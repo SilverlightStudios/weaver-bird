@@ -5,10 +5,11 @@
 
 use weaverbird_lib::commands::{
     build_weaver_nest_impl, check_minecraft_installed_impl, detect_launchers_impl,
-    get_colormap_path_impl, get_default_packs_dir_impl, get_launcher_resourcepacks_dir_impl,
-    get_pack_texture_path_impl, get_suggested_minecraft_paths_impl, get_vanilla_texture_path_impl,
-    identify_launcher_impl, initialize_vanilla_textures_from_custom_dir_impl,
-    initialize_vanilla_textures_impl, read_block_model_impl, scan_packs_folder_impl,
+    get_block_state_schema_impl, get_colormap_path_impl, get_default_packs_dir_impl,
+    get_launcher_resourcepacks_dir_impl, get_pack_texture_path_impl,
+    get_suggested_minecraft_paths_impl, get_vanilla_texture_path_impl, identify_launcher_impl,
+    initialize_vanilla_textures_from_custom_dir_impl, initialize_vanilla_textures_impl,
+    load_model_json_impl, read_block_model_impl, resolve_block_state_impl, scan_packs_folder_impl,
     BuildWeaverNestRequest,
 };
 
@@ -104,7 +105,7 @@ fn get_pack_texture_path(
     get_pack_texture_path_impl(pack_path, asset_id, is_zip, &app_handle)
 }
 
-/// Tauri command wrapper for reading block model JSON
+/// Tauri command wrapper for reading block model JSON (legacy - goes through blockstate resolution)
 #[tauri::command]
 fn read_block_model(
     pack_id: String,
@@ -112,6 +113,38 @@ fn read_block_model(
     packs_dir: String,
 ) -> Result<weaverbird_lib::util::block_models::BlockModel, weaverbird_lib::AppError> {
     read_block_model_impl(pack_id, model_id, packs_dir)
+}
+
+/// Tauri command wrapper for loading model JSON directly by model ID
+#[tauri::command]
+fn load_model_json(
+    pack_id: String,
+    model_id: String,
+    packs_dir: String,
+) -> Result<weaverbird_lib::util::block_models::BlockModel, weaverbird_lib::AppError> {
+    load_model_json_impl(pack_id, model_id, packs_dir)
+}
+
+/// Tauri command wrapper for getting block state schema
+#[tauri::command]
+fn get_block_state_schema(
+    pack_id: String,
+    block_id: String,
+    packs_dir: String,
+) -> Result<weaverbird_lib::util::blockstates::BlockStateSchema, weaverbird_lib::AppError> {
+    get_block_state_schema_impl(pack_id, block_id, packs_dir)
+}
+
+/// Tauri command wrapper for resolving block state to models
+#[tauri::command]
+fn resolve_block_state(
+    pack_id: String,
+    block_id: String,
+    packs_dir: String,
+    state_props: Option<std::collections::HashMap<String, String>>,
+    seed: Option<u64>,
+) -> Result<weaverbird_lib::util::blockstates::ResolutionResult, weaverbird_lib::AppError> {
+    resolve_block_state_impl(pack_id, block_id, packs_dir, state_props, seed)
 }
 
 fn main() {
@@ -175,7 +208,10 @@ fn main() {
             identify_launcher,
             get_launcher_resourcepacks_dir,
             get_pack_texture_path,
-            read_block_model
+            read_block_model,
+            load_model_json,
+            get_block_state_schema,
+            resolve_block_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -7,6 +7,7 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import BlockModel from "./BlockModel";
+import BlockStatePanel from "./BlockStatePanel";
 import { isPottedPlant } from "@lib/assetUtils";
 import s from "./styles.module.scss";
 
@@ -22,6 +23,8 @@ export default function Preview3D({
   onTintDetected,
 }: Props) {
   const [showPot, setShowPot] = useState(true);
+  const [blockProps, setBlockProps] = useState<Record<string, string>>({});
+  const [seed, setSeed] = useState(0);
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
 
   useEffect(() => {
@@ -37,6 +40,9 @@ export default function Preview3D({
     if (assetId) {
       console.log("[Preview3D] Asset changed to:", assetId);
       console.log("[Preview3D] Is potted plant:", isPlantPotted);
+      // Reset block state when asset changes
+      setBlockProps({});
+      setSeed(0);
     }
   }, [assetId, isPlantPotted]);
 
@@ -101,12 +107,14 @@ export default function Preview3D({
           {/* Block Model - only render when assetId is present */}
           {assetId && (
             <BlockModel
-              key={assetId}
+              key={`${assetId}-${JSON.stringify(blockProps)}-${seed}`}
               assetId={assetId}
               biomeColor={biomeColor}
               onTintDetected={onTintDetected}
               showPot={showPot}
               isPotted={isPlantPotted}
+              blockProps={blockProps}
+              seed={seed}
             />
           )}
 
@@ -123,6 +131,16 @@ export default function Preview3D({
           />
         </Canvas>
       </div>
+      {/* Block State Panel - only show when asset is selected */}
+      {assetId && (
+        <BlockStatePanel
+          assetId={assetId}
+          blockProps={blockProps}
+          onBlockPropsChange={setBlockProps}
+          seed={seed}
+          onSeedChange={setSeed}
+        />
+      )}
     </div>
   );
 }

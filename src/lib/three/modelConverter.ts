@@ -9,7 +9,11 @@
  * - @xmcl/model implementation for Three.js conversion patterns
  */
 import * as THREE from "three";
-import type { BlockModel, ModelElement } from "@lib/tauri/blockModels";
+import type {
+  BlockModel,
+  ModelElement,
+  ResolvedModel,
+} from "@lib/tauri/blockModels";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
 
@@ -18,12 +22,15 @@ const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
  *
  * @param model - The resolved block model JSON
  * @param textureLoader - Function to load textures (returns THREE.Texture or null)
+ * @param biomeColor - Optional biome color for tinting
+ * @param resolvedModel - Optional resolved model with rotations and uvlock
  * @returns Three.js Group containing all model elements
  */
 export async function blockModelToThreeJs(
   model: BlockModel,
   textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
   biomeColor?: { r: number; g: number; b: number } | null,
+  resolvedModel?: ResolvedModel,
 ): Promise<THREE.Group> {
   console.log("=== [modelConverter] Converting Model to Three.js ===");
   const group = new THREE.Group();
@@ -114,6 +121,36 @@ export async function blockModelToThreeJs(
   console.log(
     `[modelConverter] ✓ Conversion complete. Group has ${group.children.length} meshes`,
   );
+
+  // Apply blockstate rotations if provided
+  if (resolvedModel) {
+    console.log("[modelConverter] Applying blockstate rotations:");
+    console.log(`[modelConverter] - X rotation: ${resolvedModel.rotX}°`);
+    console.log(`[modelConverter] - Y rotation: ${resolvedModel.rotY}°`);
+    console.log(`[modelConverter] - Z rotation: ${resolvedModel.rotZ}°`);
+    console.log(`[modelConverter] - UV Lock: ${resolvedModel.uvlock}`);
+
+    // Apply rotations in order: X, Y, Z (Minecraft order)
+    // Convert degrees to radians
+    if (resolvedModel.rotX !== 0) {
+      group.rotateX(THREE.MathUtils.degToRad(resolvedModel.rotX));
+    }
+    if (resolvedModel.rotY !== 0) {
+      group.rotateY(THREE.MathUtils.degToRad(resolvedModel.rotY));
+    }
+    if (resolvedModel.rotZ !== 0) {
+      group.rotateZ(THREE.MathUtils.degToRad(resolvedModel.rotZ));
+    }
+
+    // TODO: Implement uvlock if needed (rotates UV coordinates to compensate for model rotation)
+    // For now, this is a placeholder - uvlock requires rotating UV coordinates in the opposite direction
+    if (resolvedModel.uvlock) {
+      console.log(
+        "[modelConverter] Note: uvlock is set but not yet fully implemented",
+      );
+    }
+  }
+
   console.log("=====================================================");
   return group;
 }
@@ -371,8 +408,8 @@ async function createFaceMaterials(
     materials.push(
       new THREE.MeshStandardMaterial({
         color: 0xff00ff, // Magenta for missing textures
-        roughness: 1.0,
-        metalness: 0.0,
+        roughness: 0.8,
+        metalness: 0.2,
       }),
     );
   }
@@ -449,9 +486,9 @@ async function createFaceMaterials(
           map: texture,
           color: materialColor, // Tint color (white/undefined = no tint)
           transparent: true,
-          alphaTest: 0.5, // Discard transparent pixels (including magenta if it has alpha)
-          roughness: 1.0, // Completely rough for Minecraft look
-          metalness: 0.0, // No metallic reflection
+          alphaTest: 0.1, // Discard transparent pixels (including magenta if it has alpha)
+          roughness: 0.8,
+          metalness: 0.2,
           flatShading: false, // Keep smooth for correct texture appearance
         });
       } else {

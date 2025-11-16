@@ -8,19 +8,19 @@
  * - React hooks best practices
  */
 
-import js from '@eslint/js'
-import tseslint from 'typescript-eslint'
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
     ignores: [
-      'node_modules',
-      'dist',
-      'build',
-      'out',
-      '.next',
-      'coverage',
-      'src-tauri',
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage",
+      "src-tauri",
     ],
   },
   // Base JavaScript rules
@@ -32,7 +32,7 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         ecmaVersion: 2020,
-        sourceType: 'module',
+        sourceType: "module",
         ecmaFeatures: {
           jsx: true,
         },
@@ -44,17 +44,17 @@ export default tseslint.config(
 
   // TypeScript-specific rules
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     rules: {
       // Use const instead of let/var
-      'prefer-const': 'error',
+      "prefer-const": "error",
 
       // Use template literals
-      'prefer-template': 'error',
+      "prefer-template": "error",
 
       // Destructuring
-      'prefer-destructuring': [
-        'warn',
+      "prefer-destructuring": [
+        "warn",
         {
           VariableDeclarator: {
             array: false,
@@ -64,24 +64,18 @@ export default tseslint.config(
       ],
 
       // Modern TypeScript patterns
-      '@typescript-eslint/explicit-function-return-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
+      "@typescript-eslint/explicit-function-return-types": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
         {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
         },
       ],
 
-      // No console in production
-      'no-console': [
-        'warn',
-        {
-          allow: ['warn', 'error'],
-        },
-      ],
+      // No console in production (disabled for debugging)
+      "no-console": "off",
     },
   },
-
-)
+);

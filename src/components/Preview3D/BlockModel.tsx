@@ -5,7 +5,7 @@ import {
   useSelectPack,
   useSelectPacksDir,
 } from "@state/selectors";
-import { readBlockModel } from "@lib/tauri/blockModels";
+import { loadModelJson, resolveBlockState } from "@lib/tauri/blockModels";
 import { blockModelToThreeJs } from "@lib/three/modelConverter";
 import { createTextureLoader } from "@lib/three/textureLoader";
 import {
@@ -20,6 +20,8 @@ interface Props {
   onTintDetected?: (hasTint: boolean) => void;
   showPot?: boolean;
   isPotted?: boolean;
+  blockProps?: Record<string, string>;
+  seed?: number;
 }
 
 function BlockModel({
@@ -28,6 +30,8 @@ function BlockModel({
   onTintDetected,
   showPot = true,
   isPotted = false,
+  blockProps = {},
+  seed = 0,
 }: Props) {
   // Normalize asset ID immediately to fix trailing underscores from malformed packs
   const normalizedAssetId = normalizeAssetId(assetId);
@@ -124,35 +128,26 @@ function BlockModel({
           console.log("[BlockModel] Loading full potted model:", modelAssetId);
         }
 
-        // Pass the full texture ID - backend will resolve blockstate -> model
-        console.log("[BlockModel] Calling readBlockModel Tauri command...");
-        const model = await readBlockModel(packId, modelAssetId, packsDirPath);
-        console.log("[BlockModel] Model loaded successfully!");
-        console.log("[BlockModel] Model data:", JSON.stringify(model, null, 2));
-        console.log("[BlockModel] Model has textures:", !!model.textures);
-        console.log(
-          "[BlockModel] Model texture keys:",
-          model.textures ? Object.keys(model.textures) : [],
-        );
-        console.log("[BlockModel] Model has elements:", !!model.elements);
-        console.log(
-          "[BlockModel] Model elements count:",
-          model.elements?.length || 0,
+        // Resolve blockstate -> models with transformations
+        console.log("[BlockModel] Calling resolveBlockState Tauri command...");
+        console.log("[BlockModel] Block props:", blockProps);
+        console.log("[BlockModel] Seed:", seed);
+
+        const resolution = await resolveBlockState(
+          packId,
+          modelAssetId,
+          packsDirPath,
+          Object.keys(blockProps).length > 0 ? blockProps : undefined,
+          seed,
         );
 
-        // Check if model has tintindex for biome coloring
-        const hasTintindex =
-          model.elements?.some((element) =>
-            Object.values(element.faces || {}).some(
-              (face: any) =>
-                face.tintindex !== undefined && face.tintindex !== null,
-            ),
-          ) || false;
-
-        console.log("[BlockModel] Has tintindex:", hasTintindex);
-        if (onTintDetected) {
-          onTintDetected(hasTintindex);
-        }
+        console.log("[BlockModel] Blockstate resolved successfully!");
+        console.log(
+          "[BlockModel] Resolution result:",
+          JSON.stringify(resolution, null, 2),
+        );
+        console.log("[BlockModel] Number of models:", resolution.models.length);
+        console.log("[BlockModel] State props:", resolution.stateProps);
 
         if (cancelled) {
           console.log("[BlockModel] Load cancelled, aborting");
@@ -168,23 +163,72 @@ function BlockModel({
         const textureLoader = createTextureLoader(
           winnerPack.path,
           winnerPack.is_zip,
-          variantNumber, // Pass variant number to apply to texture paths
+          variantNumber,
         );
 
-        // Convert to Three.js geometry
-        console.log("[BlockModel] Converting model to Three.js...");
-        console.log("[BlockModel] Biome color:", biomeColor);
-        const group = await blockModelToThreeJs(
-          model,
-          textureLoader,
-          biomeColor,
-        );
-        console.log("[BlockModel] Three.js group created successfully");
+        // Create parent group to hold all resolved models
+        const parentGroup = new THREE.Group();
+        let hasTintindex = false;
+
+        // Load and convert each resolved model
+        for (const resolvedModel of resolution.models) {
+          console.log("[BlockModel] Loading model:", resolvedModel.modelId);
+          console.log(
+            "[BlockModel] Rotations - X:",
+            resolvedModel.rotX,
+            "Y:",
+            resolvedModel.rotY,
+            "Z:",
+            resolvedModel.rotZ,
+          );
+          console.log("[BlockModel] UV Lock:", resolvedModel.uvlock);
+
+          // Load the actual model JSON directly by model ID
+          const model = await loadModelJson(
+            packId,
+            resolvedModel.modelId,
+            packsDirPath,
+          );
+          console.log("[BlockModel] Model loaded:", resolvedModel.modelId);
+
+          // Check if this model has tintindex
+          const modelHasTint =
+            model.elements?.some((element) =>
+              Object.values(element.faces || {}).some(
+                (face: any) =>
+                  face.tintindex !== undefined && face.tintindex !== null,
+              ),
+            ) || false;
+
+          if (modelHasTint) {
+            hasTintindex = true;
+          }
+
+          if (cancelled) {
+            console.log("[BlockModel] Load cancelled, aborting");
+            return;
+          }
+
+          // Convert to Three.js geometry
+          console.log("[BlockModel] Converting model to Three.js...");
+          const modelGroup = await blockModelToThreeJs(
+            model,
+            textureLoader,
+            biomeColor,
+            resolvedModel, // Pass resolved model for rotations and uvlock
+          );
+
+          console.log("[BlockModel] Model converted successfully");
+          parentGroup.add(modelGroup);
+        }
+
         console.log(
-          "[BlockModel] Group has",
-          group.children.length,
-          "children",
+          "[BlockModel] All models loaded. Has tintindex:",
+          hasTintindex,
         );
+        if (onTintDetected) {
+          onTintDetected(hasTintindex);
+        }
 
         if (cancelled) {
           console.log("[BlockModel] Load cancelled after conversion, aborting");
@@ -192,9 +236,9 @@ function BlockModel({
         }
 
         // Position the model - center at ground level
-        group.position.y = 0.5;
+        parentGroup.position.y = 0.5;
 
-        setBlockGroup(group);
+        setBlockGroup(parentGroup);
         setLoading(false);
         console.log("=== [BlockModel] Model Load Complete ===");
       } catch (err) {
@@ -208,9 +252,30 @@ function BlockModel({
           err instanceof Error ? err.message : String(err),
         );
         console.error("[BlockModel] Full error:", err);
+
+        // Try to extract more details from the error object
+        if (typeof err === "object" && err !== null) {
+          console.error(
+            "[BlockModel] Error details:",
+            JSON.stringify(err, null, 2),
+          );
+          if ("code" in err)
+            console.error("[BlockModel] Error code:", err.code);
+          if ("message" in err)
+            console.error("[BlockModel] Error message field:", err.message);
+          if ("details" in err)
+            console.error("[BlockModel] Error details field:", err.details);
+        }
+
         console.error("========================================");
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unknown error");
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : typeof err === "object" && err !== null && "message" in err
+                ? String(err.message)
+                : "Unknown error";
+          setError(errorMessage);
           setLoading(false);
           // Show placeholder on error
           createPlaceholder();
@@ -257,6 +322,8 @@ function BlockModel({
     biomeColorKey,
     showPot,
     isPotted,
+    JSON.stringify(blockProps),
+    seed,
   ]);
 
   // No rotation - keep block aligned with shadow

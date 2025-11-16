@@ -368,6 +368,54 @@ pub fn get_pack_texture_path_impl(
     }
 }
 
+/// Load a model JSON directly by model ID (after blockstate resolution)
+///
+/// This is a simpler version that just loads the model JSON without going through
+/// blockstate resolution. Use this after you've already resolved a blockstate to a model ID.
+///
+/// # Arguments
+/// * `pack_id` - ID of the resource pack to read from
+/// * `model_id` - Model ID (e.g., "minecraft:block/acacia_log_horizontal" or "block/dirt")
+/// * `packs_dir` - Directory containing resource packs
+///
+/// # Returns
+/// BlockModel JSON with parent inheritance applied
+pub fn load_model_json_impl(
+    pack_id: String,
+    model_id: String,
+    packs_dir: String,
+) -> Result<crate::util::block_models::BlockModel, AppError> {
+    println!(
+        "[load_model_json] pack_id: {}, model_id: {}",
+        pack_id, model_id
+    );
+
+    // Validate inputs
+    validation::validate_directory(&packs_dir, "Packs directory")?;
+
+    // Create vanilla pack
+    let vanilla_pack = create_vanilla_pack()?;
+
+    // Get target pack
+    let target_pack = if pack_id == "minecraft:vanilla" {
+        vanilla_pack.clone()
+    } else {
+        let packs = pack_scanner::scan_packs(&packs_dir)
+            .map_err(|e| AppError::scan(format!("Failed to scan packs: {}", e)))?;
+        packs
+            .iter()
+            .find(|p| p.id == pack_id)
+            .ok_or_else(|| AppError::validation(format!("Pack not found: {}", pack_id)))?
+            .clone()
+    };
+
+    println!("[load_model_json] Loading from pack: {}", target_pack.name);
+
+    // Load model with parent inheritance and vanilla fallback
+    crate::util::block_models::resolve_block_model(&target_pack, &model_id, &vanilla_pack)
+        .map_err(|e| AppError::io(format!("Failed to load model: {}", e)))
+}
+
 /// Read a Minecraft block model JSON file from texture ID
 ///
 /// This properly resolves the chain: texture ID -> blockstate -> model
@@ -567,6 +615,228 @@ pub fn read_block_model_impl(
 
     println!("[read_block_model] Complete!");
     result
+}
+
+/// Get the blockstate schema for a block (for UI generation)
+///
+/// # Arguments
+/// * `pack_id` - Pack ID to search
+/// * `block_id` - Block name (e.g., "oak_stairs")
+/// * `packs_dir` - Root directory containing packs
+///
+/// # Errors
+/// - VALIDATION_ERROR: Invalid inputs or block not found
+///
+/// # Returns
+/// BlockStateSchema with properties for UI generation
+pub fn get_block_state_schema_impl(
+    pack_id: String,
+    block_id: String,
+    packs_dir: String,
+) -> Result<crate::util::blockstates::BlockStateSchema, AppError> {
+    println!("=== [get_block_state_schema] START ===");
+    println!(
+        "[get_block_state_schema] pack_id: {}, block_id: {}",
+        pack_id, block_id
+    );
+
+    // CRITICAL: Normalize block_id to strip texture path prefixes
+    let normalized_block_id = if let Some(stripped) = block_id.strip_prefix("minecraft:block/") {
+        println!("[get_block_state_schema] Stripped 'minecraft:block/' prefix");
+        stripped.to_string()
+    } else if let Some(stripped) = block_id.strip_prefix("block/") {
+        println!("[get_block_state_schema] Stripped 'block/' prefix");
+        stripped.to_string()
+    } else if let Some(stripped) = block_id.strip_prefix("minecraft:") {
+        println!("[get_block_state_schema] Stripped 'minecraft:' prefix");
+        stripped.to_string()
+    } else {
+        println!("[get_block_state_schema] No prefix found, using as-is");
+        block_id.clone()
+    };
+
+    println!(
+        "[get_block_state_schema] Normalized block_id: {} -> {}",
+        block_id, normalized_block_id
+    );
+
+    // Validate inputs
+    validation::validate_directory(&packs_dir, "Packs directory")?;
+
+    // Create vanilla pack
+    let vanilla_pack = create_vanilla_pack()?;
+
+    // Get target pack
+    let target_pack = if pack_id == "minecraft:vanilla" {
+        vanilla_pack.clone()
+    } else {
+        let packs = pack_scanner::scan_packs(&packs_dir)
+            .map_err(|e| AppError::scan(format!("Failed to scan packs: {}", e)))?;
+        packs
+            .iter()
+            .find(|p| p.id == pack_id)
+            .ok_or_else(|| AppError::validation(format!("Pack not found: {}", pack_id)))?
+            .clone()
+    };
+
+    println!(
+        "[get_block_state_schema] Reading blockstate from pack: {}",
+        target_pack.name
+    );
+
+    // Read blockstate file
+    let blockstate = crate::util::blockstates::read_blockstate(
+        &PathBuf::from(&target_pack.path),
+        &normalized_block_id,
+        target_pack.is_zip,
+    )
+    .or_else(|e| {
+        println!(
+            "[get_block_state_schema] Not found in pack ({}), trying vanilla...",
+            e
+        );
+        // Fallback to vanilla
+        crate::util::blockstates::read_blockstate(
+            &PathBuf::from(&vanilla_pack.path),
+            &normalized_block_id,
+            vanilla_pack.is_zip,
+        )
+    })
+    .map_err(|e| AppError::validation(format!("Blockstate not found: {}", e)))?;
+
+    // Build schema
+    let schema =
+        crate::util::blockstates::build_block_state_schema(&blockstate, &normalized_block_id);
+
+    Ok(schema)
+}
+
+/// Resolve a blockstate to a list of models with transformations
+///
+/// # Arguments
+/// * `pack_id` - Pack ID to search
+/// * `block_id` - Block name (e.g., "oak_stairs")
+/// * `packs_dir` - Root directory containing packs
+/// * `state_props` - Block state properties (e.g., {"facing": "north", "half": "bottom"})
+/// * `seed` - Random seed for weighted variant selection
+///
+/// # Errors
+/// - VALIDATION_ERROR: Invalid inputs or resolution failed
+///
+/// # Returns
+/// ResolutionResult with resolved models and their rotations
+pub fn resolve_block_state_impl(
+    pack_id: String,
+    block_id: String,
+    packs_dir: String,
+    state_props: Option<HashMap<String, String>>,
+    seed: Option<u64>,
+) -> Result<crate::util::blockstates::ResolutionResult, AppError> {
+    println!("=== [resolve_block_state] START ===");
+    println!(
+        "[resolve_block_state] pack_id: {}, block_id: {}, props: {:?}, seed: {:?}",
+        pack_id, block_id, state_props, seed
+    );
+
+    // CRITICAL: Normalize block_id to strip texture path prefixes
+    // Input might be "minecraft:block/dark_oak_planks" but we need just "dark_oak_planks"
+    let normalized_block_id = if let Some(stripped) = block_id.strip_prefix("minecraft:block/") {
+        println!("[resolve_block_state] Stripped 'minecraft:block/' prefix");
+        stripped.to_string()
+    } else if let Some(stripped) = block_id.strip_prefix("block/") {
+        println!("[resolve_block_state] Stripped 'block/' prefix");
+        stripped.to_string()
+    } else if let Some(stripped) = block_id.strip_prefix("minecraft:") {
+        println!("[resolve_block_state] Stripped 'minecraft:' prefix");
+        stripped.to_string()
+    } else {
+        println!("[resolve_block_state] No prefix found, using as-is");
+        block_id.clone()
+    };
+
+    println!(
+        "[resolve_block_state] Normalized block_id: {} -> {}",
+        block_id, normalized_block_id
+    );
+
+    // Validate inputs
+    validation::validate_directory(&packs_dir, "Packs directory")?;
+
+    // Create vanilla pack
+    let vanilla_pack = create_vanilla_pack()?;
+
+    // Get target pack
+    let target_pack = if pack_id == "minecraft:vanilla" {
+        vanilla_pack.clone()
+    } else {
+        let packs = pack_scanner::scan_packs(&packs_dir)
+            .map_err(|e| AppError::scan(format!("Failed to scan packs: {}", e)))?;
+        packs
+            .iter()
+            .find(|p| p.id == pack_id)
+            .ok_or_else(|| AppError::validation(format!("Pack not found: {}", pack_id)))?
+            .clone()
+    };
+
+    println!(
+        "[resolve_block_state] Reading blockstate from pack: {}",
+        target_pack.name
+    );
+    println!(
+        "[resolve_block_state] Using normalized block_id: {}",
+        normalized_block_id
+    );
+
+    // Read blockstate file
+    let blockstate = crate::util::blockstates::read_blockstate(
+        &PathBuf::from(&target_pack.path),
+        &normalized_block_id,
+        target_pack.is_zip,
+    )
+    .or_else(|e| {
+        println!(
+            "[resolve_block_state] Not found in pack ({}), trying vanilla...",
+            e
+        );
+        // Fallback to vanilla
+        crate::util::blockstates::read_blockstate(
+            &PathBuf::from(&vanilla_pack.path),
+            &normalized_block_id,
+            vanilla_pack.is_zip,
+        )
+    })
+    .map_err(|e| AppError::validation(format!("Blockstate not found: {}", e)))?;
+
+    // CRITICAL: If state_props is None or empty, build schema and use default state
+    let final_props = if state_props.is_none()
+        || state_props.as_ref().map(|p| p.is_empty()).unwrap_or(true)
+    {
+        println!("[resolve_block_state] No props provided, building schema for defaults...");
+        let schema =
+            crate::util::blockstates::build_block_state_schema(&blockstate, &normalized_block_id);
+        println!(
+            "[resolve_block_state] Using default state: {:?}",
+            schema.default_state
+        );
+        Some(schema.default_state)
+    } else {
+        state_props
+    };
+
+    // Resolve blockstate
+    let resolution = crate::util::blockstates::resolve_blockstate(
+        &blockstate,
+        &normalized_block_id,
+        final_props,
+        seed,
+    )?;
+
+    println!(
+        "[resolve_block_state] Resolved {} models",
+        resolution.models.len()
+    );
+
+    Ok(resolution)
 }
 
 #[cfg(test)]
