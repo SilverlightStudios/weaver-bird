@@ -27,23 +27,57 @@ export function getMultiBlockParts(
     .toLowerCase();
 
   let halfProp = getHalfProperty(blockProps);
-  const isDoor = canonicalPath.includes("door");
+  const isDoor = canonicalPath.includes("door") && !canonicalPath.includes("trapdoor");
+  const isTrapdoor = canonicalPath.includes("trapdoor");
+
+  // Trapdoors are single-block items - they should NOT be treated as multi-blocks
+  // Their "half" property indicates where in the block space they sit (top/bottom),
+  // not that they are part of a multi-block structure
+  if (isTrapdoor) {
+    return null;
+  }
+
   if (!halfProp && isDoor) {
     halfProp = "half";
   }
-  if (halfProp) {
-    const hinge = blockProps.hinge ?? (isDoor ? "left" : undefined);
+
+  // Only treat as multi-block for actual doors (not trapdoors)
+  if (halfProp && isDoor) {
+    const hinge = blockProps.hinge ?? "left";
     const facing =
       blockProps.facing ||
       blockProps.horizontal_facing ||
       blockProps.axis ||
-      (isDoor ? "south" : undefined);
-    const open = blockProps.open ?? (isDoor ? "false" : undefined);
+      "south";
+    const open = blockProps.open ?? "false";
 
     const commonOverrides: Record<string, string> = {};
-    if (hinge) commonOverrides.hinge = hinge;
+    commonOverrides.hinge = hinge;
+    commonOverrides.facing = facing;
+    commonOverrides.open = open;
+
+    return [
+      {
+        offset: [0, 0, 0],
+        overrides: { ...commonOverrides, [halfProp]: "lower" },
+      },
+      {
+        offset: [0, 1, 0],
+        overrides: { ...commonOverrides, [halfProp]: "upper" },
+      },
+    ];
+  }
+
+  // For other blocks with half property (like tall plants), only create multi-block
+  // if the block explicitly has the half property set
+  if (halfProp && !isDoor) {
+    const facing =
+      blockProps.facing ||
+      blockProps.horizontal_facing ||
+      blockProps.axis;
+
+    const commonOverrides: Record<string, string> = {};
     if (facing) commonOverrides.facing = facing;
-    if (open) commonOverrides.open = open;
 
     return [
       {

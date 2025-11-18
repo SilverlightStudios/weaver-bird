@@ -684,29 +684,96 @@ pub fn get_block_state_schema_impl(
         target_pack.name
     );
 
-    // Read blockstate file
-    let blockstate = crate::util::blockstates::read_blockstate(
-        &PathBuf::from(&target_pack.path),
-        &normalized_block_id,
-        target_pack.is_zip,
-    )
-    .or_else(|e| {
-        println!(
-            "[get_block_state_schema] Not found in pack ({}), trying vanilla...",
-            e
-        );
-        // Fallback to vanilla
-        crate::util::blockstates::read_blockstate(
-            &PathBuf::from(&vanilla_pack.path),
-            &normalized_block_id,
-            vanilla_pack.is_zip,
-        )
-    })
-    .map_err(|e| AppError::validation(format!("Blockstate not found: {}", e)))?;
+    // Generate alternative block IDs to try (common naming variations)
+    let mut block_id_candidates = vec![normalized_block_id.clone()];
+
+    // Try with underscores inserted before common suffixes
+    // e.g., "acaciabutton" -> "acacia_button"
+    let suffixes_to_try = [
+        "button",
+        "slab",
+        "stairs",
+        "fence",
+        "wall",
+        "door",
+        "trapdoor",
+        "sign",
+        "pressure_plate",
+        "plant",
+        "bush",
+        "sapling",
+    ];
+    for suffix in &suffixes_to_try {
+        if normalized_block_id.ends_with(suffix) && !normalized_block_id.contains('_') {
+            let prefix = normalized_block_id.strip_suffix(suffix).unwrap();
+            let with_underscore = format!("{}_{}", prefix, suffix);
+            if !block_id_candidates.contains(&with_underscore) {
+                block_id_candidates.push(with_underscore);
+            }
+        }
+    }
+
+    println!(
+        "[get_block_state_schema] Trying block IDs: {:?}",
+        block_id_candidates
+    );
+
+    // Read blockstate file, trying all candidate block IDs
+    let (blockstate, used_block_id) = {
+        let mut found_blockstate = None;
+        let mut found_block_id = normalized_block_id.clone();
+
+        for candidate in &block_id_candidates {
+            println!("[get_block_state_schema] Trying candidate: {}", candidate);
+            match crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&target_pack.path),
+                candidate,
+                target_pack.is_zip,
+            ) {
+                Ok(bs) => {
+                    println!(
+                        "[get_block_state_schema] Found blockstate in pack for: {}",
+                        candidate
+                    );
+                    found_blockstate = Some(bs);
+                    found_block_id = candidate.clone();
+                    break;
+                }
+                Err(_) => {
+                    // Try vanilla fallback for this candidate
+                    match crate::util::blockstates::read_blockstate(
+                        &PathBuf::from(&vanilla_pack.path),
+                        candidate,
+                        vanilla_pack.is_zip,
+                    ) {
+                        Ok(bs) => {
+                            println!(
+                                "[get_block_state_schema] Found blockstate in vanilla for: {}",
+                                candidate
+                            );
+                            found_blockstate = Some(bs);
+                            found_block_id = candidate.clone();
+                            break;
+                        }
+                        Err(_) => continue,
+                    }
+                }
+            }
+        }
+
+        match found_blockstate {
+            Some(bs) => (bs, found_block_id),
+            None => {
+                return Err(AppError::validation(format!(
+                    "Blockstate not found for any candidate: {:?}",
+                    block_id_candidates
+                )));
+            }
+        }
+    };
 
     // Build schema
-    let schema =
-        crate::util::blockstates::build_block_state_schema(&blockstate, &normalized_block_id);
+    let schema = crate::util::blockstates::build_block_state_schema(&blockstate, &used_block_id);
 
     Ok(schema)
 }
@@ -787,52 +854,139 @@ pub fn resolve_block_state_impl(
         normalized_block_id
     );
 
-    // Read blockstate file
-    let blockstate = crate::util::blockstates::read_blockstate(
-        &PathBuf::from(&target_pack.path),
-        &normalized_block_id,
-        target_pack.is_zip,
-    )
-    .or_else(|e| {
-        println!(
-            "[resolve_block_state] Not found in pack ({}), trying vanilla...",
-            e
-        );
-        // Fallback to vanilla
-        crate::util::blockstates::read_blockstate(
-            &PathBuf::from(&vanilla_pack.path),
-            &normalized_block_id,
-            vanilla_pack.is_zip,
-        )
-    })
-    .map_err(|e| AppError::validation(format!("Blockstate not found: {}", e)))?;
+    // Generate alternative block IDs to try (common naming variations)
+    // This mirrors the logic in read_block_model for consistency
+    let mut block_id_candidates = vec![normalized_block_id.clone()];
 
-    let mut schema_cache: Option<crate::util::blockstates::BlockStateSchema> = None;
-    let mut get_schema = || -> crate::util::blockstates::BlockStateSchema {
-        if schema_cache.is_none() {
-            schema_cache = Some(crate::util::blockstates::build_block_state_schema(
-                &blockstate,
-                &normalized_block_id,
-            ));
+    // Try with underscores inserted before common suffixes
+    // e.g., "acaciabutton" -> "acacia_button"
+    let suffixes_to_try = [
+        "button",
+        "slab",
+        "stairs",
+        "fence",
+        "wall",
+        "door",
+        "trapdoor",
+        "sign",
+        "pressure_plate",
+        "plant",
+        "bush",
+        "sapling",
+    ];
+    for suffix in &suffixes_to_try {
+        if normalized_block_id.ends_with(suffix) && !normalized_block_id.contains('_') {
+            let prefix = normalized_block_id.strip_suffix(suffix).unwrap();
+            let with_underscore = format!("{}_{}", prefix, suffix);
+            if !block_id_candidates.contains(&with_underscore) {
+                block_id_candidates.push(with_underscore);
+            }
         }
-        schema_cache
-            .as_ref()
-            .expect("schema cache should be initialized")
-            .clone()
+    }
+
+    println!(
+        "[resolve_block_state] Trying block IDs: {:?}",
+        block_id_candidates
+    );
+
+    // Read blockstate file, trying all candidate block IDs
+    let (blockstate, used_block_id) = {
+        let mut found_blockstate = None;
+        let mut found_block_id = normalized_block_id.clone();
+
+        for candidate in &block_id_candidates {
+            println!("[resolve_block_state] Trying candidate: {}", candidate);
+            match crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&target_pack.path),
+                candidate,
+                target_pack.is_zip,
+            ) {
+                Ok(bs) => {
+                    println!(
+                        "[resolve_block_state] Found blockstate in pack for: {}",
+                        candidate
+                    );
+                    found_blockstate = Some(bs);
+                    found_block_id = candidate.clone();
+                    break;
+                }
+                Err(_) => {
+                    // Try vanilla fallback for this candidate
+                    match crate::util::blockstates::read_blockstate(
+                        &PathBuf::from(&vanilla_pack.path),
+                        candidate,
+                        vanilla_pack.is_zip,
+                    ) {
+                        Ok(bs) => {
+                            println!(
+                                "[resolve_block_state] Found blockstate in vanilla for: {}",
+                                candidate
+                            );
+                            found_blockstate = Some(bs);
+                            found_block_id = candidate.clone();
+                            break;
+                        }
+                        Err(_) => continue,
+                    }
+                }
+            }
+        }
+
+        match found_blockstate {
+            Some(bs) => (bs, found_block_id),
+            None => {
+                return Err(AppError::validation(format!(
+                    "Blockstate not found for any candidate: {:?}",
+                    block_id_candidates
+                )));
+            }
+        }
     };
 
-    // CRITICAL: Merge provided state props with defaults so multi-part overrides only need to provide the keys they change
+    println!(
+        "[resolve_block_state] Successfully loaded blockstate for: {}",
+        used_block_id
+    );
+
+    // Build schema to get valid properties for this block
+    let schema = crate::util::blockstates::build_block_state_schema(&blockstate, &used_block_id);
+
+    // Get the set of valid property names for this block
+    let valid_props: std::collections::HashSet<String> =
+        schema.properties.iter().map(|p| p.name.clone()).collect();
+
+    println!(
+        "[resolve_block_state] Valid properties for this block: {:?}",
+        valid_props
+    );
+
+    // CRITICAL: Merge provided state props with defaults, but ONLY include properties
+    // that are actually defined in the blockstate schema. This filters out invalid
+    // properties like "hinge" for trapdoors or "distance" for barrels.
     let final_props = match state_props {
         Some(map) if !map.is_empty() => {
-            let schema = get_schema();
             let mut merged = schema.default_state.clone();
+            let mut filtered_count = 0;
             for (key, value) in map {
-                merged.insert(key, value);
+                if valid_props.contains(&key) {
+                    merged.insert(key, value);
+                } else {
+                    filtered_count += 1;
+                    println!(
+                        "[resolve_block_state] Filtered out invalid property: {}={}",
+                        key, value
+                    );
+                }
+            }
+            if filtered_count > 0 {
+                println!(
+                    "[resolve_block_state] Filtered out {} invalid properties",
+                    filtered_count
+                );
             }
             Some(merged)
         }
         _ => {
-            let schema = get_schema();
             println!(
                 "[resolve_block_state] Using default state: {:?}",
                 schema.default_state
@@ -841,10 +995,12 @@ pub fn resolve_block_state_impl(
         }
     };
 
+    println!("[resolve_block_state] Final properties: {:?}", final_props);
+
     // Resolve blockstate
     let resolution = crate::util::blockstates::resolve_blockstate(
         &blockstate,
-        &normalized_block_id,
+        &used_block_id,
         final_props,
         seed,
     )?;
