@@ -684,91 +684,48 @@ pub fn get_block_state_schema_impl(
         target_pack.name
     );
 
-    // Generate alternative block IDs to try (common naming variations)
-    let mut block_id_candidates = vec![normalized_block_id.clone()];
-
-    // Try with underscores inserted before common suffixes
-    // e.g., "acaciabutton" -> "acacia_button"
-    let suffixes_to_try = [
-        "button",
-        "slab",
-        "stairs",
-        "fence",
-        "wall",
-        "door",
-        "trapdoor",
-        "sign",
-        "pressure_plate",
-        "plant",
-        "bush",
-        "sapling",
-    ];
-    for suffix in &suffixes_to_try {
-        if normalized_block_id.ends_with(suffix) && !normalized_block_id.contains('_') {
-            let prefix = normalized_block_id.strip_suffix(suffix).unwrap();
-            let with_underscore = format!("{}_{}", prefix, suffix);
-            if !block_id_candidates.contains(&with_underscore) {
-                block_id_candidates.push(with_underscore);
-            }
-        }
-    }
-
-    println!(
-        "[get_block_state_schema] Trying block IDs: {:?}",
-        block_id_candidates
-    );
-
-    // Read blockstate file, trying all candidate block IDs
+    // Use universal blockstate finder to locate the file
+    // This scans the directory and matches by normalizing names (removing underscores)
+    // Works with any block type without needing a hardcoded list
     let (blockstate, used_block_id) = {
-        let mut found_blockstate = None;
-        let mut found_block_id = normalized_block_id.clone();
-
-        for candidate in &block_id_candidates {
-            println!("[get_block_state_schema] Trying candidate: {}", candidate);
-            match crate::util::blockstates::read_blockstate(
+        // Try target pack first
+        if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
+            &PathBuf::from(&target_pack.path),
+            &normalized_block_id,
+            target_pack.is_zip,
+        ) {
+            println!(
+                "[get_block_state_schema] Found blockstate in pack: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
                 &PathBuf::from(&target_pack.path),
-                candidate,
+                &actual_block_id,
                 target_pack.is_zip,
-            ) {
-                Ok(bs) => {
-                    println!(
-                        "[get_block_state_schema] Found blockstate in pack for: {}",
-                        candidate
-                    );
-                    found_blockstate = Some(bs);
-                    found_block_id = candidate.clone();
-                    break;
-                }
-                Err(_) => {
-                    // Try vanilla fallback for this candidate
-                    match crate::util::blockstates::read_blockstate(
-                        &PathBuf::from(&vanilla_pack.path),
-                        candidate,
-                        vanilla_pack.is_zip,
-                    ) {
-                        Ok(bs) => {
-                            println!(
-                                "[get_block_state_schema] Found blockstate in vanilla for: {}",
-                                candidate
-                            );
-                            found_blockstate = Some(bs);
-                            found_block_id = candidate.clone();
-                            break;
-                        }
-                        Err(_) => continue,
-                    }
-                }
-            }
+            )?;
+            (bs, actual_block_id)
         }
-
-        match found_blockstate {
-            Some(bs) => (bs, found_block_id),
-            None => {
-                return Err(AppError::validation(format!(
-                    "Blockstate not found for any candidate: {:?}",
-                    block_id_candidates
-                )));
-            }
+        // Fallback to vanilla
+        else if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
+            &PathBuf::from(&vanilla_pack.path),
+            &normalized_block_id,
+            vanilla_pack.is_zip,
+        ) {
+            println!(
+                "[get_block_state_schema] Found blockstate in vanilla: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&vanilla_pack.path),
+                &actual_block_id,
+                vanilla_pack.is_zip,
+            )?;
+            (bs, actual_block_id)
+        } else {
+            return Err(AppError::validation(format!(
+                "Blockstate not found: {}",
+                normalized_block_id
+            )));
         }
     };
 
@@ -854,92 +811,48 @@ pub fn resolve_block_state_impl(
         normalized_block_id
     );
 
-    // Generate alternative block IDs to try (common naming variations)
-    // This mirrors the logic in read_block_model for consistency
-    let mut block_id_candidates = vec![normalized_block_id.clone()];
-
-    // Try with underscores inserted before common suffixes
-    // e.g., "acaciabutton" -> "acacia_button"
-    let suffixes_to_try = [
-        "button",
-        "slab",
-        "stairs",
-        "fence",
-        "wall",
-        "door",
-        "trapdoor",
-        "sign",
-        "pressure_plate",
-        "plant",
-        "bush",
-        "sapling",
-    ];
-    for suffix in &suffixes_to_try {
-        if normalized_block_id.ends_with(suffix) && !normalized_block_id.contains('_') {
-            let prefix = normalized_block_id.strip_suffix(suffix).unwrap();
-            let with_underscore = format!("{}_{}", prefix, suffix);
-            if !block_id_candidates.contains(&with_underscore) {
-                block_id_candidates.push(with_underscore);
-            }
-        }
-    }
-
-    println!(
-        "[resolve_block_state] Trying block IDs: {:?}",
-        block_id_candidates
-    );
-
-    // Read blockstate file, trying all candidate block IDs
+    // Use universal blockstate finder to locate the file
+    // This scans the directory and matches by normalizing names (removing underscores)
+    // Works with any block type without needing a hardcoded list
     let (blockstate, used_block_id) = {
-        let mut found_blockstate = None;
-        let mut found_block_id = normalized_block_id.clone();
-
-        for candidate in &block_id_candidates {
-            println!("[resolve_block_state] Trying candidate: {}", candidate);
-            match crate::util::blockstates::read_blockstate(
+        // Try target pack first
+        if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
+            &PathBuf::from(&target_pack.path),
+            &normalized_block_id,
+            target_pack.is_zip,
+        ) {
+            println!(
+                "[resolve_block_state] Found blockstate in pack: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
                 &PathBuf::from(&target_pack.path),
-                candidate,
+                &actual_block_id,
                 target_pack.is_zip,
-            ) {
-                Ok(bs) => {
-                    println!(
-                        "[resolve_block_state] Found blockstate in pack for: {}",
-                        candidate
-                    );
-                    found_blockstate = Some(bs);
-                    found_block_id = candidate.clone();
-                    break;
-                }
-                Err(_) => {
-                    // Try vanilla fallback for this candidate
-                    match crate::util::blockstates::read_blockstate(
-                        &PathBuf::from(&vanilla_pack.path),
-                        candidate,
-                        vanilla_pack.is_zip,
-                    ) {
-                        Ok(bs) => {
-                            println!(
-                                "[resolve_block_state] Found blockstate in vanilla for: {}",
-                                candidate
-                            );
-                            found_blockstate = Some(bs);
-                            found_block_id = candidate.clone();
-                            break;
-                        }
-                        Err(_) => continue,
-                    }
-                }
-            }
+            )?;
+            (bs, actual_block_id)
         }
-
-        match found_blockstate {
-            Some(bs) => (bs, found_block_id),
-            None => {
-                return Err(AppError::validation(format!(
-                    "Blockstate not found for any candidate: {:?}",
-                    block_id_candidates
-                )));
-            }
+        // Fallback to vanilla
+        else if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
+            &PathBuf::from(&vanilla_pack.path),
+            &normalized_block_id,
+            vanilla_pack.is_zip,
+        ) {
+            println!(
+                "[resolve_block_state] Found blockstate in vanilla: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&vanilla_pack.path),
+                &actual_block_id,
+                vanilla_pack.is_zip,
+            )?;
+            (bs, actual_block_id)
+        } else {
+            return Err(AppError::validation(format!(
+                "Blockstate not found: {}",
+                normalized_block_id
+            )));
         }
     };
 
