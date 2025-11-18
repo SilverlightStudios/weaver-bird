@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import ReactThreeTestRenderer from "@react-three/test-renderer";
 import BlockModel from "./BlockModel";
 import * as zustand from "@state/selectors";
-import { readBlockModel, resolveBlockState } from "@lib/tauri/blockModels";
+import { loadModelJson, resolveBlockState } from "@lib/tauri/blockModels";
 import type {
   BlockModel as BlockModelType,
   ResolutionResult,
@@ -17,7 +17,7 @@ vi.mock("@state/selectors", () => ({
 
 // Mock Tauri commands
 vi.mock("@lib/tauri/blockModels", () => ({
-  readBlockModel: vi.fn(),
+  loadModelJson: vi.fn(),
   resolveBlockState: vi.fn(),
 }));
 
@@ -71,7 +71,7 @@ describe("BlockModel", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
   });
 
-  it("should call readBlockModel with correct parameters", async () => {
+  it("should call loadModelJson with correct parameters", async () => {
     const mockModel: BlockModelType = {
       textures: { all: "minecraft:block/dirt" },
       elements: [
@@ -105,14 +105,14 @@ describe("BlockModel", () => {
     };
 
     vi.mocked(resolveBlockState).mockResolvedValue(mockResolution);
-    vi.mocked(readBlockModel).mockResolvedValue(mockModel);
+    vi.mocked(loadModelJson).mockResolvedValue(mockModel);
 
     await ReactThreeTestRenderer.create(<BlockModel assetId={mockAssetId} />);
 
     // Allow time for async operations
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    expect(readBlockModel).toHaveBeenCalledWith(
+    expect(loadModelJson).toHaveBeenCalledWith(
       mockPackId,
       mockAssetId,
       mockPacksDir,
@@ -120,7 +120,7 @@ describe("BlockModel", () => {
   });
 
   it("should handle model loading errors gracefully", async () => {
-    vi.mocked(readBlockModel).mockRejectedValue(new Error("Model not found"));
+    vi.mocked(loadModelJson).mockRejectedValue(new Error("Model not found"));
 
     const renderer = await ReactThreeTestRenderer.create(
       <BlockModel assetId={mockAssetId} />,
@@ -147,7 +147,7 @@ describe("BlockModel", () => {
       ],
     };
 
-    vi.mocked(readBlockModel).mockResolvedValue(mockModel);
+    vi.mocked(loadModelJson).mockResolvedValue(mockModel);
 
     const renderer = await ReactThreeTestRenderer.create(
       <BlockModel assetId={mockAssetId} />,
@@ -174,7 +174,7 @@ describe("BlockModel", () => {
       ],
     };
 
-    vi.mocked(readBlockModel).mockResolvedValue(mockModel);
+    vi.mocked(loadModelJson).mockResolvedValue(mockModel);
 
     const renderer = await ReactThreeTestRenderer.create(
       <BlockModel assetId={mockAssetId} />,
@@ -240,7 +240,7 @@ describe("BlockModel", () => {
     vi.mocked(resolveBlockState)
       .mockResolvedValueOnce(mockResolution1)
       .mockResolvedValueOnce(mockResolution2);
-    vi.mocked(readBlockModel)
+    vi.mocked(loadModelJson)
       .mockResolvedValueOnce(mockModel1)
       .mockResolvedValueOnce(mockModel2);
 
@@ -255,8 +255,8 @@ describe("BlockModel", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Should have called readBlockModel twice
-    expect(readBlockModel).toHaveBeenCalledTimes(2);
+    // Should have called loadModelJson twice
+    expect(loadModelJson).toHaveBeenCalledTimes(2);
   });
 
   it("should handle multi-element models", async () => {
@@ -280,7 +280,7 @@ describe("BlockModel", () => {
       ],
     };
 
-    vi.mocked(readBlockModel).mockResolvedValue(mockModel);
+    vi.mocked(loadModelJson).mockResolvedValue(mockModel);
 
     const renderer = await ReactThreeTestRenderer.create(
       <BlockModel assetId={mockAssetId} />,
@@ -304,7 +304,7 @@ describe("BlockModel", () => {
       ],
     };
 
-    vi.mocked(readBlockModel).mockResolvedValue(mockModel);
+    vi.mocked(loadModelJson).mockResolvedValue(mockModel);
 
     const renderer = await ReactThreeTestRenderer.create(
       <BlockModel assetId={mockAssetId} />,
