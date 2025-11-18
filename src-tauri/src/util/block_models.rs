@@ -363,10 +363,35 @@ mod tests {
     }
 
     #[test]
+    fn test_normalize_model_id_custom_namespace() {
+        assert_eq!(
+            normalize_model_id("mymod:block/custom"),
+            "mymod:block/custom"
+        );
+        assert_eq!(normalize_model_id("item/stick"), "minecraft:item/stick");
+    }
+
+    #[test]
     fn test_model_id_to_path() {
         assert_eq!(
             model_id_to_path("minecraft:block/dirt"),
             "assets/minecraft/models/block/dirt.json"
+        );
+    }
+
+    #[test]
+    fn test_model_id_to_path_custom_namespace() {
+        assert_eq!(
+            model_id_to_path("mymod:block/custom"),
+            "assets/mymod/models/block/custom.json"
+        );
+    }
+
+    #[test]
+    fn test_model_id_to_path_item() {
+        assert_eq!(
+            model_id_to_path("minecraft:item/stick"),
+            "assets/minecraft/models/item/stick.json"
         );
     }
 
@@ -391,5 +416,248 @@ mod tests {
             resolved.get("base"),
             Some(&"minecraft:block/dirt".to_string())
         );
+    }
+
+    #[test]
+    fn test_resolve_textures_no_references() {
+        let model = BlockModel {
+            parent: None,
+            textures: Some(HashMap::from([
+                ("top".to_string(), "minecraft:block/dirt_top".to_string()),
+                ("bottom".to_string(), "minecraft:block/dirt".to_string()),
+            ])),
+            elements: None,
+            ambientocclusion: None,
+        };
+
+        let resolved = resolve_textures(&model);
+        assert_eq!(
+            resolved.get("top"),
+            Some(&"minecraft:block/dirt_top".to_string())
+        );
+        assert_eq!(
+            resolved.get("bottom"),
+            Some(&"minecraft:block/dirt".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_textures_chain() {
+        let model = BlockModel {
+            parent: None,
+            textures: Some(HashMap::from([
+                ("all".to_string(), "#main".to_string()),
+                ("main".to_string(), "#base".to_string()),
+                ("base".to_string(), "minecraft:block/stone".to_string()),
+            ])),
+            elements: None,
+            ambientocclusion: None,
+        };
+
+        let resolved = resolve_textures(&model);
+        assert_eq!(
+            resolved.get("all"),
+            Some(&"minecraft:block/stone".to_string())
+        );
+        assert_eq!(
+            resolved.get("main"),
+            Some(&"minecraft:block/stone".to_string())
+        );
+        assert_eq!(
+            resolved.get("base"),
+            Some(&"minecraft:block/stone".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_textures_empty() {
+        let model = BlockModel {
+            parent: None,
+            textures: None,
+            elements: None,
+            ambientocclusion: None,
+        };
+
+        let resolved = resolve_textures(&model);
+        assert_eq!(resolved.len(), 0);
+    }
+
+    #[test]
+    fn test_resolve_textures_unresolved_reference() {
+        let model = BlockModel {
+            parent: None,
+            textures: Some(HashMap::from([(
+                "all".to_string(),
+                "#nonexistent".to_string(),
+            )])),
+            elements: None,
+            ambientocclusion: None,
+        };
+
+        let resolved = resolve_textures(&model);
+        // Should keep the unresolved reference as-is
+        assert_eq!(resolved.get("all"), Some(&"#nonexistent".to_string()));
+    }
+
+    #[test]
+    fn test_merge_models_textures() {
+        let parent = BlockModel {
+            parent: None,
+            textures: Some(HashMap::from([
+                ("all".to_string(), "minecraft:block/stone".to_string()),
+                ("top".to_string(), "minecraft:block/stone_top".to_string()),
+            ])),
+            elements: None,
+            ambientocclusion: Some(true),
+        };
+
+        let child = BlockModel {
+            parent: Some("minecraft:block/cube_all".to_string()),
+            textures: Some(HashMap::from([(
+                "all".to_string(),
+                "minecraft:block/dirt".to_string(),
+            )])),
+            elements: None,
+            ambientocclusion: None,
+        };
+
+        let merged = merge_models(parent, child);
+
+        // Child textures should override parent
+        assert_eq!(
+            merged.textures.as_ref().unwrap().get("all"),
+            Some(&"minecraft:block/dirt".to_string())
+        );
+        // Parent textures should still be present if not overridden
+        assert_eq!(
+            merged.textures.as_ref().unwrap().get("top"),
+            Some(&"minecraft:block/stone_top".to_string())
+        );
+        // Parent reference should be cleared
+        assert_eq!(merged.parent, None);
+    }
+
+    #[test]
+    fn test_merge_models_elements() {
+        let parent_elements = vec![ModelElement {
+            from: [0.0, 0.0, 0.0],
+            to: [16.0, 16.0, 16.0],
+            rotation: None,
+            faces: HashMap::new(),
+            shade: None,
+        }];
+
+        let child_elements = vec![ModelElement {
+            from: [4.0, 4.0, 4.0],
+            to: [12.0, 12.0, 12.0],
+            rotation: None,
+            faces: HashMap::new(),
+            shade: None,
+        }];
+
+        let parent = BlockModel {
+            parent: None,
+            textures: None,
+            elements: Some(parent_elements),
+            ambientocclusion: None,
+        };
+
+        let child = BlockModel {
+            parent: Some("minecraft:block/cube".to_string()),
+            textures: None,
+            elements: Some(child_elements.clone()),
+            ambientocclusion: None,
+        };
+
+        let merged = merge_models(parent, child);
+
+        // Child elements should completely replace parent elements
+        assert!(merged.elements.is_some());
+        assert_eq!(merged.elements.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            merged.elements.as_ref().unwrap()[0].from,
+            [4.0, 4.0, 4.0]
+        );
+    }
+
+    #[test]
+    fn test_merge_models_ambient_occlusion() {
+        let parent = BlockModel {
+            parent: None,
+            textures: None,
+            elements: None,
+            ambientocclusion: Some(true),
+        };
+
+        let child = BlockModel {
+            parent: Some("minecraft:block/cube".to_string()),
+            textures: None,
+            elements: None,
+            ambientocclusion: Some(false),
+        };
+
+        let merged = merge_models(parent, child);
+
+        // Child ambient occlusion should override parent
+        assert_eq!(merged.ambientocclusion, Some(false));
+    }
+
+    #[test]
+    fn test_block_model_serialization() {
+        let model = BlockModel {
+            parent: Some("minecraft:block/cube_all".to_string()),
+            textures: Some(HashMap::from([(
+                "all".to_string(),
+                "minecraft:block/stone".to_string(),
+            )])),
+            elements: None,
+            ambientocclusion: Some(true),
+        };
+
+        let json = serde_json::to_string(&model).expect("should serialize");
+        assert!(json.contains("\"parent\":"));
+        assert!(json.contains("\"textures\":"));
+        assert!(json.contains("\"ambientocclusion\":"));
+
+        let deserialized: BlockModel =
+            serde_json::from_str(&json).expect("should deserialize");
+        assert_eq!(
+            deserialized.parent,
+            Some("minecraft:block/cube_all".to_string())
+        );
+    }
+
+    #[test]
+    fn test_model_element_serialization() {
+        let element = ModelElement {
+            from: [0.0, 0.0, 0.0],
+            to: [16.0, 16.0, 16.0],
+            rotation: Some(ElementRotation {
+                origin: [8.0, 8.0, 8.0],
+                axis: "y".to_string(),
+                angle: 45.0,
+                rescale: Some(false),
+            }),
+            faces: HashMap::from([(
+                "north".to_string(),
+                ElementFace {
+                    texture: "#all".to_string(),
+                    uv: Some([0.0, 0.0, 16.0, 16.0]),
+                    rotation: Some(90),
+                    cullface: Some("north".to_string()),
+                    tintindex: Some(0),
+                },
+            )]),
+            shade: Some(true),
+        };
+
+        let json = serde_json::to_string(&element).expect("should serialize");
+        let deserialized: ModelElement =
+            serde_json::from_str(&json).expect("should deserialize");
+
+        assert_eq!(deserialized.from, [0.0, 0.0, 0.0]);
+        assert_eq!(deserialized.to, [16.0, 16.0, 16.0]);
+        assert!(deserialized.rotation.is_some());
+        assert_eq!(deserialized.rotation.as_ref().unwrap().angle, 45.0);
     }
 }
