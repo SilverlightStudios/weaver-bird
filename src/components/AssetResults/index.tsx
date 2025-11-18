@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getVanillaTexturePath, getPackTexturePath } from "@lib/tauri";
 import {
@@ -178,7 +178,7 @@ export default function AssetResults({ assets, selectedId, onSelect }: Props) {
   const packOrder = useStore((state) => state.packOrder);
 
   // Helper to get winning pack for an asset
-  const getWinningPack = (assetId: string): string | undefined => {
+  const getWinningPack = useCallback((assetId: string): string | undefined => {
     // Check if asset is penciled to a specific pack
     const override = winners[assetId];
     if (override) {
@@ -193,7 +193,7 @@ export default function AssetResults({ assets, selectedId, onSelect }: Props) {
       (a, b) => packOrder.indexOf(a) - packOrder.indexOf(b),
     );
     return sorted[0];
-  };
+  }, [winners, providersByAsset, packOrder]);
 
   // Group assets by variant, but only group variants from the same winning pack
   const groupedAssets = useMemo(() => {
@@ -231,7 +231,7 @@ export default function AssetResults({ assets, selectedId, onSelect }: Props) {
     });
 
     return displayAssets;
-  }, [assets, winners, providersByAsset, packOrder]);
+  }, [assets, getWinningPack]);
 
   console.log(
     "[AssetResults] Rendering",

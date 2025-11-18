@@ -3,6 +3,8 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useId,
+  useCallback,
   type ReactNode,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
@@ -51,8 +53,8 @@ export function DropdownMenu({
     onOpenChange?.(newOpen);
   };
 
-  const [triggerId] = useState(`dropdown-trigger-${Math.random()}`);
-  const [contentId] = useState(`dropdown-content-${Math.random()}`);
+  const triggerId = `dropdown-trigger-${useId()}`;
+  const contentId = `dropdown-content-${useId()}`;
 
   return (
     <DropdownContext.Provider
@@ -81,9 +83,26 @@ export const DropdownMenuTrigger = forwardRef<
     props.onClick?.(e);
   };
 
-  if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement, {
-      ref,
+  const child = asChild && React.isValidElement(children) ? (children as React.ReactElement) : null;
+  const childRef = child ? (child as { ref?: React.Ref<unknown> }).ref : null;
+
+  const mergedRef = useCallback((node: HTMLElement | null) => {
+    // Merge refs - only call function refs and our own object ref
+    if (typeof ref === "function") {
+      ref(node);
+    } else if (ref) {
+      (ref as React.MutableRefObject<HTMLElement | null>).current = node;
+    }
+    // Only call child ref if it's a function (we can't safely modify object refs we don't own)
+    if (typeof childRef === "function") {
+      childRef(node);
+    }
+  }, [ref, childRef]);
+
+  if (child) {
+    // eslint-disable-next-line react-hooks/refs
+    return React.cloneElement(child, {
+      ref: mergedRef,
       id: triggerId,
       "aria-expanded": open,
       "aria-controls": contentId,
@@ -226,7 +245,7 @@ export const DropdownMenuContent = forwardRef<
     >
       {children}
     </div>,
-    document.body,
+    portalTarget,
   );
 });
 DropdownMenuContent.displayName = "DropdownMenuContent";

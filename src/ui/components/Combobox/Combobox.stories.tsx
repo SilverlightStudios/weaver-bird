@@ -52,240 +52,254 @@ const biomes: ComboboxOption[] = [
   { value: "end", label: "The End", disabled: true },
 ];
 
-export const Default: Story = {
-  render: () => {
-    const [value, setValue] = useState("");
+const DefaultComponent = () => {
+  const [value, setValue] = useState("");
 
-    return (
-      <div style={{ minWidth: "300px" }}>
-        <Combobox
-          options={frameworks}
-          value={value}
-          onValueChange={setValue}
-          placeholder="Select framework..."
-          searchPlaceholder="Search frameworks..."
-        />
-        <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
-          Selected: {value || "none"}
-        </p>
-      </div>
-    );
-  },
+  return (
+    <div style={{ minWidth: "300px" }}>
+      <Combobox
+        options={frameworks}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Select framework..."
+        searchPlaceholder="Search frameworks..."
+      />
+      <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
+        Selected: {value || "none"}
+      </p>
+    </div>
+  );
+};
+
+export const Default: Story = {
+  render: () => <DefaultComponent />,
+};
+
+const MinecraftBlocksComponent = () => {
+  const [value, setValue] = useState("");
+
+  return (
+    <div style={{ minWidth: "300px" }}>
+      <Combobox
+        options={minecraftBlocks}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Select block..."
+        searchPlaceholder="Search blocks..."
+        emptyMessage="No blocks found."
+      />
+      <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
+        Selected: {value || "none"}
+      </p>
+    </div>
+  );
 };
 
 export const MinecraftBlocks: Story = {
-  render: () => {
-    const [value, setValue] = useState("");
+  render: () => <MinecraftBlocksComponent />,
+};
 
-    return (
-      <div style={{ minWidth: "300px" }}>
-        <Combobox
-          options={minecraftBlocks}
-          value={value}
-          onValueChange={setValue}
-          placeholder="Select block..."
-          searchPlaceholder="Search blocks..."
-          emptyMessage="No blocks found."
-        />
-        <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
-          Selected: {value || "none"}
-        </p>
-      </div>
-    );
-  },
+const WithDisabledOptionsComponent = () => {
+  const [value, setValue] = useState("");
+
+  return (
+    <div style={{ minWidth: "300px" }}>
+      <Combobox
+        options={biomes}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Select biome..."
+        searchPlaceholder="Search biomes..."
+        emptyMessage="No biomes found."
+      />
+      <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
+        Selected: {value || "none"}
+      </p>
+      <p style={{ marginTop: "0.5rem", fontSize: "0.75rem", opacity: 0.5 }}>
+        Note: Nether and End are disabled
+      </p>
+    </div>
+  );
 };
 
 export const WithDisabledOptions: Story = {
-  render: () => {
-    const [value, setValue] = useState("");
+  render: () => <WithDisabledOptionsComponent />,
+};
 
-    return (
-      <div style={{ minWidth: "300px" }}>
-        <Combobox
-          options={biomes}
-          value={value}
-          onValueChange={setValue}
-          placeholder="Select biome..."
-          searchPlaceholder="Search biomes..."
-          emptyMessage="No biomes found."
-        />
-        <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
-          Selected: {value || "none"}
-        </p>
-        <p style={{ marginTop: "0.5rem", fontSize: "0.75rem", opacity: 0.5 }}>
-          Note: Nether and End are disabled
-        </p>
-      </div>
-    );
-  },
+const CustomTriggerComponent = () => {
+  const [value, setValue] = useState("");
+
+  return (
+    <div style={{ minWidth: "300px" }}>
+      <Combobox
+        options={frameworks}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Select framework..."
+        searchPlaceholder="Search frameworks..."
+        renderTrigger={({ selectedLabel, placeholder, isOpen }) => (
+          <Button variant="primary" style={{ width: "100%" }}>
+            {selectedLabel || placeholder} {isOpen ? "▲" : "▼"}
+          </Button>
+        )}
+      />
+      <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
+        Selected: {value || "none"}
+      </p>
+    </div>
+  );
 };
 
 export const CustomTrigger: Story = {
-  render: () => {
-    const [value, setValue] = useState("");
+  render: () => <CustomTriggerComponent />,
+};
 
-    return (
-      <div style={{ minWidth: "300px" }}>
-        <Combobox
-          options={frameworks}
-          value={value}
-          onValueChange={setValue}
-          placeholder="Select framework..."
-          searchPlaceholder="Search frameworks..."
-          renderTrigger={({ selectedLabel, placeholder, isOpen }) => (
-            <Button variant="primary" style={{ width: "100%" }}>
-              {selectedLabel || placeholder} {isOpen ? "▲" : "▼"}
-            </Button>
-          )}
-        />
-        <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
-          Selected: {value || "none"}
-        </p>
-      </div>
-    );
-  },
+const PreselectedComponent = () => {
+  const [value, setValue] = useState("grass_block");
+
+  return (
+    <div style={{ minWidth: "300px" }}>
+      <Combobox
+        options={minecraftBlocks}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Select block..."
+        searchPlaceholder="Search blocks..."
+      />
+      <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
+        Selected: {value || "none"}
+      </p>
+    </div>
+  );
 };
 
 export const Preselected: Story = {
-  render: () => {
-    const [value, setValue] = useState("grass_block");
+  render: () => <PreselectedComponent />,
+};
 
-    return (
-      <div style={{ minWidth: "300px" }}>
-        <Combobox
-          options={minecraftBlocks}
-          value={value}
-          onValueChange={setValue}
-          placeholder="Select block..."
-          searchPlaceholder="Search blocks..."
-        />
-        <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
-          Selected: {value || "none"}
-        </p>
-      </div>
-    );
-  },
+const LongListComponent = () => {
+  const [value, setValue] = useState("");
+
+  const longList: ComboboxOption[] = Array.from({ length: 50 }, (_, i) => ({
+    value: `item-${i + 1}`,
+    label: `Item ${i + 1}`,
+  }));
+
+  return (
+    <div style={{ minWidth: "300px" }}>
+      <Combobox
+        options={longList}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Select item..."
+        searchPlaceholder="Search items..."
+      />
+      <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
+        Selected: {value || "none"}
+      </p>
+    </div>
+  );
 };
 
 export const LongList: Story = {
-  render: () => {
-    const [value, setValue] = useState("");
+  render: () => <LongListComponent />,
+};
 
-    const longList: ComboboxOption[] = Array.from({ length: 50 }, (_, i) => ({
-      value: `item-${i + 1}`,
-      label: `Item ${i + 1}`,
-    }));
+const InFormComponent = () => {
+  const [framework, setFramework] = useState("");
+  const [block, setBlock] = useState("stone");
+  const [biome, setBiome] = useState("");
 
-    return (
-      <div style={{ minWidth: "300px" }}>
-        <Combobox
-          options={longList}
-          value={value}
-          onValueChange={setValue}
-          placeholder="Select item..."
-          searchPlaceholder="Search items..."
-        />
-        <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
-          Selected: {value || "none"}
-        </p>
-      </div>
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(
+      `Submitted:\nFramework: ${framework}\nBlock: ${block}\nBiome: ${biome}`,
     );
-  },
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        minWidth: "300px",
+      }}
+    >
+      <div>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "0.5rem",
+            fontSize: "0.875rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Framework
+        </label>
+        <Combobox
+          options={frameworks}
+          value={framework}
+          onValueChange={setFramework}
+          placeholder="Select framework..."
+          searchPlaceholder="Search..."
+        />
+      </div>
+
+      <div>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "0.5rem",
+            fontSize: "0.875rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Block Type
+        </label>
+        <Combobox
+          options={minecraftBlocks}
+          value={block}
+          onValueChange={setBlock}
+          placeholder="Select block..."
+          searchPlaceholder="Search..."
+        />
+      </div>
+
+      <div>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "0.5rem",
+            fontSize: "0.875rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Biome
+        </label>
+        <Combobox
+          options={biomes}
+          value={biome}
+          onValueChange={setBiome}
+          placeholder="Select biome..."
+          searchPlaceholder="Search..."
+        />
+      </div>
+
+      <Button type="submit" variant="primary">
+        Submit Form
+      </Button>
+    </form>
+  );
 };
 
 export const InForm: Story = {
-  render: () => {
-    const [framework, setFramework] = useState("");
-    const [block, setBlock] = useState("stone");
-    const [biome, setBiome] = useState("");
-
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      alert(
-        `Submitted:\nFramework: ${framework}\nBlock: ${block}\nBiome: ${biome}`,
-      );
-    };
-
-    return (
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-          minWidth: "300px",
-        }}
-      >
-        <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontSize: "0.875rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            Framework
-          </label>
-          <Combobox
-            options={frameworks}
-            value={framework}
-            onValueChange={setFramework}
-            placeholder="Select framework..."
-            searchPlaceholder="Search..."
-          />
-        </div>
-
-        <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontSize: "0.875rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            Block Type
-          </label>
-          <Combobox
-            options={minecraftBlocks}
-            value={block}
-            onValueChange={setBlock}
-            placeholder="Select block..."
-            searchPlaceholder="Search..."
-          />
-        </div>
-
-        <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontSize: "0.875rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            Biome
-          </label>
-          <Combobox
-            options={biomes}
-            value={biome}
-            onValueChange={setBiome}
-            placeholder="Select biome..."
-            searchPlaceholder="Search..."
-          />
-        </div>
-
-        <Button type="submit" variant="primary">
-          Submit Form
-        </Button>
-      </form>
-    );
-  },
+  render: () => <InFormComponent />,
 };

@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useRef, type HTMLAttributes } from "react";
+import React, { forwardRef, useState, useRef, useCallback, type HTMLAttributes } from "react";
 import s from "./Slider.module.scss";
 
 export interface SliderProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
@@ -35,14 +35,14 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
     const trackRef = useRef<HTMLDivElement>(null);
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
-    const handleValueChange = (newValue: number[]) => {
+    const handleValueChange = useCallback((newValue: number[]) => {
       if (!isControlled) {
         setInternalValue(newValue);
       }
       onValueChange?.(newValue);
-    };
+    }, [isControlled, onValueChange]);
 
-    const getValueFromPosition = (clientX: number, clientY: number): number => {
+    const getValueFromPosition = useCallback((clientX: number, clientY: number): number => {
       if (!trackRef.current) return 0;
 
       const rect = trackRef.current.getBoundingClientRect();
@@ -58,7 +58,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       const rawValue = min + percentage * (max - min);
       const steppedValue = Math.round(rawValue / step) * step;
       return Math.max(min, Math.min(max, steppedValue));
-    };
+    }, [orientation, min, max, step]);
 
     const handlePointerDown = (index: number) => (e: React.PointerEvent) => {
       if (disabled) return;
@@ -67,20 +67,20 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     };
 
-    const handlePointerMove = (e: PointerEvent) => {
+    const handlePointerMove = useCallback((e: PointerEvent) => {
       if (draggingIndex === null || disabled) return;
 
       const newValue = getValueFromPosition(e.clientX, e.clientY);
       const updatedValues = [...value];
       updatedValues[draggingIndex] = newValue;
       handleValueChange(updatedValues.sort((a, b) => a - b));
-    };
+    }, [draggingIndex, disabled, getValueFromPosition, value, handleValueChange]);
 
-    const handlePointerUp = (e: PointerEvent) => {
+    const handlePointerUp = useCallback((e: PointerEvent) => {
       if (draggingIndex === null) return;
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       setDraggingIndex(null);
-    };
+    }, [draggingIndex]);
 
     React.useEffect(() => {
       if (draggingIndex === null) return;
@@ -92,7 +92,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
         document.removeEventListener("pointermove", handlePointerMove);
         document.removeEventListener("pointerup", handlePointerUp);
       };
-    }, [draggingIndex, value, min, max, step, disabled]);
+    }, [draggingIndex, handlePointerMove, handlePointerUp]);
 
     const getPercentage = (val: number): number => {
       return ((val - min) / (max - min)) * 100;

@@ -77,96 +77,98 @@ export const Default: Story = {
   ),
 };
 
-export const WithForm: Story = {
-  render: () => {
-    const [goal, setGoal] = useState(350);
+const WithFormComponent = () => {
+  const [goal, setGoal] = useState(350);
 
-    return (
-      <StoryWrapper>
-        <Drawer>
-          <DrawerTrigger asChild>
-            <Button variant="primary">Set Goal</Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>Mining Goal</DrawerTitle>
-              <DrawerDescription>
-                Set your daily diamond mining goal.
-              </DrawerDescription>
-            </DrawerHeader>
+  return (
+    <StoryWrapper>
+      <Drawer>
+        <DrawerTrigger asChild>
+          <Button variant="primary">Set Goal</Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Mining Goal</DrawerTitle>
+            <DrawerDescription>
+              Set your daily diamond mining goal.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div
+            style={{
+              padding: "1rem 1.5rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+            }}
+          >
             <div
               style={{
-                padding: "1rem 1.5rem",
                 display: "flex",
-                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "space-between",
                 gap: "1rem",
               }}
             >
-              <div
+              <label
+                htmlFor="goal-input"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "1rem",
-                }}
-              >
-                <label
-                  htmlFor="goal-input"
-                  style={{
-                    fontSize: "0.875rem",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  Diamonds per day:
-                </label>
-                <input
-                  id="goal-input"
-                  type="number"
-                  value={goal}
-                  onChange={(e) => setGoal(parseInt(e.target.value))}
-                  style={{
-                    width: "6rem",
-                    padding: "0.5rem",
-                    border: "3px solid var(--color-ink)",
-                    borderRadius: "0.4rem",
-                    fontFamily: "var(--font-family)",
-                    fontSize: "1rem",
-                    textAlign: "center",
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  padding: "1rem",
-                  background: "rgb(0 0 0 / 5%)",
-                  border: "3px solid var(--color-ink)",
-                  borderRadius: "0.5rem",
-                  fontSize: "0.75rem",
+                  fontSize: "0.875rem",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                 }}
               >
-                Current goal: {goal} diamonds/day
-              </div>
+                Diamonds per day:
+              </label>
+              <input
+                id="goal-input"
+                type="number"
+                value={goal}
+                onChange={(e) => setGoal(parseInt(e.target.value))}
+                style={{
+                  width: "6rem",
+                  padding: "0.5rem",
+                  border: "3px solid var(--color-ink)",
+                  borderRadius: "0.4rem",
+                  fontFamily: "var(--font-family)",
+                  fontSize: "1rem",
+                  textAlign: "center",
+                }}
+              />
             </div>
-            <DrawerFooter>
-              <Button
-                variant="primary"
-                onClick={() => alert(`Goal set to ${goal}`)}
-              >
-                Save Goal
-              </Button>
-              <DrawerClose asChild>
-                <Button variant="ghost">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      </StoryWrapper>
-    );
-  },
+            <div
+              style={{
+                padding: "1rem",
+                background: "rgb(0 0 0 / 5%)",
+                border: "3px solid var(--color-ink)",
+                borderRadius: "0.5rem",
+                fontSize: "0.75rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Current goal: {goal} diamonds/day
+            </div>
+          </div>
+          <DrawerFooter>
+            <Button
+              variant="primary"
+              onClick={() => alert(`Goal set to ${goal}`)}
+            >
+              Save Goal
+            </Button>
+            <DrawerClose asChild>
+              <Button variant="ghost">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </StoryWrapper>
+  );
+};
+
+export const WithForm: Story = {
+  render: () => <WithFormComponent />,
 };
 
 export const LongContent: Story = {

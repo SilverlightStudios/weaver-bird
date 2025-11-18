@@ -3,6 +3,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useCallback,
   createContext,
   useContext,
   type ReactNode,
@@ -16,7 +17,7 @@ interface TooltipContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
   delayDuration: number;
-  triggerRef: React.RefObject<HTMLElement>;
+  triggerRef: React.MutableRefObject<HTMLElement | null>;
 }
 
 const TooltipContext = createContext<TooltipContextValue | null>(null);
@@ -110,14 +111,23 @@ export const TooltipTrigger = forwardRef<
       };
     }, []);
 
-    if (asChild && React.isValidElement(children)) {
-      return React.cloneElement(children as React.ReactElement, {
-        ref: (node: HTMLElement) => {
-          (triggerRef as React.MutableRefObject<HTMLElement | null>).current =
-            node;
-          if (typeof ref === "function") ref(node);
-          else if (ref) ref.current = node;
-        },
+    const child = asChild && React.isValidElement(children) ? (children as React.ReactElement) : null;
+    const childRef = child ? (child as { ref?: React.Ref<unknown> }).ref : null;
+
+    const mergedRef = useCallback((node: HTMLElement | null) => {
+      triggerRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) ref.current = node;
+      // Only call child ref if it's a function
+      if (typeof childRef === "function") {
+        childRef(node);
+      }
+    }, [triggerRef, ref, childRef]);
+
+    if (child) {
+      // eslint-disable-next-line react-hooks/refs
+      return React.cloneElement(child, {
+        ref: mergedRef,
         onMouseEnter: handleMouseEnter,
         onMouseLeave: handleMouseLeave,
         onFocus: handleFocus,
@@ -127,12 +137,7 @@ export const TooltipTrigger = forwardRef<
 
     return (
       <button
-        ref={(node) => {
-          (triggerRef as React.MutableRefObject<HTMLElement | null>).current =
-            node;
-          if (typeof ref === "function") ref(node);
-          else if (ref) ref.current = node;
-        }}
+        ref={mergedRef}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onFocus={handleFocus}
@@ -254,7 +259,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
         window.removeEventListener("scroll", updatePosition, true);
         window.removeEventListener("resize", updatePosition);
       };
-    }, [open, side, align, sideOffset]);
+    }, [open, side, align, sideOffset, triggerRef]);
 
     if (!open) return null;
 
@@ -290,7 +295,7 @@ export interface TooltipProviderProps {
 
 export function TooltipProvider({
   children,
-  delayDuration,
+  delayDuration: _delayDuration,
 }: TooltipProviderProps) {
   // This is mainly for API compatibility with shadcn
   // Our implementation doesn't need a global provider

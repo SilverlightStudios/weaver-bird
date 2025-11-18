@@ -178,7 +178,7 @@ export function Combobox({
             </CommandPrimitive.List>
           </CommandPrimitive>
         </div>,
-        document.body,
+        portalTarget,
       )
     : null;
 
