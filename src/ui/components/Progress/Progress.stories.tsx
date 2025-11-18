@@ -36,18 +36,6 @@ export const Default: Story = {
   ),
 };
 
-export const WithLabel: Story = {
-  args: {
-    value: 75,
-    showLabel: true,
-  },
-  render: (args) => (
-    <div style={{ width: "400px" }}>
-      <Progress {...args} />
-    </div>
-  ),
-};
-
 export const Animated: Story = {
   render: () => {
     const [progress, setProgress] = useState(13);

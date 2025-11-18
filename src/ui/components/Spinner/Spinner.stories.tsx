@@ -25,24 +25,6 @@ export const Default: Story = {
   },
 };
 
-export const Small: Story = {
-  args: {
-    size: "sm",
-  },
-};
-
-export const Large: Story = {
-  args: {
-    size: "lg",
-  },
-};
-
-export const ExtraLarge: Story = {
-  args: {
-    size: "xl",
-  },
-};
-
 export const AllSizes: Story = {
   render: () => (
     <div

@@ -15,6 +15,12 @@ const meta = {
     layout: "centered",
   },
   tags: ["autodocs"],
+  argTypes: {
+    delayDuration: {
+      control: "number",
+      description: "Delay in milliseconds before tooltip appears",
+    },
+  },
 } satisfies Meta<typeof Tooltip>;
 
 export default meta;

@@ -133,25 +133,6 @@ export const PackFormat: Story = {
   },
 };
 
-export const Disabled: Story = {
-  render: () => (
-    <RadioGroup defaultValue="option2" disabled>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <RadioGroupItem value="option1" id="d1" />
-        <Label htmlFor="d1">Option 1 (Disabled)</Label>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <RadioGroupItem value="option2" id="d2" />
-        <Label htmlFor="d2">Option 2 (Disabled)</Label>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <RadioGroupItem value="option3" id="d3" />
-        <Label htmlFor="d3">Option 3 (Disabled)</Label>
-      </div>
-    </RadioGroup>
-  ),
-};
-
 export const SingleItemDisabled: Story = {
   render: () => {
     const [value, setValue] = useState("option2");

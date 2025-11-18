@@ -12,6 +12,13 @@ const meta = {
     layout: "fullscreen",
   },
   tags: ["autodocs"],
+  argTypes: {
+    direction: {
+      control: "select",
+      options: ["horizontal", "vertical"],
+      description: "Direction of panel resizing",
+    },
+  },
 } satisfies Meta<typeof ResizablePanelGroup>;
 
 export default meta;

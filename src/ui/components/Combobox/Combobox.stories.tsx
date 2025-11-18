@@ -10,7 +10,20 @@ const meta = {
     layout: "centered",
   },
   tags: ["autodocs"],
-  argTypes: {},
+  argTypes: {
+    placeholder: {
+      control: "text",
+      description: "Placeholder text for the combobox trigger",
+    },
+    searchPlaceholder: {
+      control: "text",
+      description: "Placeholder text for the search input",
+    },
+    emptyMessage: {
+      control: "text",
+      description: "Message to display when no results are found",
+    },
+  },
 } satisfies Meta<typeof Combobox>;
 
 export default meta;

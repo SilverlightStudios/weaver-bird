@@ -13,6 +13,7 @@ const meta = {
     min: { control: "number" },
     max: { control: "number" },
     step: { control: "number" },
+    disabled: { control: "boolean" },
     orientation: {
       control: "select",
       options: ["horizontal", "vertical"],
@@ -88,121 +89,6 @@ const WithRangeComponent = () => {
 
 export const WithRange: Story = {
   render: () => <WithRangeComponent />,
-};
-
-const CustomStepComponent = () => {
-  const [value, setValue] = useState([50]);
-
-  return (
-    <StoryWrapper>
-      <div>
-        <Slider value={value} onValueChange={setValue} step={10} />
-        <p
-          style={{
-            marginTop: "1rem",
-            fontFamily: "var(--font-family)",
-            fontSize: "0.875rem",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            opacity: 0.7,
-          }}
-        >
-          Value: {value[0]} (Step: 10)
-        </p>
-      </div>
-    </StoryWrapper>
-  );
-};
-
-export const CustomStep: Story = {
-  render: () => <CustomStepComponent />,
-};
-
-const CustomMinMaxComponent = () => {
-  const [value, setValue] = useState([500]);
-
-  return (
-    <StoryWrapper>
-      <div>
-        <Slider
-          value={value}
-          onValueChange={setValue}
-          min={0}
-          max={1000}
-          step={50}
-        />
-        <p
-          style={{
-            marginTop: "1rem",
-            fontFamily: "var(--font-family)",
-            fontSize: "0.875rem",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            opacity: 0.7,
-          }}
-        >
-          Value: {value[0]} / 1000
-        </p>
-      </div>
-    </StoryWrapper>
-  );
-};
-
-export const CustomMinMax: Story = {
-  render: () => <CustomMinMaxComponent />,
-};
-
-const VerticalComponent = () => {
-  const [value, setValue] = useState([60]);
-
-  return (
-    <div style={{ padding: "3rem", minHeight: "300px" }}>
-      <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-        <Slider
-          value={value}
-          onValueChange={setValue}
-          orientation="vertical"
-        />
-        <p
-          style={{
-            fontFamily: "var(--font-family)",
-            fontSize: "0.875rem",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            opacity: 0.7,
-          }}
-        >
-          Value: {value[0]}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-export const Vertical: Story = {
-  render: () => <VerticalComponent />,
-};
-
-export const Disabled: Story = {
-  render: () => (
-    <StoryWrapper>
-      <div>
-        <Slider defaultValue={[40]} disabled />
-        <p
-          style={{
-            marginTop: "1rem",
-            fontFamily: "var(--font-family)",
-            fontSize: "0.875rem",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            opacity: 0.7,
-          }}
-        >
-          Disabled state
-        </p>
-      </div>
-    </StoryWrapper>
-  ),
 };
 
 const VolumeControlComponent = () => {
