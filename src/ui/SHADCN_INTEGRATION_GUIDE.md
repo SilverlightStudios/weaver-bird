@@ -8,12 +8,22 @@ We use **shadcn/ui** as a **reference implementation** only, not as our final co
 
 **shadcn → Minecraft Anti-Design Pipeline:**
 
-1. Install shadcn component (reference only)
-2. Study its structure, props, accessibility features
-3. Build our own version using SCSS + modern CSS
-4. Apply anti-design tokens (shadows, rotations, patterns)
-5. Make it more concise for our use case
-6. Delete the shadcn component
+1. **Consider building from scratch first** - Can you solve this with vanilla React + CSS?
+2. Install shadcn component (reference only, if needed)
+3. Study its structure, props, accessibility features
+4. **Build our own version using vanilla React + SCSS** - No Radix UI dependencies
+5. Apply anti-design tokens (shadows, rotations, patterns)
+6. Make it more concise for our use case
+7. Delete the shadcn component
+
+**⚠️ Important: Avoid Radix UI Dependencies**
+
+We prefer building components ourselves using modern CSS and vanilla React rather than relying on Radix UI primitives. This gives us:
+- **Full control** over behavior and styling
+- **Smaller bundle size** - No heavy dependencies
+- **Simpler codebase** - Easier to understand and maintain
+- **Modern CSS features** - Native popover API, CSS anchor positioning (future), dialog element
+- **No abstraction overhead** - Direct implementation
 
 ---
 
@@ -29,9 +39,11 @@ We use **shadcn/ui** as a **reference implementation** only, not as our final co
 
 ### ❌ What We Don't Use
 
+- **Radix UI primitives** - We build our own using vanilla React + modern CSS
 - **Tailwind classes** - We use SCSS modules + CSS variables
 - **Their visual design** - Too clean/corporate for our punk aesthetic
 - **All their complexity** - We simplify for our specific needs
+- **Third-party libraries** - Prefer native solutions (portals, context, hooks)
 
 ---
 
@@ -691,12 +703,213 @@ Document every variant, size, and state in Storybook.
 
 ---
 
+## Storybook Best Practices for Portal Components
+
+When building components that use portals (dropdowns, modals, tooltips, comboboxes), follow these patterns to ensure they work correctly in Storybook:
+
+### 1. Use `position: absolute` Instead of `position: fixed`
+
+For dropdown/popover components, use `position: absolute` rather than `position: fixed`:
+
+```scss
+// Good
+.dropdownContent {
+    position: absolute;
+    z-index: 50;
+}
+
+// Avoid
+.dropdownContent {
+    position: fixed; // Can break in Storybook iframes with transforms
+    z-index: 50;
+}
+```
+
+**Exception**: Full-screen overlays (modals, drawers) should still use `position: fixed`.
+
+### 2. Calculate Positions with Scroll Offsets
+
+When positioning absolutely, include scroll offsets in your calculations:
+
+```typescript
+// Good - for position: absolute
+const updatePosition = () => {
+  const triggerRect = trigger.getBoundingClientRect();
+  const scrollY = window.scrollY || document.documentElement.scrollTop;
+  const scrollX = window.scrollX || document.documentElement.scrollLeft;
+  
+  content.style.top = `${triggerRect.bottom + scrollY + offset}px`;
+  content.style.left = `${triggerRect.left + scrollX}px`;
+};
+
+// Only for position: fixed (no scroll offsets needed)
+const updatePosition = () => {
+  const triggerRect = trigger.getBoundingClientRect();
+  content.style.top = `${triggerRect.bottom + offset}px`;
+  content.style.left = `${triggerRect.left}px`;
+};
+```
+
+### 3. Global Decorator for Portal Context
+
+Add a global decorator in `.storybook/preview.tsx` to set up positioning context:
+
+```tsx
+// .storybook/preview.tsx
+import type { Decorator } from "@storybook/react";
+import React from "react";
+
+const PortalDecorator: Decorator = (Story) => {
+  React.useEffect(() => {
+    // Create positioning context for portals
+    const root = document.getElementById("storybook-root");
+    if (root) {
+      root.style.position = "relative";
+      root.style.isolation = "isolate";
+    }
+
+    document.body.style.position = "relative";
+    document.body.style.isolation = "isolate";
+  }, []);
+
+  return <Story />;
+};
+
+const preview: Preview = {
+  decorators: [PortalDecorator],
+  // ... rest of config
+};
+```
+
+**Note**: Use `.tsx` extension for preview files when decorators contain JSX. TypeScript files (`.ts`) cannot parse JSX syntax.
+
+### 4. Avoid Duplicate Position Declarations
+
+Don't declare `position` twice in the same rule - it causes conflicts:
+
+```scss
+// Bad - conflicting position declarations
+.content {
+    position: absolute;
+    // ... other styles
+    position: relative; // This overrides the first one!
+}
+
+// Good
+.content {
+    position: absolute;
+    isolation: isolate; // Use isolation instead of position: relative
+}
+```
+
+### 5. Portal to document.body
+
+Always portal to `document.body` for consistent behavior:
+
+```tsx
+import { createPortal } from "react-dom";
+
+// Good
+return createPortal(
+  <div className={s.dropdown}>{children}</div>,
+  document.body
+);
+```
+
+### 6. Story Layout Configuration
+
+For components with portals/overlays:
+
+```typescript
+// Component stories
+const meta = {
+  title: "Components/Dropdown",
+  component: Dropdown,
+  parameters: {
+    layout: "fullscreen", // Use fullscreen for overlays
+  },
+} satisfies Meta<typeof Dropdown>;
+
+// Wrap trigger buttons in a centered container
+export const Default: Story = {
+  render: () => (
+    <div style={{ 
+      display: "flex", 
+      justifyContent: "center", 
+      alignItems: "center", 
+      minHeight: "400px" 
+    }}>
+      <Dropdown>...</Dropdown>
+    </div>
+  ),
+};
+```
+
+### 7. Handle Custom Triggers Properly
+
+When supporting custom triggers via `renderTrigger`, don't wrap them in styled buttons:
+
+```tsx
+// Bad - wraps custom trigger in default button styles
+const trigger = renderTrigger ? (
+  <button className={s.trigger}>
+    {renderTrigger({ isOpen })}
+  </button>
+) : (
+  <button className={s.trigger}>Default</button>
+);
+
+// Good - uses unstyled wrapper for custom triggers
+const trigger = renderTrigger ? (
+  <div role="combobox" onClick={handleClick}>
+    {renderTrigger({ isOpen })}
+  </div>
+) : (
+  <button className={s.trigger}>Default</button>
+);
+```
+
+### 8. Prevent Content Overflow
+
+For dropdowns with search inputs or scrollable content:
+
+```scss
+.dropdownContent {
+    position: absolute;
+    overflow: hidden; // Prevent content from escaping
+}
+
+.searchWrapper {
+    width: 100%;
+    max-width: 100%; // Constrain to parent
+}
+
+.searchInput {
+    width: 100%;
+    min-width: 0; // Allow flexbox shrinking
+    box-sizing: border-box; // Include padding/border in width
+}
+```
+
+### Common Storybook Portal Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Dropdown appears in wrong location | Using `position: fixed` with transforms in iframe | Use `position: absolute` + scroll offsets |
+| Content overflows dropdown | No width constraints | Add `width: 100%`, `min-width: 0`, `box-sizing: border-box` |
+| Custom trigger has default styles | Wrapping custom content in styled button | Use unstyled wrapper (`<div>`) for custom triggers |
+| Portal not visible | No positioning context | Add global decorator with `position: relative` |
+| Duplicate `position` rules | Copy/paste error | Remove conflicting declarations, use `isolation: isolate` |
+
+---
+
 ## Resources
 
 - **shadcn/ui**: https://ui.shadcn.com/
 - **Radix UI**: https://www.radix-ui.com/ (primitives shadcn uses)
 - **Our Design Tokens**: `/src/ui/tokens/`
 - **Anti-Design Guide**: `/src/ui/tokens/ANTI_DESIGN_GUIDE.md`
+- **Storybook Decorators**: https://storybook.js.org/docs/writing-stories/decorators
 
 ---
 

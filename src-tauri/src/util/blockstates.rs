@@ -240,24 +240,40 @@ pub fn build_block_state_schema(blockstate: &Blockstate, block_id: &str) -> Bloc
 
     // Scan variants to extract properties
     if let Some(variants) = &blockstate.variants {
-        for (key, variant) in variants {
-            // Count models for this variant
-            let model_count = match variant {
-                BlockstateVariant::Single(_) => 1,
-                BlockstateVariant::Multiple(models) => models.len(),
-            };
-            variants_map.insert(key.clone(), model_count);
+        // Special case: if blockstate only has "" or "normal" variant, don't extract properties
+        // This prevents generating fake properties for simple blocks like leaves
+        let has_only_default =
+            variants.len() == 1 && (variants.contains_key("") || variants.contains_key("normal"));
 
-            // Parse variant key: "facing=north,half=bottom" -> properties
-            if !key.is_empty() && key != "normal" {
-                for prop_pair in key.split(',') {
-                    if let Some((prop_name, prop_value)) = prop_pair.split_once('=') {
-                        property_values
-                            .entry(prop_name.to_string())
-                            .or_insert_with(HashSet::new)
-                            .insert(prop_value.to_string());
+        if !has_only_default {
+            for (key, variant) in variants {
+                // Count models for this variant
+                let model_count = match variant {
+                    BlockstateVariant::Single(_) => 1,
+                    BlockstateVariant::Multiple(models) => models.len(),
+                };
+                variants_map.insert(key.clone(), model_count);
+
+                // Parse variant key: "facing=north,half=bottom" -> properties
+                if !key.is_empty() && key != "normal" {
+                    for prop_pair in key.split(',') {
+                        if let Some((prop_name, prop_value)) = prop_pair.split_once('=') {
+                            property_values
+                                .entry(prop_name.to_string())
+                                .or_insert_with(HashSet::new)
+                                .insert(prop_value.to_string());
+                        }
                     }
                 }
+            }
+        } else {
+            // For simple blocks, still record the variant in the map
+            for (key, variant) in variants {
+                let model_count = match variant {
+                    BlockstateVariant::Single(_) => 1,
+                    BlockstateVariant::Multiple(models) => models.len(),
+                };
+                variants_map.insert(key.clone(), model_count);
             }
         }
     }
@@ -397,17 +413,30 @@ pub fn resolve_blockstate(
             variants.keys().collect::<Vec<_>>()
         );
 
-        // Try exact match, then empty string, then "normal"
-        let variant = variants
-            .get(&variant_key)
-            .or_else(|| {
-                println!("[resolve_blockstate] No exact match, trying empty string");
-                variants.get("")
-            })
-            .or_else(|| {
-                println!("[resolve_blockstate] No empty string, trying 'normal'");
-                variants.get("normal")
-            });
+        // Special case: if the blockstate only has "" or "normal" variant and nothing else,
+        // always use it regardless of properties. This handles simple blocks like leaves
+        // that have an empty blockstate but might have block properties added by the game.
+        let has_only_default =
+            variants.len() == 1 && (variants.contains_key("") || variants.contains_key("normal"));
+
+        let variant = if has_only_default {
+            println!(
+                "[resolve_blockstate] Blockstate has only default variant, using it regardless of props"
+            );
+            variants.get("").or_else(|| variants.get("normal"))
+        } else {
+            // Try exact match, then empty string, then "normal"
+            variants
+                .get(&variant_key)
+                .or_else(|| {
+                    println!("[resolve_blockstate] No exact match, trying empty string");
+                    variants.get("")
+                })
+                .or_else(|| {
+                    println!("[resolve_blockstate] No empty string, trying 'normal'");
+                    variants.get("normal")
+                })
+        };
 
         if let Some(var) = variant {
             println!("[resolve_blockstate] Found variant!");

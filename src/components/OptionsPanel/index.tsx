@@ -1,0 +1,336 @@
+/**
+ * Options Panel Component
+ *
+ * Displays tabbed options for the selected asset including:
+ * - Block State properties
+ * - Pot controls
+ * - Biome color picker
+ * - Block state variants
+ * - Resource pack providers
+ * - Advanced debug info
+ */
+
+import { useState, useEffect } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui/components/tabs";
+import BiomeColorPicker from "@components/BiomeColorPicker";
+import VariantChooser from "@components/VariantChooser";
+import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
+import {
+  getColormapAssetId,
+  guessColormapTypeForAsset,
+  getBlockStateIdFromAssetId,
+  isBiomeColormapAsset,
+  isPottedPlant,
+} from "@lib/assetUtils";
+import {
+  getBlockStateSchema,
+  type BlockStateSchema,
+} from "@lib/tauri/blockModels";
+import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
+import s from "./styles.module.scss";
+
+interface ProviderOption {
+  packId: string;
+  packName: string;
+  isPenciled?: boolean;
+  isWinner?: boolean;
+}
+
+interface Props {
+  assetId?: string;
+  biomeColor?: { r: number; g: number; b: number } | null;
+  onBiomeColorChange?: (color: { r: number; g: number; b: number }) => void;
+  providers?: ProviderOption[];
+  onSelectProvider?: (packId: string) => void;
+  showPot: boolean;
+  onShowPotChange: (show: boolean) => void;
+  hasTintindex: boolean;
+  tintType?: "grass" | "foliage";
+  foliagePreviewBlock: string;
+  onFoliagePreviewBlockChange: (blockId: string) => void;
+  onBlockPropsChange?: (props: Record<string, string>) => void;
+  onSeedChange?: (seed: number) => void;
+}
+
+const FOLIAGE_PREVIEW_OPTIONS = [
+  { id: "minecraft:block/oak_leaves", label: "Oak Leaves" },
+  { id: "minecraft:block/spruce_leaves", label: "Spruce Leaves" },
+  { id: "minecraft:block/birch_leaves", label: "Birch Leaves" },
+  { id: "minecraft:block/jungle_leaves", label: "Jungle Leaves" },
+  { id: "minecraft:block/acacia_leaves", label: "Acacia Leaves" },
+  { id: "minecraft:block/dark_oak_leaves", label: "Dark Oak Leaves" },
+];
+
+export default function OptionsPanel({
+  assetId,
+  onBiomeColorChange,
+  providers = [],
+  onSelectProvider,
+  showPot,
+  onShowPotChange,
+  hasTintindex,
+  tintType,
+  foliagePreviewBlock,
+  onFoliagePreviewBlockChange,
+  onBlockPropsChange,
+  onSeedChange,
+}: Props) {
+  const [blockProps, setBlockProps] = useState<Record<string, string>>({});
+  const [seed, setSeed] = useState(0);
+
+  // Forward block props and seed changes to parent
+  const handleBlockPropsChange = (props: Record<string, string>) => {
+    setBlockProps(props);
+    if (onBlockPropsChange) {
+      onBlockPropsChange(props);
+    }
+  };
+
+  const handleSeedChange = (newSeed: number) => {
+    setSeed(newSeed);
+    if (onSeedChange) {
+      onSeedChange(newSeed);
+    }
+  };
+  const [schema, setSchema] = useState<BlockStateSchema | null>(null);
+
+  const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
+  const isColormapSelection = assetId ? isBiomeColormapAsset(assetId) : false;
+  const selectedWinnerPackId = useSelectWinner(assetId ?? "");
+  const winnerPackId = assetId ? selectedWinnerPackId : null;
+  const packsDir = useSelectPacksDir();
+  const blockStateAssetId =
+    assetId != null ? getBlockStateIdFromAssetId(assetId) : null;
+  const isMinecraftNamespace = assetId?.startsWith("minecraft:") ?? false;
+
+  // Load schema to determine available tabs
+  useEffect(() => {
+    if (!assetId || isColormapSelection || !packsDir || !blockStateAssetId) {
+      setSchema(null);
+      return;
+    }
+
+    const targetBlockStateId = blockStateAssetId;
+    const targetPackId =
+      winnerPackId ?? (isMinecraftNamespace ? "minecraft:vanilla" : null);
+    if (!targetPackId) {
+      setSchema(null);
+      return;
+    }
+    const packIdForSchema: string = targetPackId;
+
+    let cancelled = false;
+
+    async function loadSchema() {
+      try {
+        const schemaData = await getBlockStateSchema(
+          packIdForSchema,
+          targetBlockStateId,
+          packsDir!,
+        );
+        if (!cancelled) {
+          setSchema(schemaData);
+        }
+      } catch (err) {
+        console.error("[OptionsPanel] Error loading schema:", err);
+        if (!cancelled) {
+          setSchema(null);
+        }
+      }
+    }
+    loadSchema();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    assetId,
+    blockStateAssetId,
+    winnerPackId,
+    packsDir,
+    isColormapSelection,
+    isMinecraftNamespace,
+  ]);
+
+  // Reset state when asset changes
+  useEffect(() => {
+    if (assetId) {
+      setBlockProps({});
+      setSeed(0);
+    }
+  }, [assetId]);
+
+  // Determine which tabs to show
+  const effectiveColormapType = tintType ?? guessColormapTypeForAsset(assetId);
+  const colormapAssetId = isColormapSelection
+    ? (assetId ?? getColormapAssetId(effectiveColormapType))
+    : getColormapAssetId(effectiveColormapType);
+  const hasBiomeColorTab = hasTintindex || isColormapSelection;
+  // Variants tab shows texture variants from different resource packs
+  const hasVariantsTab = !isColormapSelection && providers.length > 1;
+  const shouldShowPotTab = !isColormapSelection && isPlantPotted;
+  // Block State tab shows blockstate properties (facing, half, etc.) and seed
+  const shouldShowBlockStateTab =
+    !isColormapSelection && (schema?.properties.length ?? 0) > 0;
+
+  const defaultTab = shouldShowBlockStateTab ? "block-state" : "advanced";
+
+  if (!assetId) {
+    return (
+      <div className={s.root}>
+        <div className={s.emptyState}>Select an asset to view options</div>
+      </div>
+    );
+  }
+
+  if (isColormapSelection && onBiomeColorChange && colormapAssetId) {
+    return (
+      <div className={s.root}>
+        {effectiveColormapType === "foliage" && (
+          <div className={s.leafSelector}>
+            <label htmlFor="foliage-preview-select">Preview Leaves</label>
+            <select
+              id="foliage-preview-select"
+              value={foliagePreviewBlock}
+              onChange={(event) =>
+                onFoliagePreviewBlockChange(event.target.value)
+              }
+            >
+              {FOLIAGE_PREVIEW_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <BiomeColorPicker
+          assetId={colormapAssetId}
+          type={effectiveColormapType}
+          onColorSelect={onBiomeColorChange}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={s.root}>
+      <Tabs defaultValue={defaultTab}>
+        <TabsList>
+          {shouldShowBlockStateTab && (
+            <TabsTrigger value="block-state">Block State</TabsTrigger>
+          )}
+          {shouldShowPotTab && <TabsTrigger value="pot">Pot</TabsTrigger>}
+          {hasBiomeColorTab && (
+            <TabsTrigger value="biome">Biome Color</TabsTrigger>
+          )}
+          {hasVariantsTab && (
+            <TabsTrigger value="variants">Variants</TabsTrigger>
+          )}
+          <TabsTrigger value="advanced">Advanced</TabsTrigger>
+        </TabsList>
+
+        {shouldShowBlockStateTab && (
+          <TabsContent value="block-state">
+            <BlockStatePanel
+              assetId={assetId}
+              blockProps={blockProps}
+              onBlockPropsChange={handleBlockPropsChange}
+              seed={seed}
+              onSeedChange={handleSeedChange}
+            />
+          </TabsContent>
+        )}
+
+        {shouldShowPotTab && (
+          <TabsContent value="pot">
+            <div style={{ padding: "1rem" }}>
+              <h3>Pot Display</h3>
+              <label
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={showPot}
+                  onChange={(e) => onShowPotChange(e.target.checked)}
+                  style={{
+                    cursor: "pointer",
+                    width: "18px",
+                    height: "18px",
+                  }}
+                />
+                <span
+                  style={{
+                    textTransform: "uppercase",
+                    fontWeight: "600",
+                  }}
+                >
+                  Show Pot
+                </span>
+              </label>
+              <p style={{ fontSize: "0.85rem", marginTop: "1rem" }}>
+                This is a potted plant. Toggle the pot display on or off.
+              </p>
+            </div>
+          </TabsContent>
+        )}
+
+        {hasBiomeColorTab && colormapAssetId && (
+          <TabsContent value="biome">
+            {onBiomeColorChange && (
+              <BiomeColorPicker
+                assetId={colormapAssetId}
+                type={effectiveColormapType}
+                onColorSelect={onBiomeColorChange}
+              />
+            )}
+          </TabsContent>
+        )}
+
+        {hasVariantsTab && onSelectProvider && (
+          <TabsContent value="variants">
+            <div style={{ padding: "1rem" }}>
+              <h3>Texture Variants</h3>
+              <p style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
+                This texture has variants from {providers.length} different
+                resource packs. Click on a variant below to switch between
+                different visual styles.
+              </p>
+              <VariantChooser
+                providers={providers}
+                onSelectProvider={onSelectProvider}
+                assetId={assetId}
+              />
+            </div>
+          </TabsContent>
+        )}
+
+        <TabsContent value="advanced">
+          <div style={{ padding: "1rem" }}>
+            <h3>Advanced Options</h3>
+            <p>Additional configuration options for advanced users.</p>
+            <div style={{ fontSize: "0.85rem" }}>
+              <p>
+                <strong>Asset ID:</strong> {assetId}
+              </p>
+              <p>
+                <strong>Current Seed:</strong> {seed}
+              </p>
+              <p>
+                <strong>Block Props:</strong> {Object.keys(blockProps).length}{" "}
+                configured
+              </p>
+              <p>
+                <strong>Has Schema:</strong> {schema ? "Yes" : "No"}
+              </p>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

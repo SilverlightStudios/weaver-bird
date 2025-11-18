@@ -44,6 +44,15 @@ pub struct Provider {
     pub file_map: HashMap<String, bool>,
 }
 
+/// Override selection payload for penciled assets
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OverrideSelection {
+    pub pack_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub variant_path: Option<String>,
+}
+
 /// Result of scanning a resource packs directory
 ///
 /// Contains all discovered packs and their assets

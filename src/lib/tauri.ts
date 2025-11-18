@@ -6,7 +6,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { ScanResult } from "@state";
+import type { OverrideWirePayload, ScanResult } from "@state";
 
 /**
  * Structured error response from Tauri backend
@@ -67,7 +67,7 @@ export async function scanPacksFolder(path: string): Promise<ScanResult> {
 export async function buildWeaverNest(request: {
   packsDir: string;
   packOrder: string[];
-  overrides: Record<string, string>;
+  overrides: Record<string, OverrideWirePayload>;
   outputDir: string;
 }): Promise<string> {
   return invoke<string>("build_weaver_nest", request);

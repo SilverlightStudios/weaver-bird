@@ -1,0 +1,162 @@
+@use "@/ui/tokens" as tokens;
+
+// Container
+.spinner {
+    display: inline-block;
+    position: relative;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+// Inner rotating container
+.inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes spin {
+    0% {
+        rotate: 0deg;
+    }
+    100% {
+        rotate: 360deg;
+    }
+}
+
+// Individual blocks (Minecraft-style chunky pixels)
+.block {
+    position: absolute;
+    background: var(--color-ink);
+    border: 2px solid var(--color-ink);
+
+    // Slight rotation for anti-design aesthetic
+    rotate: var(--rotate-slight);
+
+    // Position blocks in a square pattern
+    &[data-position="1"] {
+        top: 0;
+        left: 0;
+        animation-delay: 0s;
+    }
+
+    &[data-position="2"] {
+        top: 0;
+        right: 0;
+        animation-delay: 0.15s;
+        rotate: calc(-1 * var(--rotate-slight));
+    }
+
+    &[data-position="3"] {
+        bottom: 0;
+        right: 0;
+        animation-delay: 0.3s;
+    }
+
+    &[data-position="4"] {
+        bottom: 0;
+        left: 0;
+        animation-delay: 0.45s;
+        rotate: calc(-1 * var(--rotate-slight));
+    }
+
+    // Fade in/out animation for each block
+    animation: blockPulse 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes blockPulse {
+    0%,
+    100% {
+        opacity: 0.3;
+        scale: 0.8;
+    }
+    50% {
+        opacity: 1;
+        scale: 1;
+    }
+}
+
+// Size variants
+.sm {
+    $block-size: 0.35rem;
+    $gap: 0.25rem;
+    // Add extra padding for rotation/scale overflow
+    width: calc($block-size * 2 + $gap + 0.2rem);
+    height: calc($block-size * 2 + $gap + 0.2rem);
+    padding: 0.1rem;
+
+    .block {
+        width: $block-size;
+        height: $block-size;
+        border-width: 1px;
+    }
+}
+
+.md {
+    $block-size: 0.5rem;
+    $gap: 0.4rem;
+    // Add extra padding for rotation/scale overflow
+    width: calc($block-size * 2 + $gap + 0.3rem);
+    height: calc($block-size * 2 + $gap + 0.3rem);
+    padding: 0.15rem;
+
+    .block {
+        width: $block-size;
+        height: $block-size;
+    }
+}
+
+.lg {
+    $block-size: 0.75rem;
+    $gap: 0.6rem;
+    // Add extra padding for rotation/scale overflow
+    width: calc($block-size * 2 + $gap + 0.5rem);
+    height: calc($block-size * 2 + $gap + 0.5rem);
+    padding: 0.25rem;
+
+    .block {
+        width: $block-size;
+        height: $block-size;
+    }
+}
+
+.xl {
+    $block-size: 1.2rem;
+    $gap: 1rem;
+    // Add extra padding for rotation/scale overflow
+    width: calc($block-size * 2 + $gap + 0.8rem);
+    height: calc($block-size * 2 + $gap + 0.8rem);
+    padding: 0.4rem;
+
+    .block {
+        width: $block-size;
+        height: $block-size;
+        border-width: 3px;
+    }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .inner {
+        animation-duration: 2s;
+    }
+
+    .block {
+        animation: none;
+        opacity: 0.6;
+    }
+}
+
+// Screen reader only utility
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}

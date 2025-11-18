@@ -5,7 +5,7 @@
 /// - Validates all inputs before processing
 /// - Separates concerns: validation → execution → response
 /// - Reduces boilerplate with validation module
-use crate::model::ScanResult;
+use crate::model::{OverrideSelection, ScanResult};
 use crate::util::{
     asset_indexer, launcher_detection, mc_paths, pack_scanner, texture_index, vanilla_textures,
     weaver_nest,
@@ -19,7 +19,7 @@ use std::path::PathBuf;
 pub struct BuildWeaverNestRequest {
     pub packs_dir: String,
     pub pack_order: Vec<String>,
-    pub overrides: HashMap<String, String>, // asset_id -> pack_id
+    pub overrides: HashMap<String, OverrideSelection>, // asset_id -> override payload
     pub output_dir: String,
 }
 
@@ -807,20 +807,38 @@ pub fn resolve_block_state_impl(
     })
     .map_err(|e| AppError::validation(format!("Blockstate not found: {}", e)))?;
 
-    // CRITICAL: If state_props is None or empty, build schema and use default state
-    let final_props = if state_props.is_none()
-        || state_props.as_ref().map(|p| p.is_empty()).unwrap_or(true)
-    {
-        println!("[resolve_block_state] No props provided, building schema for defaults...");
-        let schema =
-            crate::util::blockstates::build_block_state_schema(&blockstate, &normalized_block_id);
-        println!(
-            "[resolve_block_state] Using default state: {:?}",
-            schema.default_state
-        );
-        Some(schema.default_state)
-    } else {
-        state_props
+    let mut schema_cache: Option<crate::util::blockstates::BlockStateSchema> = None;
+    let mut get_schema = || -> crate::util::blockstates::BlockStateSchema {
+        if schema_cache.is_none() {
+            schema_cache = Some(crate::util::blockstates::build_block_state_schema(
+                &blockstate,
+                &normalized_block_id,
+            ));
+        }
+        schema_cache
+            .as_ref()
+            .expect("schema cache should be initialized")
+            .clone()
+    };
+
+    // CRITICAL: Merge provided state props with defaults so multi-part overrides only need to provide the keys they change
+    let final_props = match state_props {
+        Some(map) if !map.is_empty() => {
+            let schema = get_schema();
+            let mut merged = schema.default_state.clone();
+            for (key, value) in map {
+                merged.insert(key, value);
+            }
+            Some(merged)
+        }
+        _ => {
+            let schema = get_schema();
+            println!(
+                "[resolve_block_state] Using default state: {:?}",
+                schema.default_state
+            );
+            Some(schema.default_state.clone())
+        }
     };
 
     // Resolve blockstate

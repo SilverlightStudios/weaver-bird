@@ -4,6 +4,7 @@ import {
   type BlockStateSchema,
   type BlockPropertySchema,
 } from "@lib/tauri/blockModels";
+import { getBlockStateIdFromAssetId } from "@lib/assetUtils";
 import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
 import s from "./BlockStatePanel.module.scss";
 
@@ -28,13 +29,20 @@ export default function BlockStatePanel({
 
   const winnerPackId = useSelectWinner(assetId);
   const packsDir = useSelectPacksDir();
+  const blockStateAssetId = getBlockStateIdFromAssetId(assetId);
+  const isMinecraftNamespace = assetId.startsWith("minecraft:");
 
   // Load schema when asset changes
   useEffect(() => {
-    if (!winnerPackId || !packsDir) {
+    const targetPackId =
+      winnerPackId ?? (isMinecraftNamespace ? "minecraft:vanilla" : undefined);
+    if (!targetPackId || !packsDir || !blockStateAssetId) {
       setSchema(null);
       return;
     }
+
+    const packIdForSchema: string = targetPackId;
+    const targetBlockStateId = blockStateAssetId;
 
     let cancelled = false;
 
@@ -46,8 +54,8 @@ export default function BlockStatePanel({
         console.log("[BlockStatePanel] Loading schema for:", assetId);
 
         const schemaData = await getBlockStateSchema(
-          winnerPackId!,
-          assetId,
+          packIdForSchema,
+          targetBlockStateId,
           packsDir!,
         );
         console.log("[BlockStatePanel] Schema loaded:", schemaData);
@@ -75,7 +83,15 @@ export default function BlockStatePanel({
     return () => {
       cancelled = true;
     };
-  }, [assetId, winnerPackId, packsDir]);
+  }, [
+    assetId,
+    blockStateAssetId,
+    winnerPackId,
+    packsDir,
+    isMinecraftNamespace,
+    blockProps,
+    onBlockPropsChange,
+  ]);
 
   // Render property control based on type
   const renderPropertyControl = (prop: BlockPropertySchema) => {
@@ -181,12 +197,21 @@ export default function BlockStatePanel({
   return (
     <div className={s.root}>
       <div className={s.header}>Block State</div>
+      <div className={s.description}>
+        Configure how this block appears in-game. Block state properties control
+        orientation, connection states, and visual variants.
+      </div>
       <div className={s.properties}>
         {schema.properties.map(renderPropertyControl)}
       </div>
       <div className={s.seedControl}>
+        <div className={s.seedDescription}>
+          <strong>Random Seed:</strong> Controls which texture variant is
+          selected when multiple variants exist. Change the seed to see
+          different random variations of this block.
+        </div>
         <label className={s.property}>
-          <span className={s.propertyName}>Random Seed</span>
+          <span className={s.propertyName}>Seed Value</span>
           <input
             type="number"
             value={seed}

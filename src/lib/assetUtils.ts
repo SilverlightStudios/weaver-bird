@@ -113,15 +113,112 @@ export function isItemTexture(assetId: string): boolean {
 }
 
 /**
+ * Check if an asset is a biome colormap (grass/foliage)
+ */
+export function isBiomeColormapAsset(assetId: string): boolean {
+  return assetId.includes(":colormap/");
+}
+
+/**
+ * Get the biome colormap type ("grass" or "foliage") from an asset ID
+ */
+export function getColormapTypeFromAssetId(
+  assetId: string,
+): "grass" | "foliage" | null {
+  if (!isBiomeColormapAsset(assetId)) {
+    return null;
+  }
+
+  const path = assetId.replace(/^[^:]*:/, "");
+  const parts = path.split("/");
+  const last = parts[parts.length - 1];
+
+  if (last === "grass") {
+    return "grass";
+  }
+  if (last === "foliage") {
+    return "foliage";
+  }
+  return null;
+}
+
+/**
+ * Extract the variant label (e.g., "No Orange Grass") for optional colormaps
+ */
+export function getColormapVariantLabel(assetId: string): string | null {
+  if (!isBiomeColormapAsset(assetId)) {
+    return null;
+  }
+
+  const match = assetId.match(/^[^:]*:colormap\/(.+)$/);
+  if (!match) return null;
+
+  const path = match[1];
+  const parts = path.split("/");
+  if (parts.length <= 1) {
+    return null;
+  }
+
+  return parts.slice(0, -1).join(" / ");
+}
+
+/**
+ * Convert an asset ID to its relative texture path inside a pack
+ */
+export function assetIdToTexturePath(assetId: string): string {
+  const [namespace, rawPath] = assetId.includes(":")
+    ? assetId.split(":")
+    : ["minecraft", assetId];
+  return `assets/${namespace}/textures/${rawPath}.png`;
+}
+
+/**
+ * Get the canonical asset ID for a biome colormap type
+ */
+export function getColormapAssetId(type: "grass" | "foliage"): string {
+  return `minecraft:colormap/${type}`;
+}
+
+const FOLIAGE_KEYWORDS = [
+  "leaf",
+  "leaves",
+  "azalea",
+  "bush",
+  "vine",
+  "cactus",
+  "sapling",
+  "flower",
+  "fern",
+  "hanging_roots",
+  "moss",
+];
+
+/**
+ * Heuristic guess for which colormap type a block asset should use
+ */
+export function guessColormapTypeForAsset(
+  assetId?: string,
+): "grass" | "foliage" {
+  if (!assetId) return "grass";
+
+  const normalized = assetId.toLowerCase();
+  const isFoliage = FOLIAGE_KEYWORDS.some((keyword) =>
+    normalized.includes(keyword),
+  );
+
+  return isFoliage ? "foliage" : "grass";
+}
+
+/**
  * Extract the base name without variant suffixes
  * Example: "acacia_leaves_bushy1" -> "acacia_leaves"
  */
 export function getBaseName(assetId: string): string {
   let name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
 
-  // Remove common suffixes
+  // Remove common structural suffixes (top/bottom, head/foot, etc.)
   name = name.replace(
-    /_(top|bottom|side|front|back|left|right|inventory|bushy|stage\d+)\d*$/,
+    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|inventory|bushy|stage\d+)\d*$/,
     "",
   );
 
@@ -129,6 +226,18 @@ export function getBaseName(assetId: string): string {
   name = name.replace(/\d+$/, "");
 
   return name;
+}
+
+/**
+ * Convert a texture asset ID to the canonical blockstate asset ID
+ * Example: "minecraft:block/acacia_door_bottom" -> "minecraft:block/acacia_door"
+ */
+export function getBlockStateIdFromAssetId(assetId: string): string {
+  const namespaceMatch = assetId.match(/^([^:]+):/);
+  const namespace = namespaceMatch ? namespaceMatch[1] : "minecraft";
+
+  const baseName = getBaseName(assetId);
+  return `${namespace}:block/${baseName}`;
 }
 
 /**
@@ -150,6 +259,21 @@ export function getVariantGroupKey(assetId: string): string {
   // This allows grouping variants from different namespaces
   const pathMatch = normalized.match(/^[^:]*:(.+)$/);
   const path = pathMatch ? pathMatch[1] : normalized;
+
+  if (path.startsWith("colormap/")) {
+    const parts = path.split("/");
+    if (parts.length > 1) {
+      return `colormap/${parts[parts.length - 1]}`;
+    }
+  }
+
+  // Remove structural suffixes like _top/_bottom/_head/_foot
+  const structuralMatch = path.match(
+    /^(.*)_(top|bottom|upper|lower|head|foot)$/,
+  );
+  if (structuralMatch) {
+    return structuralMatch[1];
+  }
 
   // Remove trailing numbers with optional underscore separator
   // Handles: "acacia_planks1", "acacia_planks01", "acacia_planks_1", "acacia_planks_01"
@@ -244,6 +368,18 @@ export function groupAssetsByVariant(assetIds: string[]): AssetGroup[] {
   for (const [baseId, variantIds] of groups.entries()) {
     // Sort variants: base first (no number), then by number
     const sorted = variantIds.sort((a, b) => {
+      const structuralPriority = (id: string) => {
+        if (/_bottom|_lower|_foot/.test(id)) return 0;
+        if (/_top|_upper|_head/.test(id)) return 1;
+        return 0;
+      };
+
+      const aStructural = structuralPriority(a);
+      const bStructural = structuralPriority(b);
+      if (aStructural !== bStructural) {
+        return aStructural - bStructural;
+      }
+
       const aIsNumbered = isNumberedVariant(a);
       const bIsNumbered = isNumberedVariant(b);
 

@@ -7,25 +7,58 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import BlockModel from "./BlockModel";
-import BlockStatePanel from "./BlockStatePanel";
-import { isPottedPlant } from "@lib/assetUtils";
+import {
+  getColormapTypeFromAssetId,
+  isBiomeColormapAsset,
+  isPottedPlant,
+} from "@lib/assetUtils";
+import { getMultiBlockParts, type MultiBlockPart } from "@lib/multiBlockConfig";
 import s from "./styles.module.scss";
 
 interface Props {
   assetId?: string;
   biomeColor?: { r: number; g: number; b: number } | null;
-  onTintDetected?: (hasTint: boolean) => void;
+  onTintDetected?: (info: {
+    hasTint: boolean;
+    tintType?: "grass" | "foliage";
+  }) => void;
+  showPot: boolean;
+  onShowPotChange: (show: boolean) => void;
+  blockProps?: Record<string, string>;
+  seed?: number;
+  foliagePreviewBlock: string;
 }
 
 export default function Preview3D({
   assetId,
   biomeColor,
   onTintDetected,
+  showPot,
+  onShowPotChange,
+  blockProps = {},
+  seed = 0,
+  foliagePreviewBlock,
 }: Props) {
-  const [showPot, setShowPot] = useState(true);
-  const [blockProps, setBlockProps] = useState<Record<string, string>>({});
-  const [seed, setSeed] = useState(0);
+  const [tintInfo, setTintInfo] = useState<{
+    hasTint: boolean;
+    tintType?: "grass" | "foliage";
+  }>({ hasTint: false });
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
+  const isColormapAsset = assetId ? isBiomeColormapAsset(assetId) : false;
+  const colormapType = assetId
+    ? (getColormapTypeFromAssetId(assetId) ?? "grass")
+    : "grass";
+  const previewAssetId = assetId
+    ? isColormapAsset
+      ? colormapType === "foliage"
+        ? foliagePreviewBlock
+        : "minecraft:block/grass_block"
+      : assetId
+    : undefined;
+  const multiBlockParts: MultiBlockPart[] | null = previewAssetId
+    ? getMultiBlockParts(previewAssetId, blockProps)
+    : null;
+  const showPotToggle = isPlantPotted && !isColormapAsset;
 
   useEffect(() => {
     console.log("[Preview3D] Component mounted");
@@ -34,36 +67,51 @@ export default function Preview3D({
     return () => {
       console.log("[Preview3D] Component unmounting");
     };
-  }, []);
+  }, [assetId]);
+
+  // Forward tint detection to parent if callback provided
+  useEffect(() => {
+    if (onTintDetected) {
+      onTintDetected(tintInfo);
+    }
+  }, [tintInfo, onTintDetected]);
 
   useEffect(() => {
-    if (assetId) {
-      console.log("[Preview3D] Asset changed to:", assetId);
-      console.log("[Preview3D] Is potted plant:", isPlantPotted);
-      // Reset block state when asset changes
-      setBlockProps({});
-      setSeed(0);
+    if (isColormapAsset) {
+      setTintInfo({ hasTint: false, tintType: undefined });
     }
-  }, [assetId, isPlantPotted]);
+  }, [isColormapAsset, assetId]);
+
+  const handleTintDetected = (info: {
+    hasTint: boolean;
+    tintType?: "grass" | "foliage";
+  }) => {
+    if (isColormapAsset) {
+      setTintInfo({ hasTint: false, tintType: undefined });
+      return;
+    }
+    setTintInfo(info);
+  };
 
   return (
     <div className={s.root}>
       <div className={s.header}>
         <span>Preview</span>
-        {isPlantPotted && (
+        {showPotToggle && (
           <label className={s.pottedControl}>
             <input
               type="checkbox"
               checked={showPot}
-              onChange={(e) => setShowPot(e.target.checked)}
+              onChange={(e) => onShowPotChange(e.target.checked)}
             />
             Show Pot
           </label>
         )}
       </div>
+
       <div className={s.canvas}>
         {/* Always show placeholder when no asset selected */}
-        {!assetId && (
+        {!previewAssetId && (
           <div className={s.placeholder}>Select an asset to preview</div>
         )}
 
@@ -78,7 +126,7 @@ export default function Preview3D({
           }}
           onError={(error) => console.error("[Preview3D] Canvas error:", error)}
           style={{
-            display: assetId ? "block" : "none",
+            display: previewAssetId ? "block" : "none",
             position: "absolute",
             inset: 0,
             width: "100%",
@@ -105,18 +153,39 @@ export default function Preview3D({
           <pointLight position={[0, -5, 0]} intensity={0.5} color="#ffffff" />
 
           {/* Block Model - only render when assetId is present */}
-          {assetId && (
-            <BlockModel
-              key={`${assetId}-${JSON.stringify(blockProps)}-${seed}`}
-              assetId={assetId}
-              biomeColor={biomeColor}
-              onTintDetected={onTintDetected}
-              showPot={showPot}
-              isPotted={isPlantPotted}
-              blockProps={blockProps}
-              seed={seed}
-            />
-          )}
+          {previewAssetId &&
+            (multiBlockParts ? (
+              multiBlockParts.map((part, index) => (
+                <BlockModel
+                  key={`${previewAssetId}-${index}`}
+                  assetId={previewAssetId}
+                  biomeColor={biomeColor}
+                  onTintDetected={index === 0 ? handleTintDetected : undefined}
+                  forcedPackId={
+                    isColormapAsset ? "minecraft:vanilla" : undefined
+                  }
+                  showPot={showPot && !isColormapAsset}
+                  isPotted={isPlantPotted && !isColormapAsset}
+                  blockProps={{
+                    ...blockProps,
+                    ...(part.overrides ?? {}),
+                  }}
+                  seed={seed}
+                  positionOffset={part.offset}
+                />
+              ))
+            ) : (
+              <BlockModel
+                assetId={previewAssetId}
+                biomeColor={biomeColor}
+                onTintDetected={handleTintDetected}
+                forcedPackId={isColormapAsset ? "minecraft:vanilla" : undefined}
+                showPot={showPot && !isColormapAsset}
+                isPotted={isPlantPotted && !isColormapAsset}
+                blockProps={blockProps}
+                seed={seed}
+              />
+            ))}
 
           {/* Soft contact shadow - tight under the block */}
           <ContactShadows
@@ -131,16 +200,6 @@ export default function Preview3D({
           />
         </Canvas>
       </div>
-      {/* Block State Panel - only show when asset is selected */}
-      {assetId && (
-        <BlockStatePanel
-          assetId={assetId}
-          blockProps={blockProps}
-          onBlockPropsChange={setBlockProps}
-          seed={seed}
-          onSeedChange={setSeed}
-        />
-      )}
     </div>
   );
 }

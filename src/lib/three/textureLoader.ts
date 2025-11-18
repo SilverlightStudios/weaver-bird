@@ -170,14 +170,24 @@ export function createTextureLoader(
     console.log(`[textureLoader] createTextureLoader called for: ${textureId}`);
 
     // Apply variant number to texture path if provided (ETF-style variants)
+    // BUT only if the texture path doesn't already have a variant number
     let actualTextureId = textureId;
     if (variantNumber) {
-      // Append variant number to the texture path
-      // E.g., "block/allium" + "3" -> "block/allium3"
-      actualTextureId = `${textureId}${variantNumber}`;
-      console.log(
-        `[textureLoader] Applying variant suffix: ${textureId} -> ${actualTextureId}`,
-      );
+      // Check if texture already ends with a number (indicating it's already a variant)
+      const hasVariantNumber = /\d+$/.test(textureId);
+
+      if (!hasVariantNumber) {
+        // Append variant number to the texture path
+        // E.g., "block/allium" + "3" -> "block/allium3"
+        actualTextureId = `${textureId}${variantNumber}`;
+        console.log(
+          `[textureLoader] Applying variant suffix: ${textureId} -> ${actualTextureId}`,
+        );
+      } else {
+        console.log(
+          `[textureLoader] Texture already has variant number, not applying suffix: ${textureId}`,
+        );
+      }
     }
 
     // Try loading from the pack first

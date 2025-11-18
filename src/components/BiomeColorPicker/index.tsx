@@ -1,45 +1,206 @@
-import { useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { getPackTexturePath, getVanillaTexturePath } from "@lib/tauri";
+import {
+  assetIdToTexturePath,
+  getColormapTypeFromAssetId,
+  getColormapVariantLabel,
+  isBiomeColormapAsset,
+} from "@lib/assetUtils";
+import {
+  useSelectIsPenciled,
+  useSelectOverrideVariantPath,
+  useSelectSetOverride,
+  useSelectWinner,
+  useStore,
+} from "@state";
 import { getBiomesWithCoords, type BiomeData } from "./biomeData";
 import s from "./styles.module.scss";
 
-interface Props {
-  type: "grass" | "foliage";
-  onColorSelect: (color: { r: number; g: number; b: number }) => void;
+interface ColormapSourceOption {
+  id: string;
+  assetId: string;
+  packId: string;
+  packName: string;
+  label: string;
+  variantLabel?: string | null;
+  relativePath: string;
+  order: number;
 }
 
-export default function BiomeColorPicker({ type, onColorSelect }: Props) {
+interface Props {
+  assetId: string;
+  type: "grass" | "foliage";
+  onColorSelect: (color: { r: number; g: number; b: number }) => void;
+  showSourceSelector?: boolean;
+  readOnly?: boolean;
+}
+
+export default function BiomeColorPicker({
+  assetId,
+  type,
+  onColorSelect,
+  showSourceSelector = true,
+  readOnly = false,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [colormapSrc, setColormapSrc] = useState<string>("");
   const [selectedBiome, setSelectedBiome] = useState<string | null>(null);
   const [hoveredBiome, setHoveredBiome] = useState<string | null>(null);
   const [imageData, setImageData] = useState<ImageData | null>(null);
 
-  // Load the colormap image
-  useEffect(() => {
-    async function loadColormap() {
-      try {
-        const path = await invoke<string>("get_colormap_path", {
-          colormapType: type,
+  const assets = useStore((state) => state.assets);
+  const providersByAsset = useStore((state) => state.providersByAsset);
+  const packs = useStore((state) => state.packs);
+  const packOrder = useStore((state) => state.packOrder);
+
+  const setOverride = useSelectSetOverride();
+  const winnerPackId = useSelectWinner(assetId);
+  const overrideVariantPath = useSelectOverrideVariantPath(assetId);
+  const isPenciled = useSelectIsPenciled(assetId);
+
+  const resolvedType = getColormapTypeFromAssetId(assetId) ?? type;
+
+  const sourceOptions: ColormapSourceOption[] = useMemo(() => {
+    const options: ColormapSourceOption[] = [];
+    const seen = new Set<string>();
+    const orderLookup = new Map<string, number>();
+    packOrder.forEach((id, index) => orderLookup.set(id, index));
+
+    Object.values(assets)
+      .filter((asset) => {
+        if (!isBiomeColormapAsset(asset.id)) return false;
+        return getColormapTypeFromAssetId(asset.id) === resolvedType;
+      })
+      .forEach((asset) => {
+        const variantLabel = getColormapVariantLabel(asset.id);
+        const providers = providersByAsset[asset.id] ?? [];
+
+        providers.forEach((packId) => {
+          const packName = packs[packId]?.name ?? packId;
+          const id = `${asset.id}::${packId}`;
+          if (seen.has(id)) return;
+          seen.add(id);
+
+          const priority = orderLookup.get(packId);
+          options.push({
+            id,
+            assetId: asset.id,
+            packId,
+            packName,
+            label: variantLabel ? `${packName} (${variantLabel})` : packName,
+            variantLabel,
+            relativePath: assetIdToTexturePath(asset.id),
+            order: priority === undefined ? Number.MAX_SAFE_INTEGER : priority,
+          });
         });
-        const url = convertFileSrc(path);
-        setColormapSrc(url);
+      });
+
+    if (
+      !options.some(
+        (option) =>
+          option.packId === "minecraft:vanilla" && option.assetId === assetId,
+      )
+    ) {
+      options.push({
+        id: `${assetId}::minecraft:vanilla`,
+        assetId,
+        packId: "minecraft:vanilla",
+        packName: "Minecraft (Vanilla)",
+        label: "Minecraft (Vanilla)",
+        variantLabel: null,
+        relativePath: assetIdToTexturePath(assetId),
+        order: Number.MAX_SAFE_INTEGER / 2,
+      });
+    }
+
+    return options.sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      if (!!a.variantLabel !== !!b.variantLabel) {
+        return a.variantLabel ? 1 : -1;
+      }
+      return a.label.localeCompare(b.label);
+    });
+  }, [assets, providersByAsset, packs, packOrder, assetId, resolvedType]);
+
+  const selectedSource = useMemo(() => {
+    if (!sourceOptions.length) return null;
+    if (!winnerPackId) {
+      return sourceOptions[0];
+    }
+
+    if (overrideVariantPath) {
+      const variantMatch = sourceOptions.find(
+        (option) =>
+          option.packId === winnerPackId &&
+          option.relativePath === overrideVariantPath,
+      );
+      if (variantMatch) {
+        return variantMatch;
+      }
+    }
+
+    const directMatch = sourceOptions.find(
+      (option) => option.packId === winnerPackId && option.assetId === assetId,
+    );
+    if (directMatch) {
+      return directMatch;
+    }
+
+    return (
+      sourceOptions.find((option) => option.packId === winnerPackId) ??
+      sourceOptions[0]
+    );
+  }, [assetId, overrideVariantPath, sourceOptions, winnerPackId]);
+
+  // Resolve file path for the currently selected source
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadColormap() {
+      if (!selectedSource) {
+        setColormapSrc("");
+        return;
+      }
+
+      try {
+        let path: string;
+        if (selectedSource.packId === "minecraft:vanilla") {
+          path = await getVanillaTexturePath(selectedSource.assetId);
+        } else {
+          const packMeta = packs[selectedSource.packId];
+          if (!packMeta) {
+            throw new Error(
+              `Pack metadata not found for ${selectedSource.packId}`,
+            );
+          }
+          path = await getPackTexturePath(
+            packMeta.path,
+            selectedSource.assetId,
+            packMeta.is_zip,
+          );
+        }
+
+        if (!cancelled) {
+          setColormapSrc(convertFileSrc(path));
+        }
       } catch (error) {
-        console.error(`Failed to load ${type} colormap:`, error);
+        console.error("[BiomeColorPicker] Failed to load colormap:", error);
+        if (!cancelled) {
+          setColormapSrc("");
+        }
       }
     }
 
     loadColormap();
-  }, [type]);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSource, packs]);
 
   // Draw the colormap image to canvas and extract image data
   useEffect(() => {
     if (!colormapSrc || !canvasRef.current) {
-      console.log("[BiomeColorPicker] Waiting for colormap or canvas:", {
-        colormapSrc,
-        hasCanvas: !!canvasRef.current,
-      });
       return;
     }
 
@@ -47,28 +208,20 @@ export default function BiomeColorPicker({ type, onColorSelect }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    console.log("[BiomeColorPicker] Loading colormap image:", colormapSrc);
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
-      console.log(
-        "[BiomeColorPicker] Image loaded, size:",
-        img.width,
-        "x",
-        img.height,
-      );
-      // Set canvas size to match image
       canvas.width = img.width;
       canvas.height = img.height;
-
-      // Draw image
       ctx.drawImage(img, 0, 0);
 
-      // Extract pixel data for color sampling
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      setImageData(data);
-      console.log(
-        "[BiomeColorPicker] Image data extracted, ready for sampling",
-      );
+      try {
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        setImageData(data);
+      } catch (error) {
+        console.error("[BiomeColorPicker] Unable to read image:", error);
+        setImageData(null);
+      }
     };
     img.onerror = (error) => {
       console.error("[BiomeColorPicker] Failed to load image:", error);
@@ -76,42 +229,30 @@ export default function BiomeColorPicker({ type, onColorSelect }: Props) {
     img.src = colormapSrc;
   }, [colormapSrc]);
 
-  // Handle canvas click to sample color
   function handleCanvasClick(event: React.MouseEvent<HTMLCanvasElement>) {
-    console.log("[BiomeColorPicker] Canvas clicked");
-    if (!imageData || !canvasRef.current) {
-      console.log("[BiomeColorPicker] Click ignored - no image data or canvas");
-      return;
-    }
+    if (!imageData || !canvasRef.current || readOnly) return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-
-    // Get click coordinates relative to canvas
     const x = Math.floor(
       ((event.clientX - rect.left) / rect.width) * canvas.width,
     );
     const y = Math.floor(
       ((event.clientY - rect.top) / rect.height) * canvas.height,
     );
-    console.log("[BiomeColorPicker] Click at pixel:", x, y);
 
-    // Sample color at clicked position
     const color = sampleColor(x, y);
     if (color) {
-      console.log("[BiomeColorPicker] Sampled color:", color);
       onColorSelect(color);
-      setSelectedBiome(null); // Clear biome selection when manually clicking
+      setSelectedBiome(null);
     }
   }
 
-  // Sample color from image data at given coordinates
   function sampleColor(
     x: number,
     y: number,
   ): { r: number; g: number; b: number } | null {
     if (!imageData) return null;
-
     const index = (y * imageData.width + x) * 4;
     return {
       r: imageData.data[index],
@@ -120,21 +261,34 @@ export default function BiomeColorPicker({ type, onColorSelect }: Props) {
     };
   }
 
-  // Handle biome hotspot selection
   function handleBiomeSelect(biome: BiomeData, x: number, y: number) {
+    if (readOnly) return;
     setSelectedBiome(biome.id);
-
-    // In canvas coordinates, Y is flipped (0 is top)
-    // But our biome data has Y from bottom, so flip it
-    const canvasY = imageData ? imageData.height - 1 - y : 255 - y;
-
-    const color = sampleColor(x, canvasY);
+    const color = sampleColor(x, y);
     if (color) {
       onColorSelect(color);
     }
   }
 
   const biomesWithCoords = getBiomesWithCoords();
+
+  const selectValue =
+    isPenciled && selectedSource ? selectedSource.id : "__auto";
+
+  function handleSourceChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const { value } = event.target;
+    if (value === "__auto") {
+      setOverride(assetId, undefined);
+      return;
+    }
+
+    const option = sourceOptions.find((opt) => opt.id === value);
+    if (!option) return;
+
+    setOverride(assetId, option.packId, {
+      variantPath: option.assetId === assetId ? undefined : option.relativePath,
+    });
+  }
 
   return (
     <div className={s.root}>
@@ -143,8 +297,29 @@ export default function BiomeColorPicker({ type, onColorSelect }: Props) {
         <p>Select a biome or click anywhere on the map</p>
       </div>
 
+      {showSourceSelector && sourceOptions.length > 0 && (
+        <div className={s.sourceSelector}>
+          <label htmlFor={`colormap-source-${resolvedType}`}>
+            Colormap Source
+          </label>
+          <select
+            id={`colormap-source-${resolvedType}`}
+            value={selectValue}
+            onChange={handleSourceChange}
+          >
+            <option value="__auto">
+              Pack order ({selectedSource?.packName ?? "Default"})
+            </option>
+            {sourceOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className={s.content}>
-        {/* Colormap canvas */}
         <div className={s.canvasContainer}>
           <canvas
             ref={canvasRef}
@@ -152,15 +327,11 @@ export default function BiomeColorPicker({ type, onColorSelect }: Props) {
             onClick={handleCanvasClick}
           />
 
-          {/* Biome hotspots overlay */}
           {imageData && (
             <div className={s.hotspots}>
               {biomesWithCoords.map((biome) => {
-                // Convert to percentage for CSS positioning
-                // Y needs to be flipped since CSS top:0 is at top but our data is from bottom
                 const leftPercent = (biome.x / 255) * 100;
-                const topPercent = ((255 - biome.y) / 255) * 100;
-
+                const topPercent = (biome.y / 255) * 100;
                 const isSelected = selectedBiome === biome.id;
                 const isHovered = hoveredBiome === biome.id;
 
@@ -176,6 +347,7 @@ export default function BiomeColorPicker({ type, onColorSelect }: Props) {
                     onMouseEnter={() => setHoveredBiome(biome.id)}
                     onMouseLeave={() => setHoveredBiome(null)}
                     title={biome.name}
+                    disabled={readOnly}
                   >
                     <span className={s.dot} />
                     {isHovered && (

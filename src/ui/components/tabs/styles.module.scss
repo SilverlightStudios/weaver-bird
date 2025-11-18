@@ -1,0 +1,230 @@
+/**
+ * Minecraft Anti-Design Tabs Component Styles
+ *
+ * Heavy offset shadows, asymmetric borders, playful rotations,
+ * and punk aesthetic throughout.
+ */
+
+@use "@/ui/tokens" as tokens;
+
+:root {
+    --tabs-root-display: contents;
+}
+
+.tabsRoot {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tabsList {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    background-color: var(--color-block);
+    border-bottom: 3px solid var(--color-ink);
+    flex-wrap: wrap;
+
+    // Subtle halftone pattern overlay
+    position: relative;
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        @include tokens.pattern-halftone-sm;
+        opacity: 0.15;
+        mix-blend-mode: soft-light;
+        pointer-events: none;
+    }
+}
+
+.tabsTrigger {
+    // Base layout
+    padding: var(--spacing-sm) var(--spacing-md);
+
+    // Typography - uppercase, bold, with letter spacing
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-ink);
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+
+    // Anti-Design styling
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-sm;
+    @include tokens.shadow-md;
+    @include tokens.rotate-slight;
+
+    // Background
+    background-color: var(--color-bg);
+
+    // Subtle texture
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        @include tokens.pattern-stripes-diagonal;
+        opacity: 0.08;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        @include tokens.radius-quirky-sm;
+    }
+
+    // Hover state - increases shadow and straightens
+    &:hover {
+        @include tokens.shadow-lg;
+        rotate: -0.1deg;
+        translate: 0 -2px;
+        transition: all 180ms var(--spring-bezier);
+    }
+
+    // Active/selected state
+    &[data-state="active"] {
+        background-color: var(--color-primary);
+        color: white;
+        @include tokens.shadow-xl;
+        rotate: 0deg;
+
+        // Different stripe pattern for active state
+        &::before {
+            @include tokens.pattern-stripes-vertical;
+            opacity: 0.12;
+        }
+
+        // Accent glow on active
+        &::after {
+            content: "";
+            position: absolute;
+            inset: -3px;
+            @include tokens.radius-quirky-sm;
+            border: 2px solid var(--color-primary);
+            opacity: 0.3;
+            filter: blur(2px);
+            pointer-events: none;
+        }
+    }
+
+    // Active state stays elevated on interaction
+    &[data-state="active"]:hover {
+        @include tokens.shadow-xl;
+        translate: 0 -3px;
+    }
+
+    // Pressed state
+    &[data-state="active"]:active {
+        @include tokens.shadow-sm;
+        rotate: var(--rotate-mild);
+        translate: 0 2px;
+    }
+
+    // Disabled state
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+
+        &:hover {
+            @include tokens.shadow-md;
+            translate: 0 0;
+        }
+    }
+}
+
+.tabsContent {
+    // Layout - must fill available space and be scrollable
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: var(--spacing-lg);
+    background-color: var(--color-block);
+
+    // Border and shadow
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-lg;
+    @include tokens.shadow-md;
+    @include tokens.rotate-slight;
+
+    // Subtle patterns and textures
+    position: relative;
+    isolation: isolate;
+
+    // Decorative accent layer behind content
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        @include tokens.gradient-accent-band;
+        opacity: 0.5;
+        mix-blend-mode: multiply;
+        z-index: -2;
+    }
+
+    // Halftone texture overlay
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        @include tokens.pattern-halftone-sm;
+        opacity: 0.12;
+        mix-blend-mode: soft-light;
+        z-index: -1;
+        pointer-events: none;
+        @include tokens.radius-quirky-lg;
+    }
+
+    // Animation on mount/unmount (Radix provides data attributes)
+    &[data-state="active"] {
+        animation: slideIn 240ms var(--spring-bezier);
+        display: flex;
+    }
+
+    &[data-state="inactive"] {
+        display: none !important;
+    }
+
+    // Interactive hover effect
+    &:hover {
+        @include tokens.shadow-lg;
+        rotate: 0deg;
+        translate: 0 -2px;
+        transition: all 240ms var(--spring-bezier);
+    }
+}
+
+// Animation for content slide-in
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        translate: 0 10px;
+        rotate: 1deg;
+    }
+    to {
+        opacity: 1;
+        translate: 0 0;
+        rotate: 0deg;
+    }
+}
+
+// Reduced motion preferences
+@media (prefers-reduced-motion: reduce) {
+    .tabsTrigger,
+    .tabsContent {
+        &:hover,
+        &:active,
+        &[data-state="active"] {
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+}

@@ -4,8 +4,8 @@
     flex: 1;
     background-color: var(--color-bg-secondary);
     border-left: 1px solid var(--color-border);
-    min-height: 0;
     overflow: hidden;
+    height: 100%;
 }
 
 .header {
@@ -42,7 +42,6 @@
     justify-content: center;
     background-color: var(--color-bg);
     min-height: 0;
-    max-height: 100%;
     overflow: hidden;
     position: relative;
     width: 100%;
@@ -59,4 +58,10 @@
 .placeholder {
     color: var(--color-text-light);
     text-align: center;
+}
+
+.colormapPreview {
+    flex: 1;
+    padding: var(--spacing-md);
+    overflow-y: auto;
 }

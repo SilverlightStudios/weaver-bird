@@ -113,6 +113,13 @@
     image-rendering: crisp-edges;
 }
 
+.colormapTexture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+}
+
 .placeholder {
     width: 100%;
     height: 100%;

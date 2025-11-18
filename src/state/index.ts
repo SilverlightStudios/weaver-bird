@@ -33,6 +33,7 @@ export {
   useSelectAvailableLaunchers,
   useSelectSetSelectedLauncher,
   useSelectSetAvailableLaunchers,
+  useSelectOverrideVariantPath,
 } from "./selectors";
 
 export * from "./types";

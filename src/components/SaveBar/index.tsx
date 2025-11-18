@@ -1,6 +1,7 @@
-import { useCallback } from 'react'
-import { buildWeaverNest, formatError } from '@lib/tauri'
-import s from './styles.module.scss'
+import { useCallback } from "react";
+import { buildWeaverNest, formatError } from "@lib/tauri";
+import type { OverrideWirePayload } from "@state";
+import s from "./styles.module.scss";
 
 interface Progress {
   phase: string;
@@ -15,7 +16,7 @@ interface Props {
   disabled?: boolean;
   packsDir?: string;
   packOrder: string[];
-  overrides: Record<string, string>;
+  overrides: Record<string, OverrideWirePayload>;
   outputDir?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;

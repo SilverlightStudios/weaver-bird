@@ -18,7 +18,11 @@ interface StoreActions {
   ingestAllProviders: (providers: Record<AssetId, PackId[]>) => void;
 
   // Overrides (pencil functionality)
-  setOverride: (assetId: AssetId, packId: PackId | undefined) => void;
+  setOverride: (
+    assetId: AssetId,
+    packId: PackId | undefined,
+    options?: { variantPath?: string },
+  ) => void;
 
   // UI state
   setOutputDir: (path: string) => void;
@@ -99,12 +103,20 @@ export const useStore = create<WeaverbirdStore>()(
     },
 
     // Overrides
-    setOverride: (assetId: AssetId, packId: PackId | undefined) => {
+    setOverride: (
+      assetId: AssetId,
+      packId: PackId | undefined,
+      options?: { variantPath?: string },
+    ) => {
       set((state) => {
         if (packId === undefined) {
           state.overrides[assetId] = undefined;
         } else {
-          state.overrides[assetId] = { packId, penciled: true };
+          state.overrides[assetId] = {
+            packId,
+            penciled: true,
+            variantPath: options?.variantPath,
+          };
         }
       });
     },

@@ -6,7 +6,7 @@
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useStore } from "./store";
-import { AssetId, PackId, OverrideEntry } from "./types";
+import { AssetId, PackId, OverrideEntry, OverrideWirePayload } from "./types";
 
 /**
  * Get providers for an asset, sorted by current pack order
@@ -180,15 +180,29 @@ export const useSelectIngestAllProviders = () =>
 export const useSelectOverridesRecord = () => {
   const overrides = useStore((state) => state.overrides);
 
-  return useMemo(() => {
+  return useMemo<Record<string, OverrideWirePayload>>(() => {
     return Object.fromEntries(
       Object.entries(overrides)
         .filter(
           (entry): entry is [string, OverrideEntry] => entry[1] !== undefined,
         )
-        .map(([k, v]) => [k, v.packId]),
+        .map(([assetId, entry]) => [
+          assetId,
+          {
+            packId: entry.packId,
+            ...(entry.variantPath ? { variantPath: entry.variantPath } : {}),
+          },
+        ]),
     );
   }, [overrides]);
+};
+
+export const useSelectOverrideVariantPath = (assetId: AssetId) => {
+  const overrides = useStore((state) => state.overrides);
+
+  return useMemo(() => {
+    return overrides[assetId]?.variantPath;
+  }, [assetId, overrides]);
 };
 
 /**

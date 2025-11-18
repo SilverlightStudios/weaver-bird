@@ -41,6 +41,12 @@ export interface Provider {
 export interface OverrideEntry {
   packId: PackId;
   penciled: true;
+  variantPath?: string;
+}
+
+export interface OverrideWirePayload {
+  packId: PackId;
+  variantPath?: string;
 }
 
 /**

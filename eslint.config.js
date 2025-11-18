@@ -10,6 +10,7 @@
 
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
+import reactHooks from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
   {
@@ -39,6 +40,17 @@ export default tseslint.config(
         project: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    plugins: {
+      "react-hooks": reactHooks,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      "react-hooks/set-state-in-effect": "off",
     },
   },
 

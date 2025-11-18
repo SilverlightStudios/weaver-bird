@@ -5,23 +5,33 @@ import {
   useSelectPack,
   useSelectPacksDir,
 } from "@state/selectors";
-import { loadModelJson, resolveBlockState } from "@lib/tauri/blockModels";
+import {
+  loadModelJson,
+  resolveBlockState,
+  type ElementFace,
+} from "@lib/tauri/blockModels";
 import { blockModelToThreeJs } from "@lib/three/modelConverter";
 import { createTextureLoader } from "@lib/three/textureLoader";
 import {
   normalizeAssetId,
   getVariantNumber,
   getPlantNameFromPotted,
+  getBlockStateIdFromAssetId,
 } from "@lib/assetUtils";
 
 interface Props {
   assetId: string;
   biomeColor?: { r: number; g: number; b: number } | null;
-  onTintDetected?: (hasTint: boolean) => void;
+  onTintDetected?: (info: {
+    hasTint: boolean;
+    tintType?: "grass" | "foliage";
+  }) => void;
   showPot?: boolean;
   isPotted?: boolean;
   blockProps?: Record<string, string>;
   seed?: number;
+  forcedPackId?: string;
+  positionOffset?: [number, number, number];
 }
 
 function BlockModel({
@@ -32,6 +42,8 @@ function BlockModel({
   isPotted = false,
   blockProps = {},
   seed = 0,
+  forcedPackId,
+  positionOffset = [0, 0, 0],
 }: Props) {
   // Normalize asset ID immediately to fix trailing underscores from malformed packs
   const normalizedAssetId = normalizeAssetId(assetId);
@@ -43,30 +55,45 @@ function BlockModel({
 
   // Get the winning pack using the ORIGINAL asset ID (state stores original IDs)
   // but we'll use the normalized ID when loading models
-  const winnerPackId = useSelectWinner(assetId);
-  const winnerPack = useSelectPack(winnerPackId || "");
+  const storeWinnerPackId = useSelectWinner(assetId);
+  const storeWinnerPack = useSelectPack(storeWinnerPackId || "");
+  const forcedPackMeta = useSelectPack(forcedPackId || "");
+  const vanillaPack = useSelectPack("minecraft:vanilla");
+
+  const resolvedPackId =
+    forcedPackId ??
+    storeWinnerPackId ??
+    (vanillaPack ? "minecraft:vanilla" : undefined);
+  const resolvedPack = forcedPackId
+    ? forcedPackId === "minecraft:vanilla"
+      ? vanillaPack
+      : forcedPackMeta
+    : storeWinnerPackId
+      ? storeWinnerPack
+      : vanillaPack;
   const packsDir = useSelectPacksDir();
 
   // Create stable string representation of biomeColor for dependency comparison
   const biomeColorKey = biomeColor
     ? `${biomeColor.r},${biomeColor.g},${biomeColor.b}`
     : null;
+  const blockPropsKey = JSON.stringify(blockProps);
 
   useEffect(() => {
     console.log("=== [BlockModel] Dependencies Updated ===");
     console.log("[BlockModel] Original Asset ID:", assetId);
     console.log("[BlockModel] Normalized Asset ID:", normalizedAssetId);
-    console.log("[BlockModel] Winner Pack ID:", winnerPackId);
-    console.log("[BlockModel] Winner Pack:", winnerPack);
+    console.log("[BlockModel] Winner Pack ID:", resolvedPackId);
+    console.log("[BlockModel] Winner Pack:", resolvedPack);
     console.log("[BlockModel] Packs Dir:", packsDir);
     console.log("===========================================");
-  }, [assetId, normalizedAssetId, winnerPackId, packsDir]);
+  }, [assetId, normalizedAssetId, resolvedPackId, resolvedPack, packsDir]);
 
   // Load the real block model
   useEffect(() => {
     console.log("[BlockModel] === Model Load Effect Triggered ===");
     console.log("[BlockModel] Asset ID:", assetId);
-    console.log("[BlockModel] Winner Pack ID:", winnerPackId);
+    console.log("[BlockModel] Winner Pack ID:", resolvedPackId);
 
     // Clean up previous model first
     if (blockGroup) {
@@ -85,7 +112,7 @@ function BlockModel({
     }
 
     // Need all dependencies to load
-    if (!winnerPackId || !winnerPack || !packsDir) {
+    if (!resolvedPackId || !resolvedPack || !packsDir) {
       console.log("[BlockModel] Missing required data, showing placeholder");
       createPlaceholder();
       return;
@@ -93,7 +120,7 @@ function BlockModel({
 
     // TypeScript guard: these are guaranteed to be defined here
     const packsDirPath: string = packsDir;
-    const packId: string = winnerPackId;
+    const packId: string = resolvedPackId;
 
     let cancelled = false;
 
@@ -107,8 +134,8 @@ function BlockModel({
         console.log("[BlockModel] Is Potted:", isPotted);
         console.log("[BlockModel] Show Pot:", showPot);
         console.log("[BlockModel] Pack ID:", packId);
-        console.log("[BlockModel] Pack Path:", winnerPack.path);
-        console.log("[BlockModel] Pack is_zip:", winnerPack.is_zip);
+        console.log("[BlockModel] Pack Path:", resolvedPack.path);
+        console.log("[BlockModel] Pack is_zip:", resolvedPack.is_zip);
         console.log("[BlockModel] Packs Dir:", packsDirPath);
 
         // For potted plants, decide whether to load the potted model or just the plant
@@ -132,10 +159,12 @@ function BlockModel({
         console.log("[BlockModel] Calling resolveBlockState Tauri command...");
         console.log("[BlockModel] Block props:", blockProps);
         console.log("[BlockModel] Seed:", seed);
+        const blockStateAssetId = getBlockStateIdFromAssetId(modelAssetId);
+        console.log("[BlockModel] Blockstate asset ID:", blockStateAssetId);
 
         const resolution = await resolveBlockState(
           packId,
-          modelAssetId,
+          blockStateAssetId,
           packsDirPath,
           Object.keys(blockProps).length > 0 ? blockProps : undefined,
           seed,
@@ -161,14 +190,15 @@ function BlockModel({
         // Create texture loader for this pack
         console.log("[BlockModel] Creating texture loader...");
         const textureLoader = createTextureLoader(
-          winnerPack.path,
-          winnerPack.is_zip,
+          resolvedPack.path,
+          resolvedPack.is_zip,
           variantNumber,
         );
 
         // Create parent group to hold all resolved models
         const parentGroup = new THREE.Group();
         let hasTintindex = false;
+        const tintIndices = new Set<number>();
 
         // Load and convert each resolved model
         for (const resolvedModel of resolution.models) {
@@ -192,13 +222,16 @@ function BlockModel({
           console.log("[BlockModel] Model loaded:", resolvedModel.modelId);
 
           // Check if this model has tintindex
-          const modelHasTint =
-            model.elements?.some((element) =>
-              Object.values(element.faces || {}).some(
-                (face: any) =>
-                  face.tintindex !== undefined && face.tintindex !== null,
-              ),
-            ) || false;
+          let modelHasTint = false;
+          model.elements?.forEach((element) => {
+            const faces = element.faces ?? {};
+            Object.values<ElementFace>(faces).forEach((face) => {
+              if (face.tintindex !== undefined && face.tintindex !== null) {
+                modelHasTint = true;
+                tintIndices.add(Number(face.tintindex));
+              }
+            });
+          });
 
           if (modelHasTint) {
             hasTintindex = true;
@@ -227,7 +260,12 @@ function BlockModel({
           hasTintindex,
         );
         if (onTintDetected) {
-          onTintDetected(hasTintindex);
+          const tintType = tintIndices.has(1)
+            ? "foliage"
+            : tintIndices.has(0)
+              ? "grass"
+              : undefined;
+          onTintDetected({ hasTint: hasTintindex, tintType });
         }
 
         if (cancelled) {
@@ -317,12 +355,13 @@ function BlockModel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     normalizedAssetId,
-    winnerPackId,
+    resolvedPackId,
+    resolvedPack,
     packsDir,
     biomeColorKey,
     showPot,
     isPotted,
-    JSON.stringify(blockProps),
+    blockPropsKey,
     seed,
   ]);
 
@@ -353,7 +392,7 @@ function BlockModel({
   // Wrap in try-catch to prevent any rendering errors from crashing the Canvas
   try {
     return (
-      <group ref={groupRef}>
+      <group ref={groupRef} position={positionOffset}>
         <primitive object={blockGroup} />
       </group>
     );

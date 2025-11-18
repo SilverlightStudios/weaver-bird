@@ -32,84 +32,80 @@
  */
 
 export interface ColorSegment {
-  text: string
-  color?: string
-  bold?: boolean
-  italic?: boolean
-  underline?: boolean
-  strikethrough?: boolean
+  text: string;
+  color?: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
 }
 
 const COLOR_MAP: Record<string, string> = {
-  '0': '#000000',
-  '1': '#0000AA',
-  '2': '#00AA00',
-  '3': '#00AAAA',
-  '4': '#AA0000',
-  '5': '#AA00AA',
-  '6': '#FFAA00',
-  '7': '#AAAAAA',
-  '8': '#555555',
-  '9': '#5555FF',
-  'a': '#55FF55',
-  'b': '#55FFFF',
-  'c': '#FF5555',
-  'd': '#FF55FF',
-  'e': '#FFFF55',
-  'f': '#FFFFFF',
-}
+  "0": "#000000",
+  "1": "#0000AA",
+  "2": "#00AA00",
+  "3": "#00AAAA",
+  "4": "#AA0000",
+  "5": "#AA00AA",
+  "6": "#FFAA00",
+  "7": "#AAAAAA",
+  "8": "#555555",
+  "9": "#5555FF",
+  a: "#55FF55",
+  b: "#55FFFF",
+  c: "#FF5555",
+  d: "#FF55FF",
+  e: "#FFFF55",
+  f: "#FFFFFF",
+};
 
 /**
  * Parse Minecraft formatted text into color segments
  */
 export function parseMinecraftText(text: string): ColorSegment[] {
-  const segments: ColorSegment[] = []
+  const segments: ColorSegment[] = [];
 
   // Replace \u00a7 with § for consistent parsing
-  const normalized = text.replace(/\\u00a7/g, '§')
+  const normalized = text.replace(/\\u00a7/g, "§");
 
   // Split by color codes
-  const parts = normalized.split(/(§[0-9a-fk-or])/gi)
+  const parts = normalized.split(/(§[0-9a-fk-or])/gi);
 
-  let currentColor: string | undefined
-  let currentBold = false
-  let currentItalic = false
-  let currentUnderline = false
-  let currentStrikethrough = false
+  let currentColor: string | undefined;
+  let currentBold = false;
+  let currentItalic = false;
+  let currentUnderline = false;
+  let currentStrikethrough = false;
 
   for (let i = 0; i < parts.length; i++) {
-    const part = parts[i]
+    const part = parts[i];
 
-    if (!part) continue
+    if (!part) continue;
 
     // Check if this is a color code
     if (part.match(/^§[0-9a-fk-or]$/i)) {
-      const code = part[1].toLowerCase()
+      const code = part[1].toLowerCase();
 
       // Color codes
       if (COLOR_MAP[code]) {
-        currentColor = COLOR_MAP[code]
+        currentColor = COLOR_MAP[code];
       }
       // Formatting codes
-      else if (code === 'l') {
-        currentBold = true
-      }
-      else if (code === 'o') {
-        currentItalic = true
-      }
-      else if (code === 'n') {
-        currentUnderline = true
-      }
-      else if (code === 'm') {
-        currentStrikethrough = true
-      }
-      else if (code === 'r') {
+      else if (code === "l") {
+        currentBold = true;
+      } else if (code === "o") {
+        currentItalic = true;
+      } else if (code === "n") {
+        currentUnderline = true;
+      } else if (code === "m") {
+        currentStrikethrough = true;
+      } else if (code === "r") {
         // Reset all formatting
-        currentColor = undefined
-        currentBold = false
-        currentItalic = false
-        currentUnderline = false
-        currentStrikethrough = false
+        currentColor = undefined;
+        currentBold = false;
+        currentItalic = false;
+        currentUnderline = false;
+        currentStrikethrough = false;
       }
     }
     // This is text content
@@ -122,12 +118,12 @@ export function parseMinecraftText(text: string): ColorSegment[] {
           italic: currentItalic,
           underline: currentUnderline,
           strikethrough: currentStrikethrough,
-        })
+        });
       }
     }
   }
 
-  return segments
+  return segments;
 }
 
 /**
@@ -135,43 +131,43 @@ export function parseMinecraftText(text: string): ColorSegment[] {
  */
 export function segmentsToHTML(segments: ColorSegment[]): string {
   return segments
-    .map(segment => {
-      let html = segment.text
-      let styles: string[] = []
+    .map((segment) => {
+      let html = segment.text;
+      const styles: string[] = [];
 
       if (segment.color) {
-        styles.push(`color: ${segment.color}`)
+        styles.push(`color: ${segment.color}`);
       }
 
       if (segment.bold) {
-        html = `<strong>${html}</strong>`
+        html = `<strong>${html}</strong>`;
       }
 
       if (segment.italic) {
-        html = `<em>${html}</em>`
+        html = `<em>${html}</em>`;
       }
 
       if (segment.underline) {
-        styles.push('text-decoration: underline')
+        styles.push("text-decoration: underline");
       }
 
       if (segment.strikethrough) {
-        styles.push('text-decoration: line-through')
+        styles.push("text-decoration: line-through");
       }
 
       if (styles.length > 0) {
-        return `<span style="${styles.join('; ')}">${html}</span>`
+        return `<span style="${styles.join("; ")}">${html}</span>`;
       }
 
-      return html
+      return html;
     })
-    .join('')
+    .join("");
 }
 
 /**
  * Parse and convert Minecraft text to HTML in one step
  */
 export function minecraftTextToHTML(text: string): string {
-  const segments = parseMinecraftText(text)
-  return segmentsToHTML(segments)
+  const segments = parseMinecraftText(text);
+  return segmentsToHTML(segments);
 }

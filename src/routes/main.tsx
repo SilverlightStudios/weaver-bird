@@ -5,9 +5,8 @@ import PackList from "@components/PackList";
 import SearchBar from "@components/SearchBar";
 import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
-import VariantChooser from "@components/VariantChooser";
+import OptionsPanel from "@components/OptionsPanel";
 import TextureVariantSelector from "@components/TextureVariantSelector";
-import BiomeColorPicker from "@components/BiomeColorPicker";
 import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
 import Settings from "@components/Settings";
@@ -55,12 +54,21 @@ const MESSAGE_TIMEOUT_MS = 3000;
 export default function MainRoute() {
   const [packsDir, setPacksDir] = useState<string>("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [hasTintindex, setHasTintindex] = useState(false);
+  const [showPot, setShowPot] = useState(true);
+  const [tintInfo, setTintInfo] = useState<{
+    hasTint: boolean;
+    tintType?: "grass" | "foliage";
+  }>({ hasTint: false });
+  const [foliagePreviewBlock, setFoliagePreviewBlock] = useState(
+    "minecraft:block/oak_leaves",
+  );
   const [biomeColor, setBiomeColor] = useState<{
     r: number;
     g: number;
     b: number;
   } | null>(null);
+  const [blockProps, setBlockProps] = useState<Record<string, string>>({});
+  const [seed, setSeed] = useState(0);
   const setPacksDirInStore = useSetPacksDir();
 
   // UI messages with auto-hide
@@ -94,6 +102,10 @@ export default function MainRoute() {
 
   // Get providers for selected asset
   const providers = useSelectProvidersWithWinner(uiState.selectedAssetId);
+
+  useEffect(() => {
+    setTintInfo({ hasTint: false, tintType: undefined });
+  }, [uiState.selectedAssetId]);
 
   // Memoize data transformations for components
   const packListItems = useMemo(
@@ -345,13 +357,36 @@ export default function MainRoute() {
           </div>
         </div>
 
-        {/* Right: Preview & Variants */}
+        {/* Right: Preview & Options */}
         <div className={s.rightPanel}>
           <div className={s.previewSection}>
             <Preview3D
               assetId={uiState.selectedAssetId}
               biomeColor={biomeColor}
-              onTintDetected={setHasTintindex}
+              onTintDetected={setTintInfo}
+              showPot={showPot}
+              onShowPotChange={setShowPot}
+              blockProps={blockProps}
+              seed={seed}
+              foliagePreviewBlock={foliagePreviewBlock}
+            />
+          </div>
+
+          <div className={s.optionsSection}>
+            <OptionsPanel
+              assetId={uiState.selectedAssetId}
+              biomeColor={biomeColor}
+              onBiomeColorChange={setBiomeColor}
+              providers={providers}
+              onSelectProvider={handleSelectProvider}
+              showPot={showPot}
+              onShowPotChange={setShowPot}
+              hasTintindex={tintInfo.hasTint}
+              tintType={tintInfo.tintType}
+              foliagePreviewBlock={foliagePreviewBlock}
+              onFoliagePreviewBlockChange={setFoliagePreviewBlock}
+              onBlockPropsChange={setBlockProps}
+              onSeedChange={setSeed}
             />
           </div>
 
@@ -365,21 +400,6 @@ export default function MainRoute() {
               }))}
               onSelectVariant={setSelectedAsset}
             />
-          )}
-
-          <div className={s.variantSection}>
-            <VariantChooser
-              providers={providers}
-              onSelectProvider={handleSelectProvider}
-              assetId={uiState.selectedAssetId}
-            />
-          </div>
-
-          {/* Biome Color Picker - only show if model has tintindex */}
-          {uiState.selectedAssetId && hasTintindex && (
-            <div className={s.biomeSection}>
-              <BiomeColorPicker type="grass" onColorSelect={setBiomeColor} />
-            </div>
           )}
         </div>
       </div>

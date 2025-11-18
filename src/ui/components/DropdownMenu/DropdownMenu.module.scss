@@ -1,0 +1,254 @@
+@use "@/ui/tokens" as tokens;
+
+// Content - the dropdown panel
+.content {
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-md;
+    @include tokens.shadow-xl;
+    @include tokens.rotate-slight;
+
+    position: absolute;
+    min-width: 12rem;
+    max-width: 20rem;
+    padding: var(--spacing-sm);
+    z-index: 50;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgb(255 255 255 / 98%) 0%,
+            rgb(245 245 245 / 96%) 100%
+        ),
+        var(--color-block);
+
+    // Texture overlay
+    isolation: isolate;
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        @include tokens.pattern-halftone-sm;
+        opacity: 0.2;
+        mix-blend-mode: soft-light;
+        pointer-events: none;
+        z-index: -1;
+        border-radius: inherit;
+    }
+
+    // Animation
+    @keyframes slideDownAndFade {
+        from {
+            opacity: 0;
+            translate: 0 -8px;
+            rotate: -2deg;
+        }
+        to {
+            opacity: 1;
+            translate: 0 0;
+            rotate: var(--rotate-slight);
+        }
+    }
+
+    @keyframes slideUpAndFade {
+        from {
+            opacity: 0;
+            translate: 0 8px;
+            rotate: 2deg;
+        }
+        to {
+            opacity: 1;
+            translate: 0 0;
+            rotate: var(--rotate-slight);
+        }
+    }
+
+    &[data-side="top"] {
+        animation: slideUpAndFade 200ms var(--spring-bezier);
+    }
+
+    &[data-side="bottom"] {
+        animation: slideDownAndFade 200ms var(--spring-bezier);
+    }
+}
+
+// Individual menu item
+.item {
+    @include tokens.radius-quirky-sm;
+
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.45rem 0.6rem;
+    margin: 0.15rem 0;
+
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1;
+
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+
+    transition:
+        background 120ms ease,
+        rotate 120ms var(--spring-bezier),
+        translate 120ms var(--spring-bezier);
+
+    &:hover,
+    &[data-highlighted] {
+        background: var(--color-primary);
+        color: white;
+        rotate: 0deg;
+        translate: 2px 0;
+    }
+
+    &:active {
+        background: var(--color-ink);
+        color: var(--color-bg);
+        translate: 4px 0;
+    }
+
+    &[data-disabled] {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+}
+
+// Checkbox item
+.checkboxItem {
+    @extend .item;
+    padding-left: 1.8rem;
+}
+
+// Radio item
+.radioItem {
+    @extend .item;
+    padding-left: 1.8rem;
+}
+
+// Item indicator container (for checkbox/radio)
+.itemIndicator {
+    position: absolute;
+    left: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+}
+
+// Checkmark icon
+.checkmark {
+    font-size: 0.9rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+// Radio dot
+.radioDot {
+    font-size: 0.7rem;
+    line-height: 1;
+}
+
+// Label - section header
+.label {
+    padding: 0.4rem 0.6rem 0.25rem;
+    font-family: var(--font-family);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text);
+    opacity: 0.6;
+}
+
+// Separator
+.separator {
+    height: 3px;
+    margin: var(--spacing-sm) 0;
+    background: var(--color-ink);
+    border-radius: 2px;
+    rotate: var(--rotate-slight);
+}
+
+// Shortcut hint
+.shortcut {
+    margin-left: auto;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    opacity: 0.5;
+    font-family: var(--font-family);
+}
+
+// Inset modifier (for items with icons)
+.inset {
+    padding-left: 2rem;
+}
+
+// SubTrigger - trigger for nested submenu
+.subTrigger {
+    @extend .item;
+
+    &[data-state="open"] {
+        background: var(--color-primary);
+        color: white;
+    }
+}
+
+// Chevron for submenu
+.chevron {
+    margin-left: auto;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+// SubContent - nested submenu panel
+.subContent {
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-md;
+    @include tokens.shadow-lg;
+
+    min-width: 10rem;
+    padding: var(--spacing-sm);
+    z-index: 50;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgb(255 255 255 / 98%) 0%,
+            rgb(245 245 245 / 96%) 100%
+        ),
+        var(--color-block);
+
+    // Slide in from right
+    @keyframes slideLeftAndFade {
+        from {
+            opacity: 0;
+            translate: 8px 0;
+        }
+        to {
+            opacity: 1;
+            translate: 0 0;
+        }
+    }
+
+    animation: slideLeftAndFade 180ms var(--spring-bezier);
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .content,
+    .subContent {
+        animation: none;
+    }
+
+    .item {
+        transition-duration: 0.01ms;
+    }
+}

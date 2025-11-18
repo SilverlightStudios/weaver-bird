@@ -3,7 +3,9 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { getVanillaTexturePath, getPackTexturePath } from "@lib/tauri";
 import {
   beautifyAssetName,
+  getBlockStateIdFromAssetId,
   groupAssetsByVariant,
+  isBiomeColormapAsset,
   normalizeAssetId,
 } from "@lib/assetUtils";
 import {
@@ -11,6 +13,7 @@ import {
   useSelectIsPenciled,
   useSelectPack,
 } from "@state/selectors";
+import { useStore } from "@state/store";
 import s from "./styles.module.scss";
 
 interface AssetItem {
@@ -41,6 +44,7 @@ function AssetCard({
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const isColormap = isBiomeColormapAsset(asset.id);
 
   // Get the winning pack for this asset
   const winnerPackId = useSelectWinner(asset.id);
@@ -90,10 +94,11 @@ function AssetCard({
               normalizedAssetId,
               winnerPack.is_zip,
             );
-          } catch (error) {
+          } catch (packError) {
             // If pack texture fails, fall back to vanilla
             console.warn(
               `Pack texture not found for ${normalizedAssetId}, using vanilla.`,
+              packError,
             );
             texturePath = await getVanillaTexturePath(normalizedAssetId);
           }
@@ -123,7 +128,7 @@ function AssetCard({
     };
   }, [isVisible, asset.id, winnerPackId, winnerPack]);
 
-  const displayName = beautifyAssetName(asset.id);
+  const displayName = asset.name || beautifyAssetName(asset.id);
 
   return (
     <div
@@ -136,7 +141,7 @@ function AssetCard({
           <img
             src={imageSrc}
             alt={displayName}
-            className={s.texture}
+            className={isColormap ? s.colormapTexture : s.texture}
             onError={() => setImageError(true)}
           />
         ) : imageError ? (
@@ -168,29 +173,65 @@ function AssetCard({
 }
 
 export default function AssetResults({ assets, selectedId, onSelect }: Props) {
-  // Group assets by variant
+  const winners = useStore((state) => state.overrides);
+  const providersByAsset = useStore((state) => state.providersByAsset);
+  const packOrder = useStore((state) => state.packOrder);
+
+  // Helper to get winning pack for an asset
+  const getWinningPack = (assetId: string): string | undefined => {
+    // Check if asset is penciled to a specific pack
+    const override = winners[assetId];
+    if (override) {
+      return override.packId;
+    }
+
+    // Otherwise, get first provider in pack order
+    const providers = providersByAsset[assetId] ?? [];
+    if (providers.length === 0) return undefined;
+
+    const sorted = [...providers].sort(
+      (a, b) => packOrder.indexOf(a) - packOrder.indexOf(b),
+    );
+    return sorted[0];
+  };
+
+  // Group assets by variant, but only group variants from the same winning pack
   const groupedAssets = useMemo(() => {
     const assetIds = assets.map((a) => a.id);
     const groups = groupAssetsByVariant(assetIds);
 
-    // Create a map for quick lookup of variant counts
-    const variantCountMap = new Map<string, number>();
-    groups.forEach((group) => {
-      group.variantIds.forEach((id) => {
-        variantCountMap.set(id, group.variantIds.length);
+    // Filter each group to only include variants from the same winning pack
+    const packFilteredGroups = groups.map((group) => {
+      // Get the winning pack for the base asset
+      const baseWinningPack = getWinningPack(group.variantIds[0]);
+
+      // Filter variants to only those with the same winning pack
+      const filteredVariants = group.variantIds.filter((variantId) => {
+        return getWinningPack(variantId) === baseWinningPack;
       });
+
+      return {
+        ...group,
+        variantIds: filteredVariants,
+      };
     });
 
     // Return only the base asset from each group (first variant)
-    const displayAssets = groups.map((group) => ({
-      id: group.variantIds[0], // Use the first variant as the display asset
-      name: assets.find((a) => a.id === group.variantIds[0])?.name || "",
-      variantCount: group.variantIds.length,
-      allVariants: group.variantIds,
-    }));
+    const displayAssets = packFilteredGroups.map((group) => {
+      const primaryId = group.variantIds[0];
+      const canonicalId = primaryId.includes(":colormap/")
+        ? primaryId
+        : getBlockStateIdFromAssetId(primaryId);
+      return {
+        id: primaryId,
+        name: beautifyAssetName(canonicalId),
+        variantCount: group.variantIds.length,
+        allVariants: group.variantIds,
+      };
+    });
 
     return displayAssets;
-  }, [assets]);
+  }, [assets, winners, providersByAsset, packOrder]);
 
   console.log(
     "[AssetResults] Rendering",

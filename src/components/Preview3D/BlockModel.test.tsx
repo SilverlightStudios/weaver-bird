@@ -64,7 +64,7 @@ describe("BlockModel", () => {
     );
 
     // Should create a group with a brown placeholder mesh
-    const scene = renderer.scene;
+    const { scene } = renderer;
     expect(scene.children.length).toBeGreaterThan(0);
 
     // Allow time for async operations

@@ -13,6 +13,8 @@ import type {
   BlockModel,
   ModelElement,
   ResolvedModel,
+  ElementFace,
+  ElementRotation,
 } from "@lib/tauri/blockModels";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
@@ -272,7 +274,7 @@ async function createElementMesh(
  */
 function applyCustomUVs(
   geometry: THREE.BoxGeometry,
-  faces: Record<string, any>,
+  faces: Record<string, ElementFace>,
 ): void {
   const faceMapping: Record<string, number> = {
     east: 0, // right (+X)
@@ -376,7 +378,7 @@ function applyCustomUVs(
  * Minecraft faces: east, west, up, down, south, north
  */
 async function createFaceMaterials(
-  faces: Record<string, any>,
+  faces: Record<string, ElementFace>,
   textureVariables: Record<string, string>,
   textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
   _from: [number, number, number],
@@ -402,12 +404,14 @@ async function createFaceMaterials(
     Object.keys(textureVariables),
   );
 
-  // Create default materials for each of the 6 faces (magenta = missing texture)
+  // Create default materials for each of the 6 faces
+  // Use transparent material for undefined faces instead of magenta
   const materials: THREE.Material[] = [];
   for (let i = 0; i < 6; i++) {
     materials.push(
       new THREE.MeshStandardMaterial({
-        color: 0xff00ff, // Magenta for missing textures
+        transparent: true,
+        opacity: 0, // Invisible for undefined faces
         roughness: 0.8,
         metalness: 0.2,
       }),
@@ -495,12 +499,26 @@ async function createFaceMaterials(
         console.warn(
           `[modelConverter] ✗ Texture loader returned null for ${textureId}`,
         );
+        // Use transparent material for missing textures
+        materials[faceIndex] = new THREE.MeshStandardMaterial({
+          transparent: true,
+          opacity: 0,
+          roughness: 0.8,
+          metalness: 0.2,
+        });
       }
     } catch (err) {
       console.error(
         `[modelConverter] ✗ Failed to load texture ${textureId}:`,
         err,
       );
+      // Use transparent material for failed texture loads
+      materials[faceIndex] = new THREE.MeshStandardMaterial({
+        transparent: true,
+        opacity: 0,
+        roughness: 0.8,
+        metalness: 0.2,
+      });
     }
   }
 
@@ -516,7 +534,7 @@ async function createFaceMaterials(
  */
 function applyRotation(
   mesh: THREE.Mesh,
-  rotation: any,
+  rotation: ElementRotation,
   _elementCenter: [number, number, number],
 ): void {
   // Minecraft rotations are around a specific origin point
