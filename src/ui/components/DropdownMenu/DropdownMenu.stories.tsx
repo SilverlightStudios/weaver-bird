@@ -25,10 +25,40 @@ const meta = {
     layout: "centered",
   },
   tags: ["autodocs"],
+  argTypes: {
+    open: {
+      control: "boolean",
+      description: "Control whether the dropdown is open (controlled mode)",
+    },
+    onOpenChange: {
+      action: "onOpenChange",
+      description: "Callback when open state changes",
+    },
+  },
 } satisfies Meta<typeof DropdownMenu>;
 
 export default meta;
-type Story = Omit<StoryObj<typeof meta>, "args">;
+type Story = StoryObj<typeof meta>;
+
+// Playground story - demonstrates basic usage
+export const Playground: Story = {
+  render: () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="primary">Open Menu</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>New File</DropdownMenuItem>
+        <DropdownMenuItem>Open Project</DropdownMenuItem>
+        <DropdownMenuItem>Save As...</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>Settings</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ),
+};
 
 export const Default: Story = {
   render: () => (

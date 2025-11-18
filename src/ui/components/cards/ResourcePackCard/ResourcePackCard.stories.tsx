@@ -3,7 +3,7 @@ import ResourcePackCard from "./ResourcePackCard";
 
 const meta: Meta<typeof ResourcePackCard> = {
   component: ResourcePackCard,
-  title: "Cards/ResourcePackCard",
+  title: "Components/ResourcePackCard",
   tags: ["autodocs"],
   args: {
     name: "Lapis Dreams",

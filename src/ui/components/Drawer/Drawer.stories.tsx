@@ -29,7 +29,41 @@ const meta = {
 } satisfies Meta<typeof Drawer>;
 
 export default meta;
-type Story = Omit<StoryObj<typeof meta>, "args">;
+type Story = StoryObj<typeof meta>;
+
+// Playground story with working controls
+export const Playground: Story = {
+  args: {
+    position: "bottom",
+  },
+  render: (args) => (
+    <div style={{ padding: "2rem", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Drawer position={args.position}>
+        <DrawerTrigger asChild>
+          <Button variant="primary">Open {args.position} Drawer</Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Drawer Position: {args.position}</DrawerTitle>
+            <DrawerDescription>
+              Use the controls panel to change the drawer position.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div style={{ padding: "0 1.5rem 1.5rem" }}>
+            <p style={{ fontSize: "0.875rem", lineHeight: "1.6", opacity: 0.8 }}>
+              The drawer appears from the {args.position} of the screen.
+            </p>
+          </div>
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="primary">Close</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  ),
+};
 
 // Wrapper component for all stories to center the trigger button
 const StoryWrapper = ({ children }: { children: React.ReactNode }) => (

@@ -12,6 +12,12 @@ const meta = {
   argTypes: {
     disabled: {
       control: "boolean",
+      description: "Disable all radio buttons in the group",
+    },
+    defaultValue: {
+      control: "select",
+      options: ["option1", "option2", "option3"],
+      description: "The default selected value",
     },
   },
 } satisfies Meta<typeof RadioGroup>;
@@ -41,6 +47,30 @@ const Label = ({
     {children}
   </label>
 );
+
+// Playground story with working controls
+export const Playground: Story = {
+  args: {
+    defaultValue: "option2",
+    disabled: false,
+  },
+  render: (args) => (
+    <RadioGroup {...args}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <RadioGroupItem value="option1" id="p1" />
+        <Label htmlFor="p1">Option 1</Label>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <RadioGroupItem value="option2" id="p2" />
+        <Label htmlFor="p2">Option 2</Label>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <RadioGroupItem value="option3" id="p3" />
+        <Label htmlFor="p3">Option 3</Label>
+      </div>
+    </RadioGroup>
+  ),
+};
 
 const DefaultComponent = () => {
   const [value, setValue] = useState("comfortable");

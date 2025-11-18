@@ -27,7 +27,7 @@ const meta = {
 } satisfies Meta<typeof Combobox>;
 
 export default meta;
-type Story = Omit<StoryObj<typeof meta>, "args">;
+type Story = StoryObj<typeof meta>;
 
 const frameworks: ComboboxOption[] = [
   { value: "next", label: "Next.js" },
@@ -64,6 +64,40 @@ const biomes: ComboboxOption[] = [
   { value: "nether", label: "Nether", disabled: true },
   { value: "end", label: "The End", disabled: true },
 ];
+
+// Playground story with working controls
+const PlaygroundComponent = (args: {
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+}) => {
+  const [value, setValue] = useState("");
+
+  return (
+    <div style={{ minWidth: "300px" }}>
+      <Combobox
+        options={frameworks}
+        value={value}
+        onValueChange={setValue}
+        placeholder={args.placeholder}
+        searchPlaceholder={args.searchPlaceholder}
+        emptyMessage={args.emptyMessage}
+      />
+      <p style={{ marginTop: "1rem", fontSize: "0.875rem", opacity: 0.7 }}>
+        Selected: {value || "none"}
+      </p>
+    </div>
+  );
+};
+
+export const Playground: Story = {
+  args: {
+    placeholder: "Select framework...",
+    searchPlaceholder: "Search frameworks...",
+    emptyMessage: "No framework found.",
+  },
+  render: (args) => <PlaygroundComponent {...args} />,
+};
 
 const DefaultComponent = () => {
   const [value, setValue] = useState("");

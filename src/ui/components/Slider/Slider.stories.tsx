@@ -22,7 +22,53 @@ const meta = {
 } satisfies Meta<typeof Slider>;
 
 export default meta;
-type Story = Omit<StoryObj<typeof meta>, "args">;
+type Story = StoryObj<typeof meta>;
+
+// Playground story with working controls
+const PlaygroundComponent = (args: {
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+  orientation?: "horizontal" | "vertical";
+}) => {
+  const [value, setValue] = useState([50]);
+
+  return (
+    <div style={{ padding: "3rem", minWidth: args.orientation === "vertical" ? "100px" : "400px", minHeight: args.orientation === "vertical" ? "200px" : "auto" }}>
+      <Slider
+        value={value}
+        onValueChange={setValue}
+        min={args.min}
+        max={args.max}
+        step={args.step}
+        disabled={args.disabled}
+        orientation={args.orientation}
+      />
+      <p style={{
+        marginTop: "1rem",
+        fontFamily: "var(--font-family)",
+        fontSize: "0.875rem",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+        opacity: 0.7,
+      }}>
+        Value: {value[0]}
+      </p>
+    </div>
+  );
+};
+
+export const Playground: Story = {
+  args: {
+    min: 0,
+    max: 100,
+    step: 1,
+    disabled: false,
+    orientation: "horizontal",
+  },
+  render: (args) => <PlaygroundComponent {...args} />,
+};
 
 const StoryWrapper = ({ children }: { children: React.ReactNode }) => (
   <div

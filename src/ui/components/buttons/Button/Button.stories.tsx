@@ -9,7 +9,7 @@ const DiamondIcon = () => (
 
 const meta: Meta<typeof Button> = {
   component: Button,
-  title: "Buttons/AntiDesignButton",
+  title: "Components/Button",
   tags: ["autodocs"],
   parameters: {
     layout: "centered",

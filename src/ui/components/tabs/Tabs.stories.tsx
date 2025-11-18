@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
 
 const meta = {
-  title: "UI Components/Tabs",
+  title: "Components/Tabs",
   component: Tabs,
   parameters: {
     layout: "centered",
@@ -19,6 +19,44 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/**
+ * Playground story with working controls
+ */
+export const Playground: Story = {
+  args: {
+    orientation: "horizontal",
+  },
+  render: (args) => (
+    <div style={{ display: "flex", gap: "1rem", maxWidth: "600px" }}>
+      <Tabs defaultValue="tab1" className="w-full max-w-md" orientation={args.orientation}>
+        <TabsList style={{ flexDirection: args.orientation === "vertical" ? "column" : "row", gap: "0.5rem" }}>
+          <TabsTrigger value="tab1">Tab One</TabsTrigger>
+          <TabsTrigger value="tab2">Tab Two</TabsTrigger>
+          <TabsTrigger value="tab3">Tab Three</TabsTrigger>
+        </TabsList>
+        <TabsContent value="tab1">
+          <div style={{ padding: "1rem" }}>
+            <h3 style={{ marginTop: 0 }}>Tab One Content</h3>
+            <p>This is the content for the first tab. Use the controls to change orientation.</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="tab2">
+          <div style={{ padding: "1rem" }}>
+            <h3 style={{ marginTop: 0 }}>Tab Two Content</h3>
+            <p>This is the content for the second tab.</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="tab3">
+          <div style={{ padding: "1rem" }}>
+            <h3 style={{ marginTop: 0 }}>Tab Three Content</h3>
+            <p>This is the content for the third tab.</p>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  ),
+};
 
 /**
  * Basic tabs component with three tabs

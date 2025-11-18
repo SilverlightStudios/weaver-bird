@@ -24,7 +24,28 @@ const meta = {
 } satisfies Meta<typeof Tooltip>;
 
 export default meta;
-type Story = Omit<StoryObj<typeof meta>, "args">;
+type Story = StoryObj<typeof meta>;
+
+// Playground story with working controls
+export const Playground: Story = {
+  args: {
+    delayDuration: 700,
+  },
+  render: (args) => (
+    <div style={{ padding: "4rem", minHeight: "300px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <TooltipProvider>
+        <Tooltip delayDuration={args.delayDuration}>
+          <TooltipTrigger asChild>
+            <Button variant="primary">Hover me</Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Delay: {args.delayDuration}ms - Adjust in controls panel!</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  ),
+};
 
 const StoryWrapper = ({ children }: { children: React.ReactNode }) => (
   <div
