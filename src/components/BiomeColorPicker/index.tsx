@@ -18,7 +18,7 @@ import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@/ui/components/Tooltip";
+} from "@/ui/components/Tooltip/Tooltip";
 import { getBiomesWithCoords, type BiomeData } from "./biomeData";
 import s from "./styles.module.scss";
 

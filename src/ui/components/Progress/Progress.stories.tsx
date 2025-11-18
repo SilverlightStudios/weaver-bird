@@ -48,26 +48,27 @@ export const WithLabel: Story = {
   ),
 };
 
-export const Animated: Story = {
-  render: () => {
-    const [progress, setProgress] = useState(13);
+const AnimatedComponent = () => {
+  const [progress, setProgress] = useState(13);
 
-    useEffect(() => {
-      const timer = setTimeout(() => setProgress(66), 500);
-      return () => clearTimeout(timer);
-    }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => setProgress(66), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-    return (
-      <div style={{ width: "400px" }}>
-        <Progress value={progress} showLabel />
-      </div>
-    );
-  },
+  return (
+    <div style={{ width: "400px" }}>
+      <Progress value={progress} showLabel />
+    </div>
+  );
 };
 
-export const PackBuilding: Story = {
-  render: () => {
-    const [progress, setProgress] = useState(0);
+export const Animated: Story = {
+  render: () => <AnimatedComponent />,
+};
+
+const PackBuildingComponent = () => {
+  const [progress, setProgress] = useState(0);
 
     useEffect(() => {
       const interval = setInterval(() => {
@@ -130,7 +131,10 @@ export const PackBuilding: Story = {
         </p>
       </div>
     );
-  },
+};
+
+export const PackBuilding: Story = {
+  render: () => <PackBuildingComponent />,
 };
 
 export const ProgressStages: Story = {
@@ -230,11 +234,10 @@ export const ProgressStages: Story = {
   ),
 };
 
-export const MultipleProgress: Story = {
-  render: () => {
-    const [scanning, setScanning] = useState(0);
-    const [indexing, setIndexing] = useState(0);
-    const [building, setBuilding] = useState(0);
+const MultipleProgressComponent = () => {
+  const [scanning, setScanning] = useState(0);
+  const [indexing, setIndexing] = useState(0);
+  const [building, setBuilding] = useState(0);
 
     useEffect(() => {
       // Scanning phase
@@ -399,7 +402,10 @@ export const MultipleProgress: Story = {
         )}
       </div>
     );
-  },
+};
+
+export const MultipleProgress: Story = {
+  render: () => <MultipleProgressComponent />,
 };
 
 export const Sizes: Story = {

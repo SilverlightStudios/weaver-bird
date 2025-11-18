@@ -7,7 +7,7 @@ import {
 import s from "./Pagination.module.scss";
 
 // Main Pagination container
-export interface PaginationProps extends HTMLAttributes<HTMLElement> {}
+export type PaginationProps = HTMLAttributes<HTMLElement>;
 
 export const Pagination = forwardRef<HTMLElement, PaginationProps>(
   ({ className, ...props }, ref) => (
@@ -23,7 +23,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(
 Pagination.displayName = "Pagination";
 
 // Pagination content wrapper
-export interface PaginationContentProps extends HTMLAttributes<HTMLUListElement> {}
+export type PaginationContentProps = HTMLAttributes<HTMLUListElement>;
 
 export const PaginationContent = forwardRef<
   HTMLUListElement,
@@ -38,7 +38,7 @@ export const PaginationContent = forwardRef<
 PaginationContent.displayName = "PaginationContent";
 
 // Individual pagination item
-export interface PaginationItemProps extends HTMLAttributes<HTMLLIElement> {}
+export type PaginationItemProps = HTMLAttributes<HTMLLIElement>;
 
 export const PaginationItem = forwardRef<HTMLLIElement, PaginationItemProps>(
   ({ className, ...props }, ref) => (
@@ -78,8 +78,7 @@ export const PaginationLink = forwardRef<HTMLAnchorElement, PaginationLinkProps>
 PaginationLink.displayName = "PaginationLink";
 
 // Previous button
-export interface PaginationPreviousProps
-  extends ButtonHTMLAttributes<HTMLButtonElement> {}
+export type PaginationPreviousProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const PaginationPrevious = forwardRef<
   HTMLButtonElement,
@@ -114,8 +113,7 @@ export const PaginationPrevious = forwardRef<
 PaginationPrevious.displayName = "PaginationPrevious";
 
 // Next button
-export interface PaginationNextProps
-  extends ButtonHTMLAttributes<HTMLButtonElement> {}
+export type PaginationNextProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const PaginationNext = forwardRef<
   HTMLButtonElement,
@@ -150,7 +148,7 @@ export const PaginationNext = forwardRef<
 PaginationNext.displayName = "PaginationNext";
 
 // Ellipsis
-export interface PaginationEllipsisProps extends HTMLAttributes<HTMLSpanElement> {}
+export type PaginationEllipsisProps = HTMLAttributes<HTMLSpanElement>;
 
 export const PaginationEllipsis = forwardRef<
   HTMLSpanElement,
