@@ -86,12 +86,12 @@ export const DropdownMenuTrigger = forwardRef<
   const child = asChild && React.isValidElement(children) ? (children as React.ReactElement) : null;
   const childRef = child ? (child as { ref?: React.Ref<unknown> }).ref : null;
 
-  const mergedRef = useCallback((node: HTMLElement | null) => {
+  const mergedRef = useCallback((node: HTMLButtonElement | null) => {
     // Merge refs - only call function refs and our own object ref
     if (typeof ref === "function") {
       ref(node);
     } else if (ref) {
-      (ref as React.MutableRefObject<HTMLElement | null>).current = node;
+      (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
     }
     // Only call child ref if it's a function (we can't safely modify object refs we don't own)
     if (typeof childRef === "function") {

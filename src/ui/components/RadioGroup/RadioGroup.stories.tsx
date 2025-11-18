@@ -42,9 +42,8 @@ const Label = ({
   </label>
 );
 
-export const Default: Story = {
-  render: () => {
-    const [value, setValue] = useState("comfortable");
+const DefaultComponent = () => {
+  const [value, setValue] = useState("comfortable");
 
     return (
       <RadioGroup value={value} onValueChange={setValue}>
@@ -62,12 +61,14 @@ export const Default: Story = {
         </div>
       </RadioGroup>
     );
-  },
 };
 
-export const PackFormat: Story = {
-  render: () => {
-    const [format, setFormat] = useState("pack8");
+export const Default: Story = {
+  render: () => <DefaultComponent />,
+};
+
+const PackFormatComponent = () => {
+  const [format, setFormat] = useState("pack8");
 
     return (
       <div
@@ -130,12 +131,33 @@ export const PackFormat: Story = {
         </p>
       </div>
     );
-  },
 };
 
-export const SingleItemDisabled: Story = {
-  render: () => {
-    const [value, setValue] = useState("option2");
+export const PackFormat: Story = {
+  render: () => <PackFormatComponent />,
+};
+
+export const Disabled: Story = {
+  render: () => (
+    <RadioGroup defaultValue="option2" disabled>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <RadioGroupItem value="option1" id="d1" />
+        <Label htmlFor="d1">Option 1 (Disabled)</Label>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <RadioGroupItem value="option2" id="d2" />
+        <Label htmlFor="d2">Option 2 (Disabled)</Label>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <RadioGroupItem value="option3" id="d3" />
+        <Label htmlFor="d3">Option 3 (Disabled)</Label>
+      </div>
+    </RadioGroup>
+  ),
+};
+
+const SingleItemDisabledComponent = () => {
+  const [value, setValue] = useState("option2");
 
     return (
       <RadioGroup value={value} onValueChange={setValue}>
@@ -158,12 +180,14 @@ export const SingleItemDisabled: Story = {
         </div>
       </RadioGroup>
     );
-  },
 };
 
-export const Horizontal: Story = {
-  render: () => {
-    const [view, setView] = useState("grid");
+export const SingleItemDisabled: Story = {
+  render: () => <SingleItemDisabledComponent />,
+};
+
+const HorizontalComponent = () => {
+  const [view, setView] = useState("grid");
 
     return (
       <div>
@@ -204,12 +228,14 @@ export const Horizontal: Story = {
         </RadioGroup>
       </div>
     );
-  },
 };
 
-export const WithDescriptions: Story = {
-  render: () => {
-    const [priority, setPriority] = useState("medium");
+export const Horizontal: Story = {
+  render: () => <HorizontalComponent />,
+};
+
+const WithDescriptionsComponent = () => {
+  const [priority, setPriority] = useState("medium");
 
     return (
       <div style={{ width: "400px" }}>
@@ -301,5 +327,8 @@ export const WithDescriptions: Story = {
         </RadioGroup>
       </div>
     );
-  },
+};
+
+export const WithDescriptions: Story = {
+  render: () => <WithDescriptionsComponent />,
 };

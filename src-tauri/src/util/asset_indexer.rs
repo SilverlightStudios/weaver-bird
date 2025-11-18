@@ -219,10 +219,233 @@ mod tests {
     }
 
     #[test]
+    fn test_extract_asset_id_custom_namespace() {
+        assert_eq!(
+            extract_asset_id("assets/custom/textures/block/custom_block.png"),
+            Some("custom:block/custom_block".to_string())
+        );
+
+        assert_eq!(
+            extract_asset_id("assets/mymod/textures/item/tool.png"),
+            Some("mymod:item/tool".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_asset_id_nested_paths() {
+        assert_eq!(
+            extract_asset_id("assets/minecraft/textures/block/variants/stone_variant.png"),
+            Some("minecraft:block/variants/stone_variant".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_asset_id_different_extensions() {
+        assert_eq!(
+            extract_asset_id("assets/minecraft/textures/block/stone.jpg"),
+            Some("minecraft:block/stone".to_string())
+        );
+
+        assert_eq!(
+            extract_asset_id("assets/minecraft/textures/block/stone"),
+            Some("minecraft:block/stone".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_asset_id_invalid_paths() {
+        // No assets/ prefix
+        assert_eq!(extract_asset_id("minecraft/textures/block/stone.png"), None);
+
+        // Missing namespace
+        assert_eq!(extract_asset_id("assets/"), None);
+        assert_eq!(extract_asset_id("assets"), None);
+
+        // Not a texture file
+        assert_eq!(extract_asset_id("assets/minecraft/models/block/stone.json"), None);
+        assert_eq!(extract_asset_id("assets/minecraft/sounds/ambient.ogg"), None);
+    }
+
+    #[test]
     fn test_extract_labels() {
         let labels = extract_labels("minecraft:block/stone");
+        assert_eq!(labels.len(), 3);
         assert!(labels.contains(&"minecraft".to_string()));
         assert!(labels.contains(&"block".to_string()));
         assert!(labels.contains(&"stone".to_string()));
+    }
+
+    #[test]
+    fn test_extract_labels_nested() {
+        let labels = extract_labels("minecraft:block/variants/stone");
+        assert_eq!(labels.len(), 4);
+        assert!(labels.contains(&"minecraft".to_string()));
+        assert!(labels.contains(&"block".to_string()));
+        assert!(labels.contains(&"variants".to_string()));
+        assert!(labels.contains(&"stone".to_string()));
+    }
+
+    #[test]
+    fn test_extract_labels_custom_namespace() {
+        let labels = extract_labels("mymod:item/sword");
+        assert_eq!(labels.len(), 3);
+        assert!(labels.contains(&"mymod".to_string()));
+        assert!(labels.contains(&"item".to_string()));
+        assert!(labels.contains(&"sword".to_string()));
+    }
+
+    #[test]
+    fn test_extract_labels_no_namespace() {
+        let labels = extract_labels("block/stone");
+        assert_eq!(labels.len(), 2);
+        assert!(labels.contains(&"block".to_string()));
+        assert!(labels.contains(&"stone".to_string()));
+    }
+
+    #[test]
+    fn test_index_assets_empty_list() {
+        let packs: Vec<PackMeta> = vec![];
+        let result = index_assets(&packs);
+        assert!(result.is_ok());
+        let (assets, providers) = result.unwrap();
+        assert_eq!(assets.len(), 0);
+        assert_eq!(providers.len(), 0);
+    }
+
+    #[test]
+    fn test_index_assets_single_pack() {
+        // Create a temporary test pack directory
+        let temp_dir = std::env::temp_dir().join("test_asset_index_single");
+        let pack_dir = temp_dir.join("test_pack");
+        let asset_dir = pack_dir.join("assets/minecraft/textures/block");
+        std::fs::create_dir_all(&asset_dir).expect("Failed to create test directory");
+
+        // Create test texture files
+        std::fs::write(asset_dir.join("stone.png"), "fake png data").expect("Failed to create test file");
+        std::fs::write(asset_dir.join("dirt.png"), "fake png data").expect("Failed to create test file");
+
+        let pack = PackMeta {
+            id: "test_pack".to_string(),
+            name: "Test Pack".to_string(),
+            path: pack_dir.to_string_lossy().to_string(),
+            size: 1000,
+            is_zip: false,
+            description: None,
+            icon_data: None,
+        };
+
+        let result = index_assets(&[pack]);
+
+        // Clean up
+        std::fs::remove_dir_all(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        let (assets, providers) = result.unwrap();
+        assert_eq!(assets.len(), 2);
+
+        // Find stone asset
+        let stone_asset = assets.iter().find(|a| a.id == "minecraft:block/stone");
+        assert!(stone_asset.is_some());
+        let stone_asset = stone_asset.unwrap();
+        assert!(stone_asset.labels.contains(&"minecraft".to_string()));
+        assert!(stone_asset.labels.contains(&"block".to_string()));
+        assert!(stone_asset.labels.contains(&"stone".to_string()));
+
+        // Check providers
+        assert!(providers.contains_key("minecraft:block/stone"));
+        assert_eq!(providers["minecraft:block/stone"], vec!["test_pack"]);
+    }
+
+    #[test]
+    fn test_index_assets_multiple_packs_same_asset() {
+        // Create two temporary test pack directories with the same asset
+        let temp_dir = std::env::temp_dir().join("test_asset_index_multi");
+        let pack1_dir = temp_dir.join("pack1");
+        let pack2_dir = temp_dir.join("pack2");
+        let asset_dir1 = pack1_dir.join("assets/minecraft/textures/block");
+        let asset_dir2 = pack2_dir.join("assets/minecraft/textures/block");
+        std::fs::create_dir_all(&asset_dir1).expect("Failed to create test directory");
+        std::fs::create_dir_all(&asset_dir2).expect("Failed to create test directory");
+
+        // Create the same texture file in both packs
+        std::fs::write(asset_dir1.join("stone.png"), "pack1 version").expect("Failed to create test file");
+        std::fs::write(asset_dir2.join("stone.png"), "pack2 version").expect("Failed to create test file");
+
+        let pack1 = PackMeta {
+            id: "pack1".to_string(),
+            name: "Pack 1".to_string(),
+            path: pack1_dir.to_string_lossy().to_string(),
+            size: 1000,
+            is_zip: false,
+            description: None,
+            icon_data: None,
+        };
+
+        let pack2 = PackMeta {
+            id: "pack2".to_string(),
+            name: "Pack 2".to_string(),
+            path: pack2_dir.to_string_lossy().to_string(),
+            size: 1000,
+            is_zip: false,
+            description: None,
+            icon_data: None,
+        };
+
+        let result = index_assets(&[pack1, pack2]);
+
+        // Clean up
+        std::fs::remove_dir_all(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        let (assets, providers) = result.unwrap();
+
+        // Should have one asset with multiple providers
+        assert_eq!(assets.len(), 1);
+        let stone_asset = &assets[0];
+        assert_eq!(stone_asset.id, "minecraft:block/stone");
+
+        // Check providers
+        assert!(providers.contains_key("minecraft:block/stone"));
+        let stone_providers = &providers["minecraft:block/stone"];
+        assert_eq!(stone_providers.len(), 2);
+        assert!(stone_providers.contains(&"pack1".to_string()));
+        assert!(stone_providers.contains(&"pack2".to_string()));
+    }
+
+    #[test]
+    fn test_index_assets_sorted_output() {
+        let temp_dir = std::env::temp_dir().join("test_asset_index_sorted");
+        let pack_dir = temp_dir.join("test_pack");
+        let asset_dir = pack_dir.join("assets/minecraft/textures/block");
+        std::fs::create_dir_all(&asset_dir).expect("Failed to create test directory");
+
+        // Create files in non-alphabetical order
+        std::fs::write(asset_dir.join("zebra.png"), "fake").expect("Failed to create test file");
+        std::fs::write(asset_dir.join("apple.png"), "fake").expect("Failed to create test file");
+        std::fs::write(asset_dir.join("monkey.png"), "fake").expect("Failed to create test file");
+
+        let pack = PackMeta {
+            id: "test_pack".to_string(),
+            name: "Test Pack".to_string(),
+            path: pack_dir.to_string_lossy().to_string(),
+            size: 1000,
+            is_zip: false,
+            description: None,
+            icon_data: None,
+        };
+
+        let result = index_assets(&[pack]);
+
+        // Clean up
+        std::fs::remove_dir_all(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        let (assets, _) = result.unwrap();
+        assert_eq!(assets.len(), 3);
+
+        // Assets should be sorted alphabetically by ID
+        assert_eq!(assets[0].id, "minecraft:block/apple");
+        assert_eq!(assets[1].id, "minecraft:block/monkey");
+        assert_eq!(assets[2].id, "minecraft:block/zebra");
     }
 }

@@ -192,10 +192,205 @@ fn extract_icon_from_dir(dir_path: &Path) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::io::Write;
 
     #[test]
     fn test_scan_packs_nonexistent() {
         let result = scan_packs("/nonexistent/path");
         assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("does not exist"));
+    }
+
+    #[test]
+    fn test_scan_packs_not_a_directory() {
+        // Create a temporary file
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_pack_scanner_file.txt");
+        fs::write(&test_file, "test").expect("Failed to create test file");
+
+        let result = scan_packs(test_file.to_str().unwrap());
+
+        // Clean up
+        fs::remove_file(&test_file).ok();
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("not a directory"));
+    }
+
+    #[test]
+    fn test_scan_packs_empty_directory() {
+        // Create a temporary empty directory
+        let temp_dir = std::env::temp_dir().join("test_empty_pack_dir");
+        fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
+
+        let result = scan_packs(temp_dir.to_str().unwrap());
+
+        // Clean up
+        fs::remove_dir(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        let packs = result.unwrap();
+        assert_eq!(packs.len(), 0);
+    }
+
+    #[test]
+    fn test_scan_packs_with_directory_pack() {
+        // Create a temporary directory with a directory-based pack
+        let temp_dir = std::env::temp_dir().join("test_pack_dir_with_packs");
+        let pack_dir = temp_dir.join("test_pack");
+        fs::create_dir_all(&pack_dir).expect("Failed to create test directory");
+
+        // Create pack.mcmeta
+        let mcmeta_path = pack_dir.join("pack.mcmeta");
+        let mut mcmeta_file = fs::File::create(&mcmeta_path).expect("Failed to create pack.mcmeta");
+        mcmeta_file
+            .write_all(
+                br#"{
+            "pack": {
+                "pack_format": 15,
+                "description": "Test pack description"
+            }
+        }"#,
+            )
+            .expect("Failed to write pack.mcmeta");
+
+        let result = scan_packs(temp_dir.to_str().unwrap());
+
+        // Clean up
+        fs::remove_file(&mcmeta_path).ok();
+        fs::remove_dir(&pack_dir).ok();
+        fs::remove_dir(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        let packs = result.unwrap();
+        assert_eq!(packs.len(), 1);
+        assert_eq!(packs[0].name, "test_pack");
+        assert_eq!(packs[0].is_zip, false);
+        assert_eq!(packs[0].description, Some("Test pack description".to_string()));
+    }
+
+    #[test]
+    fn test_scan_packs_skips_hidden_files() {
+        // Create a temporary directory with hidden files
+        let temp_dir = std::env::temp_dir().join("test_pack_dir_hidden");
+        let hidden_dir = temp_dir.join(".hidden_pack");
+        fs::create_dir_all(&hidden_dir).expect("Failed to create test directory");
+
+        // Create pack.mcmeta in hidden directory
+        let mcmeta_path = hidden_dir.join("pack.mcmeta");
+        let mut mcmeta_file = fs::File::create(&mcmeta_path).expect("Failed to create pack.mcmeta");
+        mcmeta_file
+            .write_all(
+                br#"{
+            "pack": {
+                "pack_format": 15,
+                "description": "Hidden pack"
+            }
+        }"#,
+            )
+            .expect("Failed to write pack.mcmeta");
+
+        let result = scan_packs(temp_dir.to_str().unwrap());
+
+        // Clean up
+        fs::remove_file(&mcmeta_path).ok();
+        fs::remove_dir(&hidden_dir).ok();
+        fs::remove_dir(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        let packs = result.unwrap();
+        // Hidden files/directories should be skipped
+        assert_eq!(packs.len(), 0);
+    }
+
+    #[test]
+    fn test_scan_packs_skips_directory_without_mcmeta() {
+        // Create a temporary directory without pack.mcmeta
+        let temp_dir = std::env::temp_dir().join("test_pack_dir_no_mcmeta");
+        let pack_dir = temp_dir.join("not_a_pack");
+        fs::create_dir_all(&pack_dir).expect("Failed to create test directory");
+
+        let result = scan_packs(temp_dir.to_str().unwrap());
+
+        // Clean up
+        fs::remove_dir(&pack_dir).ok();
+        fs::remove_dir(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        let packs = result.unwrap();
+        assert_eq!(packs.len(), 0);
+    }
+
+    #[test]
+    fn test_extract_description_from_dir_valid() {
+        let temp_dir = std::env::temp_dir().join("test_extract_desc");
+        fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
+
+        let mcmeta_path = temp_dir.join("pack.mcmeta");
+        let mut mcmeta_file = fs::File::create(&mcmeta_path).expect("Failed to create pack.mcmeta");
+        mcmeta_file
+            .write_all(
+                br#"{
+            "pack": {
+                "pack_format": 15,
+                "description": "My custom description"
+            }
+        }"#,
+            )
+            .expect("Failed to write pack.mcmeta");
+
+        let description = extract_description_from_dir(&temp_dir);
+
+        // Clean up
+        fs::remove_file(&mcmeta_path).ok();
+        fs::remove_dir(&temp_dir).ok();
+
+        assert_eq!(description, Some("My custom description".to_string()));
+    }
+
+    #[test]
+    fn test_extract_description_from_dir_missing() {
+        let temp_dir = std::env::temp_dir().join("test_extract_desc_missing");
+        fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
+
+        let description = extract_description_from_dir(&temp_dir);
+
+        // Clean up
+        fs::remove_dir(&temp_dir).ok();
+
+        assert_eq!(description, None);
+    }
+
+    #[test]
+    fn test_extract_icon_from_dir_missing() {
+        let temp_dir = std::env::temp_dir().join("test_extract_icon_missing");
+        fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
+
+        let icon_data = extract_icon_from_dir(&temp_dir);
+
+        // Clean up
+        fs::remove_dir(&temp_dir).ok();
+
+        assert_eq!(icon_data, None);
+    }
+
+    #[test]
+    fn test_calculate_dir_size() {
+        let temp_dir = std::env::temp_dir().join("test_calc_size");
+        fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
+
+        // Create a test file with known size
+        let test_file = temp_dir.join("test.txt");
+        fs::write(&test_file, "12345").expect("Failed to create test file");
+
+        let size = calculate_dir_size(&temp_dir);
+
+        // Clean up
+        fs::remove_file(&test_file).ok();
+        fs::remove_dir(&temp_dir).ok();
+
+        // Should be at least 5 bytes (the content we wrote)
+        assert!(size >= 5);
     }
 }

@@ -14,6 +14,11 @@ import {
   useSelectWinner,
   useStore,
 } from "@state";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/ui/components/Tooltip/Tooltip";
 import { getBiomesWithCoords, type BiomeData } from "./biomeData";
 import s from "./styles.module.scss";
 
@@ -336,24 +341,28 @@ export default function BiomeColorPicker({
                 const isHovered = hoveredBiome === biome.id;
 
                 return (
-                  <button
-                    key={biome.id}
-                    className={`${s.hotspot} ${isSelected ? s.selected : ""} ${isHovered ? s.hovered : ""}`}
-                    style={{
-                      left: `${leftPercent}%`,
-                      top: `${topPercent}%`,
-                    }}
-                    onClick={() => handleBiomeSelect(biome, biome.x, biome.y)}
-                    onMouseEnter={() => setHoveredBiome(biome.id)}
-                    onMouseLeave={() => setHoveredBiome(null)}
-                    title={biome.name}
-                    disabled={readOnly}
-                  >
-                    <span className={s.dot} />
-                    {isHovered && (
-                      <span className={s.tooltip}>{biome.name}</span>
-                    )}
-                  </button>
+                  <Tooltip key={biome.id} delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <button
+                        className={`${s.hotspot} ${isSelected ? s.selected : ""} ${isHovered ? s.hovered : ""}`}
+                        style={{
+                          left: `${leftPercent}%`,
+                          top: `${topPercent}%`,
+                        }}
+                        onClick={() =>
+                          handleBiomeSelect(biome, biome.x, biome.y)
+                        }
+                        onMouseEnter={() => setHoveredBiome(biome.id)}
+                        onMouseLeave={() => setHoveredBiome(null)}
+                        disabled={readOnly}
+                      >
+                        <span className={s.dot} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
+                      {biome.name}
+                    </TooltipContent>
+                  </Tooltip>
                 );
               })}
             </div>

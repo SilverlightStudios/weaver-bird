@@ -2,6 +2,7 @@ import {
   createContext,
   forwardRef,
   useContext,
+  useId,
   type HTMLAttributes,
   type InputHTMLAttributes,
 } from "react";
@@ -55,7 +56,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
     },
     ref,
   ) => {
-    const groupName = name || `radio-group-${Math.random().toString(36).slice(2)}`;
+    const id = useId();
+    const groupName = name || `radio-group-${id}`;
 
     return (
       <RadioGroupContext.Provider

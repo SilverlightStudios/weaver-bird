@@ -1,6 +1,7 @@
-import { useCallback } from 'react'
-import { openFolderDialog } from '@lib/tauri'
-import s from './styles.module.scss'
+import { useCallback } from "react";
+import { openFolderDialog } from "@lib/tauri";
+import Button from "@/ui/components/buttons/Button";
+import s from "./styles.module.scss";
 
 interface Props {
   outputDir?: string;
@@ -39,9 +40,14 @@ export default function OutputSettings({
             placeholder="Select output directory..."
             readOnly
           />
-          <button className={s.button} onClick={handleBrowse}>
+          <Button
+            className={s.button}
+            onClick={handleBrowse}
+            variant="secondary"
+            size="md"
+          >
             Browse
-          </button>
+          </Button>
         </div>
       </div>
 

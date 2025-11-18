@@ -11,6 +11,7 @@ import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
 import Settings from "@components/Settings";
 import MinecraftLocations from "@components/Settings/MinecraftLocations";
+import Button from "@/ui/components/buttons/Button";
 
 import {
   scanPacksFolder,
@@ -313,13 +314,15 @@ export default function MainRoute() {
             <h1>Weaverbird</h1>
             <p>Minecraft Resource Pack Manager</p>
           </div>
-          <button
+          <Button
             className={s.settingsButton}
             onClick={() => setSettingsOpen(true)}
             aria-label="Open settings"
+            variant="ghost"
+            size="md"
           >
             ⚙️
-          </button>
+          </Button>
         </div>
       </div>
 

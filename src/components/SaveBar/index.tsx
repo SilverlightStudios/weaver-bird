@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { buildWeaverNest, formatError } from "@lib/tauri";
 import type { OverrideWirePayload } from "@state";
+import Button from "@/ui/components/buttons/Button";
 import s from "./styles.module.scss";
 
 interface Progress {
@@ -61,13 +62,16 @@ export default function SaveBar({
 
   return (
     <div className={s.root}>
-      <button
+      <Button
         className={s.button}
         onClick={handleSave}
         disabled={isLoading || disabled}
+        variant="primary"
+        size="lg"
+        fullWidth
       >
         {isLoading ? "Saving..." : "Save to Weaver Nest"}
-      </button>
+      </Button>
 
       {progress && (
         <div className={s.progress}>

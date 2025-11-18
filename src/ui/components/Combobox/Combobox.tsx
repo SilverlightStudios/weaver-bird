@@ -36,7 +36,8 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const triggerRef = useRef<HTMLButtonElement | HTMLDivElement>(null);
+  const triggerDivRef = useRef<HTMLDivElement>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((option) => option.value === value);
@@ -53,11 +54,12 @@ export function Combobox({
     if (!open) return;
 
     const handleClickOutside = (e: MouseEvent) => {
+      const triggerElement = triggerDivRef.current || triggerButtonRef.current;
       if (
         contentRef.current &&
         !contentRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
+        triggerElement &&
+        !triggerElement.contains(e.target as Node)
       ) {
         setOpen(false);
       }
@@ -80,9 +82,10 @@ export function Combobox({
 
   // Position the dropdown relative to trigger
   useEffect(() => {
-    if (!open || !contentRef.current || !triggerRef.current) return;
+    const triggerElement = triggerDivRef.current || triggerButtonRef.current;
+    if (!open || !contentRef.current || !triggerElement) return;
 
-    const trigger = triggerRef.current;
+    const trigger = triggerElement;
     const content = contentRef.current;
 
     const updatePosition = () => {
@@ -113,7 +116,7 @@ export function Combobox({
 
   const triggerButton = renderTrigger ? (
     <div
-      ref={triggerRef as React.RefObject<HTMLDivElement>}
+      ref={triggerDivRef}
       role="combobox"
       aria-expanded={open}
       onClick={() => setOpen(!open)}
@@ -127,7 +130,7 @@ export function Combobox({
     </div>
   ) : (
     <button
-      ref={triggerRef}
+      ref={triggerButtonRef}
       className={[s.trigger, className].filter(Boolean).join(" ")}
       role="combobox"
       aria-expanded={open}

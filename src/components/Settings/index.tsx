@@ -1,4 +1,13 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
+} from "@/ui/components/Drawer";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui/components/tabs";
+import Button from "@/ui/components/buttons/Button";
 import s from "./styles.module.scss";
 
 interface Props {
@@ -8,59 +17,41 @@ interface Props {
   outputTab: ReactNode;
 }
 
-type TabId = "minecraft" | "output";
-
-interface Tab {
-  id: TabId;
-  label: string;
-}
-
-const TABS: Tab[] = [
-  { id: "minecraft", label: "Minecraft Locations" },
-  { id: "output", label: "Output Settings" },
-];
-
 export default function Settings({
   isOpen,
   onClose,
   minecraftTab,
   outputTab,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>("minecraft");
-
-  if (!isOpen) return null;
-
   return (
-    <div className={s.overlay} onClick={onClose}>
-      <div className={s.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={s.header}>
-          <h2>Settings</h2>
-          <button
-            className={s.closeButton}
-            onClick={onClose}
-            aria-label="Close settings"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className={s.tabs}>
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={`${s.tab} ${activeTab === tab.id ? s.tabActive : ""}`}
-              onClick={() => setActiveTab(tab.id)}
+    <Drawer open={isOpen} onOpenChange={onClose} position="center">
+      <DrawerContent className={s.drawerContent}>
+        <DrawerHeader className={s.drawerHeader}>
+          <DrawerTitle>Settings</DrawerTitle>
+          <DrawerClose asChild>
+            <Button
+              variant="ghost"
+              size="md"
+              aria-label="Close settings"
+              className={s.closeButton}
             >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+              ✕
+            </Button>
+          </DrawerClose>
+        </DrawerHeader>
 
         <div className={s.content}>
-          {activeTab === "minecraft" && minecraftTab}
-          {activeTab === "output" && outputTab}
+          <Tabs defaultValue="minecraft">
+            <TabsList>
+              <TabsTrigger value="minecraft">Minecraft Locations</TabsTrigger>
+              <TabsTrigger value="output">Output Settings</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="minecraft">{minecraftTab}</TabsContent>
+            <TabsContent value="output">{outputTab}</TabsContent>
+          </Tabs>
         </div>
-      </div>
-    </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

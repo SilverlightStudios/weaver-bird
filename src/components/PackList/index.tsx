@@ -22,6 +22,7 @@ import type { LauncherInfo } from "@/state/types";
 import ResourcePackCard, {
   type ResourcePackCardMetadata,
 } from "@/components/cards/ResourcePackCard";
+import Button from "@/ui/components/buttons/Button";
 import s from "./styles.module.scss";
 
 interface PackItem {
@@ -208,9 +209,14 @@ export default function PackList({
         <div className={s.headerSection}>
           <h2 className={s.header}>Resource Packs</h2>
           {onBrowse && (
-            <button className={s.browseButton} onClick={onBrowse}>
+            <Button
+              className={s.browseButton}
+              onClick={onBrowse}
+              variant="secondary"
+              size="md"
+            >
               Browse
-            </button>
+            </Button>
           )}
         </div>
         {packsDir && <div className={s.packsDir}>{packsDir}</div>}

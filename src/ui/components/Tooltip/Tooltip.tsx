@@ -76,7 +76,7 @@ export const TooltipTrigger = forwardRef<
     ref,
   ) => {
     const { setOpen, delayDuration, triggerRef } = useTooltipContext();
-    const timeoutRef = useRef<NodeJS.Timeout>();
+    const timeoutRef = useRef<number>();
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
       timeoutRef.current = setTimeout(() => {
@@ -114,7 +114,7 @@ export const TooltipTrigger = forwardRef<
     const child = asChild && React.isValidElement(children) ? (children as React.ReactElement) : null;
     const childRef = child ? (child as { ref?: React.Ref<unknown> }).ref : null;
 
-    const mergedRef = useCallback((node: HTMLElement | null) => {
+    const mergedRef = useCallback((node: HTMLButtonElement | null) => {
       triggerRef.current = node;
       if (typeof ref === "function") ref(node);
       else if (ref) ref.current = node;
