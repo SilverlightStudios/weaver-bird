@@ -83,37 +83,20 @@
     @include tokens.radius-quirky-sm;
     @include tokens.rotate-slight;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgb(255 255 255 / 98%) 0%,
-            rgb(245 245 245 / 96%) 100%
-        ),
-        var(--color-block);
+    @include tokens.gradient-surface;
 
     cursor: grab;
     outline: none;
 
-    transition:
-        box-shadow 180ms var(--spring-bezier),
+    @include tokens.interactive-transitions;
+    transition: box-shadow 180ms var(--spring-bezier),
         rotate 180ms var(--spring-bezier),
         translate 180ms var(--spring-bezier),
         scale 120ms var(--spring-bezier);
 
     // Texture overlay
     isolation: isolate;
-
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        @include tokens.pattern-halftone-sm;
-        opacity: 0.2;
-        mix-blend-mode: soft-light;
-        pointer-events: none;
-        z-index: -1;
-        border-radius: inherit;
-    }
+    @include tokens.texture-overlay(0.2);
 
     .horizontal & {
         top: 50%;
@@ -138,10 +121,7 @@
         scale: 0.95;
     }
 
-    &:focus-visible {
-        outline: 3px solid var(--color-primary);
-        outline-offset: 4px;
-    }
+    @include tokens.focus-outline;
 }
 
 // Reduced motion support

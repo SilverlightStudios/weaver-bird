@@ -13,55 +13,11 @@
     padding: var(--spacing-sm);
     z-index: 50;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgb(255 255 255 / 98%) 0%,
-            rgb(245 245 245 / 96%) 100%
-        ),
-        var(--color-block);
+    @include tokens.gradient-surface;
 
     // Texture overlay
     isolation: isolate;
-
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        @include tokens.pattern-halftone-sm;
-        opacity: 0.2;
-        mix-blend-mode: soft-light;
-        pointer-events: none;
-        z-index: -1;
-        border-radius: inherit;
-    }
-
-    // Animation
-    @keyframes slideDownAndFade {
-        from {
-            opacity: 0;
-            translate: 0 -8px;
-            rotate: -2deg;
-        }
-        to {
-            opacity: 1;
-            translate: 0 0;
-            rotate: var(--rotate-slight);
-        }
-    }
-
-    @keyframes slideUpAndFade {
-        from {
-            opacity: 0;
-            translate: 0 8px;
-            rotate: 2deg;
-        }
-        to {
-            opacity: 1;
-            translate: 0 0;
-            rotate: var(--rotate-slight);
-        }
-    }
+    @include tokens.texture-overlay(0.2);
 
     &[data-side="top"] {
         animation: slideUpAndFade 200ms var(--spring-bezier);
@@ -93,30 +49,7 @@
     user-select: none;
     outline: none;
 
-    transition:
-        background 120ms ease,
-        rotate 120ms var(--spring-bezier),
-        translate 120ms var(--spring-bezier);
-
-    &:hover,
-    &[data-highlighted] {
-        background: var(--color-primary);
-        color: white;
-        rotate: 0deg;
-        translate: 2px 0;
-    }
-
-    &:active {
-        background: var(--color-ink);
-        color: var(--color-bg);
-        translate: 4px 0;
-    }
-
-    &[data-disabled] {
-        opacity: 0.4;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
+    @include tokens.menu-item-states;
 }
 
 // Checkbox item
@@ -218,25 +151,7 @@
     padding: var(--spacing-sm);
     z-index: 50;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgb(255 255 255 / 98%) 0%,
-            rgb(245 245 245 / 96%) 100%
-        ),
-        var(--color-block);
-
-    // Slide in from right
-    @keyframes slideLeftAndFade {
-        from {
-            opacity: 0;
-            translate: 8px 0;
-        }
-        to {
-            opacity: 1;
-            translate: 0 0;
-        }
-    }
+    @include tokens.gradient-surface;
 
     animation: slideLeftAndFade 180ms var(--spring-bezier);
 }

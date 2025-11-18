@@ -23,21 +23,9 @@
     color: var(--color-text);
     cursor: pointer;
 
-    transition:
-        box-shadow 180ms var(--spring-bezier),
-        rotate 180ms var(--spring-bezier),
-        translate 180ms var(--spring-bezier);
-
-    &:hover {
-        @include tokens.shadow-lg;
-        rotate: 0deg;
-        translate: 0 -2px;
-    }
-
-    &:focus-visible {
-        outline: 3px solid var(--color-primary);
-        outline-offset: 4px;
-    }
+    @include tokens.interactive-transitions;
+    @include tokens.interactive-lift;
+    @include tokens.focus-outline;
 
     &[aria-expanded="true"] {
         @include tokens.shadow-xl;
@@ -76,42 +64,11 @@
     max-width: 20rem;
     z-index: 50;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgb(255 255 255 / 98%) 0%,
-            rgb(245 245 245 / 96%) 100%
-        ),
-        var(--color-block);
+    @include tokens.gradient-surface;
 
     // Texture overlay
     isolation: isolate;
-
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        @include tokens.pattern-halftone-sm;
-        opacity: 0.2;
-        mix-blend-mode: soft-light;
-        pointer-events: none;
-        z-index: -1;
-        border-radius: inherit;
-    }
-
-    // Animation
-    @keyframes slideDownAndFade {
-        from {
-            opacity: 0;
-            translate: 0 -8px;
-            rotate: -2deg;
-        }
-        to {
-            opacity: 1;
-            translate: 0 0;
-            rotate: var(--rotate-slight);
-        }
-    }
+    @include tokens.texture-overlay(0.2);
 
     &[data-side="bottom"] {
         animation: slideDownAndFade 200ms var(--spring-bezier);
@@ -184,24 +141,7 @@
     overflow-y: auto;
     overflow-x: hidden;
 
-    // Custom scrollbar
-    &::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: rgb(0 0 0 / 5%);
-        border-radius: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--color-ink);
-        border-radius: 4px;
-
-        &:hover {
-            background: var(--color-primary);
-        }
-    }
+    @include tokens.custom-scrollbar;
 }
 
 // Empty state
@@ -236,30 +176,7 @@
     user-select: none;
     outline: none;
 
-    transition:
-        background 120ms ease,
-        rotate 120ms var(--spring-bezier),
-        translate 120ms var(--spring-bezier);
-
-    &[data-selected="true"],
-    &:hover {
-        background: var(--color-primary);
-        color: white;
-        rotate: 0deg;
-        translate: 2px 0;
-    }
-
-    &:active {
-        background: var(--color-ink);
-        color: var(--color-bg);
-        translate: 4px 0;
-    }
-
-    &[data-disabled="true"] {
-        opacity: 0.4;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
+    @include tokens.menu-item-states;
 }
 
 .itemCheck {

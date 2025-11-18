@@ -64,6 +64,7 @@
     isolation: isolate;
 
     // Transitions
+    @include tokens.interactive-transitions;
     transition:
         box-shadow 180ms var(--spring-bezier),
         rotate 180ms var(--spring-bezier),
@@ -72,16 +73,7 @@
         color 180ms ease;
 
     // Texture overlay
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        @include tokens.pattern-halftone-sm;
-        mix-blend-mode: soft-light;
-        opacity: 0.2;
-        pointer-events: none;
-    }
+    @include tokens.texture-overlay(0.2);
 
     // Hover state
     &:hover:not(.active):not(:disabled) {
@@ -97,11 +89,7 @@
         translate: 0 2px;
     }
 
-    // Focus visible
-    &:focus-visible {
-        outline: 3px solid var(--color-primary);
-        outline-offset: 4px;
-    }
+    @include tokens.focus-outline;
 
     // Disabled state
     &:disabled {
