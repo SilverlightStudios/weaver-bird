@@ -1,0 +1,157 @@
+@use "@/ui/tokens" as tokens;
+
+/**
+ * RadioGroup Component - Anti-Design Style
+ *
+ * Chunky, playful radio buttons with punk aesthetic.
+ */
+
+.radioGroup {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.radioItemWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.radioInput {
+  // Hide the native input but keep it accessible
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+
+  // Focus visible on the indicator
+  &:focus-visible + .radioIndicator {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 4px;
+  }
+}
+
+.radioIndicator {
+  // Anti-design styling
+  @include tokens.border-standard;
+  @include tokens.shadow-md;
+  @include tokens.rotate-slight;
+
+  // Sizing - chunky and bold
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+
+  // Asymmetric border radius (square-ish but quirky)
+  border-radius: 0.6rem 0.3rem 0.7rem 0.3rem;
+
+  // Background
+  background: var(--color-block);
+
+  // Center the dot
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Interaction
+  cursor: pointer;
+  position: relative;
+  isolation: isolate;
+  transition:
+    box-shadow 180ms var(--spring-bezier),
+    rotate 180ms var(--spring-bezier),
+    translate 180ms var(--spring-bezier),
+    background 180ms ease;
+
+  // Texture overlay
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    @include tokens.pattern-halftone-sm;
+    mix-blend-mode: soft-light;
+    opacity: 0.2;
+    pointer-events: none;
+  }
+
+  // Hover state
+  &:hover:not(.disabled) {
+    @include tokens.shadow-lg;
+    rotate: 0deg;
+    translate: 0 -2px;
+    background: var(--color-bg);
+  }
+
+  // Active/pressed state
+  &:active:not(.disabled) {
+    @include tokens.shadow-sm;
+    translate: 0 2px;
+  }
+
+  // Checked state
+  &.checked {
+    background: var(--color-primary);
+    border-color: var(--color-ink);
+    @include tokens.shadow-lg;
+
+    &:hover:not(.disabled) {
+      @include tokens.shadow-xl;
+      background: color-mix(in srgb, var(--color-primary) 90%, black);
+    }
+  }
+
+  // Disabled state
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+  }
+}
+
+.radioDot {
+  // Inner dot when checked
+  width: 0.7rem;
+  height: 0.7rem;
+  background: white;
+
+  // Asymmetric radius for playfulness
+  border-radius: 0.4rem 0.2rem 0.3rem 0.2rem;
+
+  // Slight rotation opposite to parent
+  rotate: 2deg;
+
+  // Subtle shadow
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 20%);
+
+  // Entry animation
+  animation: radioPopIn 180ms var(--spring-bezier);
+}
+
+@keyframes radioPopIn {
+  0% {
+    scale: 0;
+    rotate: -45deg;
+  }
+  100% {
+    scale: 1;
+    rotate: 2deg;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .radioIndicator {
+    rotate: 0deg;
+    transition-duration: 0.01ms;
+  }
+
+  .radioDot {
+    animation: none;
+    rotate: 0deg;
+  }
+}

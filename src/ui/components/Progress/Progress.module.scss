@@ -1,0 +1,129 @@
+@use "@/ui/tokens" as tokens;
+
+/**
+ * Progress Component - Anti-Design Style
+ *
+ * Chunky, playful progress bars with punk aesthetic.
+ */
+
+.progress {
+  width: 100%;
+  position: relative;
+}
+
+.progressTrack {
+  // Track (background)
+  @include tokens.border-standard;
+  @include tokens.shadow-md;
+  @include tokens.rotate-slight;
+
+  // Chunky height
+  height: 1.5rem;
+  width: 100%;
+
+  // Asymmetric border radius
+  border-radius: 0.6rem 0.4rem 0.7rem 0.3rem;
+
+  // Background
+  background: var(--color-block);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+
+  // Texture overlay on track
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    @include tokens.pattern-halftone-sm;
+    mix-blend-mode: soft-light;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+.progressIndicator {
+  // Progress fill
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    color-mix(in srgb, var(--color-primary) 80%, white) 50%,
+    var(--color-primary) 100%
+  );
+
+  // Transitions
+  transition: width 300ms ease-out;
+
+  // Position for label
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
+
+  // Subtle inner shadow for depth
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 30%);
+
+  // Animated stripes (punk aesthetic)
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgb(0 0 0 / 10%) 10px,
+    rgb(0 0 0 / 10%) 20px
+  );
+  background-size: 28px 28px;
+  animation: progressStripes 1s linear infinite;
+
+  // Slight counter-rotation
+  rotate: 0.1deg;
+}
+
+@keyframes progressStripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 28px 0;
+  }
+}
+
+.progressLabel {
+  // Label text styling
+  font-family: var(--font-family);
+  font-size: 0.65rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: white;
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 40%);
+  white-space: nowrap;
+  z-index: 1;
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .progressTrack {
+    rotate: 0deg;
+  }
+
+  .progressIndicator {
+    animation: none;
+    rotate: 0deg;
+    transition-duration: 0.01ms;
+  }
+}
+
+// Complete state (100%)
+.progress:has(.progressIndicator[style*="100%"]) {
+  .progressIndicator {
+    background: linear-gradient(
+      90deg,
+      var(--color-emerald, #10b981) 0%,
+      color-mix(in srgb, var(--color-emerald, #10b981) 80%, white) 50%,
+      var(--color-emerald, #10b981) 100%
+    );
+  }
+}
