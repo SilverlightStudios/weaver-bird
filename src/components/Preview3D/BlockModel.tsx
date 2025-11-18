@@ -17,6 +17,7 @@ import {
   getVariantNumber,
   getPlantNameFromPotted,
   getBlockStateIdFromAssetId,
+  extractBlockStateProperties,
 } from "@lib/assetUtils";
 
 interface Props {
@@ -157,8 +158,16 @@ function BlockModel({
 
         // Resolve blockstate -> models with transformations
         console.log("[BlockModel] Calling resolveBlockState Tauri command...");
-        console.log("[BlockModel] Block props:", blockProps);
+
+        // Extract inferred properties from asset ID (e.g., _on -> powered=true)
+        const inferredProps = extractBlockStateProperties(modelAssetId);
+        console.log("[BlockModel] Inferred props from asset ID:", inferredProps);
+
+        // Merge user-provided props with inferred props (user props take precedence)
+        const mergedProps = { ...inferredProps, ...blockProps };
+        console.log("[BlockModel] Merged block props:", mergedProps);
         console.log("[BlockModel] Seed:", seed);
+
         const blockStateAssetId = getBlockStateIdFromAssetId(modelAssetId);
         console.log("[BlockModel] Blockstate asset ID:", blockStateAssetId);
 
@@ -166,7 +175,7 @@ function BlockModel({
           packId,
           blockStateAssetId,
           packsDirPath,
-          Object.keys(blockProps).length > 0 ? blockProps : undefined,
+          Object.keys(mergedProps).length > 0 ? mergedProps : undefined,
           seed,
         );
 

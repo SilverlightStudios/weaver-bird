@@ -210,8 +210,120 @@ export function guessColormapTypeForAsset(
 }
 
 /**
+ * Block state suffix patterns that should be extracted as properties
+ * These are universal patterns used across many Minecraft blocks
+ */
+interface BlockStateSuffix {
+  pattern: RegExp;
+  property: string;
+  value: string;
+  // If true, also check for the opposite suffix (e.g., _on/_off)
+  opposite?: { suffix: string; value: string };
+}
+
+const BLOCK_STATE_SUFFIXES: BlockStateSuffix[] = [
+  // Redstone power state (rails, repeaters, comparators, etc.)
+  {
+    pattern: /_on$/,
+    property: "powered",
+    value: "true",
+    opposite: { suffix: "_off", value: "false" },
+  },
+  // Lit state (furnaces, redstone torches, etc.)
+  {
+    pattern: /_lit$/,
+    property: "lit",
+    value: "true",
+  },
+  // Open/closed state (doors, trapdoors, fence gates)
+  {
+    pattern: /_open$/,
+    property: "open",
+    value: "true",
+    opposite: { suffix: "_closed", value: "false" },
+  },
+  // Active state (sculk sensors, etc.)
+  {
+    pattern: /_active$/,
+    property: "active",
+    value: "true",
+    opposite: { suffix: "_inactive", value: "false" },
+  },
+  // Triggered state (dispensers, droppers)
+  {
+    pattern: /_triggered$/,
+    property: "triggered",
+    value: "true",
+  },
+];
+
+/**
+ * Extract block state properties from an asset ID suffix
+ * Example: "activator_rail_on" -> { powered: "true" }
+ * Example: "furnace_lit" -> { lit: "true" }
+ * Example: "oak_door_open" -> { open: "true" }
+ */
+export function extractBlockStateProperties(
+  assetId: string,
+): Record<string, string> {
+  const name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
+  const props: Record<string, string> = {};
+
+  for (const suffix of BLOCK_STATE_SUFFIXES) {
+    if (suffix.pattern.test(name)) {
+      props[suffix.property] = suffix.value;
+      break;
+    }
+    // Check for opposite suffix
+    if (suffix.opposite && name.endsWith(suffix.opposite.suffix)) {
+      props[suffix.property] = suffix.opposite.value;
+      break;
+    }
+  }
+
+  return props;
+}
+
+/**
+ * Remove block state suffixes from an asset name
+ * Example: "activator_rail_on" -> "activator_rail"
+ * Example: "furnace_lit" -> "furnace"
+ */
+export function removeBlockStateSuffixes(name: string): string {
+  let result = name;
+
+  // Remove state suffixes
+  for (const suffix of BLOCK_STATE_SUFFIXES) {
+    result = result.replace(suffix.pattern, "");
+    if (suffix.opposite) {
+      result = result.replace(new RegExp(`${suffix.opposite.suffix}$`), "");
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Transform asset name to match blockstate file naming convention
+ * Handles potted plants and other special naming patterns
+ * Example: "allium_potted" -> "potted_allium"
+ * Example: "cactus_potted" -> "potted_cactus"
+ */
+export function normalizeBlockNameForBlockstate(name: string): string {
+  // Handle "_potted" suffix -> "potted_" prefix
+  // Minecraft blockstates use "potted_plant" format, not "plant_potted"
+  if (name.endsWith("_potted")) {
+    const plantName = name.replace(/_potted$/, "");
+    return `potted_${plantName}`;
+  }
+
+  return name;
+}
+
+/**
  * Extract the base name without variant suffixes
  * Example: "acacia_leaves_bushy1" -> "acacia_leaves"
+ * Example: "activator_rail_on" -> "activator_rail"
  */
 export function getBaseName(assetId: string): string {
   let name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
@@ -222,6 +334,9 @@ export function getBaseName(assetId: string): string {
     "",
   );
 
+  // Remove block state suffixes (on/off, lit, open/closed, etc.)
+  name = removeBlockStateSuffixes(name);
+
   // Remove trailing numbers
   name = name.replace(/\d+$/, "");
 
@@ -231,12 +346,18 @@ export function getBaseName(assetId: string): string {
 /**
  * Convert a texture asset ID to the canonical blockstate asset ID
  * Example: "minecraft:block/acacia_door_bottom" -> "minecraft:block/acacia_door"
+ * Example: "minecraft:block/activator_rail_on" -> "minecraft:block/activator_rail"
+ * Example: "minecraft:block/allium_potted" -> "minecraft:block/potted_allium"
  */
 export function getBlockStateIdFromAssetId(assetId: string): string {
   const namespaceMatch = assetId.match(/^([^:]+):/);
   const namespace = namespaceMatch ? namespaceMatch[1] : "minecraft";
 
-  const baseName = getBaseName(assetId);
+  let baseName = getBaseName(assetId);
+
+  // Apply special naming transformations (e.g., potted plants)
+  baseName = normalizeBlockNameForBlockstate(baseName);
+
   return `${namespace}:block/${baseName}`;
 }
 
