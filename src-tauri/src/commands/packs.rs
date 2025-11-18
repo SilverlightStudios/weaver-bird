@@ -684,29 +684,53 @@ pub fn get_block_state_schema_impl(
         target_pack.name
     );
 
-    // Read blockstate file
-    let blockstate = crate::util::blockstates::read_blockstate(
-        &PathBuf::from(&target_pack.path),
-        &normalized_block_id,
-        target_pack.is_zip,
-    )
-    .or_else(|e| {
-        println!(
-            "[get_block_state_schema] Not found in pack ({}), trying vanilla...",
-            e
-        );
+    // Use universal blockstate finder to locate the file
+    // This scans the directory and matches by normalizing names (removing underscores)
+    // Works with any block type without needing a hardcoded list
+    let (blockstate, used_block_id) = {
+        // Try target pack first
+        if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
+            &PathBuf::from(&target_pack.path),
+            &normalized_block_id,
+            target_pack.is_zip,
+        ) {
+            println!(
+                "[get_block_state_schema] Found blockstate in pack: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&target_pack.path),
+                &actual_block_id,
+                target_pack.is_zip,
+            )?;
+            (bs, actual_block_id)
+        }
         // Fallback to vanilla
-        crate::util::blockstates::read_blockstate(
+        else if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
             &PathBuf::from(&vanilla_pack.path),
             &normalized_block_id,
             vanilla_pack.is_zip,
-        )
-    })
-    .map_err(|e| AppError::validation(format!("Blockstate not found: {}", e)))?;
+        ) {
+            println!(
+                "[get_block_state_schema] Found blockstate in vanilla: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&vanilla_pack.path),
+                &actual_block_id,
+                vanilla_pack.is_zip,
+            )?;
+            (bs, actual_block_id)
+        } else {
+            return Err(AppError::validation(format!(
+                "Blockstate not found: {}",
+                normalized_block_id
+            )));
+        }
+    };
 
     // Build schema
-    let schema =
-        crate::util::blockstates::build_block_state_schema(&blockstate, &normalized_block_id);
+    let schema = crate::util::blockstates::build_block_state_schema(&blockstate, &used_block_id);
 
     Ok(schema)
 }
@@ -787,52 +811,95 @@ pub fn resolve_block_state_impl(
         normalized_block_id
     );
 
-    // Read blockstate file
-    let blockstate = crate::util::blockstates::read_blockstate(
-        &PathBuf::from(&target_pack.path),
-        &normalized_block_id,
-        target_pack.is_zip,
-    )
-    .or_else(|e| {
-        println!(
-            "[resolve_block_state] Not found in pack ({}), trying vanilla...",
-            e
-        );
+    // Use universal blockstate finder to locate the file
+    // This scans the directory and matches by normalizing names (removing underscores)
+    // Works with any block type without needing a hardcoded list
+    let (blockstate, used_block_id) = {
+        // Try target pack first
+        if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
+            &PathBuf::from(&target_pack.path),
+            &normalized_block_id,
+            target_pack.is_zip,
+        ) {
+            println!(
+                "[resolve_block_state] Found blockstate in pack: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&target_pack.path),
+                &actual_block_id,
+                target_pack.is_zip,
+            )?;
+            (bs, actual_block_id)
+        }
         // Fallback to vanilla
-        crate::util::blockstates::read_blockstate(
+        else if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
             &PathBuf::from(&vanilla_pack.path),
             &normalized_block_id,
             vanilla_pack.is_zip,
-        )
-    })
-    .map_err(|e| AppError::validation(format!("Blockstate not found: {}", e)))?;
-
-    let mut schema_cache: Option<crate::util::blockstates::BlockStateSchema> = None;
-    let mut get_schema = || -> crate::util::blockstates::BlockStateSchema {
-        if schema_cache.is_none() {
-            schema_cache = Some(crate::util::blockstates::build_block_state_schema(
-                &blockstate,
-                &normalized_block_id,
-            ));
+        ) {
+            println!(
+                "[resolve_block_state] Found blockstate in vanilla: {} -> {}",
+                normalized_block_id, actual_block_id
+            );
+            let bs = crate::util::blockstates::read_blockstate(
+                &PathBuf::from(&vanilla_pack.path),
+                &actual_block_id,
+                vanilla_pack.is_zip,
+            )?;
+            (bs, actual_block_id)
+        } else {
+            return Err(AppError::validation(format!(
+                "Blockstate not found: {}",
+                normalized_block_id
+            )));
         }
-        schema_cache
-            .as_ref()
-            .expect("schema cache should be initialized")
-            .clone()
     };
 
-    // CRITICAL: Merge provided state props with defaults so multi-part overrides only need to provide the keys they change
+    println!(
+        "[resolve_block_state] Successfully loaded blockstate for: {}",
+        used_block_id
+    );
+
+    // Build schema to get valid properties for this block
+    let schema = crate::util::blockstates::build_block_state_schema(&blockstate, &used_block_id);
+
+    // Get the set of valid property names for this block
+    let valid_props: std::collections::HashSet<String> =
+        schema.properties.iter().map(|p| p.name.clone()).collect();
+
+    println!(
+        "[resolve_block_state] Valid properties for this block: {:?}",
+        valid_props
+    );
+
+    // CRITICAL: Merge provided state props with defaults, but ONLY include properties
+    // that are actually defined in the blockstate schema. This filters out invalid
+    // properties like "hinge" for trapdoors or "distance" for barrels.
     let final_props = match state_props {
         Some(map) if !map.is_empty() => {
-            let schema = get_schema();
             let mut merged = schema.default_state.clone();
+            let mut filtered_count = 0;
             for (key, value) in map {
-                merged.insert(key, value);
+                if valid_props.contains(&key) {
+                    merged.insert(key, value);
+                } else {
+                    filtered_count += 1;
+                    println!(
+                        "[resolve_block_state] Filtered out invalid property: {}={}",
+                        key, value
+                    );
+                }
+            }
+            if filtered_count > 0 {
+                println!(
+                    "[resolve_block_state] Filtered out {} invalid properties",
+                    filtered_count
+                );
             }
             Some(merged)
         }
         _ => {
-            let schema = get_schema();
             println!(
                 "[resolve_block_state] Using default state: {:?}",
                 schema.default_state
@@ -841,10 +908,12 @@ pub fn resolve_block_state_impl(
         }
     };
 
+    println!("[resolve_block_state] Final properties: {:?}", final_props);
+
     // Resolve blockstate
     let resolution = crate::util::blockstates::resolve_blockstate(
         &blockstate,
-        &normalized_block_id,
+        &used_block_id,
         final_props,
         seed,
     )?;

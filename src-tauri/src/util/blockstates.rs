@@ -70,6 +70,85 @@ pub struct MultipartCase {
     pub apply: BlockstateVariant,
 }
 
+/// Find the actual blockstate filename by fuzzy matching
+///
+/// This function scans the blockstates directory and finds a file that matches
+/// the requested block_id when underscores are removed. This provides universal
+/// support for all block types without needing to maintain a hardcoded list.
+///
+/// # Arguments
+/// * `pack_path` - Path to the resource pack
+/// * `block_id` - Block ID to search for (e.g., "acaciabutton" or "acacia_button")
+/// * `is_zip` - Whether the pack is a ZIP file
+///
+/// # Returns
+/// The actual block ID as it appears in the blockstate filename, or None if not found
+pub fn find_blockstate_file(pack_path: &Path, block_id: &str, is_zip: bool) -> Option<String> {
+    // Normalize the input by removing underscores for comparison
+    let normalized_input = block_id.replace('_', "").to_lowercase();
+
+    let blockstate_files: Vec<String> = if is_zip {
+        // For ZIP files, list entries and filter to blockstates
+        let zip_path_str = pack_path.to_str()?;
+        let all_files = crate::util::zip::list_zip_files(zip_path_str).ok()?;
+
+        all_files
+            .into_iter()
+            .filter(|f| f.starts_with("assets/minecraft/blockstates/") && f.ends_with(".json"))
+            .map(|f| {
+                // Extract just the filename without path and extension
+                f.strip_prefix("assets/minecraft/blockstates/")
+                    .unwrap_or(&f)
+                    .strip_suffix(".json")
+                    .unwrap_or(&f)
+                    .to_string()
+            })
+            .collect()
+    } else {
+        // For directories, read the blockstates folder
+        let blockstates_dir = pack_path.join("assets/minecraft/blockstates");
+        if !blockstates_dir.exists() {
+            return None;
+        }
+
+        match fs::read_dir(&blockstates_dir) {
+            Ok(entries) => entries
+                .flatten()
+                .filter_map(|entry| {
+                    let path = entry.path();
+                    if path.extension().map_or(false, |ext| ext == "json") {
+                        path.file_stem()
+                            .and_then(|s| s.to_str())
+                            .map(|s| s.to_string())
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            Err(_) => return None,
+        }
+    };
+
+    // First try exact match
+    if blockstate_files.contains(&block_id.to_string()) {
+        return Some(block_id.to_string());
+    }
+
+    // Then try normalized match (remove underscores)
+    for file in blockstate_files {
+        let normalized_file = file.replace('_', "").to_lowercase();
+        if normalized_file == normalized_input {
+            println!(
+                "[find_blockstate_file] Matched '{}' -> '{}' via normalization",
+                block_id, file
+            );
+            return Some(file);
+        }
+    }
+
+    None
+}
+
 /// Read a blockstate file from a resource pack
 ///
 /// # Arguments
