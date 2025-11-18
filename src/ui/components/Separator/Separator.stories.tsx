@@ -22,79 +22,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Horizontal: Story = {
+export const Default: Story = {
   args: {
     orientation: "horizontal",
   },
-  render: (args) => (
-    <div style={{ width: "300px" }}>
-      <div style={{ padding: "1rem" }}>
-        <h4
-          style={{
-            fontSize: "0.875rem",
-            fontFamily: "var(--font-family)",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: "0.5rem",
-          }}
-        >
-          Minecraft Pack Manager
-        </h4>
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "var(--color-text-light)",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Organize and customize your resource packs
-        </p>
-      </div>
-      <Separator {...args} />
-      <div
-        style={{
-          padding: "1rem",
-          display: "flex",
-          gap: "1rem",
-          fontSize: "0.75rem",
-          fontFamily: "var(--font-family)",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-        }}
-      >
-        <div>About</div>
-        <div>Docs</div>
-        <div>Source</div>
-      </div>
-    </div>
-  ),
-};
-
-export const Vertical: Story = {
-  args: {
-    orientation: "vertical",
-  },
-  render: (args) => (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "1rem",
-        height: "40px",
-        fontSize: "0.75rem",
-        fontFamily: "var(--font-family)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
-    >
-      <div>Blog</div>
-      <Separator {...args} />
-      <div>Docs</div>
-      <Separator {...args} />
-      <div>Source</div>
-    </div>
-  ),
 };
 
 export const ContentSeparation: Story = {

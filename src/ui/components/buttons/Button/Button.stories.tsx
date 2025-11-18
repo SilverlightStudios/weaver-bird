@@ -17,12 +17,41 @@ const meta: Meta<typeof Button> = {
   args: {
     children: "Spawn Builder",
   },
+  argTypes: {
+    variant: {
+      control: "select",
+      options: ["primary", "secondary", "ghost"],
+      description: "Button visual style variant",
+    },
+    size: {
+      control: "select",
+      options: ["sm", "md", "lg"],
+      description: "Button size",
+    },
+    disabled: {
+      control: "boolean",
+      description: "Disable the button",
+    },
+    fullWidth: {
+      control: "boolean",
+      description: "Make button take full width of container",
+    },
+    iconLocation: {
+      control: "select",
+      options: ["leading", "following", "above", "below"],
+      description: "Position of icon relative to text",
+    },
+    color: {
+      control: "color",
+      description: "Custom accent color",
+    },
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof Button>;
 
-export const Primary: Story = {
+export const Default: Story = {
   args: {
     variant: "primary",
   },

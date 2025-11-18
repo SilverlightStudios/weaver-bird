@@ -8,6 +8,13 @@ const meta = {
     layout: "centered",
   },
   tags: ["autodocs"],
+  argTypes: {
+    orientation: {
+      control: "select",
+      options: ["horizontal", "vertical"],
+      description: "Orientation of the tabs list",
+    },
+  },
 } satisfies Meta<typeof Tabs>;
 
 export default meta;
