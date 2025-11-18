@@ -616,51 +616,29 @@ export default function MainRoute() {
 
       {/* Footer */}
       <div className={s.footer}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-            padding: "0.5rem 0.75rem",
+        <SaveBar
+          isLoading={false}
+          progress={uiState.progress}
+          disabled={!uiState.outputDir || !packsDir}
+          packsDir={packsDir}
+          packOrder={packOrder}
+          overrides={overridesRecord}
+          outputDir={uiState.outputDir}
+          statusMessage={errorMessage || successMessage}
+          statusType={errorMessage ? "error" : successMessage ? "success" : "idle"}
+          onClearStatus={() => {
+            setErrorMessage("");
+            setSuccessMessage("");
           }}
-        >
-          {errorMessage && (
-            <div
-              style={{
-                color: "var(--color-danger)",
-                fontSize: "var(--font-size-sm)",
-              }}
-            >
-              Error: {errorMessage}
-            </div>
-          )}
-          {successMessage && (
-            <div
-              style={{
-                color: "var(--color-success)",
-                fontSize: "var(--font-size-sm)",
-              }}
-            >
-              Success: {successMessage}
-            </div>
-          )}
-
-          <SaveBar
-            isLoading={false}
-            progress={uiState.progress}
-            disabled={!uiState.outputDir || !packsDir}
-            packsDir={packsDir}
-            packOrder={packOrder}
-            overrides={overridesRecord}
-            outputDir={uiState.outputDir}
-            onSuccess={() => {
-              setSuccessMessage("Weaver Nest built successfully!");
-            }}
-            onError={(error: string) => {
-              setErrorMessage(error);
-            }}
-          />
-        </div>
+          onSuccess={() => {
+            setErrorMessage("");
+            setSuccessMessage("Weaver Nest built successfully!");
+          }}
+          onError={(error: string) => {
+            setSuccessMessage("");
+            setErrorMessage(error);
+          }}
+        />
       </div>
 
       {/* Settings Modal */}

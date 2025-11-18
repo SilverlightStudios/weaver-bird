@@ -11,6 +11,8 @@ interface Progress {
   bytes?: number;
 }
 
+type StatusType = "idle" | "success" | "error";
+
 interface Props {
   isLoading?: boolean;
   progress?: Progress;
@@ -21,7 +23,27 @@ interface Props {
   outputDir?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
+  statusMessage?: string;
+  statusType?: StatusType;
+  onClearStatus?: () => void;
 }
+
+const SaveIcon = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+    <polyline points="17 21 17 13 7 13 7 21" />
+    <polyline points="7 3 7 8 15 8" />
+  </svg>
+);
 
 export default function SaveBar({
   isLoading = false,
@@ -33,6 +55,9 @@ export default function SaveBar({
   outputDir = "",
   onSuccess,
   onError,
+  statusMessage,
+  statusType = "idle",
+  onClearStatus,
 }: Props) {
   const percent = progress
     ? Math.round((progress.completed / Math.max(progress.total, 1)) * 100)
@@ -67,24 +92,40 @@ export default function SaveBar({
         onClick={handleSave}
         disabled={isLoading || disabled}
         variant="primary"
-        size="lg"
-        fullWidth
+        size="md"
+        renderIcon={() => <SaveIcon />}
+        iconLocation="leading"
       >
-        {isLoading ? "Saving..." : "Save to Weaver Nest"}
+        {isLoading ? "Saving..." : "Save"}
       </Button>
 
-      {progress && (
-        <div className={s.progress}>
-          <div className={s.progressBar}>
-            <div className={s.fill} style={{ width: `${percent}%` }} />
+      <div className={s.statusArea}>
+        {progress ? (
+          <div className={s.progress}>
+            <div className={s.progressBar}>
+              <div className={s.fill} style={{ width: `${percent}%` }} />
+            </div>
+            <span className={s.progressText}>
+              {progress.phase} {progress.completed}/{progress.total}
+              {progress.bytes &&
+                ` (${(progress.bytes / 1024 / 1024).toFixed(1)} MB)`}
+            </span>
           </div>
-          <span className={s.progressText}>
-            {progress.phase} {progress.completed}/{progress.total}
-            {progress.bytes &&
-              ` (${(progress.bytes / 1024 / 1024).toFixed(1)} MB)`}
-          </span>
-        </div>
-      )}
+        ) : statusMessage ? (
+          <div className={s.status} data-type={statusType}>
+            <span className={s.statusText}>{statusMessage}</span>
+            {onClearStatus && (
+              <button
+                className={s.clearButton}
+                onClick={onClearStatus}
+                aria-label="Clear status"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
