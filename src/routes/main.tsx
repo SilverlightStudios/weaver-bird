@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import s from "./main.module.scss";
 
 import PackList from "@components/PackList";
@@ -21,6 +21,12 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/ui/components/Pagination/Pagination";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/ui/components/Resizable/Resizable";
+import type { ImperativePanelHandle } from "react-resizable-panels";
 
 import {
   scanPacksFolder,
@@ -163,6 +169,8 @@ export default function MainRoute() {
   } | null>(null);
   const [blockProps, setBlockProps] = useState<Record<string, string>>({});
   const [seed, setSeed] = useState(0);
+  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
+  const leftSidebarRef = useRef<ImperativePanelHandle>(null);
   const setPacksDirInStore = useSetPacksDir();
 
   // UI messages with auto-hide
@@ -259,6 +267,18 @@ export default function MainRoute() {
     },
     [setOverride],
   );
+
+  const handleToggleLeftSidebar = useCallback(() => {
+    const panel = leftSidebarRef.current;
+    if (panel) {
+      if (isLeftSidebarCollapsed) {
+        panel.expand();
+      } else {
+        panel.collapse();
+      }
+      setIsLeftSidebarCollapsed(!isLeftSidebarCollapsed);
+    }
+  }, [isLeftSidebarCollapsed]);
 
   const handleBrowsePacksFolder = useCallback(async () => {
     try {
@@ -439,119 +459,159 @@ export default function MainRoute() {
 
       {/* Main Content */}
       <div className={s.mainContent}>
-        {/* Left: Pack List */}
-        <div className={s.sidebar}>
-          <PackList
-            packs={packListItems}
-            onReorder={handleReorderPacks}
-            onBrowse={handleBrowsePacksFolder}
-            packsDir={packsDir}
-            selectedLauncher={selectedLauncher}
-            availableLaunchers={availableLaunchers}
-            onLauncherChange={handleLauncherChange}
-          />
-        </div>
+        <ResizablePanelGroup direction="horizontal">
+          {/* Left: Pack List (Collapsible) */}
+          <ResizablePanel
+            ref={leftSidebarRef}
+            defaultSize={25}
+            minSize={15}
+            maxSize={35}
+            collapsible={true}
+            collapsedSize={4}
+            onCollapse={() => setIsLeftSidebarCollapsed(true)}
+            onExpand={() => setIsLeftSidebarCollapsed(false)}
+            className={s.sidebar}
+          >
+            <div className={s.sidebarContent}>
+              {/* Collapse Toggle Button */}
+              <button
+                className={s.collapseButton}
+                onClick={handleToggleLeftSidebar}
+                aria-label={
+                  isLeftSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                }
+                title={
+                  isLeftSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                }
+              >
+                {isLeftSidebarCollapsed ? "▶" : "◀"}
+              </button>
 
-        {/* Center: Search & Results */}
-        <div className={s.center}>
-          <div className={s.searchSection}>
-            <SearchBar
-              value={uiState.searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search blocks, mobs, textures..."
-            />
-          </div>
+              {/* Pack List Content */}
+              {!isLeftSidebarCollapsed && (
+                <PackList
+                  packs={packListItems}
+                  onReorder={handleReorderPacks}
+                  onBrowse={handleBrowsePacksFolder}
+                  packsDir={packsDir}
+                  selectedLauncher={selectedLauncher}
+                  availableLaunchers={availableLaunchers}
+                  onLauncherChange={handleLauncherChange}
+                />
+              )}
+            </div>
+          </ResizablePanel>
 
-          <div className={s.resultsSection}>
-            <AssetResults
-              assets={assetListItems}
-              selectedId={uiState.selectedAssetId}
-              onSelect={setSelectedAsset}
-              totalItems={paginatedData.totalItems}
-              displayRange={displayRange}
-            />
+          <ResizableHandle withHandle />
 
-            {/* Pagination Controls */}
-            {paginatedData.totalPages > 1 && (
-              <div style={{ padding: "var(--spacing-md)", paddingTop: "0" }}>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() =>
-                          setCurrentPage(paginatedData.currentPage - 1)
-                        }
-                        disabled={!paginatedData.hasPrevPage}
-                      />
-                    </PaginationItem>
+          {/* Center: Search & Results */}
+          <ResizablePanel defaultSize={45} minSize={30} className={s.center}>
+            <div className={s.searchSection}>
+              <SearchBar
+                value={uiState.searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search blocks, mobs, textures..."
+              />
+            </div>
 
-                    {/* Page numbers */}
-                    {renderPageNumbers(
-                      paginatedData.currentPage,
-                      paginatedData.totalPages,
-                      setCurrentPage,
-                    )}
+            <div className={s.resultsSection}>
+              <AssetResults
+                assets={assetListItems}
+                selectedId={uiState.selectedAssetId}
+                onSelect={setSelectedAsset}
+                totalItems={paginatedData.totalItems}
+                displayRange={displayRange}
+              />
 
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() =>
-                          setCurrentPage(paginatedData.currentPage + 1)
-                        }
-                        disabled={!paginatedData.hasNextPage}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
+              {/* Pagination Controls */}
+              {paginatedData.totalPages > 1 && (
+                <div style={{ padding: "var(--spacing-md)", paddingTop: "0" }}>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() =>
+                            setCurrentPage(paginatedData.currentPage - 1)
+                          }
+                          disabled={!paginatedData.hasPrevPage}
+                        />
+                      </PaginationItem>
+
+                      {/* Page numbers */}
+                      {renderPageNumbers(
+                        paginatedData.currentPage,
+                        paginatedData.totalPages,
+                        setCurrentPage,
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() =>
+                            setCurrentPage(paginatedData.currentPage + 1)
+                          }
+                          disabled={!paginatedData.hasNextPage}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right: Preview & Options */}
+          <ResizablePanel
+            defaultSize={30}
+            minSize={25}
+            maxSize={50}
+            className={s.rightPanel}
+          >
+            <div className={s.previewSection}>
+              <Preview3D
+                assetId={uiState.selectedAssetId}
+                biomeColor={biomeColor}
+                onTintDetected={setTintInfo}
+                showPot={showPot}
+                onShowPotChange={setShowPot}
+                blockProps={blockProps}
+                seed={seed}
+                foliagePreviewBlock={foliagePreviewBlock}
+              />
+            </div>
+
+            <div className={s.optionsSection}>
+              <OptionsPanel
+                assetId={uiState.selectedAssetId}
+                biomeColor={biomeColor}
+                onBiomeColorChange={setBiomeColor}
+                providers={providers}
+                onSelectProvider={handleSelectProvider}
+                showPot={showPot}
+                onShowPotChange={setShowPot}
+                hasTintindex={tintInfo.hasTint}
+                tintType={tintInfo.tintType}
+                foliagePreviewBlock={foliagePreviewBlock}
+                onFoliagePreviewBlockChange={setFoliagePreviewBlock}
+                onBlockPropsChange={setBlockProps}
+                onSeedChange={setSeed}
+              />
+            </div>
+
+            {/* Texture Variant Selector - for different numbered variants of the same texture */}
+            {uiState.selectedAssetId && (
+              <TextureVariantSelector
+                assetId={uiState.selectedAssetId}
+                allAssets={allAssets.map((a: AssetRecord) => ({
+                  id: a.id,
+                  name: a.id,
+                }))}
+                onSelectVariant={setSelectedAsset}
+              />
             )}
-          </div>
-        </div>
-
-        {/* Right: Preview & Options */}
-        <div className={s.rightPanel}>
-          <div className={s.previewSection}>
-            <Preview3D
-              assetId={uiState.selectedAssetId}
-              biomeColor={biomeColor}
-              onTintDetected={setTintInfo}
-              showPot={showPot}
-              onShowPotChange={setShowPot}
-              blockProps={blockProps}
-              seed={seed}
-              foliagePreviewBlock={foliagePreviewBlock}
-            />
-          </div>
-
-          <div className={s.optionsSection}>
-            <OptionsPanel
-              assetId={uiState.selectedAssetId}
-              biomeColor={biomeColor}
-              onBiomeColorChange={setBiomeColor}
-              providers={providers}
-              onSelectProvider={handleSelectProvider}
-              showPot={showPot}
-              onShowPotChange={setShowPot}
-              hasTintindex={tintInfo.hasTint}
-              tintType={tintInfo.tintType}
-              foliagePreviewBlock={foliagePreviewBlock}
-              onFoliagePreviewBlockChange={setFoliagePreviewBlock}
-              onBlockPropsChange={setBlockProps}
-              onSeedChange={setSeed}
-            />
-          </div>
-
-          {/* Texture Variant Selector - for different numbered variants of the same texture */}
-          {uiState.selectedAssetId && (
-            <TextureVariantSelector
-              assetId={uiState.selectedAssetId}
-              allAssets={allAssets.map((a: AssetRecord) => ({
-                id: a.id,
-                name: a.id,
-              }))}
-              onSelectVariant={setSelectedAsset}
-            />
-          )}
-        </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
 
       {/* Footer */}

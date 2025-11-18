@@ -13,21 +13,59 @@
 }
 
 .sidebar {
-    flex: 0 0 280px;
-    min-width: 240px;
-    max-width: 320px;
     display: flex;
     flex-direction: column;
     background-color: var(--color-bg-secondary);
-    border-right: 1px solid var(--color-border);
-    overflow: auto;
+    overflow: hidden;
+    position: relative;
+}
+
+.sidebarContent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.collapseButton {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    z-index: 10;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background-color: var(--color-bg);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all var(--spring-bezier) 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+        background-color: var(--color-bg-secondary);
+        border-color: var(--color-ink);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: rotate(-5deg);
+    }
+
+    &:active {
+        transform: rotate(-5deg) scale(0.95);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
 }
 
 .center {
-    flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
+    overflow: hidden;
 }
 
 .searchSection {
@@ -43,13 +81,9 @@
 }
 
 .rightPanel {
-    flex: 0 0 360px;
-    min-width: 300px;
-    max-width: 450px;
     display: flex;
     flex-direction: column;
     background-color: var(--color-bg-secondary);
-    border-left: 1px solid var(--color-border);
     overflow: hidden;
 }
 
@@ -61,6 +95,12 @@
     max-height: 50%;
     border-bottom: 1px solid var(--color-border);
     overflow: hidden;
+}
+
+.optionsSection {
+    flex: 1 1 auto;
+    overflow: auto;
+    min-height: 0;
 }
 
 .variantSection {
