@@ -34,6 +34,7 @@ type Story = StoryObj<typeof meta>;
 // Playground story with working controls
 export const Playground: Story = {
   args: {
+    children: null,
     position: "bottom",
   },
   render: (args) => (
@@ -81,6 +82,7 @@ const StoryWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 export const Default: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Drawer>
@@ -209,10 +211,12 @@ const WithFormComponent = () => {
 };
 
 export const WithForm: Story = {
+  args: { children: null },
   render: () => <WithFormComponent />,
 };
 
 export const LongContent: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Drawer>
@@ -278,6 +282,7 @@ export const LongContent: Story = {
 };
 
 export const ConfirmAction: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Drawer>
@@ -322,6 +327,7 @@ export const ConfirmAction: Story = {
 };
 
 export const MinimalContent: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Drawer>
@@ -355,6 +361,7 @@ export const MinimalContent: Story = {
 };
 
 export const MultipleActions: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Drawer>
@@ -437,6 +444,7 @@ export const MultipleActions: Story = {
 };
 
 export const AllPositions: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <div

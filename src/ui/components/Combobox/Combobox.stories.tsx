@@ -92,6 +92,7 @@ const PlaygroundComponent = (args: {
 
 export const Playground: Story = {
   args: {
+    options: frameworks,
     placeholder: "Select framework...",
     searchPlaceholder: "Search frameworks...",
     emptyMessage: "No framework found.",
@@ -119,6 +120,7 @@ const DefaultComponent = () => {
 };
 
 export const Default: Story = {
+  args: { options: frameworks },
   render: () => <DefaultComponent />,
 };
 
@@ -143,6 +145,7 @@ const MinecraftBlocksComponent = () => {
 };
 
 export const MinecraftBlocks: Story = {
+  args: { options: minecraftBlocks },
   render: () => <MinecraftBlocksComponent />,
 };
 
@@ -170,6 +173,7 @@ const WithDisabledOptionsComponent = () => {
 };
 
 export const WithDisabledOptions: Story = {
+  args: { options: biomes },
   render: () => <WithDisabledOptionsComponent />,
 };
 
@@ -198,6 +202,7 @@ const CustomTriggerComponent = () => {
 };
 
 export const CustomTrigger: Story = {
+  args: { options: frameworks },
   render: () => <CustomTriggerComponent />,
 };
 
@@ -221,6 +226,7 @@ const PreselectedComponent = () => {
 };
 
 export const Preselected: Story = {
+  args: { options: minecraftBlocks },
   render: () => <PreselectedComponent />,
 };
 
@@ -249,6 +255,7 @@ const LongListComponent = () => {
 };
 
 export const LongList: Story = {
+  args: { options: [] },
   render: () => <LongListComponent />,
 };
 
@@ -348,5 +355,6 @@ const InFormComponent = () => {
 };
 
 export const InForm: Story = {
+  args: { options: frameworks },
   render: () => <InFormComponent />,
 };

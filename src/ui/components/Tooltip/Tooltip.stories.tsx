@@ -29,6 +29,7 @@ type Story = StoryObj<typeof meta>;
 // Playground story with working controls
 export const Playground: Story = {
   args: {
+    children: null,
     delayDuration: 700,
   },
   render: (args) => (
@@ -62,6 +63,7 @@ const StoryWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 export const Default: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <TooltipProvider>
@@ -79,6 +81,7 @@ export const Default: Story = {
 };
 
 export const Sides: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <div
@@ -129,6 +132,7 @@ export const Sides: Story = {
 };
 
 export const Alignment: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <div style={{ display: "flex", gap: "2rem", flexDirection: "column" }}>
@@ -164,6 +168,7 @@ export const Alignment: Story = {
 };
 
 export const LongContent: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Tooltip>
@@ -183,6 +188,7 @@ export const LongContent: Story = {
 };
 
 export const WithIcon: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Tooltip>
@@ -214,6 +220,7 @@ export const WithIcon: Story = {
 };
 
 export const InstantTooltip: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <Tooltip delayDuration={0}>
@@ -229,6 +236,7 @@ export const InstantTooltip: Story = {
 };
 
 export const MultipleTooltips: Story = {
+  args: { children: null },
   render: () => (
     <StoryWrapper>
       <TooltipProvider>

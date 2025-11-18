@@ -42,6 +42,7 @@ type Story = StoryObj<typeof meta>;
 
 // Playground story - demonstrates basic usage
 export const Playground: Story = {
+  args: { children: null },
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -61,6 +62,7 @@ export const Playground: Story = {
 };
 
 export const Default: Story = {
+  args: { children: null },
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -80,6 +82,7 @@ export const Default: Story = {
 };
 
 export const WithShortcuts: Story = {
+  args: { children: null },
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -146,6 +149,7 @@ const WithCheckboxesComponent = () => {
 };
 
 export const WithCheckboxes: Story = {
+  args: { children: null },
   render: () => <WithCheckboxesComponent />,
 };
 
@@ -171,10 +175,12 @@ const WithRadioGroupComponent = () => {
 };
 
 export const WithRadioGroup: Story = {
+  args: { children: null },
   render: () => <WithRadioGroupComponent />,
 };
 
 export const WithSubmenu: Story = {
+  args: { children: null },
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -203,6 +209,7 @@ export const WithSubmenu: Story = {
 };
 
 export const WithDisabledItems: Story = {
+  args: { children: null },
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -222,6 +229,7 @@ export const WithDisabledItems: Story = {
 };
 
 export const WithGroups: Story = {
+  args: { children: null },
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -247,7 +255,8 @@ export const WithGroups: Story = {
   ),
 };
 
-export const Playground: Story = {
+export const MultipleMenus: Story = {
+  args: { children: null },
   render: () => (
     <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
       <DropdownMenu>
