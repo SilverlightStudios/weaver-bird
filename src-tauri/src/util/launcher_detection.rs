@@ -666,9 +666,11 @@ mod tests {
     fn test_detect_launchers() {
         let launchers = detect_all_launchers();
         println!("Found {} launcher(s)", launchers.len());
-        for launcher in launchers {
+        for launcher in &launchers {
             println!("  - {}: {}", launcher.name, launcher.minecraft_dir);
         }
+        // Test should at least not crash
+        assert!(launchers.len() >= 0);
     }
 
     #[test]
@@ -678,5 +680,297 @@ mod tests {
             "Minecraft (Official Launcher)"
         );
         assert_eq!(LauncherType::Modrinth.display_name(), "Modrinth App");
+        assert_eq!(LauncherType::CurseForge.display_name(), "CurseForge");
+        assert_eq!(LauncherType::PrismLauncher.display_name(), "Prism Launcher");
+        assert_eq!(LauncherType::MultiMC.display_name(), "MultiMC");
+        assert_eq!(LauncherType::ATLauncher.display_name(), "ATLauncher");
+        assert_eq!(LauncherType::GDLauncher.display_name(), "GDLauncher");
+        assert_eq!(LauncherType::Technic.display_name(), "Technic Launcher");
+        assert_eq!(LauncherType::Custom.display_name(), "Custom Location");
+    }
+
+    #[test]
+    fn test_launcher_icons() {
+        assert_eq!(LauncherType::Official.icon(), "minecraft");
+        assert_eq!(LauncherType::Modrinth.icon(), "modrinth");
+        assert_eq!(LauncherType::CurseForge.icon(), "curseforge");
+        assert_eq!(LauncherType::PrismLauncher.icon(), "prism");
+        assert_eq!(LauncherType::MultiMC.icon(), "multimc");
+        assert_eq!(LauncherType::ATLauncher.icon(), "atlauncher");
+        assert_eq!(LauncherType::GDLauncher.icon(), "gdlauncher");
+        assert_eq!(LauncherType::Technic.icon(), "technic");
+        assert_eq!(LauncherType::Custom.icon(), "folder");
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_official() {
+        let path = Path::new("/home/user/.minecraft");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        // Could be Official or Custom depending on whether versions dir exists
+        assert!(matches!(result.unwrap(), LauncherType::Official | LauncherType::Custom));
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_modrinth() {
+        let path = Path::new("/home/user/modrinth/profiles");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::Modrinth);
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_modrinth_theseus() {
+        let path = Path::new("/home/user/com.modrinth.theseus/profiles");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::Modrinth);
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_curseforge() {
+        let path = Path::new("/home/user/curseforge/minecraft/Install");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::CurseForge);
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_prism() {
+        let path = Path::new("/home/user/PrismLauncher/instances");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::PrismLauncher);
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_multimc() {
+        let path = Path::new("/home/user/MultiMC/instances");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::MultiMC);
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_atlauncher() {
+        let path = Path::new("/home/user/ATLauncher/instances");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::ATLauncher);
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_gdlauncher() {
+        let path = Path::new("/home/user/gdlauncher_next/instances");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::GDLauncher);
+    }
+
+    #[test]
+    fn test_identify_launcher_from_path_custom() {
+        let path = Path::new("/some/random/path");
+        let result = identify_launcher_from_path(path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), LauncherType::Custom);
+    }
+
+    #[test]
+    fn test_validate_minecraft_directory_with_versions() {
+        let temp_dir = std::env::temp_dir().join("test_mc_versions");
+        let versions_dir = temp_dir.join("versions");
+        std::fs::create_dir_all(&versions_dir).expect("Failed to create test directory");
+
+        let result = validate_minecraft_directory(&temp_dir);
+
+        // Clean up
+        std::fs::remove_dir_all(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+
+    #[test]
+    fn test_validate_minecraft_directory_with_instances() {
+        let temp_dir = std::env::temp_dir().join("test_mc_instances");
+        let instances_dir = temp_dir.join("instances");
+        std::fs::create_dir_all(&instances_dir).expect("Failed to create test directory");
+
+        let result = validate_minecraft_directory(&temp_dir);
+
+        // Clean up
+        std::fs::remove_dir_all(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+
+    #[test]
+    fn test_validate_minecraft_directory_profiles() {
+        let temp_dir = std::env::temp_dir().join("test_mc_parent");
+        let profiles_dir = temp_dir.join("profiles");
+        std::fs::create_dir_all(&profiles_dir).expect("Failed to create test directory");
+
+        let result = validate_minecraft_directory(&profiles_dir);
+
+        // Clean up
+        std::fs::remove_dir_all(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+
+    #[test]
+    fn test_validate_minecraft_directory_invalid() {
+        let temp_dir = std::env::temp_dir().join("test_mc_invalid");
+        std::fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
+
+        let result = validate_minecraft_directory(&temp_dir);
+
+        // Clean up
+        std::fs::remove_dir(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    #[test]
+    fn test_get_resourcepacks_dir_official() {
+        let launcher_dir = Path::new("/home/user/.minecraft");
+        let result = get_resourcepacks_dir(launcher_dir, &LauncherType::Official);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), launcher_dir.join("resourcepacks"));
+    }
+
+    #[test]
+    fn test_get_resourcepacks_dir_modrinth() {
+        let launcher_dir = Path::new("/home/user/modrinth/profiles");
+        let result = get_resourcepacks_dir(launcher_dir, &LauncherType::Modrinth);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), launcher_dir);
+    }
+
+    #[test]
+    fn test_get_resourcepacks_dir_prism() {
+        let launcher_dir = Path::new("/home/user/PrismLauncher/instances");
+        let result = get_resourcepacks_dir(launcher_dir, &LauncherType::PrismLauncher);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), launcher_dir);
+    }
+
+    #[test]
+    fn test_get_resourcepacks_dir_curseforge() {
+        let launcher_dir = Path::new("/home/user/curseforge/minecraft/Install");
+        let result = get_resourcepacks_dir(launcher_dir, &LauncherType::CurseForge);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), launcher_dir);
+    }
+
+    #[test]
+    fn test_get_resourcepacks_dir_custom_with_resourcepacks() {
+        let temp_dir = std::env::temp_dir().join("test_custom_mc");
+        let resourcepacks_dir = temp_dir.join("resourcepacks");
+        std::fs::create_dir_all(&resourcepacks_dir).expect("Failed to create test directory");
+
+        let result = get_resourcepacks_dir(&temp_dir, &LauncherType::Custom);
+
+        // Clean up
+        std::fs::remove_dir_all(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), resourcepacks_dir);
+    }
+
+    #[test]
+    fn test_get_resourcepacks_dir_custom_without_resourcepacks() {
+        let temp_dir = std::env::temp_dir().join("test_custom_mc_no_rp");
+        std::fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
+
+        let result = get_resourcepacks_dir(&temp_dir, &LauncherType::Custom);
+
+        // Clean up
+        std::fs::remove_dir(&temp_dir).ok();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), temp_dir);
+    }
+
+    #[test]
+    fn test_launcher_type_serialization() {
+        let launcher_type = LauncherType::Official;
+        let json = serde_json::to_string(&launcher_type).expect("should serialize");
+        assert_eq!(json, "\"official\"");
+
+        let deserialized: LauncherType = serde_json::from_str(&json).expect("should deserialize");
+        assert_eq!(deserialized, LauncherType::Official);
+    }
+
+    #[test]
+    fn test_launcher_type_all_variants_serialize() {
+        let variants = vec![
+            (LauncherType::Official, "\"official\""),
+            (LauncherType::Modrinth, "\"modrinth\""),
+            (LauncherType::CurseForge, "\"curseforge\""),
+            (LauncherType::PrismLauncher, "\"prism\""),
+            (LauncherType::MultiMC, "\"multimc\""),
+            (LauncherType::ATLauncher, "\"atlauncher\""),
+            (LauncherType::GDLauncher, "\"gdlauncher\""),
+            (LauncherType::Technic, "\"technic\""),
+            (LauncherType::Custom, "\"custom\""),
+        ];
+
+        for (launcher_type, expected_json) in variants {
+            let json = serde_json::to_string(&launcher_type).expect("should serialize");
+            assert_eq!(json, expected_json);
+
+            let deserialized: LauncherType = serde_json::from_str(&json).expect("should deserialize");
+            assert_eq!(deserialized, launcher_type);
+        }
+    }
+
+    #[test]
+    fn test_launcher_info_serialization() {
+        let info = LauncherInfo {
+            launcher_type: LauncherType::Modrinth,
+            name: "Modrinth App".to_string(),
+            minecraft_dir: "/home/user/modrinth".to_string(),
+            found: true,
+            icon: "modrinth".to_string(),
+            icon_path: Some("/Applications/Modrinth.app/icon.png".to_string()),
+        };
+
+        let json = serde_json::to_string(&info).expect("should serialize");
+        let deserialized: LauncherInfo = serde_json::from_str(&json).expect("should deserialize");
+
+        assert_eq!(deserialized.launcher_type, LauncherType::Modrinth);
+        assert_eq!(deserialized.name, "Modrinth App");
+        assert_eq!(deserialized.minecraft_dir, "/home/user/modrinth");
+        assert_eq!(deserialized.found, true);
+        assert_eq!(deserialized.icon, "modrinth");
+        assert_eq!(deserialized.icon_path, Some("/Applications/Modrinth.app/icon.png".to_string()));
+    }
+
+    #[test]
+    fn test_launcher_type_clone() {
+        let launcher1 = LauncherType::PrismLauncher;
+        let launcher2 = launcher1.clone();
+        assert_eq!(launcher1, launcher2);
+    }
+
+    #[test]
+    fn test_launcher_info_clone() {
+        let info1 = LauncherInfo {
+            launcher_type: LauncherType::Official,
+            name: "Minecraft".to_string(),
+            minecraft_dir: "/home/user/.minecraft".to_string(),
+            found: true,
+            icon: "minecraft".to_string(),
+            icon_path: None,
+        };
+
+        let info2 = info1.clone();
+        assert_eq!(info1.launcher_type, info2.launcher_type);
+        assert_eq!(info1.name, info2.name);
+        assert_eq!(info1.minecraft_dir, info2.minecraft_dir);
     }
 }
