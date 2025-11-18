@@ -1,7 +1,7 @@
 import React, { forwardRef, useState, useRef, useCallback, type HTMLAttributes } from "react";
 import s from "./Slider.module.scss";
 
-export interface SliderProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
+export interface SliderProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange" | "defaultValue"> {
   min?: number;
   max?: number;
   step?: number;

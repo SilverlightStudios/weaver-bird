@@ -43,9 +43,8 @@ interface ResizableHandleProps
 export const ResizableHandle = forwardRef<
   React.ElementRef<typeof PanelResizeHandle>,
   ResizableHandleProps
->(({ className, withHandle = false, ...props }, ref) => (
+>(({ className, withHandle = false, ...props }, _ref) => (
   <PanelResizeHandle
-    ref={ref}
     className={[s.handle, withHandle ? s.withHandle : "", className]
       .filter(Boolean)
       .join(" ")}

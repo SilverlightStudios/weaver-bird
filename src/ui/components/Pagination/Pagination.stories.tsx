@@ -80,9 +80,8 @@ export const WithEllipsis: Story = {
   ),
 };
 
-export const Interactive: Story = {
-  render: () => {
-    const [currentPage, setCurrentPage] = useState(3);
+const InteractiveComponent = () => {
+  const [currentPage, setCurrentPage] = useState(3);
     const totalPages = 10;
 
     const handlePageClick = (page: number) => {
@@ -263,7 +262,10 @@ export const Interactive: Story = {
         </Pagination>
       </div>
     );
-  },
+};
+
+export const Interactive: Story = {
+  render: () => <InteractiveComponent />,
 };
 
 export const ManyPages: Story = {
@@ -416,9 +418,8 @@ export const WithCustomLabels: Story = {
   ),
 };
 
-export const InContext: Story = {
-  render: () => {
-    const [page, setPage] = useState(2);
+const InContextComponent = () => {
+  const [page, setPage] = useState(2);
     const totalPages = 5;
     const itemsPerPage = 12;
 
@@ -548,5 +549,8 @@ export const InContext: Story = {
         </Pagination>
       </div>
     );
-  },
+};
+
+export const InContext: Story = {
+  render: () => <InContextComponent />,
 };
