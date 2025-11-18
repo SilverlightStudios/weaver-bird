@@ -34,6 +34,7 @@
       "@/*": ["src/*"],
       "@/components/*": ["src/ui/components/*"],
       "@components/*": ["src/components/*"],
+      "@app/*": ["src/app/*"],
       "@lib/*": ["src/lib/*"],
       "@state": ["src/state"],
       "@state/*": ["src/state/*"],

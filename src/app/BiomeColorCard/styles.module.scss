@@ -1,0 +1,281 @@
+@use "@/ui/tokens" as tokens;
+
+.card {
+    --ink: var(--color-ink);
+    --accent-color: var(--color-emerald);
+
+    // Layout
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: 0.75rem;
+    overflow: clip;
+    isolation: isolate;
+    box-sizing: border-box;
+
+    // Shape & borders using tokens
+    @include tokens.radius-quirky-lg;
+    @include tokens.border-standard;
+    border-color: var(--ink);
+
+    // Background
+    @include tokens.gradient-glossy;
+    background-color: var(--color-block);
+
+    // Shadow & rotation using tokens
+    @include tokens.shadow-lg;
+    @include tokens.rotate-slight;
+
+    // Transitions
+    transition:
+        rotate 240ms var(--spring-bezier),
+        translate 240ms var(--spring-bezier),
+        box-shadow 240ms var(--spring-bezier);
+
+    // Accent band decoration
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -25%;
+        @include tokens.gradient-accent-band(var(--accent-color));
+        @include tokens.rotate-strong;
+        z-index: -2;
+        mask: radial-gradient(circle at 75% 10%, #000 55%, transparent 60%)
+            no-repeat 0 0 / 120%;
+    }
+
+    // Halftone texture overlay
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        @include tokens.pattern-halftone-sm;
+        z-index: -1;
+    }
+
+    // Hover state using tokens
+    &:hover {
+        @include tokens.shadow-xl;
+        rotate: 0deg;
+        translate: 0 -4px;
+    }
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.title {
+    @include tokens.text-shadow-bold;
+
+    margin: 0;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    line-height: 1.1;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text);
+    opacity: 0.7;
+}
+
+.sourceSelector {
+    margin-bottom: 0.25rem;
+}
+
+.dropdownTrigger {
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-sm;
+    @include tokens.shadow-sm;
+    @include tokens.rotate-slight;
+
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    background: var(--color-block);
+    border-color: var(--ink);
+    cursor: pointer;
+    font-family: var(--font-family);
+    text-align: left;
+
+    transition:
+        rotate 120ms var(--spring-bezier),
+        box-shadow 120ms var(--spring-bezier),
+        translate 120ms var(--spring-bezier);
+
+    &:hover {
+        @include tokens.shadow-md;
+        rotate: 0deg;
+        translate: 1px -1px;
+    }
+
+    &:active {
+        translate: 2px 0;
+        box-shadow: 2px 2px 0 var(--ink);
+    }
+}
+
+.dropdownLabel {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text);
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.dropdownValue {
+    flex: 1;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdownChevron {
+    font-size: 0.6rem;
+    color: var(--ink);
+    opacity: 0.6;
+}
+
+.selectedItem {
+    background: var(--color-primary);
+    color: white;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+}
+
+.canvasContainer {
+    @include tokens.border-dashed;
+    @include tokens.radius-quirky-md;
+    @include tokens.pattern-stripes-diagonal;
+
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 256px;
+    overflow: visible;
+    background-color: rgb(0 0 0 / 90%);
+    border-color: var(--ink);
+    padding: 3px;
+
+    // Inset glow
+    @include tokens.border-inset-glow;
+}
+
+.canvas {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    display: block;
+    image-rendering: pixelated;
+    border-radius: inherit;
+}
+
+.hotspots {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.hotspot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: all;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    z-index: 1;
+
+    &:focus {
+        outline: none;
+    }
+
+    &.hovered {
+        z-index: 3;
+    }
+
+    &.selected {
+        z-index: 2;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+    }
+}
+
+.dot {
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: 2px solid var(--ink);
+    box-shadow: 1px 1px 0 var(--ink);
+
+    transition:
+        width 120ms var(--spring-bezier),
+        height 120ms var(--spring-bezier),
+        box-shadow 120ms var(--spring-bezier);
+
+    .hotspot:hover & {
+        width: 14px;
+        height: 14px;
+        background: var(--color-primary);
+        box-shadow: 2px 2px 0 var(--ink);
+    }
+
+    .hotspot.selected & {
+        width: 12px;
+        height: 12px;
+        background: var(--accent-color);
+        box-shadow: 2px 2px 0 var(--ink);
+    }
+}
+
+// Accent variants
+.accentEmerald {
+    --accent-color: var(--color-emerald);
+}
+
+.accentGold {
+    --accent-color: var(--color-gold);
+}
+
+.accentBerry {
+    --accent-color: var(--color-berry);
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .dropdownTrigger {
+        transition-duration: 0.01ms;
+    }
+
+    .dot {
+        transition-duration: 0.01ms;
+    }
+}

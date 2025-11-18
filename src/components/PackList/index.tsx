@@ -21,7 +21,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import type { LauncherInfo } from "@/state/types";
 import ResourcePackCard, {
   type ResourcePackCardMetadata,
-} from "@/components/cards/ResourcePackCard";
+} from "@app/ResourcePackCard";
 import Button from "@/ui/components/buttons/Button";
 import {
   Combobox,
