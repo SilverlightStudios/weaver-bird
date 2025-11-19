@@ -43,8 +43,10 @@
 }
 
 .tabsTrigger {
-    // Base layout
-    padding: var(--spacing-sm) var(--spacing-md);
+    // Base layout - compact for icon-only tabs
+    padding: var(--spacing-xs) var(--spacing-sm);
+    min-width: 2rem;
+    min-height: 2rem;
 
     // Typography - uppercase, bold, with letter spacing
     font-family: var(--font-family);
@@ -146,29 +148,18 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm);
     background-color: var(--color-block);
 
-    // Border and shadow
+    // Border and shadow - no rotation for cleaner edge alignment
     @include tokens.border-standard;
-    @include tokens.radius-quirky-lg;
-    @include tokens.shadow-md;
-    @include tokens.rotate-slight;
+    border-radius: 4px;
+    @include tokens.shadow-sm;
 
     // Subtle patterns and textures
     position: relative;
     isolation: isolate;
-
-    // Decorative accent layer behind content
-    &::before {
-        content: "";
-        position: absolute;
-        inset: -20%;
-        @include tokens.gradient-accent-band;
-        opacity: 0.5;
-        mix-blend-mode: multiply;
-        z-index: -2;
-    }
 
     // Halftone texture overlay
     &::after {
@@ -176,11 +167,11 @@
         position: absolute;
         inset: 0;
         @include tokens.pattern-halftone-sm;
-        opacity: 0.12;
+        opacity: 0.08;
         mix-blend-mode: soft-light;
         z-index: -1;
         pointer-events: none;
-        @include tokens.radius-quirky-lg;
+        border-radius: 4px;
     }
 
     // Animation on mount/unmount (Radix provides data attributes)
@@ -191,14 +182,6 @@
 
     &[data-state="inactive"] {
         display: none !important;
-    }
-
-    // Interactive hover effect
-    &:hover {
-        @include tokens.shadow-lg;
-        rotate: 0deg;
-        translate: 0 -2px;
-        transition: all 240ms var(--spring-bezier);
     }
 }
 
