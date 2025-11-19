@@ -656,11 +656,11 @@ export async function runTestAndReport(options: TestOptions = {}): Promise<strin
   const report = lines.join('\n');
 
   // Also log to console for easy copying
-  console.log('\n' + '='.repeat(60));
+  console.log(`\n${'='.repeat(60)}`);
   console.log('COPY THE REPORT BELOW:');
-  console.log('='.repeat(60) + '\n');
+  console.log(`${'='.repeat(60)}\n`);
   console.log(report);
-  console.log('\n' + '='.repeat(60));
+  console.log(`\n${'='.repeat(60)}`);
 
   return report;
 }

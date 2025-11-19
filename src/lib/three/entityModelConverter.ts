@@ -209,9 +209,9 @@ function applyJEMUVs(
     // Convert pixel coordinates to 0-1 UV space
     // Entity textures have (0,0) at top-left, Three.js at bottom-left
     let uvU1 = u1 / texWidth;
-    let uvV1 = 1 - v1 / texHeight; // Top of face
+    const uvV1 = 1 - v1 / texHeight; // Top of face
     let uvU2 = u2 / texWidth;
-    let uvV2 = 1 - v2 / texHeight; // Bottom of face
+    const uvV2 = 1 - v2 / texHeight; // Bottom of face
 
     // Handle mirroring
     if (mirror) {
