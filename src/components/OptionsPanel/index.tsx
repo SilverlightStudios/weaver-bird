@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/ui/components/Tooltip/Tooltip";
-import BiomeColorPicker from "@components/BiomeColorPicker";
+import BiomeColorCard from "@app/BiomeColorCard";
 import VariantChooser from "@components/VariantChooser";
 import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
 import TextureVariantSelector from "@components/TextureVariantSelector";
@@ -251,7 +251,7 @@ export default function OptionsPanel({
             />
           </div>
         )}
-        <BiomeColorPicker
+        <BiomeColorCard
           assetId={colormapAssetId}
           type={effectiveColormapType}
           onColorSelect={onBiomeColorChange}
@@ -335,7 +335,7 @@ export default function OptionsPanel({
         {hasBiomeColorTab && colormapAssetId && (
           <TabsContent value="biome">
             {onBiomeColorChange && (
-              <BiomeColorPicker
+              <BiomeColorCard
                 assetId={colormapAssetId}
                 type={effectiveColormapType}
                 onColorSelect={onBiomeColorChange}
