@@ -73,14 +73,16 @@ export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
 Tabs.displayName = "Tabs";
 
 // TabsList component
-export type TabsListProps = React.HTMLAttributes<HTMLDivElement>;
+export interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {
+  stretch?: boolean;
+}
 
 export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
-  ({ className, ...props }, ref) => (
+  ({ className, stretch = false, ...props }, ref) => (
     <div
       ref={ref}
       role="tablist"
-      className={`${s.tabsList} ${className || ""}`}
+      className={`${s.tabsList} ${stretch ? s.tabsListStretch : ""} ${className || ""}`}
       {...props}
     />
   ),

@@ -42,9 +42,16 @@
     }
 }
 
+// Stretch variant - tabs expand to fill available width
+.tabsListStretch {
+    .tabsTrigger {
+        flex: 1;
+    }
+}
+
 .tabsTrigger {
     // Base layout - compact for icon-only tabs
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: calc(var(--spacing-xs) + 6px) calc(var(--spacing-sm) + 6px);
     min-width: 2rem;
     min-height: 2rem;
 
@@ -64,6 +71,21 @@
     @include tokens.radius-quirky-sm;
     @include tokens.shadow-md;
     @include tokens.rotate-slight;
+
+    // First tab - large radius on left side
+    &:first-child {
+        border-radius: 1rem 0.4rem 0.4rem 1rem;
+    }
+
+    // Last tab - large radius on right side
+    &:last-child {
+        border-radius: 0.4rem 1rem 1rem 0.4rem;
+    }
+
+    // Middle tabs - small radius all around
+    &:not(:first-child):not(:last-child) {
+        border-radius: 0.4rem;
+    }
 
     // Background
     background-color: var(--color-bg);
