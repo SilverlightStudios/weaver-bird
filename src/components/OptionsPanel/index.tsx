@@ -12,6 +12,11 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui/components/tabs";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/ui/components/Tooltip/Tooltip";
 import BiomeColorPicker from "@components/BiomeColorPicker";
 import VariantChooser from "@components/VariantChooser";
 import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
@@ -35,6 +40,28 @@ import {
 } from "@lib/tauri/blockModels";
 import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
 import s from "./styles.module.scss";
+
+// Tab icon component with tooltip
+interface TabIconProps {
+  icon: string;
+  label: string;
+  value: string;
+}
+
+function TabIcon({ icon, label, value }: TabIconProps) {
+  return (
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger asChild>
+        <TabsTrigger value={value} aria-label={label}>
+          <span className={s.tabIcon}>{icon}</span>
+        </TabsTrigger>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={8}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 interface ProviderOption {
   packId: string;
@@ -238,19 +265,21 @@ export default function OptionsPanel({
       <Tabs defaultValue={defaultTab}>
         <TabsList>
           {shouldShowBlockStateTab && (
-            <TabsTrigger value="block-state">Block State</TabsTrigger>
+            <TabIcon icon="⚙" label="Block State" value="block-state" />
           )}
-          {shouldShowPotTab && <TabsTrigger value="pot">Pot</TabsTrigger>}
+          {shouldShowPotTab && (
+            <TabIcon icon="🌱" label="Pot" value="pot" />
+          )}
           {hasBiomeColorTab && (
-            <TabsTrigger value="biome">Biome Color</TabsTrigger>
+            <TabIcon icon="🎨" label="Biome Color" value="biome" />
           )}
           {hasTextureVariants && onSelectVariant && (
-            <TabsTrigger value="texture-variants">Texture Variant</TabsTrigger>
+            <TabIcon icon="🖼" label="Texture Variant" value="texture-variants" />
           )}
           {hasVariantsTab && (
-            <TabsTrigger value="variants">Pack Variants</TabsTrigger>
+            <TabIcon icon="📦" label="Pack Variants" value="variants" />
           )}
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          <TabIcon icon="⚡" label="Advanced" value="advanced" />
         </TabsList>
 
         {shouldShowBlockStateTab && (

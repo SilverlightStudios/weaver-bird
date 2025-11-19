@@ -6,6 +6,10 @@ import {
 } from "@lib/tauri/blockModels";
 import { getBlockStateIdFromAssetId } from "@lib/assetUtils";
 import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
+import {
+  Combobox,
+  type ComboboxOption,
+} from "@/ui/components/Combobox/Combobox";
 import s from "./BlockStatePanel.module.scss";
 
 interface Props {
@@ -137,23 +141,26 @@ export default function BlockStatePanel({
           </label>
         );
 
-      case "enum":
+      case "enum": {
+        const options: ComboboxOption[] = (prop.values || []).map((value) => ({
+          value,
+          label: value,
+        }));
         return (
-          <label key={prop.name} className={s.property}>
+          <div key={prop.name} className={s.property}>
             <span className={s.propertyName}>{prop.name}</span>
-            <select
+            <Combobox
+              options={options}
               value={currentValue}
-              onChange={(e) => handleChange(e.target.value)}
-              className={s.select}
-            >
-              {prop.values?.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
+              onValueChange={handleChange}
+              placeholder="Select..."
+              searchPlaceholder="Search..."
+              emptyMessage="No options"
+              className={s.combobox}
+            />
+          </div>
         );
+      }
 
       case "int":
         return (
