@@ -5,8 +5,12 @@ import {
   useSelectPack,
   useSelectPacksDir,
 } from "@state/selectors";
-import { getEntityModel, getEntityType, isEntityAsset } from "@lib/entityModels";
-import { entityModelToThreeJs } from "@lib/three/entityModelConverter";
+import {
+  loadEntityModel,
+  getEntityTypeFromAssetId,
+  isSupportedEntity,
+} from "@lib/emf";
+import { parsedEntityModelToThreeJs } from "@lib/three/entityModelConverter";
 import { loadPackTexture, loadVanillaTexture } from "@lib/three/textureLoader";
 
 interface Props {
@@ -15,12 +19,10 @@ interface Props {
 }
 
 /**
- * Component for rendering entity models (chests, shulker boxes, etc.)
+ * Component for rendering entity models (chests, shulker boxes, mobs, etc.)
  *
- * Entity models differ from block models:
- * - Geometry is hardcoded (not from resource packs)
- * - Only textures come from packs
- * - UV mapping uses absolute pixel coordinates
+ * Uses EMF (Entity Model Features) JEM format for entity geometry.
+ * Supports custom pack models with vanilla fallback.
  */
 function EntityModel({
   assetId,
@@ -69,28 +71,11 @@ function EntityModel({
       setEntityGroup(null);
     }
 
-    // Check if this is actually an entity asset
-    if (!isEntityAsset(assetId)) {
-      console.warn("[EntityModel] Asset is not an entity:", assetId);
-      setError("Not an entity asset");
-      createPlaceholder();
-      return;
-    }
-
-    // Get the entity type
-    const entityType = getEntityType(assetId);
+    // Get entity type from asset ID
+    const entityType = getEntityTypeFromAssetId(assetId);
     if (!entityType) {
       console.warn("[EntityModel] Unknown entity type for:", assetId);
       setError("Unknown entity type");
-      createPlaceholder();
-      return;
-    }
-
-    // Get the entity model definition
-    const modelDef = getEntityModel(entityType);
-    if (!modelDef) {
-      console.warn("[EntityModel] No model definition for entity type:", entityType);
-      setError("No model definition");
       createPlaceholder();
       return;
     }
@@ -104,8 +89,25 @@ function EntityModel({
       try {
         console.log("=== [EntityModel] Starting Entity Model Load ===");
         console.log("[EntityModel] Entity type:", entityType);
-        console.log("[EntityModel] Model name:", modelDef!.name);
-        console.log("[EntityModel] Texture path:", modelDef!.texturePath);
+
+        // Load the entity model definition (from pack or vanilla)
+        const parsedModel = await loadEntityModel(
+          entityType!,
+          resolvedPack?.path,
+          resolvedPack?.is_zip,
+        );
+
+        if (!parsedModel) {
+          throw new Error(`No model definition found for ${entityType}`);
+        }
+
+        console.log("[EntityModel] Model loaded:", parsedModel.entityType);
+        console.log("[EntityModel] Texture path:", parsedModel.texturePath);
+
+        if (cancelled) {
+          console.log("[EntityModel] Load cancelled, aborting");
+          return;
+        }
 
         // Extract the texture path from the asset ID
         // e.g., "minecraft:entity/chest/normal" -> "entity/chest/normal"
@@ -139,9 +141,9 @@ function EntityModel({
           console.warn("[EntityModel] Failed to load texture, using placeholder");
         }
 
-        // Convert entity model to Three.js
+        // Convert parsed entity model to Three.js
         console.log("[EntityModel] Converting model to Three.js...");
-        const group = entityModelToThreeJs(modelDef!, texture);
+        const group = parsedEntityModelToThreeJs(parsedModel, texture);
 
         if (cancelled) {
           console.log("[EntityModel] Load cancelled after conversion, aborting");
@@ -171,7 +173,7 @@ function EntityModel({
       console.log("[EntityModel] Creating placeholder cube for:", assetId);
 
       try {
-        const geometry = new THREE.BoxGeometry(0.875, 0.875, 0.875); // Chest-like size
+        const geometry = new THREE.BoxGeometry(0.875, 0.875, 0.875);
         const material = new THREE.MeshStandardMaterial({
           color: 0x8b4513, // Brown placeholder
           roughness: 0.8,
@@ -179,7 +181,7 @@ function EntityModel({
         });
 
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.y = 0.4375; // Center vertically
+        mesh.position.y = 0.4375;
 
         const group = new THREE.Group();
         group.add(mesh);
@@ -228,3 +230,8 @@ function EntityModel({
 }
 
 export default EntityModel;
+
+/**
+ * Check if an asset ID is a supported entity
+ */
+export { isSupportedEntity as isEntityAsset };

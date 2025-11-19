@@ -7,7 +7,7 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import BlockModel from "./BlockModel";
-import EntityModel from "./EntityModel";
+import EntityModel, { isEntityAsset } from "./EntityModel";
 import GridFloor from "./GridFloor";
 import {
   getColormapTypeFromAssetId,
@@ -16,7 +16,6 @@ import {
   getVariantGroupKey,
   groupAssetsByVariant,
 } from "@lib/assetUtils";
-import { isEntityAsset } from "@lib/entityModels";
 import { getMultiBlockParts, type MultiBlockPart } from "@lib/multiBlockConfig";
 import s from "./styles.module.scss";
 

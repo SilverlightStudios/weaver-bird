@@ -1,0 +1,44 @@
+{
+  "texture": "entity/chest/normal",
+  "textureSize": [64, 64],
+  "shadowSize": 0.5,
+  "models": [
+    {
+      "part": "lid",
+      "id": "lid",
+      "invertAxis": "xy",
+      "translate": [0, -9, -7],
+      "boxes": [
+        {
+          "coordinates": [-7, -5, -14, 14, 5, 14],
+          "textureOffset": [0, 0]
+        }
+      ],
+      "submodels": [
+        {
+          "id": "latch",
+          "invertAxis": "xy",
+          "translate": [0, -7, -15],
+          "boxes": [
+            {
+              "coordinates": [-1, -2, -1, 2, 4, 1],
+              "textureOffset": [0, 0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "part": "base",
+      "id": "base",
+      "invertAxis": "xy",
+      "translate": [0, 0, -7],
+      "boxes": [
+        {
+          "coordinates": [-7, 0, -14, 14, 10, 14],
+          "textureOffset": [0, 19]
+        }
+      ]
+    }
+  ]
+}

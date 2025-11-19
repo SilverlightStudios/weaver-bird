@@ -1,31 +1,31 @@
 /**
- * Converts entity model definitions to Three.js geometry
+ * Converts parsed JEM entity models to Three.js geometry
  *
- * Entity models differ from block models in several ways:
- * - UV coordinates are in absolute texture pixels, not 0-16 normalized
- * - Models have hierarchical bone structure with pivot points
- * - Textures are typically 64x64 (or larger) rather than 16x16
+ * Handles the JEM format with:
+ * - Hierarchical part structure with submodels
+ * - OptiFine-style coordinate system (invertAxis)
+ * - Box UV mapping from texture offsets
  */
 import * as THREE from "three";
-import type { EntityModel, EntityBone, EntityCuboid } from "@lib/entityModels";
+import type { ParsedEntityModel, ParsedModelPart, ParsedBox } from "@lib/emf";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16 pixels per block unit
 
 /**
- * Convert an entity model to a Three.js Group
+ * Convert a parsed entity model to a Three.js Group
  *
- * @param model - The entity model definition
+ * @param model - The parsed entity model
  * @param texture - The loaded texture for the entity
  * @returns Three.js Group containing the entity geometry
  */
-export function entityModelToThreeJs(
-  model: EntityModel,
+export function parsedEntityModelToThreeJs(
+  model: ParsedEntityModel,
   texture: THREE.Texture | null,
 ): THREE.Group {
-  console.log("=== [entityModelConverter] Converting Entity Model to Three.js ===");
-  console.log("[entityModelConverter] Entity type:", model.type);
+  console.log("=== [entityModelConverter] Converting Parsed Entity Model to Three.js ===");
+  console.log("[entityModelConverter] Entity type:", model.entityType);
   console.log("[entityModelConverter] Texture size:", model.textureSize);
-  console.log("[entityModelConverter] Bone count:", model.bones.length);
+  console.log("[entityModelConverter] Parts count:", model.parts.length);
 
   const group = new THREE.Group();
 
@@ -37,14 +37,14 @@ export function entityModelToThreeJs(
     texture.wrapT = THREE.ClampToEdgeWrapping;
   }
 
-  // Convert each bone to Three.js geometry
-  for (const bone of model.bones) {
-    const boneGroup = convertBone(bone, model.textureSize, texture);
-    group.add(boneGroup);
+  // Convert each part to Three.js geometry
+  for (const part of model.parts) {
+    const partGroup = convertPart(part, model.textureSize, texture);
+    group.add(partGroup);
   }
 
-  // Center the model - entity models are defined with origin at bottom center
-  // Offset by -8 pixels (-0.5 blocks) to center horizontally
+  // Position the model - JEM uses inverted Y, so we need to adjust
+  // Entity models typically sit on the ground plane
   group.position.set(0, 0, 0);
 
   console.log(`[entityModelConverter] ✓ Conversion complete. Group has ${countMeshes(group)} meshes`);
@@ -54,82 +54,88 @@ export function entityModelToThreeJs(
 }
 
 /**
- * Convert a bone (and its children) to Three.js geometry
+ * Convert a model part (and its children) to Three.js geometry
  */
-function convertBone(
-  bone: EntityBone,
+function convertPart(
+  part: ParsedModelPart,
   textureSize: [number, number],
   texture: THREE.Texture | null,
 ): THREE.Group {
-  const boneGroup = new THREE.Group();
-  boneGroup.name = bone.name;
+  const partGroup = new THREE.Group();
+  partGroup.name = part.name;
 
-  console.log(`[entityModelConverter] Converting bone: ${bone.name}`);
-  console.log(`[entityModelConverter] - Pivot: [${bone.pivot.join(", ")}]`);
-  console.log(`[entityModelConverter] - Cuboids: ${bone.cuboids.length}`);
+  console.log(`[entityModelConverter] Converting part: ${part.name}`);
+  console.log(`[entityModelConverter] - Translate: [${part.translate.join(", ")}]`);
+  console.log(`[entityModelConverter] - Rotate: [${part.rotate.join(", ")}]`);
+  console.log(`[entityModelConverter] - Boxes: ${part.boxes.length}`);
 
-  // Convert each cuboid in this bone
-  for (let i = 0; i < bone.cuboids.length; i++) {
-    const cuboid = bone.cuboids[i];
-    const mesh = createCuboidMesh(cuboid, textureSize, texture);
+  // Convert each box in this part
+  for (let i = 0; i < part.boxes.length; i++) {
+    const box = part.boxes[i];
+    const mesh = createBoxMesh(box, textureSize, texture);
     if (mesh) {
-      boneGroup.add(mesh);
+      partGroup.add(mesh);
     }
   }
 
-  // Convert child bones
-  if (bone.children) {
-    for (const child of bone.children) {
-      const childGroup = convertBone(child, textureSize, texture);
-      boneGroup.add(childGroup);
-    }
+  // Convert children (submodels)
+  for (const child of part.children) {
+    const childGroup = convertPart(child, textureSize, texture);
+    partGroup.add(childGroup);
   }
 
-  // Apply bone rotation if specified
-  if (bone.rotation) {
-    const [rx, ry, rz] = bone.rotation;
-    boneGroup.rotation.set(
-      THREE.MathUtils.degToRad(rx),
-      THREE.MathUtils.degToRad(ry),
-      THREE.MathUtils.degToRad(rz),
-    );
-  }
+  // Apply transformations
+  // JEM uses inverted axes (invertAxis: "xy"), so we need to flip Y and potentially X
+  const [tx, ty, tz] = part.translate;
 
-  // Set pivot point (bones rotate around their pivot)
-  // In Three.js, we need to offset the geometry relative to the pivot
-  const [px, py, pz] = bone.pivot;
-  boneGroup.position.set(
-    px / MINECRAFT_UNIT - 0.5, // Center horizontally
-    py / MINECRAFT_UNIT,       // Keep Y as-is (0 at bottom)
-    pz / MINECRAFT_UNIT - 0.5, // Center on Z
+  // Apply translation (convert from pixels to block units)
+  // JEM coordinates are inverted on Y axis
+  partGroup.position.set(
+    tx / MINECRAFT_UNIT,
+    -ty / MINECRAFT_UNIT, // Invert Y
+    tz / MINECRAFT_UNIT,
   );
 
-  return boneGroup;
+  // Apply rotation (degrees to radians)
+  // JEM rotations are also inverted
+  const [rx, ry, rz] = part.rotate;
+  partGroup.rotation.set(
+    THREE.MathUtils.degToRad(-rx), // Invert X rotation
+    THREE.MathUtils.degToRad(-ry), // Invert Y rotation
+    THREE.MathUtils.degToRad(rz),
+  );
+
+  // Apply scale
+  if (part.scale !== 1.0) {
+    partGroup.scale.setScalar(part.scale);
+  }
+
+  return partGroup;
 }
 
 /**
- * Create a Three.js mesh for a single cuboid
+ * Create a Three.js mesh for a single box
  */
-function createCuboidMesh(
-  cuboid: EntityCuboid,
+function createBoxMesh(
+  box: ParsedBox,
   textureSize: [number, number],
   texture: THREE.Texture | null,
 ): THREE.Mesh | null {
-  const [ox, oy, oz] = cuboid.origin;
-  const [sx, sy, sz] = cuboid.size;
+  const [x, y, z] = box.position;
+  const [width, height, depth] = box.size;
 
   // Calculate size in Three.js units
-  const width = sx / MINECRAFT_UNIT;
-  const height = sy / MINECRAFT_UNIT;
-  const depth = sz / MINECRAFT_UNIT;
+  const w = width / MINECRAFT_UNIT;
+  const h = height / MINECRAFT_UNIT;
+  const d = depth / MINECRAFT_UNIT;
 
-  console.log(`[entityModelConverter] Creating cuboid: origin [${ox}, ${oy}, ${oz}], size [${sx}, ${sy}, ${sz}]`);
+  console.log(`[entityModelConverter] Creating box: pos [${x}, ${y}, ${z}], size [${width}, ${height}, ${depth}]`);
 
   // Create box geometry
-  const geometry = new THREE.BoxGeometry(width, height, depth);
+  const geometry = new THREE.BoxGeometry(w, h, d);
 
-  // Apply UV coordinates for each face
-  applyEntityUVs(geometry, cuboid, textureSize);
+  // Apply UV coordinates
+  applyJEMUVs(geometry, box.uv, textureSize, box.mirror);
 
   // Create material
   let material: THREE.Material;
@@ -153,10 +159,11 @@ function createCuboidMesh(
   const mesh = new THREE.Mesh(geometry, material);
 
   // Position the mesh
-  // Origin is bottom-left-back corner, so we need to offset to center
-  const centerX = (ox + sx / 2) / MINECRAFT_UNIT - 0.5;
-  const centerY = (oy + sy / 2) / MINECRAFT_UNIT;
-  const centerZ = (oz + sz / 2) / MINECRAFT_UNIT - 0.5;
+  // JEM coordinates are the corner of the box, need to offset to center
+  // Also invert Y axis
+  const centerX = (x + width / 2) / MINECRAFT_UNIT;
+  const centerY = -(y + height / 2) / MINECRAFT_UNIT; // Invert Y
+  const centerZ = (z + depth / 2) / MINECRAFT_UNIT;
   mesh.position.set(centerX, centerY, centerZ);
 
   // Enable shadows
@@ -167,61 +174,61 @@ function createCuboidMesh(
 }
 
 /**
- * Apply entity UV coordinates to box geometry
+ * Apply JEM UV coordinates to box geometry
  *
- * Entity UVs are specified as [u, v] for the top-left corner of each face
- * in texture pixels. The face size is determined by the cuboid dimensions.
+ * JEM UVs are specified as [u1, v1, u2, v2] in texture pixels
  */
-function applyEntityUVs(
+function applyJEMUVs(
   geometry: THREE.BoxGeometry,
-  cuboid: EntityCuboid,
+  uv: ParsedBox['uv'],
   textureSize: [number, number],
+  mirror: boolean,
 ): void {
   const [texWidth, texHeight] = textureSize;
-  const [, , ] = cuboid.origin;
-  const [sx, sy, sz] = cuboid.size;
 
   const uvAttr = geometry.attributes.uv;
   if (!uvAttr) return;
 
   // Map face names to Three.js box face indices
   // Three.js order: [right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)]
-  // Minecraft: east, west, up, down, south, north
-  const faceConfigs: { name: keyof typeof cuboid.uv; index: number; width: number; height: number }[] = [
-    { name: "east", index: 0, width: sz, height: sy },   // right face (+X) shows Z×Y
-    { name: "west", index: 1, width: sz, height: sy },   // left face (-X) shows Z×Y
-    { name: "up", index: 2, width: sx, height: sz },     // top face (+Y) shows X×Z
-    { name: "down", index: 3, width: sx, height: sz },   // bottom face (-Y) shows X×Z
-    { name: "south", index: 4, width: sx, height: sy },  // front face (+Z) shows X×Y
-    { name: "north", index: 5, width: sx, height: sy },  // back face (-Z) shows X×Y
+  const faceConfigs: { name: keyof typeof uv; index: number }[] = [
+    { name: "east", index: 0 },   // right face (+X)
+    { name: "west", index: 1 },   // left face (-X)
+    { name: "up", index: 2 },     // top face (+Y)
+    { name: "down", index: 3 },   // bottom face (-Y)
+    { name: "south", index: 4 },  // front face (+Z)
+    { name: "north", index: 5 },  // back face (-Z)
   ];
 
   for (const config of faceConfigs) {
-    const faceUV = cuboid.uv[config.name];
-    if (!faceUV) continue;
+    const faceUV = uv[config.name];
+    if (!faceUV || faceUV.every(v => v === 0)) continue;
 
-    const [u, v] = faceUV;
-    const faceWidth = config.width;
-    const faceHeight = config.height;
+    const [u1, v1, u2, v2] = faceUV;
 
     // Convert pixel coordinates to 0-1 UV space
     // Entity textures have (0,0) at top-left, Three.js at bottom-left
-    const u1 = u / texWidth;
-    const v1 = 1 - v / texHeight;                    // Top of face
-    const u2 = (u + faceWidth) / texWidth;
-    const v2 = 1 - (v + faceHeight) / texHeight;     // Bottom of face
+    let uvU1 = u1 / texWidth;
+    let uvV1 = 1 - v1 / texHeight; // Top of face
+    let uvU2 = u2 / texWidth;
+    let uvV2 = 1 - v2 / texHeight; // Bottom of face
+
+    // Handle mirroring
+    if (mirror) {
+      [uvU1, uvU2] = [uvU2, uvU1];
+    }
 
     // Set UV coordinates for the 4 vertices of this face
     const baseIndex = config.index * 4;
 
     // Three.js BoxGeometry vertex layout per face:
-    // 2---3  (v1 - top)
+    // 2---3  (uvV1 - top)
     // |   |
-    // 0---1  (v2 - bottom)
-    uvAttr.setXY(baseIndex + 0, u1, v2); // Bottom-left
-    uvAttr.setXY(baseIndex + 1, u2, v2); // Bottom-right
-    uvAttr.setXY(baseIndex + 2, u1, v1); // Top-left
-    uvAttr.setXY(baseIndex + 3, u2, v1); // Top-right
+    // 0---1  (uvV2 - bottom)
+    uvAttr.setXY(baseIndex + 0, uvU1, uvV2); // Bottom-left
+    uvAttr.setXY(baseIndex + 1, uvU2, uvV2); // Bottom-right
+    uvAttr.setXY(baseIndex + 2, uvU1, uvV1); // Top-left
+    uvAttr.setXY(baseIndex + 3, uvU2, uvV1); // Top-right
   }
 
   uvAttr.needsUpdate = true;
@@ -240,23 +247,5 @@ function countMeshes(group: THREE.Group): number {
   return count;
 }
 
-/**
- * Helper to create a texture loader for entity textures
- *
- * Entity textures follow a different path pattern than block textures.
- * They're located at: assets/minecraft/textures/entity/{type}/{variant}.png
- */
-export function getEntityTexturePath(
-  entityType: string,
-  textureName: string = "normal",
-): string {
-  // Map entity types to their texture paths
-  const pathMap: Record<string, string> = {
-    chest: `entity/chest/${textureName}`,
-    trapped_chest: "entity/chest/trapped",
-    ender_chest: "entity/chest/ender",
-    shulker_box: `entity/shulker/shulker${textureName === "normal" ? "" : `_${textureName}`}`,
-  };
-
-  return pathMap[entityType] || `entity/${entityType}/${textureName}`;
-}
+// Legacy export for backward compatibility with old entity model format
+export { parsedEntityModelToThreeJs as entityModelToThreeJs };
