@@ -15,6 +15,10 @@ path = "src/lib.rs"
 name = "weaverbird"
 path = "src/main.rs"
 
+[[bin]]
+name = "block-tester"
+path = "src/bin/block_tester.rs"
+
 [dependencies]
 tauri = { version = "2.5", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2.1"

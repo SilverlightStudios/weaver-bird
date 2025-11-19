@@ -1,5 +1,6 @@
 pub mod asset_indexer;
 pub mod block_models;
+pub mod block_test_runner;
 pub mod blockstates;
 pub mod launcher_detection;
 pub mod mc_paths;
