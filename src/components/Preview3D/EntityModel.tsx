@@ -8,7 +8,7 @@ import {
 import {
   loadEntityModel,
   getEntityTypeFromAssetId,
-  isSupportedEntity,
+  isEntityTexture,
 } from "@lib/emf";
 import { parsedEntityModelToThreeJs } from "@lib/three/entityModelConverter";
 import { loadPackTexture, loadVanillaTexture } from "@lib/three/textureLoader";
@@ -232,6 +232,6 @@ function EntityModel({
 export default EntityModel;
 
 /**
- * Check if an asset ID is a supported entity
+ * Check if an asset ID is an entity texture (routes to EntityModel instead of BlockModel)
  */
-export { isSupportedEntity as isEntityAsset };
+export { isEntityTexture as isEntityAsset };

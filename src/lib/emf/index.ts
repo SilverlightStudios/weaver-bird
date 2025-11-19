@@ -11,6 +11,7 @@ export {
   loadEntityModel,
   getEntityTypeFromAssetId,
   isSupportedEntity,
+  isEntityTexture,
   getSupportedEntityTypes,
   getEntityTexturePath,
 } from './loader';

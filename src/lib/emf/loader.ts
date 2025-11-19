@@ -179,10 +179,19 @@ export function getEntityTypeFromAssetId(assetId: string): string | null {
 }
 
 /**
- * Check if an asset ID is a supported entity
+ * Check if an asset ID is a supported entity (has a model definition)
  */
 export function isSupportedEntity(assetId: string): boolean {
   return getEntityTypeFromAssetId(assetId) !== null;
+}
+
+/**
+ * Check if an asset ID is ANY entity texture (even if we don't have a model)
+ * This prevents entity textures from being sent to BlockModel
+ */
+export function isEntityTexture(assetId: string): boolean {
+  const texturePath = assetId.replace(/^minecraft:/, '');
+  return texturePath.startsWith('entity/');
 }
 
 /**
