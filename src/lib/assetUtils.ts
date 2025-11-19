@@ -360,6 +360,13 @@ export function getBaseName(assetId: string): string {
   // Fix fungi -> fungus (warped_fungi -> warped_fungus, crimson_fungi -> crimson_fungus)
   name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
 
+  // Handle pitcher_crop patterns BEFORE general crop stage check
+  // pitcher_crop_bottom_stage_4 -> pitcher_crop
+  // pitcher_crop_top_stage_3 -> pitcher_crop
+  if (name.startsWith("pitcher_crop")) {
+    return "pitcher_crop";
+  }
+
   // Handle crop stage patterns with multiple suffixes
   // wheat_stage6_bottom -> wheat, wheat_stage_6_top -> wheat
   // potatoes_stage3_bottom -> potatoes, carrots_stage3_top -> carrots
@@ -369,12 +376,226 @@ export function getBaseName(assetId: string): string {
     return name;
   }
 
-  // Handle pitcher_crop patterns
-  // pitcher_crop_bottom_stage_4 -> pitcher_crop
-  // pitcher_crop_top_stage_3 -> pitcher_crop
-  if (name.startsWith("pitcher_crop")) {
-    return "pitcher_crop";
+  // Handle kelp_age_25 -> kelp
+  if (name.startsWith("kelp_age")) {
+    return "kelp";
   }
+
+  // Handle turtle_egg patterns -> turtle_egg
+  if (name.startsWith("turtle_egg")) {
+    return "turtle_egg";
+  }
+
+  // Handle structure_block patterns -> structure_block
+  if (name.startsWith("structure_block")) {
+    return "structure_block";
+  }
+
+  // Handle sculk_catalyst patterns -> sculk_catalyst
+  if (name.startsWith("sculk_catalyst")) {
+    return "sculk_catalyst";
+  }
+
+  // Handle sculk_shrieker patterns -> sculk_shrieker
+  if (name.startsWith("sculk_shrieker")) {
+    return "sculk_shrieker";
+  }
+
+  // Handle pink_petals patterns -> pink_petals
+  if (name.startsWith("pink_petals")) {
+    return "pink_petals";
+  }
+
+  // Handle potted_azalea_bush patterns -> potted_azalea_bush or potted_flowering_azalea_bush
+  if (name.startsWith("potted_flowering_azalea_bush")) {
+    return "potted_flowering_azalea_bush";
+  }
+  if (name.startsWith("potted_azalea_bush")) {
+    return "potted_azalea_bush";
+  }
+
+  // Handle bee nest/hive honey patterns
+  // bee_nest_front_honey -> bee_nest, beehive_front_honey -> beehive
+  if (name.includes("_honey")) {
+    name = name.replace(/_front_honey$/, "").replace(/_honey$/, "");
+  }
+
+  // Handle beehive_end -> beehive
+  if (name === "beehive_end") {
+    return "beehive";
+  }
+
+  // Handle barrel_top_open -> barrel
+  if (name.startsWith("barrel_top")) {
+    return "barrel";
+  }
+
+  // Handle observer_back_on -> observer
+  if (name.startsWith("observer_back")) {
+    return "observer";
+  }
+
+  // Handle respawn_anchor_top_off -> respawn_anchor
+  if (name.startsWith("respawn_anchor")) {
+    return "respawn_anchor";
+  }
+
+  // Handle daylight_detector_inverted_top -> daylight_detector
+  if (name.startsWith("daylight_detector")) {
+    return "daylight_detector";
+  }
+
+  // Handle piston patterns -> piston or sticky_piston
+  if (name === "piston_top_sticky") {
+    return "sticky_piston";
+  }
+
+  // Handle furnace/smoker/blast_furnace _front_on patterns
+  // These blocks use "lit" property, but textures use "_on" suffix
+  const furnaceMatch = name.match(/^(furnace|smoker|blast_furnace)_(front|top)_on$/);
+  if (furnaceMatch) {
+    return furnaceMatch[1];
+  }
+  const furnaceMatch2 = name.match(/^(furnace|smoker|blast_furnace)_(front|top)$/);
+  if (furnaceMatch2) {
+    return furnaceMatch2[1];
+  }
+
+  // Handle _double suffix for slabs
+  // cut_copper_slab_double -> cut_copper_slab
+  const doubleSlabMatch = name.match(/^(.+_slab)_double$/);
+  if (doubleSlabMatch) {
+    return doubleSlabMatch[1];
+  }
+
+  // Handle dispenser/dropper _vertical patterns -> dispenser/dropper
+  if (name === "dispenser_front_vertical") {
+    return "dispenser";
+  }
+  if (name === "dropper_front_vertical") {
+    return "dropper";
+  }
+
+  // Handle dirt_path_side_lower -> dirt_path
+  if (name.startsWith("dirt_path")) {
+    return "dirt_path";
+  }
+
+  // Handle grass_block patterns -> grass_block
+  if (name.startsWith("grass_block")) {
+    return "grass_block";
+  }
+
+  // Handle moss_block side overlay -> moss_block
+  if (name.startsWith("moss_side") || name === "moss_block_side_overlay") {
+    return "moss_block";
+  }
+
+  // Handle mushroom_block_inside -> brown_mushroom_block (or red, but we default to brown)
+  if (name === "mushroom_block_inside") {
+    return "brown_mushroom_block";
+  }
+
+  // Handle magma -> magma_block
+  if (name === "magma") {
+    return "magma_block";
+  }
+
+  // Handle grass (short grass plant) -> short_grass
+  if (name === "grass") {
+    return "short_grass";
+  }
+
+  // Handle lectern_sides -> lectern
+  if (name.startsWith("lectern")) {
+    return "lectern";
+  }
+
+  // Handle quartz_block_slab_side -> quartz_slab
+  if (name.startsWith("quartz_block_slab")) {
+    return "quartz_slab";
+  }
+
+  // Handle jigsaw_lock -> jigsaw
+  if (name.startsWith("jigsaw")) {
+    return "jigsaw";
+  }
+
+  // Handle tripbase -> tripwire_hook
+  if (name === "tripbase") {
+    return "tripwire_hook";
+  }
+
+  // Handle warped_side -> warped_stem
+  if (name === "warped_side" || name === "warped") {
+    return "warped_stem";
+  }
+
+  // Handle warped_block -> warped_wart_block
+  if (name === "warped_block") {
+    return "warped_wart_block";
+  }
+
+  // Handle crimson_roots_pot and warped_roots_pot -> potted versions
+  if (name === "crimson_roots_pot") {
+    return "potted_crimson_roots";
+  }
+  if (name === "warped_roots_pot") {
+    return "potted_warped_roots";
+  }
+
+  // Handle chiseled_bookshelf_book_ends -> chiseled_bookshelf
+  if (name.startsWith("chiseled_bookshelf")) {
+    return "chiseled_bookshelf";
+  }
+
+  // Handle acacia_leaves_bushy_inventory -> acacia_leaves
+  // and mangrove_leaves_bushy_inventory -> mangrove_leaves
+  const leavesInventoryMatch = name.match(/^(.+_leaves)_bushy_inventory$/);
+  if (leavesInventoryMatch) {
+    return leavesInventoryMatch[1];
+  }
+
+  // Handle azalea_plant -> azalea
+  if (name === "azalea_plant") {
+    return "azalea";
+  }
+
+  // Handle water textures -> water
+  if (name.startsWith("water_")) {
+    return "water";
+  }
+
+  // Handle lava textures -> lava
+  if (name.startsWith("lava_")) {
+    return "lava";
+  }
+
+  // Handle sandstone_smooth -> smooth_sandstone
+  if (name === "sandstone_smooth") {
+    return "smooth_sandstone";
+  }
+  if (name === "red_sandstone_smooth") {
+    return "smooth_red_sandstone";
+  }
+
+  // Handle sandstonetrim -> chiseled_sandstone (old naming)
+  if (name === "sandstonetrim") {
+    return "chiseled_sandstone";
+  }
+
+  // Handle diamond_ore_new -> diamond_ore
+  if (name === "diamond_ore_new") {
+    return "diamond_ore";
+  }
+
+  // Handle _dfx suffix (custom format) - strip it
+  name = name.replace(/_dfx$/, "");
+
+  // Handle _pp suffix (pressure plate shorthand from custom packs)
+  // These can't be mapped since we don't know which pressure plate
+  // Just strip it and hope for the best
+  name = name.replace(/_pp$/, "_pressure_plate");
 
   // Handle destroy_stage_X -> these aren't real blocks
   if (name.startsWith("destroy_stage")) {
