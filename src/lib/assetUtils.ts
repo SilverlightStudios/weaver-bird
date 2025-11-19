@@ -379,13 +379,22 @@ export function getVariantGroupKey(assetId: string): string {
   // Extract just the path portion, ignoring namespace
   // This allows grouping variants from different namespaces
   const pathMatch = normalized.match(/^[^:]*:(.+)$/);
-  const path = pathMatch ? pathMatch[1] : normalized;
+  let path = pathMatch ? pathMatch[1] : normalized;
 
   if (path.startsWith("colormap/")) {
     const parts = path.split("/");
     if (parts.length > 1) {
       return `colormap/${parts[parts.length - 1]}`;
     }
+  }
+
+  // Strip potted prefix/suffix to group with base plant
+  // "block/potted_oak_sapling" -> "block/oak_sapling"
+  // "block/oxeye_daisy_potted" -> "block/oxeye_daisy"
+  if (path.includes("/potted_")) {
+    path = path.replace("/potted_", "/");
+  } else if (path.endsWith("_potted")) {
+    path = path.replace(/_potted$/, "");
   }
 
   // Remove structural suffixes like _top/_bottom/_head/_foot
@@ -433,6 +442,22 @@ export function getVariantNumber(assetId: string): string | null {
 export function isPottedPlant(assetId: string): boolean {
   const path = assetId.replace(/^[^:]*:/, ""); // Remove namespace
   return path.includes("potted") || path.includes("_pot");
+}
+
+/**
+ * Get the potted version asset ID for a plant
+ * Example: "minecraft:block/oak_sapling" -> "minecraft:block/potted_oak_sapling"
+ * Example: "minecraft:block/dandelion" -> "minecraft:block/potted_dandelion"
+ */
+export function getPottedAssetId(assetId: string): string {
+  // Extract namespace
+  const namespaceMatch = assetId.match(/^([^:]*:)/);
+  const namespace = namespaceMatch ? namespaceMatch[1] : "minecraft:";
+
+  // Get the block name without namespace and block/ prefix
+  const blockName = assetId.replace(/^[^:]*:/, "").replace(/^block\//, "");
+
+  return `${namespace}block/potted_${blockName}`;
 }
 
 /**

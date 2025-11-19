@@ -1,5 +1,9 @@
 import { useMemo } from "react";
-import { beautifyAssetName, groupAssetsByVariant } from "@lib/assetUtils";
+import {
+  beautifyAssetName,
+  groupAssetsByVariant,
+  isPottedPlant,
+} from "@lib/assetUtils";
 import s from "./styles.module.scss";
 
 interface Props {
@@ -27,7 +31,12 @@ export default function TextureVariantSelector({
       return [];
     }
 
-    return group.variantIds;
+    // Filter out potted variants - they're controlled by "Show Pot" toggle, not texture selector
+    const nonPottedVariants = group.variantIds.filter(
+      (id) => !isPottedPlant(id),
+    );
+
+    return nonPottedVariants;
   }, [assetId, allAssets]);
 
   // Don't render if no variants or only one variant

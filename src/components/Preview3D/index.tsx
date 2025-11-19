@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -12,6 +12,8 @@ import {
   getColormapTypeFromAssetId,
   isBiomeColormapAsset,
   isPottedPlant,
+  getVariantGroupKey,
+  groupAssetsByVariant,
 } from "@lib/assetUtils";
 import { getMultiBlockParts, type MultiBlockPart } from "@lib/multiBlockConfig";
 import s from "./styles.module.scss";
@@ -28,6 +30,7 @@ interface Props {
   blockProps?: Record<string, string>;
   seed?: number;
   foliagePreviewBlock: string;
+  allAssetIds?: string[];
 }
 
 export default function Preview3D({
@@ -39,6 +42,7 @@ export default function Preview3D({
   blockProps = {},
   seed = 0,
   foliagePreviewBlock,
+  allAssetIds = [],
 }: Props) {
   const [tintInfo, setTintInfo] = useState<{
     hasTint: boolean;
@@ -49,6 +53,22 @@ export default function Preview3D({
   const colormapType = assetId
     ? (getColormapTypeFromAssetId(assetId) ?? "grass")
     : "grass";
+
+  // Check if this asset can be potted (a potted version exists in the same variant group)
+  const canBePotted = useMemo(() => {
+    if (!assetId || isPlantPotted || allAssetIds.length === 0) return false;
+
+    // Find the variant group for this asset
+    const groupKey = getVariantGroupKey(assetId);
+    const groups = groupAssetsByVariant(allAssetIds);
+    const group = groups.find((g) => g.baseId === groupKey);
+
+    if (!group) return false;
+
+    // Check if any variant in the group is a potted version
+    return group.variantIds.some((id) => isPottedPlant(id));
+  }, [assetId, isPlantPotted, allAssetIds]);
+
   const previewAssetId = assetId
     ? isColormapAsset
       ? colormapType === "foliage"
@@ -59,7 +79,8 @@ export default function Preview3D({
   const multiBlockParts: MultiBlockPart[] | null = previewAssetId
     ? getMultiBlockParts(previewAssetId, blockProps)
     : null;
-  const showPotToggle = isPlantPotted && !isColormapAsset;
+  // Show pot toggle for both already-potted plants AND pottable plants
+  const showPotToggle = (isPlantPotted || canBePotted) && !isColormapAsset;
 
   useEffect(() => {
     console.log("[Preview3D] Component mounted");
@@ -166,7 +187,7 @@ export default function Preview3D({
                     isColormapAsset ? "minecraft:vanilla" : undefined
                   }
                   showPot={showPot && !isColormapAsset}
-                  isPotted={isPlantPotted && !isColormapAsset}
+                  isPotted={(isPlantPotted || canBePotted) && !isColormapAsset}
                   blockProps={{
                     ...blockProps,
                     ...(part.overrides ?? {}),
@@ -182,7 +203,7 @@ export default function Preview3D({
                 onTintDetected={handleTintDetected}
                 forcedPackId={isColormapAsset ? "minecraft:vanilla" : undefined}
                 showPot={showPot && !isColormapAsset}
-                isPotted={isPlantPotted && !isColormapAsset}
+                isPotted={(isPlantPotted || canBePotted) && !isColormapAsset}
                 blockProps={blockProps}
                 seed={seed}
               />

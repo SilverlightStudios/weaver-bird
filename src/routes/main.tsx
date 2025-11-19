@@ -207,6 +207,8 @@ export default function MainRoute() {
 
   useEffect(() => {
     setTintInfo({ hasTint: false, tintType: undefined });
+    setBlockProps({});
+    setSeed(0);
   }, [uiState.selectedAssetId]);
 
   // Reset to page 1 when search query changes
@@ -577,6 +579,7 @@ export default function MainRoute() {
                 blockProps={blockProps}
                 seed={seed}
                 foliagePreviewBlock={foliagePreviewBlock}
+                allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
               />
             </div>
 
@@ -617,7 +620,9 @@ export default function MainRoute() {
           overrides={overridesRecord}
           outputDir={uiState.outputDir}
           statusMessage={errorMessage || successMessage}
-          statusType={errorMessage ? "error" : successMessage ? "success" : "idle"}
+          statusType={
+            errorMessage ? "error" : successMessage ? "success" : "idle"
+          }
           onClearStatus={() => {
             setErrorMessage("");
             setSuccessMessage("");

@@ -19,6 +19,8 @@ import {
   getBlockStateIdFromAssetId,
   extractBlockStateProperties,
   getVariantGroupKey,
+  isPottedPlant,
+  getPottedAssetId,
 } from "@lib/assetUtils";
 
 interface Props {
@@ -154,19 +156,37 @@ function BlockModel({
 
         // For potted plants, decide whether to load the potted model or just the plant
         let modelAssetId = normalizedAssetId;
+        const isAlreadyPotted = isPottedPlant(normalizedAssetId);
+
         if (isPotted && !showPot) {
           // If showPot is false, load just the plant without the pot
-          const plantName = getPlantNameFromPotted(normalizedAssetId);
-          if (plantName) {
-            modelAssetId = plantName;
+          if (isAlreadyPotted) {
+            const plantName = getPlantNameFromPotted(normalizedAssetId);
+            if (plantName) {
+              modelAssetId = plantName;
+              console.log(
+                "[BlockModel] Loading plant without pot:",
+                modelAssetId,
+              );
+            }
+          }
+          // If not already potted, just use the original asset
+        } else if (isPotted && showPot) {
+          // If showPot is true, load the full potted model
+          if (isAlreadyPotted) {
+            // Already a potted asset, use as-is
             console.log(
-              "[BlockModel] Loading plant without pot:",
+              "[BlockModel] Loading full potted model:",
+              modelAssetId,
+            );
+          } else {
+            // Convert plant to potted version (e.g., oak_sapling -> potted_oak_sapling)
+            modelAssetId = getPottedAssetId(normalizedAssetId);
+            console.log(
+              "[BlockModel] Loading potted version of plant:",
               modelAssetId,
             );
           }
-        } else if (isPotted && showPot) {
-          // If showPot is true, load the full potted model (includes both pot and plant)
-          console.log("[BlockModel] Loading full potted model:", modelAssetId);
         }
 
         // Resolve blockstate -> models with transformations
@@ -174,7 +194,10 @@ function BlockModel({
 
         // Extract inferred properties from asset ID (e.g., _on -> powered=true)
         const inferredProps = extractBlockStateProperties(modelAssetId);
-        console.log("[BlockModel] Inferred props from asset ID:", inferredProps);
+        console.log(
+          "[BlockModel] Inferred props from asset ID:",
+          inferredProps,
+        );
 
         // Merge user-provided props with inferred props (user props take precedence)
         const mergedProps = { ...inferredProps, ...blockProps };
