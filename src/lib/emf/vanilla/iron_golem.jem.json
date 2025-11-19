@@ -1,0 +1,88 @@
+{
+  "texture": "entity/iron_golem/iron_golem",
+  "textureSize": [128, 128],
+  "shadowSize": 0.7,
+  "models": [
+    {
+      "part": "head",
+      "id": "head",
+      "invertAxis": "xy",
+      "translate": [0, -31, 2],
+      "boxes": [
+        {
+          "coordinates": [-4, -12, -5.5, 8, 10, 8],
+          "textureOffset": [0, 0]
+        },
+        {
+          "coordinates": [-1, -5, -7.5, 2, 4, 2],
+          "textureOffset": [24, 0]
+        }
+      ]
+    },
+    {
+      "part": "body",
+      "id": "body",
+      "invertAxis": "xy",
+      "translate": [0, -31, 0],
+      "boxes": [
+        {
+          "coordinates": [-9, 0, -6, 18, 12, 11],
+          "textureOffset": [0, 40]
+        },
+        {
+          "coordinates": [-4.5, -6, -3, 9, 5, 6],
+          "textureOffset": [0, 70],
+          "sizeAdd": 0.5
+        }
+      ]
+    },
+    {
+      "part": "left_arm",
+      "id": "left_arm",
+      "invertAxis": "xy",
+      "translate": [0, -31, 0],
+      "boxes": [
+        {
+          "coordinates": [9, -2.5, -3, 4, 30, 6],
+          "textureOffset": [60, 21]
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "id": "right_arm",
+      "invertAxis": "xy",
+      "translate": [0, -31, 0],
+      "boxes": [
+        {
+          "coordinates": [-13, -2.5, -3, 4, 30, 6],
+          "textureOffset": [60, 58]
+        }
+      ]
+    },
+    {
+      "part": "left_leg",
+      "id": "left_leg",
+      "invertAxis": "xy",
+      "translate": [5, -13, 0],
+      "boxes": [
+        {
+          "coordinates": [1.5, 0, -3, 6, 16, 5],
+          "textureOffset": [37, 0]
+        }
+      ]
+    },
+    {
+      "part": "right_leg",
+      "id": "right_leg",
+      "invertAxis": "xy",
+      "translate": [-5, -13, 0],
+      "boxes": [
+        {
+          "coordinates": [-7.5, 0, -3, 6, 16, 5],
+          "textureOffset": [60, 0]
+        }
+      ]
+    }
+  ]
+}

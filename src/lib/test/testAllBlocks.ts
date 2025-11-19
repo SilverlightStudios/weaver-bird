@@ -27,6 +27,11 @@ import {
   type ResolutionResult,
   type BlockModel,
 } from "@lib/tauri/blockModels";
+import {
+  isEntityTexture,
+  getEntityTypeFromAssetId,
+  loadEntityModel,
+} from "@lib/emf";
 
 export interface TestResult {
   assetId: string;
@@ -39,6 +44,10 @@ export interface TestResult {
   elementCount?: number;
   blockStateId?: string;
   packId?: string;
+  /** Whether this is an entity texture (vs block) */
+  isEntity?: boolean;
+  /** Entity type if this is an entity */
+  entityType?: string;
 }
 
 export interface TestSummary {
@@ -55,8 +64,12 @@ export interface TestSummary {
 export interface TestOptions {
   /** Stop on first error */
   stopOnError?: boolean;
-  /** Only test block textures (skip items, colormaps, etc.) */
+  /** Only test block textures (skip items, colormaps, entities, etc.) */
   blocksOnly?: boolean;
+  /** Only test entity textures */
+  entitiesOnly?: boolean;
+  /** Test both blocks and entities (overrides blocksOnly) */
+  includeEntities?: boolean;
   /** Maximum number of assets to test (for debugging) */
   limit?: number;
   /** Filter assets by pattern */
@@ -234,6 +247,86 @@ async function testAsset(assetId: string, verbose: boolean = false): Promise<Tes
 }
 
 /**
+ * Test a single entity asset
+ */
+async function testEntityAsset(assetId: string, verbose: boolean = false): Promise<TestResult> {
+  const start = Date.now();
+  const result: TestResult = {
+    assetId,
+    success: false,
+    duration: 0,
+    isEntity: true,
+  };
+
+  try {
+    const state = useStore.getState();
+    const packsDir = state.packsDir;
+
+    if (!packsDir) {
+      result.error = "No packs directory configured";
+      result.errorCode = "NO_PACKS_DIR";
+      result.duration = Date.now() - start;
+      return result;
+    }
+
+    // Get entity type from asset ID
+    const entityType = getEntityTypeFromAssetId(assetId);
+    result.entityType = entityType || undefined;
+
+    if (verbose) {
+      console.log(`  Asset: ${assetId}`);
+      console.log(`  Entity type: ${entityType || 'unknown'}`);
+    }
+
+    // Try to load the entity model
+    const parsedModel = await loadEntityModel(entityType || 'unknown');
+
+    if (!parsedModel) {
+      result.error = `No model definition for entity type: ${entityType || 'unknown'}`;
+      result.errorCode = "NO_ENTITY_MODEL";
+      result.duration = Date.now() - start;
+      return result;
+    }
+
+    // Count parts as "models"
+    result.modelCount = parsedModel.parts.length;
+
+    // Count total boxes as "elements"
+    let totalBoxes = 0;
+    type ModelPart = typeof parsedModel.parts[0];
+    function countBoxes(parts: ModelPart[]) {
+      for (const part of parts) {
+        totalBoxes += part.boxes.length;
+        if (part.children.length > 0) {
+          countBoxes(part.children);
+        }
+      }
+    }
+    countBoxes(parsedModel.parts);
+    result.elementCount = totalBoxes;
+
+    if (totalBoxes === 0) {
+      result.error = "Entity model has no boxes";
+      result.errorCode = "NO_ELEMENTS";
+      result.duration = Date.now() - start;
+      return result;
+    }
+
+    // Success!
+    result.success = true;
+    result.duration = Date.now() - start;
+    return result;
+
+  } catch (err) {
+    result.error = err instanceof Error ? err.message : String(err);
+    result.errorCode = "UNKNOWN_ERROR";
+    result.errorDetails = err;
+    result.duration = Date.now() - start;
+    return result;
+  }
+}
+
+/**
  * Sleep utility for delays between tests
  */
 function sleep(ms: number): Promise<void> {
@@ -247,6 +340,8 @@ export async function testAllBlocks(options: TestOptions = {}): Promise<TestSumm
   const {
     stopOnError = false,
     blocksOnly = true,
+    entitiesOnly = false,
+    includeEntities = false,
     limit,
     filter,
     delayMs = 0,
@@ -260,8 +355,15 @@ export async function testAllBlocks(options: TestOptions = {}): Promise<TestSumm
   // Get all asset IDs
   let assetIds = Object.keys(state.assets);
 
-  // Filter to blocks only
-  if (blocksOnly) {
+  // Filter based on asset type
+  if (entitiesOnly) {
+    // Only test entities
+    assetIds = assetIds.filter(id => isEntityTexture(id));
+  } else if (includeEntities) {
+    // Test both blocks and entities
+    assetIds = assetIds.filter(id => isBlockTexture(id) || isEntityTexture(id));
+  } else if (blocksOnly) {
+    // Only test blocks (default)
     assetIds = assetIds.filter(id => isBlockTexture(id));
   }
 
@@ -306,7 +408,11 @@ export async function testAllBlocks(options: TestOptions = {}): Promise<TestSumm
       console.log(`\n${progress} Testing: ${assetId}`);
     }
 
-    const result = await testAsset(assetId, verbose);
+    // Use appropriate test function based on asset type
+    const isEntity = isEntityTexture(assetId);
+    const result = isEntity
+      ? await testEntityAsset(assetId, verbose)
+      : await testAsset(assetId, verbose);
     results.push(result);
 
     if (result.success) {
@@ -413,6 +519,24 @@ export async function testBlocksStopOnError(
   options: Omit<TestOptions, 'stopOnError'> = {}
 ): Promise<TestSummary> {
   return testAllBlocks({ ...options, stopOnError: true });
+}
+
+/**
+ * Test only entity textures
+ */
+export async function testEntities(
+  options: Omit<TestOptions, 'entitiesOnly' | 'blocksOnly'> = {}
+): Promise<TestSummary> {
+  return testAllBlocks({ ...options, entitiesOnly: true, blocksOnly: false });
+}
+
+/**
+ * Test both blocks and entities
+ */
+export async function testAll(
+  options: Omit<TestOptions, 'includeEntities' | 'blocksOnly'> = {}
+): Promise<TestSummary> {
+  return testAllBlocks({ ...options, includeEntities: true, blocksOnly: false });
 }
 
 /**
@@ -559,6 +683,8 @@ export function exportErrorsAsJson(summary: TestSummary): string {
 if (typeof window !== 'undefined') {
   (window as unknown as { testAllBlocks: typeof testAllBlocks }).testAllBlocks = testAllBlocks;
   (window as unknown as { testBlocksStopOnError: typeof testBlocksStopOnError }).testBlocksStopOnError = testBlocksStopOnError;
+  (window as unknown as { testEntities: typeof testEntities }).testEntities = testEntities;
+  (window as unknown as { testAll: typeof testAll }).testAll = testAll;
   (window as unknown as { testBlocksByPattern: typeof testBlocksByPattern }).testBlocksByPattern = testBlocksByPattern;
   (window as unknown as { getUniqueBlockStateIds: typeof getUniqueBlockStateIds }).getUniqueBlockStateIds = getUniqueBlockStateIds;
   (window as unknown as { exportTestReport: typeof exportTestReport }).exportTestReport = exportTestReport;

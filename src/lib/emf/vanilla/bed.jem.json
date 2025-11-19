@@ -1,0 +1,47 @@
+{
+  "texture": "entity/bed/red",
+  "textureSize": [64, 64],
+  "shadowSize": 0.5,
+  "models": [
+    {
+      "part": "head",
+      "id": "head",
+      "invertAxis": "xy",
+      "translate": [0, -9, 0],
+      "boxes": [
+        {
+          "coordinates": [-8, 0, 0, 16, 16, 6],
+          "textureOffset": [0, 0]
+        },
+        {
+          "coordinates": [-8, -3, 6, 3, 3, 3],
+          "textureOffset": [50, 6]
+        },
+        {
+          "coordinates": [5, -3, 6, 3, 3, 3],
+          "textureOffset": [50, 6]
+        }
+      ]
+    },
+    {
+      "part": "foot",
+      "id": "foot",
+      "invertAxis": "xy",
+      "translate": [0, -9, 0],
+      "boxes": [
+        {
+          "coordinates": [-8, -16, 0, 16, 16, 6],
+          "textureOffset": [0, 22]
+        },
+        {
+          "coordinates": [-8, -19, 0, 3, 3, 3],
+          "textureOffset": [50, 0]
+        },
+        {
+          "coordinates": [5, -19, 0, 3, 3, 3],
+          "textureOffset": [50, 0]
+        }
+      ]
+    }
+  ]
+}

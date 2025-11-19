@@ -7,6 +7,7 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import BlockModel from "./BlockModel";
+import EntityModel, { isEntityAsset } from "./EntityModel";
 import GridFloor from "./GridFloor";
 import {
   getColormapTypeFromAssetId,
@@ -174,9 +175,13 @@ export default function Preview3D({
           <directionalLight position={[-5, 5, -5]} intensity={0.4} />
           <pointLight position={[0, -5, 0]} intensity={0.5} color="#ffffff" />
 
-          {/* Block Model - only render when assetId is present */}
+          {/* Model rendering - use EntityModel for entities, BlockModel for blocks */}
           {previewAssetId &&
-            (multiBlockParts ? (
+            (isEntityAsset(previewAssetId) ? (
+              // Entity model (chests, shulker boxes, etc.)
+              <EntityModel assetId={previewAssetId} />
+            ) : multiBlockParts ? (
+              // Multi-part block model
               multiBlockParts.map((part, index) => (
                 <BlockModel
                   key={`${previewAssetId}-${index}`}
@@ -197,6 +202,7 @@ export default function Preview3D({
                 />
               ))
             ) : (
+              // Standard block model
               <BlockModel
                 assetId={previewAssetId}
                 biomeColor={biomeColor}

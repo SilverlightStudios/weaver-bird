@@ -354,11 +354,25 @@ export function getBaseName(assetId: string): string {
   // Handle green_birch_leaves/readme type paths
   const slashMatch = name.match(/^([^/]+)\//);
   if (slashMatch) {
+    // Skip readme files and similar non-texture files
+    if (name.includes("readme")) {
+      return "readme"; // This will fail but that's expected
+    }
     name = slashMatch[1];
   }
 
   // Fix fungi -> fungus (warped_fungi -> warped_fungus, crimson_fungi -> crimson_fungus)
   name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
+
+  // Handle pitcherbot/pitchertop -> pitcher_crop (custom pack abbreviations)
+  if (name.startsWith("pitcherbot") || name.startsWith("pitchertop")) {
+    return "pitcher_crop";
+  }
+
+  // Handle blackstonebutton -> polished_blackstone_button
+  if (name === "blackstonebutton") {
+    return "polished_blackstone_button";
+  }
 
   // Handle pitcher_crop patterns BEFORE general crop stage check
   // pitcher_crop_bottom_stage_4 -> pitcher_crop
@@ -593,9 +607,23 @@ export function getBaseName(assetId: string): string {
   name = name.replace(/_dfx$/, "");
 
   // Handle _pp suffix (pressure plate shorthand from custom packs)
-  // These can't be mapped since we don't know which pressure plate
-  // Just strip it and hope for the best
-  name = name.replace(/_pp$/, "_pressure_plate");
+  // Map to actual Minecraft pressure plate names
+  if (name.endsWith("_pp")) {
+    const base = name.replace(/_pp$/, "");
+    // Special cases for weighted pressure plates
+    if (base === "gold") {
+      return "light_weighted_pressure_plate";
+    }
+    if (base === "iron") {
+      return "heavy_weighted_pressure_plate";
+    }
+    if (base === "polished_bs") {
+      return "polished_blackstone_pressure_plate";
+    }
+    // For wood types, convert to pressure plate
+    // oak_pp -> oak_pressure_plate, etc.
+    return `${base}_pressure_plate`;
+  }
 
   // Handle destroy_stage_X -> these aren't real blocks
   if (name.startsWith("destroy_stage")) {
