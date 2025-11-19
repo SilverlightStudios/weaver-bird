@@ -6,7 +6,6 @@ import SearchBar from "@components/SearchBar";
 import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import OptionsPanel from "@components/OptionsPanel";
-import TextureVariantSelector from "@components/TextureVariantSelector";
 import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
 import Settings from "@components/Settings";
@@ -596,20 +595,13 @@ export default function MainRoute() {
                 onFoliagePreviewBlockChange={setFoliagePreviewBlock}
                 onBlockPropsChange={setBlockProps}
                 onSeedChange={setSeed}
-              />
-            </div>
-
-            {/* Texture Variant Selector - for different numbered variants of the same texture */}
-            {uiState.selectedAssetId && (
-              <TextureVariantSelector
-                assetId={uiState.selectedAssetId}
                 allAssets={allAssets.map((a: AssetRecord) => ({
                   id: a.id,
                   name: a.id,
                 }))}
                 onSelectVariant={setSelectedAsset}
               />
-            )}
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

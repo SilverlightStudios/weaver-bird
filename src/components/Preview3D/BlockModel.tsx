@@ -18,6 +18,7 @@ import {
   getPlantNameFromPotted,
   getBlockStateIdFromAssetId,
   extractBlockStateProperties,
+  getVariantGroupKey,
 } from "@lib/assetUtils";
 
 interface Props {
@@ -57,13 +58,25 @@ function BlockModel({
   // Get the winning pack using the ORIGINAL asset ID (state stores original IDs)
   // but we'll use the normalized ID when loading models
   const storeWinnerPackId = useSelectWinner(assetId);
-  const storeWinnerPack = useSelectPack(storeWinnerPackId || "");
+
+  // For numbered variants (e.g., "acacia_planks1"), also check the base asset
+  // since providers might only be registered for base assets
+  const variantGroupKey = getVariantGroupKey(assetId);
+  const baseAssetId = assetId.startsWith("minecraft:")
+    ? `minecraft:block/${variantGroupKey}`
+    : variantGroupKey;
+  const baseWinnerPackId = useSelectWinner(baseAssetId);
+
+  // Use the variant's winner if available, otherwise fall back to base asset's winner
+  const effectiveWinnerPackId = storeWinnerPackId || baseWinnerPackId;
+
+  const storeWinnerPack = useSelectPack(effectiveWinnerPackId || "");
   const forcedPackMeta = useSelectPack(forcedPackId || "");
   const vanillaPack = useSelectPack("minecraft:vanilla");
 
   const resolvedPackId =
     forcedPackId ??
-    storeWinnerPackId ??
+    effectiveWinnerPackId ??
     (vanillaPack ? "minecraft:vanilla" : undefined);
   const resolvedPack = forcedPackId
     ? forcedPackId === "minecraft:vanilla"

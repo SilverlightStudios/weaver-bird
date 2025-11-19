@@ -10,11 +10,13 @@
  * - Advanced debug info
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui/components/tabs";
 import BiomeColorPicker from "@components/BiomeColorPicker";
 import VariantChooser from "@components/VariantChooser";
 import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
+import TextureVariantSelector from "@components/TextureVariantSelector";
+import { groupAssetsByVariant } from "@lib/assetUtils";
 import {
   Combobox,
   type ComboboxOption,
@@ -55,6 +57,9 @@ interface Props {
   onFoliagePreviewBlockChange: (blockId: string) => void;
   onBlockPropsChange?: (props: Record<string, string>) => void;
   onSeedChange?: (seed: number) => void;
+  // Props for texture variant selector
+  allAssets?: Array<{ id: string; name: string }>;
+  onSelectVariant?: (variantId: string) => void;
 }
 
 const FOLIAGE_PREVIEW_OPTIONS: ComboboxOption[] = [
@@ -79,9 +84,24 @@ export default function OptionsPanel({
   onFoliagePreviewBlockChange,
   onBlockPropsChange,
   onSeedChange,
+  allAssets = [],
+  onSelectVariant,
 }: Props) {
   const [blockProps, setBlockProps] = useState<Record<string, string>>({});
   const [seed, setSeed] = useState(0);
+
+  // Check if texture variants are available for the selected asset
+  const hasTextureVariants = useMemo(() => {
+    if (!assetId || allAssets.length === 0) return false;
+
+    const allAssetIds = allAssets.map((a) => a.id);
+    const groups = groupAssetsByVariant(allAssetIds);
+
+    // Find the group that contains the selected asset
+    const group = groups.find((g) => g.variantIds.includes(assetId));
+
+    return group && group.variantIds.length > 1;
+  }, [assetId, allAssets]);
 
   // Forward block props and seed changes to parent
   const handleBlockPropsChange = (props: Record<string, string>) => {
@@ -224,8 +244,11 @@ export default function OptionsPanel({
           {hasBiomeColorTab && (
             <TabsTrigger value="biome">Biome Color</TabsTrigger>
           )}
+          {hasTextureVariants && onSelectVariant && (
+            <TabsTrigger value="texture-variants">Texture Variant</TabsTrigger>
+          )}
           {hasVariantsTab && (
-            <TabsTrigger value="variants">Variants</TabsTrigger>
+            <TabsTrigger value="variants">Pack Variants</TabsTrigger>
           )}
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
@@ -289,6 +312,18 @@ export default function OptionsPanel({
                 onColorSelect={onBiomeColorChange}
               />
             )}
+          </TabsContent>
+        )}
+
+        {hasTextureVariants && onSelectVariant && (
+          <TabsContent value="texture-variants">
+            <div style={{ padding: "1rem" }}>
+              <TextureVariantSelector
+                assetId={assetId}
+                allAssets={allAssets}
+                onSelectVariant={onSelectVariant}
+              />
+            </div>
           </TabsContent>
         )}
 
