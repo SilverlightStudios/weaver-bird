@@ -7,6 +7,7 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import BlockModel from "./BlockModel";
+import GridFloor from "./GridFloor";
 import {
   getColormapTypeFromAssetId,
   isBiomeColormapAsset,
@@ -186,6 +187,19 @@ export default function Preview3D({
                 seed={seed}
               />
             ))}
+
+          {/* Grid floor with dashed lines - 1 Minecraft block spacing */}
+          <GridFloor
+            position={[0, 0, 0]}
+            size={20}
+            gridSize={1}
+            lineWidth={0.02}
+            dashLength={0.1}
+            gapLength={0.1}
+            lineColor="#666666"
+            fadeStart={2}
+            fadeEnd={8}
+          />
 
           {/* Soft contact shadow - tight under the block */}
           <ContactShadows
