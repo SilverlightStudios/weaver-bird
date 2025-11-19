@@ -329,8 +329,11 @@ export function getBaseName(assetId: string): string {
   let name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
 
   // Remove common structural suffixes (top/bottom, head/foot, etc.)
+  // Also handles texture-specific suffixes that don't correspond to blockstates:
+  // - bamboo_stalk, bamboo_large_leaves, bamboo_small_leaves -> bamboo
+  // - chiseled_bookshelf_occupied, chiseled_bookshelf_empty -> chiseled_bookshelf
   name = name.replace(
-    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|inventory|bushy|stage\d+)\d*$/,
+    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|inventory|bushy|stage\d+|stalk|large_leaves|small_leaves|singleleaf|occupied|empty)\d*$/,
     "",
   );
 
