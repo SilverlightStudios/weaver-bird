@@ -324,16 +324,143 @@ export function normalizeBlockNameForBlockstate(name: string): string {
  * Extract the base name without variant suffixes
  * Example: "acacia_leaves_bushy1" -> "acacia_leaves"
  * Example: "activator_rail_on" -> "activator_rail"
+ * Example: "variated/andesite/0" -> "andesite"
+ * Example: "wheat_stage6_bottom" -> "wheat"
  */
 export function getBaseName(assetId: string): string {
   let name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
+
+  // Remove .png extension if present (malformed asset IDs)
+  name = name.replace(/\.png$/, "");
+
+  // Handle variated/ texture paths: "variated/andesite/0" -> "andesite"
+  const variatedMatch = name.match(/^variated\/([^/]+)\//);
+  if (variatedMatch) {
+    name = variatedMatch[1];
+    return name;
+  }
+
+  // Handle break/ texture paths - these are particle textures, not blocks
+  // We'll still try to extract a base name for grouping
+  if (name.startsWith("break/")) {
+    name = name.replace(/^break\//, "");
+  }
+
+  // Handle "old iron/" prefixed textures
+  if (name.startsWith("old iron/")) {
+    name = name.replace(/^old iron\//, "");
+  }
+
+  // Handle green_birch_leaves/readme type paths
+  const slashMatch = name.match(/^([^/]+)\//);
+  if (slashMatch) {
+    name = slashMatch[1];
+  }
+
+  // Fix fungi -> fungus (warped_fungi -> warped_fungus, crimson_fungi -> crimson_fungus)
+  name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
+
+  // Handle crop stage patterns with multiple suffixes
+  // wheat_stage6_bottom -> wheat, wheat_stage_6_top -> wheat
+  // potatoes_stage3_bottom -> potatoes, carrots_stage3_top -> carrots
+  const cropMatch = name.match(/^(.+?)_stage_?\d+/);
+  if (cropMatch) {
+    name = cropMatch[1];
+    return name;
+  }
+
+  // Handle pitcher_crop patterns
+  // pitcher_crop_bottom_stage_4 -> pitcher_crop
+  // pitcher_crop_top_stage_3 -> pitcher_crop
+  if (name.startsWith("pitcher_crop")) {
+    return "pitcher_crop";
+  }
+
+  // Handle destroy_stage_X -> these aren't real blocks
+  if (name.startsWith("destroy_stage")) {
+    return "destroy_stage";
+  }
+
+  // Handle sniffer_egg patterns
+  // sniffer_egg_not_cracked_bottom -> sniffer_egg
+  // sniffer_egg_slightly_cracked_top -> sniffer_egg
+  // sniffer_egg_very_cracked_east -> sniffer_egg
+  if (name.startsWith("sniffer_egg")) {
+    return "sniffer_egg";
+  }
+
+  // Handle trial_spawner textures -> trial_spawner
+  if (name.startsWith("trial_spawner")) {
+    return "trial_spawner";
+  }
+
+  // Handle vault textures -> vault
+  if (name.startsWith("vault_")) {
+    return "vault";
+  }
+
+  // Handle crafter textures -> crafter
+  if (name.startsWith("crafter_")) {
+    return "crafter";
+  }
+
+  // Handle copper_bulb variants -> copper_bulb (or exposed/oxidized/weathered variants)
+  const copperBulbMatch = name.match(/^((?:exposed_|oxidized_|weathered_)?copper_bulb)/);
+  if (copperBulbMatch) {
+    return copperBulbMatch[1];
+  }
+
+  // Handle campfire patterns -> campfire or soul_campfire
+  if (name.startsWith("campfire_") || name.startsWith("soul_campfire_")) {
+    return name.startsWith("soul_") ? "soul_campfire" : "campfire";
+  }
+
+  // Handle sculk_sensor_tendril -> sculk_sensor
+  if (name.startsWith("sculk_sensor_tendril")) {
+    return "sculk_sensor";
+  }
+
+  // Handle calibrated_sculk_sensor patterns
+  if (name.startsWith("calibrated_sculk_sensor")) {
+    return "calibrated_sculk_sensor";
+  }
+
+  // Handle small_dripleaf_stem -> small_dripleaf
+  if (name.startsWith("small_dripleaf_stem")) {
+    return "small_dripleaf";
+  }
+
+  // Handle big_dripleaf patterns -> big_dripleaf
+  if (name.startsWith("big_dripleaf")) {
+    return "big_dripleaf";
+  }
+
+  // Handle pointed_dripstone patterns -> pointed_dripstone
+  if (name.startsWith("pointed_dripstone")) {
+    return "pointed_dripstone";
+  }
+
+  // Handle stonecutter_saw -> stonecutter
+  if (name.startsWith("stonecutter_saw")) {
+    return "stonecutter";
+  }
+
+  // Handle redstone_dust patterns -> redstone_wire
+  if (name.startsWith("redstone_dust")) {
+    return "redstone_wire";
+  }
+
+  // Handle dried_kelp_block patterns (dried_kelp_top/side/bottom are block textures)
+  if (name.startsWith("dried_kelp_") && !name.includes("block")) {
+    return "dried_kelp_block";
+  }
 
   // Remove common structural suffixes (top/bottom, head/foot, etc.)
   // Also handles texture-specific suffixes that don't correspond to blockstates:
   // - bamboo_stalk, bamboo_large_leaves, bamboo_small_leaves -> bamboo
   // - chiseled_bookshelf_occupied, chiseled_bookshelf_empty -> chiseled_bookshelf
   name = name.replace(
-    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|inventory|bushy|stage\d+|stalk|large_leaves|small_leaves|singleleaf|occupied|empty)\d*$/,
+    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|inventory|bushy|stage\d+|stalk|large_leaves|small_leaves|singleleaf|occupied|empty|inner|base|round|pivot|overlay|moist|corner|flow|still|arm|inside|outside|eye|conditional|dead|compost|ready|bloom|hanging|particle|post|walls|tip|frustum|merge|middle|crafting|ejecting|ominous)\d*$/,
     "",
   );
 
