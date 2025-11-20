@@ -56,10 +56,6 @@ interface StoreActions {
     color: { r: number; g: number; b: number } | undefined,
   ) => void;
 
-  // Colormap selection (DEPRECATED - use overrides system)
-  setSelectedGrassColormapAssetId: (assetId: string | undefined) => void;
-  setSelectedFoliageColormapAssetId: (assetId: string | undefined) => void;
-
   // Reset
   reset: () => void;
 }
@@ -93,10 +89,6 @@ const initialState: AppState = {
   selectedGrassColor: undefined, // Will be sampled from colormap
   selectedFoliageColor: undefined, // Will be sampled from colormap
   selectedBiomeId: "plains", // Default to plains biome
-
-  // Legacy (DEPRECATED)
-  selectedGrassColormapAssetId: undefined,
-  selectedFoliageColormapAssetId: undefined,
 };
 
 export const useStore = create<WeaverbirdStore>()(
@@ -258,19 +250,6 @@ export const useStore = create<WeaverbirdStore>()(
     ) => {
       set((state) => {
         state.selectedGrassColor = color;
-      });
-    },
-
-    // Legacy (DEPRECATED)
-    setSelectedGrassColormapAssetId: (assetId: string | undefined) => {
-      set((state) => {
-        state.selectedGrassColormapAssetId = assetId;
-      });
-    },
-
-    setSelectedFoliageColormapAssetId: (assetId: string | undefined) => {
-      set((state) => {
-        state.selectedFoliageColormapAssetId = assetId;
       });
     },
 

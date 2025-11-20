@@ -99,10 +99,6 @@ export interface UIState {
   selectedGrassColor?: { r: number; g: number; b: number }; // Sampled grass color at coordinates
   selectedFoliageColor?: { r: number; g: number; b: number }; // Sampled foliage color at coordinates
   selectedBiomeId?: string; // Biome ID if coordinates match a biome, null otherwise
-
-  // Legacy - kept for backward compatibility during migration
-  selectedGrassColormapAssetId?: string; // DEPRECATED: Use overrides system instead
-  selectedFoliageColormapAssetId?: string; // DEPRECATED: Use overrides system instead
 }
 
 /**

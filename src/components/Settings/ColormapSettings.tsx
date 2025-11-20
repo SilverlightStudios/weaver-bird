@@ -6,26 +6,6 @@ import s from "./ColormapSettings.module.scss";
  * Allows users to select which resource pack's grass and foliage colormaps to use
  */
 export default function ColormapSettings() {
-  const handleGrassColorSelect = (color: {
-    r: number;
-    g: number;
-    b: number;
-  }) => {
-    // Not used directly, but required by BiomeColorCard
-    // The card will update global state through its own handlers
-    console.log("[ColormapSettings] Grass color selected:", color);
-  };
-
-  const handleFoliageColorSelect = (color: {
-    r: number;
-    g: number;
-    b: number;
-  }) => {
-    // Not used directly, but required by BiomeColorCard
-    // The card will update global state through its own handlers
-    console.log("[ColormapSettings] Foliage color selected:", color);
-  };
-
   return (
     <div className={s.container}>
       <div className={s.header}>
@@ -45,7 +25,6 @@ export default function ColormapSettings() {
           <BiomeColorCard
             assetId="minecraft:colormap/foliage"
             type="foliage"
-            onColorSelect={handleFoliageColorSelect}
             showSourceSelector={true}
             accent="emerald"
           />
@@ -59,7 +38,6 @@ export default function ColormapSettings() {
           <BiomeColorCard
             assetId="minecraft:colormap/grass"
             type="grass"
-            onColorSelect={handleGrassColorSelect}
             showSourceSelector={true}
             accent="emerald"
           />

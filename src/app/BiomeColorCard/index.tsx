@@ -47,7 +47,7 @@ interface ColormapSourceOption {
 export interface BiomeColorCardProps {
   assetId: string;
   type: "grass" | "foliage";
-  onColorSelect: (color: { r: number; g: number; b: number }) => void;
+  onColorSelect?: (color: { r: number; g: number; b: number }) => void;
   showSourceSelector?: boolean;
   readOnly?: boolean;
   accent?: "emerald" | "gold" | "berry";
@@ -281,36 +281,32 @@ export default function BiomeColorCard({
       ((event.clientY - rect.top) / rect.height) * canvas.height,
     );
 
-    console.log("[BiomeColorCard] Canvas clicked at coordinates:", { x, y });
-
     // Update global colormap coordinates - this will trigger color sampling
     setColormapCoordinates({ x, y });
     setSelectedBiome(null);
 
-    // Still call the local callback for backward compatibility
-    const color = sampleColor(x, y);
-    if (color) {
-      onColorSelect(color);
+    // Call the optional callback if provided
+    if (onColorSelect) {
+      const color = sampleColor(x, y);
+      if (color) {
+        onColorSelect(color);
+      }
     }
   }
 
   function handleBiomeSelect(biome: BiomeData, x: number, y: number) {
     if (readOnly) return;
-    console.log(
-      "[BiomeColorCard] Biome hotspot selected:",
-      biome.id,
-      "coordinates:",
-      { x, y },
-    );
 
     // Update global colormap coordinates - this will trigger color sampling
     setColormapCoordinates({ x, y });
     setSelectedBiome(biome.id);
 
-    // Still call the local callback for backward compatibility
-    const color = sampleColor(x, y);
-    if (color) {
-      onColorSelect(color);
+    // Call the optional callback if provided
+    if (onColorSelect) {
+      const color = sampleColor(x, y);
+      if (color) {
+        onColorSelect(color);
+      }
     }
   }
 
