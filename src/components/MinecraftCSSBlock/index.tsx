@@ -24,6 +24,15 @@ interface MinecraftCSSBlockProps {
 }
 
 // Represents a rendered face with all data needed for CSS
+interface NormalizedUV {
+  u: number;
+  v: number;
+  width: number;
+  height: number;
+  flipX: 1 | -1;
+  flipY: 1 | -1;
+}
+
 interface RenderedFace {
   type: "top" | "left" | "right";
   textureUrl: string;
@@ -35,7 +44,7 @@ interface RenderedFace {
   width: number;
   height: number;
   // UV coordinates for texture clipping (0-1)
-  uv: { u1: number; v1: number; u2: number; v2: number };
+  uv: NormalizedUV;
   // Z-index for depth sorting
   zIndex: number;
   // Brightness for shading
@@ -71,20 +80,31 @@ function resolveTextureRef(
 /**
  * Converts Minecraft UV coordinates (0-16) to normalized (0-1)
  */
-function normalizeUV(uv: [number, number, number, number] | undefined): {
-  u1: number;
-  v1: number;
-  u2: number;
-  v2: number;
-} {
+function normalizeUV(
+  uv: [number, number, number, number] | undefined,
+): NormalizedUV {
   if (!uv) {
-    return { u1: 0, v1: 0, u2: 1, v2: 1 };
+    return { u: 0, v: 0, width: 1, height: 1, flipX: 1, flipY: 1 };
   }
+
+  const rawU1 = uv[0] / 16;
+  const rawV1 = uv[1] / 16;
+  const rawU2 = uv[2] / 16;
+  const rawV2 = uv[3] / 16;
+
+  const widthDelta = rawU2 - rawU1;
+  const heightDelta = rawV2 - rawV1;
+
+  const width = Math.abs(widthDelta) || 1;
+  const height = Math.abs(heightDelta) || 1;
+
   return {
-    u1: uv[0] / 16,
-    v1: uv[1] / 16,
-    u2: uv[2] / 16,
-    v2: uv[3] / 16,
+    u: widthDelta >= 0 ? rawU1 : rawU2,
+    v: heightDelta >= 0 ? rawV1 : rawV2,
+    width,
+    height,
+    flipX: widthDelta >= 0 ? 1 : -1,
+    flipY: heightDelta >= 0 ? 1 : -1,
   };
 }
 
@@ -540,10 +560,12 @@ export default function MinecraftCSSBlock({
                 "--face-width": `${face.width}px`,
                 "--face-height": `${face.height}px`,
                 "--face-brightness": face.brightness,
-                "--uv-x": face.uv.u1,
-                "--uv-y": face.uv.v1,
-                "--uv-width": face.uv.u2 - face.uv.u1,
-                "--uv-height": face.uv.v2 - face.uv.v1,
+                "--uv-x": face.uv.u,
+                "--uv-y": face.uv.v,
+                "--uv-width": face.uv.width,
+                "--uv-height": face.uv.height,
+                "--uv-flip-x": face.uv.flipX,
+                "--uv-flip-y": face.uv.flipY,
                 zIndex: face.zIndex,
               } as React.CSSProperties
             }

@@ -88,6 +88,8 @@
         // Offset for UV coordinates
         left: calc(-100% * var(--uv-x, 0) / var(--uv-width, 1));
         top: calc(-100% * var(--uv-y, 0) / var(--uv-height, 1));
+        transform-origin: top left;
+        transform: scaleX(var(--uv-flip-x, 1)) scaleY(var(--uv-flip-y, 1));
         // Pixelated rendering
         image-rendering: pixelated;
         image-rendering: -moz-crisp-edges;
