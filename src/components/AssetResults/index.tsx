@@ -15,6 +15,7 @@ import {
   useSelectPack,
 } from "@state/selectors";
 import { useStore } from "@state/store";
+import MinecraftCSSBlock from "@components/MinecraftCSSBlock";
 import s from "./styles.module.scss";
 
 interface AssetItem {
@@ -76,9 +77,10 @@ function AssetCard({
     };
   }, []);
 
-  // Only load image when visible
+  // Only load image when visible - only needed for colormaps
+  // MinecraftCSSBlock handles its own texture loading for blocks
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !isColormap) return;
 
     let mounted = true;
 
@@ -129,7 +131,7 @@ function AssetCard({
     return () => {
       mounted = false;
     };
-  }, [isVisible, asset.id, winnerPackId, winnerPack]);
+  }, [isVisible, isColormap, asset.id, winnerPackId, winnerPack]);
 
   const displayName = asset.name || beautifyAssetName(asset.id);
 
@@ -140,21 +142,39 @@ function AssetCard({
       onClick={onSelect}
     >
       <div className={s.imageContainer}>
-        {imageSrc && !imageError ? (
-          <img
-            src={imageSrc}
-            alt={displayName}
-            className={isColormap ? s.colormapTexture : s.texture}
-            onError={() => setImageError(true)}
-          />
-        ) : imageError ? (
-          <div className={s.placeholder}>
-            <span className={s.placeholderIcon}>🎨</span>
-          </div>
+        {isColormap ? (
+          // Colormaps display as flat images
+          imageSrc && !imageError ? (
+            <img
+              src={imageSrc}
+              alt={displayName}
+              className={s.colormapTexture}
+              onError={() => setImageError(true)}
+            />
+          ) : imageError ? (
+            <div className={s.placeholder}>
+              <span className={s.placeholderIcon}>🎨</span>
+            </div>
+          ) : (
+            <div className={s.placeholder}>
+              <span className={s.placeholderIcon}>⏳</span>
+            </div>
+          )
         ) : (
-          <div className={s.placeholder}>
-            <span className={s.placeholderIcon}>⏳</span>
-          </div>
+          // Blocks display as 3D CSS cubes
+          isVisible ? (
+            <MinecraftCSSBlock
+              assetId={asset.id}
+              packId={winnerPackId || undefined}
+              alt={displayName}
+              size={80}
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className={s.placeholder}>
+              <span className={s.placeholderIcon}>⏳</span>
+            </div>
+          )
         )}
         {isPenciled && (
           <div
