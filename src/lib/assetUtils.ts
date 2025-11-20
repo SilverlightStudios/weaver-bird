@@ -781,8 +781,21 @@ export function getVariantGroupKey(assetId: string): string {
     /^(.*)_(top|bottom|upper|lower|head|foot)$/,
   );
   if (structuralMatch) {
-    return structuralMatch[1];
+    path = structuralMatch[1];
   }
+
+  // Remove texture variant suffixes that should be grouped together
+  // This includes inventory variants, bushy leaves, and other visual variants
+  // that represent the same Minecraft block
+  // Examples:
+  // - acacia_leaves_inventory -> acacia_leaves
+  // - acacia_leaves_bushy -> acacia_leaves
+  // - acacia_leaves_bushy_inventory -> acacia_leaves
+  // - oak_leaves_bushy1 -> oak_leaves
+  path = path.replace(
+    /_(inventory|bushy|bushy_inventory|singleleaf|overlay)\d*$/,
+    "",
+  );
 
   // Remove trailing numbers with optional underscore separator
   // Handles: "acacia_planks1", "acacia_planks01", "acacia_planks_1", "acacia_planks_01"
@@ -792,6 +805,40 @@ export function getVariantGroupKey(assetId: string): string {
     return numberMatch[1].replace(/_$/, "");
   }
   return path;
+}
+
+/**
+ * Check if an asset ID represents an inventory texture variant
+ * Inventory textures are used when a block is displayed in the player's inventory
+ * (e.g., leaves have grey base textures that get biome-colored in-world, but inventory shows pre-colored version)
+ * Example: "minecraft:block/acacia_leaves_inventory" -> true
+ * Example: "minecraft:block/acacia_leaves_bushy_inventory" -> true
+ */
+export function isInventoryVariant(assetId: string): boolean {
+  return /_inventory\d*$/.test(assetId);
+}
+
+/**
+ * Categorize variants into world (placed block) and inventory (held item) types
+ * @param variantIds Array of asset IDs representing variants of the same block
+ * @returns Object with worldVariants and inventoryVariants arrays
+ */
+export function categorizeVariants(variantIds: string[]): {
+  worldVariants: string[];
+  inventoryVariants: string[];
+} {
+  const worldVariants: string[] = [];
+  const inventoryVariants: string[] = [];
+
+  for (const variantId of variantIds) {
+    if (isInventoryVariant(variantId)) {
+      inventoryVariants.push(variantId);
+    } else {
+      worldVariants.push(variantId);
+    }
+  }
+
+  return { worldVariants, inventoryVariants };
 }
 
 /**

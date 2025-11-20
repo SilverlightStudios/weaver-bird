@@ -7,6 +7,7 @@ import {
   groupAssetsByVariant,
   isBiomeColormapAsset,
   normalizeAssetId,
+  isInventoryVariant,
 } from "@lib/assetUtils";
 import {
   useSelectWinner,
@@ -227,9 +228,12 @@ export default function AssetResults({
       };
     });
 
-    // Return only the base asset from each group (first variant)
+    // Return only the base asset from each group
+    // Prefer inventory variant as display icon since that's what players recognize
     const displayAssets = packFilteredGroups.map((group) => {
-      const primaryId = group.variantIds[0];
+      // Find inventory variant to use as primary display, fall back to first variant
+      const inventoryVariant = group.variantIds.find((id) => isInventoryVariant(id));
+      const primaryId = inventoryVariant || group.variantIds[0];
       const canonicalId = primaryId.includes(":colormap/")
         ? primaryId
         : getBlockStateIdFromAssetId(primaryId);
