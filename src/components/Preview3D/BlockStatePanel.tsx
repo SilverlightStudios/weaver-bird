@@ -7,9 +7,9 @@ import {
 import { getBlockStateIdFromAssetId } from "@lib/assetUtils";
 import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
 import {
-  Combobox,
-  type ComboboxOption,
-} from "@/ui/components/Combobox/Combobox";
+  Select,
+  type SelectOption,
+} from "@/ui/components/Select/Select";
 import { NumberInput } from "@/ui/components/NumberInput";
 import { Slider } from "@/ui/components/Slider/Slider";
 import s from "./BlockStatePanel.module.scss";
@@ -162,21 +162,20 @@ export default function BlockStatePanel({
         );
 
       case "enum": {
-        const options: ComboboxOption[] = (prop.values || []).map((value) => ({
+        const options: SelectOption[] = (prop.values || []).map((value) => ({
           value,
           label: value,
         }));
         return (
           <div key={prop.name} className={s.property}>
             <span className={s.propertyName}>{prop.name}</span>
-            <Combobox
+            <Select
               options={options}
               value={currentValue}
               onValueChange={handleChange}
               placeholder="Select..."
-              searchPlaceholder="Search..."
               emptyMessage="No options"
-              className={s.combobox}
+              className={s.select}
             />
           </div>
         );

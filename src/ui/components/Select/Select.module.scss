@@ -1,0 +1,162 @@
+@use "@/ui/tokens" as tokens;
+
+// Trigger button
+.trigger {
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-sm;
+    @include tokens.shadow-md;
+    @include tokens.rotate-slight;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    min-width: 12rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+
+    background: var(--color-block);
+    color: var(--color-text);
+    cursor: pointer;
+
+    @include tokens.interactive-transitions;
+    @include tokens.interactive-lift;
+    @include tokens.focus-outline;
+
+    &[aria-expanded="true"] {
+        @include tokens.shadow-xl;
+        rotate: 0deg;
+    }
+}
+
+.triggerText {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.triggerIcon {
+    font-size: 0.7rem;
+    line-height: 1;
+    opacity: 0.6;
+    transition: rotate 180ms var(--spring-bezier);
+
+    .trigger[aria-expanded="true"] & {
+        rotate: 180deg;
+    }
+}
+
+// Popover content
+.content {
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-md;
+    @include tokens.shadow-xl;
+    @include tokens.rotate-slight;
+
+    position: absolute;
+    min-width: 12rem;
+    max-width: 20rem;
+    z-index: 50;
+
+    @include tokens.gradient-surface;
+
+    // Texture overlay
+    isolation: isolate;
+    @include tokens.texture-overlay(0.2);
+
+    &[data-side="bottom"] {
+        animation: slideDownAndFade 200ms var(--spring-bezier);
+    }
+}
+
+// List container
+.list {
+    max-height: 16rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--spacing-sm);
+
+    @include tokens.custom-scrollbar;
+}
+
+// Empty state
+.empty {
+    padding: 1rem;
+    text-align: center;
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text);
+    opacity: 0.5;
+}
+
+// Item
+.item {
+    @include tokens.radius-quirky-sm;
+
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.45rem 0.6rem;
+    margin: 0.15rem 0;
+
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1;
+
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+
+    @include tokens.menu-item-states;
+
+    &.selected {
+        background: var(--color-primary);
+        color: white;
+    }
+
+    &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+}
+
+.itemCheck {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    font-size: 0.9rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.itemLabel {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .content {
+        animation: none;
+    }
+
+    .trigger,
+    .item,
+    .triggerIcon {
+        transition-duration: 0.01ms;
+    }
+}
