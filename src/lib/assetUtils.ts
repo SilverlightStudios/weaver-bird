@@ -776,26 +776,28 @@ export function getVariantGroupKey(assetId: string): string {
     path = path.replace(/_potted$/, "");
   }
 
-  // Remove structural suffixes like _top/_bottom/_head/_foot
-  const structuralMatch = path.match(
-    /^(.*)_(top|bottom|upper|lower|head|foot)$/,
-  );
-  if (structuralMatch) {
-    path = structuralMatch[1];
-  }
+  // Extract the block name from the path for suffix processing
+  const pathParts = path.split("/");
+  let blockName = pathParts[pathParts.length - 1];
+  const pathPrefix = pathParts.slice(0, -1).join("/");
 
-  // Remove texture variant suffixes that should be grouped together
-  // This includes inventory variants, bushy leaves, and other visual variants
-  // that represent the same Minecraft block
-  // Examples:
-  // - acacia_leaves_inventory -> acacia_leaves
-  // - acacia_leaves_bushy -> acacia_leaves
-  // - acacia_leaves_bushy_inventory -> acacia_leaves
-  // - oak_leaves_bushy1 -> oak_leaves
-  path = path.replace(
-    /_(inventory|bushy|bushy_inventory|singleleaf|overlay)\d*$/,
+  // Remove comprehensive structural and texture-specific suffixes
+  // This matches the logic in getBaseName for consistent grouping
+  // Includes: face directions, texture variants, animation states, etc.
+  blockName = blockName.replace(
+    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|north|south|east|west|inventory|bushy|bushy_inventory|stage\d+|stalk|large_leaves|small_leaves|singleleaf|occupied|empty|inner|base|round|pivot|overlay|moist|corner|flow|still|arm|inside|outside|eye|conditional|dead|compost|ready|bloom|hanging|particle|post|walls|tip|frustum|merge|middle|crafting|ejecting|ominous)\d*$/,
     "",
   );
+
+  // Remove block state suffixes (on/off, lit, powered, open/closed, etc.)
+  // These are Minecraft block states that shouldn't create separate asset cards
+  blockName = blockName.replace(
+    /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+)$/,
+    "",
+  );
+
+  // Reconstruct path with cleaned block name
+  path = pathPrefix ? `${pathPrefix}/${blockName}` : blockName;
 
   // Remove trailing numbers with optional underscore separator
   // Handles: "acacia_planks1", "acacia_planks01", "acacia_planks_1", "acacia_planks_01"
