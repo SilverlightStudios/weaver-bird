@@ -15,6 +15,7 @@ import {
   useSelectPack,
 } from "@state/selectors";
 import { useStore } from "@state/store";
+import MinecraftCSSBlock from "@components/MinecraftCSSBlock";
 import s from "./styles.module.scss";
 
 interface AssetItem {
@@ -141,12 +142,21 @@ function AssetCard({
     >
       <div className={s.imageContainer}>
         {imageSrc && !imageError ? (
-          <img
-            src={imageSrc}
-            alt={displayName}
-            className={isColormap ? s.colormapTexture : s.texture}
-            onError={() => setImageError(true)}
-          />
+          isColormap ? (
+            <img
+              src={imageSrc}
+              alt={displayName}
+              className={s.colormapTexture}
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <MinecraftCSSBlock
+              textureSrc={imageSrc}
+              alt={displayName}
+              size={80}
+              onError={() => setImageError(true)}
+            />
+          )
         ) : imageError ? (
           <div className={s.placeholder}>
             <span className={s.placeholderIcon}>🎨</span>
