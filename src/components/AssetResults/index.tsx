@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getVanillaTexturePath, getPackTexturePath } from "@lib/tauri";
 import {
@@ -38,160 +38,179 @@ interface AssetCardProps {
   variantCount?: number; // Number of variants if this is a grouped asset
 }
 
-function AssetCard({
-  asset,
-  isSelected,
-  onSelect,
-  variantCount,
-}: AssetCardProps) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [imageError, setImageError] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const isColormap = isBiomeColormapAsset(asset.id);
+const AssetCard = memo(
+  function AssetCard({
+    asset,
+    isSelected,
+    onSelect,
+    variantCount,
+  }: AssetCardProps) {
+    const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [imageError, setImageError] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
+    const isColormap = isBiomeColormapAsset(asset.id);
 
-  // Get the winning pack for this asset
-  const winnerPackId = useSelectWinner(asset.id);
-  const isPenciled = useSelectIsPenciled(asset.id);
-  const winnerPack = useSelectPack(winnerPackId || "");
+    // Get the winning pack for this asset
+    const winnerPackId = useSelectWinner(asset.id);
+    const isPenciled = useSelectIsPenciled(asset.id);
+    const winnerPack = useSelectPack(winnerPackId || "");
 
-  // Intersection Observer to detect visibility
-  useEffect(() => {
-    if (!cardRef.current) return;
+    // Subscribe to colors and colormap URLs to trigger re-render when they change
+    useStore((state) => state.selectedGrassColor);
+    useStore((state) => state.selectedFoliageColor);
+    useStore((state) => state.grassColormapUrl);
+    useStore((state) => state.foliageColormapUrl);
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          // Once visible, stop observing (lazy load only once)
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }, // Start loading 200px before visible
-    );
+    // Intersection Observer to detect visibility
+    useEffect(() => {
+      if (!cardRef.current) return;
 
-    observer.observe(cardRef.current);
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            // Once visible, stop observing (lazy load only once)
+            observer.disconnect();
+          }
+        },
+        { rootMargin: "200px" }, // Start loading 200px before visible
+      );
 
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
+      observer.observe(cardRef.current);
 
-  // Only load image when visible - only needed for colormaps
-  // MinecraftCSSBlock handles its own texture loading for blocks
-  useEffect(() => {
-    if (!isVisible || !isColormap) return;
+      return () => {
+        observer.disconnect();
+      };
+    }, []);
 
-    let mounted = true;
+    // Only load image when visible - only needed for colormaps
+    // MinecraftCSSBlock handles its own texture loading for blocks
+    useEffect(() => {
+      if (!isVisible || !isColormap) return;
 
-    const loadImage = async () => {
-      try {
-        let texturePath: string;
-        // Normalize asset ID to fix trailing underscores and other issues
-        const normalizedAssetId = normalizeAssetId(asset.id);
+      let mounted = true;
 
-        // Priority: 1. Pack texture (if exists), 2. Vanilla texture (fallback)
-        if (winnerPackId && winnerPack) {
-          try {
-            // Try to load from the winning pack
-            texturePath = await getPackTexturePath(
-              winnerPack.path,
-              normalizedAssetId,
-              winnerPack.is_zip,
-            );
-          } catch (packError) {
-            // If pack texture fails, fall back to vanilla
-            console.warn(
-              `Pack texture not found for ${normalizedAssetId}, using vanilla.`,
-              packError,
-            );
+      const loadImage = async () => {
+        try {
+          let texturePath: string;
+          // Normalize asset ID to fix trailing underscores and other issues
+          const normalizedAssetId = normalizeAssetId(asset.id);
+
+          // Priority: 1. Pack texture (if exists), 2. Vanilla texture (fallback)
+          if (winnerPackId && winnerPack) {
+            try {
+              // Try to load from the winning pack
+              texturePath = await getPackTexturePath(
+                winnerPack.path,
+                normalizedAssetId,
+                winnerPack.is_zip,
+              );
+            } catch (packError) {
+              // If pack texture fails, fall back to vanilla
+              console.warn(
+                `Pack texture not found for ${normalizedAssetId}, using vanilla.`,
+                packError,
+              );
+              texturePath = await getVanillaTexturePath(normalizedAssetId);
+            }
+          } else {
+            // No pack provides this texture, use vanilla
             texturePath = await getVanillaTexturePath(normalizedAssetId);
           }
-        } else {
-          // No pack provides this texture, use vanilla
-          texturePath = await getVanillaTexturePath(normalizedAssetId);
+
+          if (mounted) {
+            // Convert file path to Tauri asset URL
+            const assetUrl = convertFileSrc(texturePath);
+            setImageSrc(assetUrl);
+            setImageError(false);
+          }
+        } catch (error) {
+          if (mounted) {
+            setImageError(true);
+            console.warn(`Failed to load texture for ${asset.id}:`, error);
+          }
         }
+      };
 
-        if (mounted) {
-          // Convert file path to Tauri asset URL
-          const assetUrl = convertFileSrc(texturePath);
-          setImageSrc(assetUrl);
-          setImageError(false);
-        }
-      } catch (error) {
-        if (mounted) {
-          setImageError(true);
-          console.warn(`Failed to load texture for ${asset.id}:`, error);
-        }
-      }
-    };
+      loadImage();
 
-    loadImage();
+      return () => {
+        mounted = false;
+      };
+    }, [isVisible, isColormap, asset.id, winnerPackId, winnerPack]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [isVisible, isColormap, asset.id, winnerPackId, winnerPack]);
+    const displayName = asset.name || beautifyAssetName(asset.id);
 
-  const displayName = asset.name || beautifyAssetName(asset.id);
-
-  return (
-    <div
-      ref={cardRef}
-      className={`${s.card} ${isSelected ? s.selected : ""}`}
-      onClick={onSelect}
-    >
-      <div className={s.imageContainer}>
-        {isColormap ? (
-          // Colormaps display as flat images
-          imageSrc && !imageError ? (
-            <img
-              src={imageSrc}
+    return (
+      <div
+        ref={cardRef}
+        className={`${s.card} ${isSelected ? s.selected : ""}`}
+        onClick={onSelect}
+      >
+        <div className={s.imageContainer}>
+          {isColormap ? (
+            // Colormaps display as flat images
+            imageSrc && !imageError ? (
+              <img
+                src={imageSrc}
+                alt={displayName}
+                className={s.colormapTexture}
+                onError={() => setImageError(true)}
+              />
+            ) : imageError ? (
+              <div className={s.placeholder}>
+                <span className={s.placeholderIcon}>🎨</span>
+              </div>
+            ) : (
+              <div className={s.placeholder}>
+                <span className={s.placeholderIcon}>⏳</span>
+              </div>
+            )
+          ) : // Blocks display as 3D CSS cubes
+          isVisible ? (
+            <MinecraftCSSBlock
+              assetId={asset.id}
+              packId={winnerPackId || undefined}
               alt={displayName}
-              className={s.colormapTexture}
+              size={120}
               onError={() => setImageError(true)}
             />
-          ) : imageError ? (
-            <div className={s.placeholder}>
-              <span className={s.placeholderIcon}>🎨</span>
-            </div>
           ) : (
             <div className={s.placeholder}>
               <span className={s.placeholderIcon}>⏳</span>
             </div>
-          )
-        ) : // Blocks display as 3D CSS cubes
-        isVisible ? (
-          <MinecraftCSSBlock
-            assetId={asset.id}
-            packId={winnerPackId || undefined}
-            alt={displayName}
-            size={120}
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className={s.placeholder}>
-            <span className={s.placeholderIcon}>⏳</span>
-          </div>
-        )}
-        {isPenciled && (
-          <div
-            className={s.penciledIndicator}
-            title="Manually selected texture"
-          >
-            ✏️
-          </div>
-        )}
-        {variantCount && variantCount > 1 && (
-          <div className={s.variantBadge} title={`${variantCount} variants`}>
-            {variantCount}
-          </div>
-        )}
+          )}
+          {isPenciled && (
+            <div
+              className={s.penciledIndicator}
+              title="Manually selected texture"
+            >
+              ✏️
+            </div>
+          )}
+          {variantCount && variantCount > 1 && (
+            <div className={s.variantBadge} title={`${variantCount} variants`}>
+              {variantCount}
+            </div>
+          )}
+        </div>
+        <div className={s.assetName}>{displayName}</div>
       </div>
-      <div className={s.assetName}>{displayName}</div>
-    </div>
-  );
-}
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison function - return true if props are equal (skip re-render)
+    // Only re-render if these specific props change:
+    return (
+      prevProps.asset.id === nextProps.asset.id &&
+      prevProps.isSelected === nextProps.isSelected &&
+      prevProps.variantCount === nextProps.variantCount
+      // Note: foliageColor changes will trigger re-render via the hook inside the component
+      // Note: winnerPackId, isPenciled changes will trigger re-render via selectors
+    );
+  },
+);
 
 export default function AssetResults({
   assets,
@@ -268,6 +287,14 @@ export default function AssetResults({
     return displayAssets;
   }, [assets, getWinningPack]);
 
+  // Create a stable callback that can be reused
+  const handleSelectAsset = useCallback(
+    (assetId: string) => {
+      onSelect(assetId);
+    },
+    [onSelect],
+  );
+
   console.log(
     "[AssetResults] Rendering",
     assets.length,
@@ -305,7 +332,7 @@ export default function AssetResults({
               selectedId === group.id ||
               group.allVariants.includes(selectedId || "")
             }
-            onSelect={() => onSelect(group.id)}
+            onSelect={() => handleSelectAsset(group.id)}
             variantCount={group.variantCount}
           />
         ))}

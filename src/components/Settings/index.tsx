@@ -15,6 +15,7 @@ interface Props {
   onClose: () => void;
   minecraftTab: ReactNode;
   outputTab: ReactNode;
+  colormapTab: ReactNode;
 }
 
 export default function Settings({
@@ -22,6 +23,7 @@ export default function Settings({
   onClose,
   minecraftTab,
   outputTab,
+  colormapTab,
 }: Props) {
   return (
     <Drawer open={isOpen} onOpenChange={onClose} position="center">
@@ -45,10 +47,12 @@ export default function Settings({
             <TabsList>
               <TabsTrigger value="minecraft">Minecraft Locations</TabsTrigger>
               <TabsTrigger value="output">Output Settings</TabsTrigger>
+              <TabsTrigger value="colormaps">Colormaps</TabsTrigger>
             </TabsList>
 
             <TabsContent value="minecraft">{minecraftTab}</TabsContent>
             <TabsContent value="output">{outputTab}</TabsContent>
+            <TabsContent value="colormaps">{colormapTab}</TabsContent>
           </Tabs>
         </div>
       </DrawerContent>

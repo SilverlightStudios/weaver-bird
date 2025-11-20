@@ -188,9 +188,6 @@ export default function Preview3D({
                   assetId={previewAssetId}
                   biomeColor={biomeColor}
                   onTintDetected={index === 0 ? handleTintDetected : undefined}
-                  forcedPackId={
-                    isColormapAsset ? "minecraft:vanilla" : undefined
-                  }
                   showPot={showPot && !isColormapAsset}
                   isPotted={(isPlantPotted || canBePotted) && !isColormapAsset}
                   blockProps={{
@@ -207,7 +204,6 @@ export default function Preview3D({
                 assetId={previewAssetId}
                 biomeColor={biomeColor}
                 onTintDetected={handleTintDetected}
-                forcedPackId={isColormapAsset ? "minecraft:vanilla" : undefined}
                 showPot={showPot && !isColormapAsset}
                 isPotted={(isPlantPotted || canBePotted) && !isColormapAsset}
                 blockProps={blockProps}

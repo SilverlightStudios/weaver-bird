@@ -3,6 +3,7 @@ import s from "./main.module.scss";
 
 import PackList from "@components/PackList";
 import SearchBar from "@components/SearchBar";
+import BiomeSelector from "@components/BiomeSelector";
 import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import OptionsPanel from "@components/OptionsPanel";
@@ -10,6 +11,7 @@ import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
 import Settings from "@components/Settings";
 import MinecraftLocations from "@components/Settings/MinecraftLocations";
+import ColormapSettings from "@components/Settings/ColormapSettings";
 import Button from "@/ui/components/buttons/Button";
 import {
   Pagination,
@@ -37,6 +39,16 @@ import {
 } from "@lib/tauri";
 import type { LauncherInfo } from "@lib/tauri";
 import {
+  resolveColormapWinner,
+  loadColormapUrl,
+  sampleColormapColors,
+  coordinatesToBiome,
+  getPlainsCoordinates,
+  GRASS_COLORMAP_ASSET_ID,
+  FOLIAGE_COLORMAP_ASSET_ID,
+} from "@lib/colormapManager";
+import { getColormapTypeFromAssetId } from "@lib/assetUtils";
+import {
   useStore,
   useSelectPacksInOrder,
   useSelectPaginatedAssets,
@@ -63,6 +75,12 @@ import {
 
 // Get the setPacksDir action from store
 const useSetPacksDir = () => useStore((state) => state.setPacksDir);
+const useSelectedFoliageColor = () =>
+  useStore((state) => state.selectedFoliageColor);
+const useSelectedGrassColor = () =>
+  useStore((state) => state.selectedGrassColor);
+const useSetSelectedFoliageColor = () =>
+  useStore((state) => state.setSelectedFoliageColor);
 import type { PackMeta, AssetRecord } from "@state";
 
 const MESSAGE_TIMEOUT_MS = 3000;
@@ -161,11 +179,6 @@ export default function MainRoute() {
   const [foliagePreviewBlock, setFoliagePreviewBlock] = useState(
     "minecraft:block/oak_leaves",
   );
-  const [biomeColor, setBiomeColor] = useState<{
-    r: number;
-    g: number;
-    b: number;
-  } | null>(null);
   const [blockProps, setBlockProps] = useState<Record<string, string>>({});
   const [seed, setSeed] = useState(0);
   const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
@@ -183,10 +196,27 @@ export default function MainRoute() {
   const paginatedData = useSelectPaginatedAssets();
   const allAssets = useSelectAllAssets();
   const uiState = useSelectUIState();
+
+  // Get both grass and foliage colors from global state
+  const selectedGrassColor = useSelectedGrassColor();
+  const selectedFoliageColor = useSelectedFoliageColor();
+  const setBiomeColor = useSetSelectedFoliageColor();
+
+  // Determine which color to use based on the selected asset's colormap type
+  const selectedAssetColormapType = uiState.selectedAssetId
+    ? getColormapTypeFromAssetId(uiState.selectedAssetId)
+    : null;
+
+  // Use the appropriate color based on asset type (grass or foliage)
+  const biomeColor =
+    selectedAssetColormapType === "grass"
+      ? selectedGrassColor
+      : selectedFoliageColor;
   const packOrder = useSelectPackOrder();
   const overridesRecord = useSelectOverridesRecord();
   const selectedLauncher = useSelectSelectedLauncher();
   const availableLaunchers = useSelectAvailableLaunchers();
+  const providersByAsset = useStore((state) => state.providersByAsset);
 
   // Individual action selectors (stable references prevent infinite loops)
   const setSearchQuery = useSelectSetSearchQuery();
@@ -215,6 +245,147 @@ export default function MainRoute() {
   useEffect(() => {
     setCurrentPage(1);
   }, [uiState.searchQuery, setCurrentPage]);
+
+  // Centralized Colormap Manager Effect
+  // Manages all colormap state: resolves winners, loads URLs, samples colors
+  // Triggers on: pack order change, colormap coordinates change, overrides change
+  useEffect(() => {
+    const updateColormapState = async () => {
+      // Only run if we have the required data
+      if (allAssets.length === 0 || packOrder.length === 0) {
+        console.log("[ColormapManager] Waiting for assets/packs to load");
+        return;
+      }
+
+      const packsMap = packs.reduce(
+        (acc: Record<string, PackMeta>, p: PackMeta) => {
+          acc[p.id] = p;
+          return acc;
+        },
+        {},
+      );
+
+      try {
+        // Step 1: Resolve colormap winners (respects penciled selections)
+        const grassWinner = resolveColormapWinner(
+          GRASS_COLORMAP_ASSET_ID,
+          packOrder,
+          providersByAsset,
+          overridesRecord,
+        );
+
+        const foliageWinner = resolveColormapWinner(
+          FOLIAGE_COLORMAP_ASSET_ID,
+          packOrder,
+          providersByAsset,
+          overridesRecord,
+        );
+
+        // Step 2: Load colormap URLs
+        const grassUrl = grassWinner
+          ? await loadColormapUrl(
+              GRASS_COLORMAP_ASSET_ID,
+              grassWinner,
+              packsMap,
+            )
+          : null;
+
+        const foliageUrl = foliageWinner
+          ? await loadColormapUrl(
+              FOLIAGE_COLORMAP_ASSET_ID,
+              foliageWinner,
+              packsMap,
+            )
+          : null;
+
+        // Update URLs in state
+        useStore.getState().setGrassColormapUrl(grassUrl || undefined);
+        useStore.getState().setFoliageColormapUrl(foliageUrl || undefined);
+
+        // Step 3: Get current coordinates (or default to plains)
+        const currentCoords = useStore.getState().colormapCoordinates;
+        const coords = currentCoords || getPlainsCoordinates();
+
+        // If no coordinates set yet, initialize to plains
+        if (!currentCoords) {
+          useStore.getState().setColormapCoordinates(coords);
+        }
+
+        // Step 4: Sample colors at coordinates
+        const { grassColor, foliageColor } = await sampleColormapColors(
+          grassUrl,
+          foliageUrl,
+          coords.x,
+          coords.y,
+        );
+
+        // Step 5: Update colors in state
+        useStore.getState().setSelectedGrassColor(grassColor || undefined);
+        useStore.getState().setSelectedFoliageColor(foliageColor || undefined);
+
+        // Step 6: Determine if coordinates match a biome
+        const biomeId = coordinatesToBiome(coords.x, coords.y);
+        useStore.getState().setSelectedBiomeId(biomeId || undefined);
+      } catch (error) {
+        console.error(
+          "[ColormapManager] Failed to update colormap state:",
+          error,
+        );
+      }
+    };
+
+    updateColormapState();
+  }, [
+    allAssets,
+    packOrder,
+    packs,
+    providersByAsset,
+    overridesRecord,
+    // Note: colormapCoordinates is NOT in dependencies - we read it directly
+    // This prevents infinite loops when we update coordinates
+  ]);
+
+  // Re-sample colors when coordinates change (e.g., user clicks different biome)
+  const colormapCoordinates = useStore((state) => state.colormapCoordinates);
+  const grassColormapUrl = useStore((state) => state.grassColormapUrl);
+  const foliageColormapUrl = useStore((state) => state.foliageColormapUrl);
+
+  useEffect(() => {
+    const resampleColors = async () => {
+      if (!colormapCoordinates || (!grassColormapUrl && !foliageColormapUrl)) {
+        return;
+      }
+
+      try {
+        const { grassColor, foliageColor } = await sampleColormapColors(
+          grassColormapUrl || null,
+          foliageColormapUrl || null,
+          colormapCoordinates.x,
+          colormapCoordinates.y,
+        );
+
+        useStore.getState().setSelectedGrassColor(grassColor || undefined);
+        useStore.getState().setSelectedFoliageColor(foliageColor || undefined);
+
+        // Update biome ID based on new coordinates
+        const biomeId = coordinatesToBiome(
+          colormapCoordinates.x,
+          colormapCoordinates.y,
+        );
+        useStore.getState().setSelectedBiomeId(biomeId || undefined);
+
+        console.log("[ColormapManager] Colors re-sampled:", {
+          grassColor,
+          foliageColor,
+          biomeId,
+        });
+      } catch (error) {
+        console.error("[ColormapManager] Failed to re-sample colors:", error);
+      }
+    };
+
+    resampleColors();
+  }, [colormapCoordinates, grassColormapUrl, foliageColormapUrl]);
 
   // Memoize data transformations for components
   const packListItems = useMemo(
@@ -513,6 +684,7 @@ export default function MainRoute() {
                 onChange={setSearchQuery}
                 placeholder="Search blocks, mobs, textures..."
               />
+              <BiomeSelector />
             </div>
 
             <div className={s.resultsSection}>
@@ -651,6 +823,7 @@ export default function MainRoute() {
             onPackFormatChange={setPackFormat}
           />
         }
+        colormapTab={<ColormapSettings />}
       />
     </div>
   );

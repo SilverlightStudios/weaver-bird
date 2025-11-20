@@ -77,6 +77,9 @@ export default function BiomeColorCard({
   const overrideVariantPath = useSelectOverrideVariantPath(assetId);
   const isPenciled = useSelectIsPenciled(assetId);
 
+  // Global biome state for display purposes
+  const selectedBiomeId = useStore((state) => state.selectedBiomeId);
+
   const resolvedType = getColormapTypeFromAssetId(assetId) ?? type;
 
   const sourceOptions: ColormapSourceOption[] = useMemo(() => {
@@ -247,25 +250,7 @@ export default function BiomeColorCard({
     img.src = colormapSrc;
   }, [colormapSrc]);
 
-  function handleCanvasClick(event: React.MouseEvent<HTMLCanvasElement>) {
-    if (!imageData || !canvasRef.current || readOnly) return;
-
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.floor(
-      ((event.clientX - rect.left) / rect.width) * canvas.width,
-    );
-    const y = Math.floor(
-      ((event.clientY - rect.top) / rect.height) * canvas.height,
-    );
-
-    const color = sampleColor(x, y);
-    if (color) {
-      onColorSelect(color);
-      setSelectedBiome(null);
-    }
-  }
-
+  // Helper function to sample color from imageData
   function sampleColor(
     x: number,
     y: number,
@@ -279,9 +264,50 @@ export default function BiomeColorCard({
     };
   }
 
+  // Get the coordinate setter from store
+  const setColormapCoordinates = useStore(
+    (state) => state.setColormapCoordinates,
+  );
+
+  function handleCanvasClick(event: React.MouseEvent<HTMLCanvasElement>) {
+    if (!imageData || !canvasRef.current || readOnly) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor(
+      ((event.clientX - rect.left) / rect.width) * canvas.width,
+    );
+    const y = Math.floor(
+      ((event.clientY - rect.top) / rect.height) * canvas.height,
+    );
+
+    console.log("[BiomeColorCard] Canvas clicked at coordinates:", { x, y });
+
+    // Update global colormap coordinates - this will trigger color sampling
+    setColormapCoordinates({ x, y });
+    setSelectedBiome(null);
+
+    // Still call the local callback for backward compatibility
+    const color = sampleColor(x, y);
+    if (color) {
+      onColorSelect(color);
+    }
+  }
+
   function handleBiomeSelect(biome: BiomeData, x: number, y: number) {
     if (readOnly) return;
+    console.log(
+      "[BiomeColorCard] Biome hotspot selected:",
+      biome.id,
+      "coordinates:",
+      { x, y },
+    );
+
+    // Update global colormap coordinates - this will trigger color sampling
+    setColormapCoordinates({ x, y });
     setSelectedBiome(biome.id);
+
+    // Still call the local callback for backward compatibility
     const color = sampleColor(x, y);
     if (color) {
       onColorSelect(color);
@@ -307,7 +333,7 @@ export default function BiomeColorCard({
   const isAutoSelected = !isPenciled || !selectedSource;
   const currentSourceLabel = isAutoSelected
     ? `Pack order (${selectedSource?.packName ?? "Default"})`
-    : selectedSource?.label ?? "Select source";
+    : (selectedSource?.label ?? "Select source");
 
   const accentClass =
     accent === "gold"
@@ -322,7 +348,9 @@ export default function BiomeColorCard({
         <h3 className={s.title}>
           {resolvedType === "grass" ? "Grass" : "Foliage"} Colormap
         </h3>
-        <p className={s.subtitle}>Select a biome or click anywhere on the map</p>
+        <p className={s.subtitle}>
+          Select a biome or click anywhere on the map
+        </p>
       </div>
 
       {showSourceSelector && sourceOptions.length > 0 && (
@@ -374,9 +402,16 @@ export default function BiomeColorCard({
           {imageData && (
             <div className={s.hotspots}>
               {biomesWithCoords.map((biome) => {
-                const leftPercent = (biome.x / 255) * 100;
-                const topPercent = (biome.y / 255) * 100;
-                const isSelected = selectedBiome === biome.id;
+                // Use actual image dimensions instead of hardcoded 255
+                const maxX = imageData.width - 1;
+                const maxY = imageData.height - 1;
+                const leftPercent = (biome.x / maxX) * 100;
+                const topPercent = (biome.y / maxY) * 100;
+                // Check both local selection and global selection
+                const isLocallySelected = selectedBiome === biome.id;
+                const isGloballySelected =
+                  resolvedType === "foliage" && selectedBiomeId === biome.id;
+                const isSelected = isLocallySelected || isGloballySelected;
                 const isHovered = hoveredBiome === biome.id;
 
                 return (

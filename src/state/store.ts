@@ -40,6 +40,26 @@ interface StoreActions {
   setCurrentPage: (page: number) => void;
   setItemsPerPage: (itemsPerPage: number) => void;
 
+  // Biome selection
+  setSelectedBiomeId: (biomeId: string | undefined) => void;
+  setSelectedFoliageColor: (
+    color: { r: number; g: number; b: number } | undefined,
+  ) => void;
+
+  // Colormap state actions - NEW centralized colormap management
+  setColormapCoordinates: (
+    coords: { x: number; y: number } | undefined,
+  ) => void;
+  setGrassColormapUrl: (url: string | undefined) => void;
+  setFoliageColormapUrl: (url: string | undefined) => void;
+  setSelectedGrassColor: (
+    color: { r: number; g: number; b: number } | undefined,
+  ) => void;
+
+  // Colormap selection (DEPRECATED - use overrides system)
+  setSelectedGrassColormapAssetId: (assetId: string | undefined) => void;
+  setSelectedFoliageColormapAssetId: (assetId: string | undefined) => void;
+
   // Reset
   reset: () => void;
 }
@@ -65,6 +85,18 @@ const initialState: AppState = {
   availableLaunchers: [],
   currentPage: 1,
   itemsPerPage: 50,
+
+  // Colormap state - will be initialized by colormap manager
+  colormapCoordinates: undefined, // Will be set to plains biome coords on init
+  grassColormapUrl: undefined, // Will be resolved from top pack
+  foliageColormapUrl: undefined, // Will be resolved from top pack
+  selectedGrassColor: undefined, // Will be sampled from colormap
+  selectedFoliageColor: undefined, // Will be sampled from colormap
+  selectedBiomeId: "plains", // Default to plains biome
+
+  // Legacy (DEPRECATED)
+  selectedGrassColormapAssetId: undefined,
+  selectedFoliageColormapAssetId: undefined,
 };
 
 export const useStore = create<WeaverbirdStore>()(
@@ -185,6 +217,60 @@ export const useStore = create<WeaverbirdStore>()(
     setItemsPerPage: (itemsPerPage: number) => {
       set((state) => {
         state.itemsPerPage = itemsPerPage;
+      });
+    },
+
+    setSelectedBiomeId: (biomeId: string | undefined) => {
+      set((state) => {
+        state.selectedBiomeId = biomeId;
+      });
+    },
+
+    setSelectedFoliageColor: (
+      color: { r: number; g: number; b: number } | undefined,
+    ) => {
+      set((state) => {
+        state.selectedFoliageColor = color;
+      });
+    },
+
+    // NEW Colormap state actions
+    setColormapCoordinates: (coords: { x: number; y: number } | undefined) => {
+      set((state) => {
+        state.colormapCoordinates = coords;
+      });
+    },
+
+    setGrassColormapUrl: (url: string | undefined) => {
+      set((state) => {
+        state.grassColormapUrl = url;
+      });
+    },
+
+    setFoliageColormapUrl: (url: string | undefined) => {
+      set((state) => {
+        state.foliageColormapUrl = url;
+      });
+    },
+
+    setSelectedGrassColor: (
+      color: { r: number; g: number; b: number } | undefined,
+    ) => {
+      set((state) => {
+        state.selectedGrassColor = color;
+      });
+    },
+
+    // Legacy (DEPRECATED)
+    setSelectedGrassColormapAssetId: (assetId: string | undefined) => {
+      set((state) => {
+        state.selectedGrassColormapAssetId = assetId;
+      });
+    },
+
+    setSelectedFoliageColormapAssetId: (assetId: string | undefined) => {
+      set((state) => {
+        state.selectedFoliageColormapAssetId = assetId;
       });
     },
 

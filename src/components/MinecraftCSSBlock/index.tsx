@@ -8,6 +8,12 @@ import {
 } from "@lib/tauri/blockModels";
 import { getBlockStateIdFromAssetId, normalizeAssetId } from "@lib/assetUtils";
 import { useStore } from "@state/store";
+import { getFoliageColorForBiome, rgbToCSS } from "@lib/biomeColors";
+import {
+  tintTexture,
+  clearTintCache,
+  type TintColor,
+} from "@lib/textureColorization";
 import s from "./styles.module.scss";
 
 interface MinecraftCSSBlockProps {
@@ -49,6 +55,8 @@ interface RenderedFace {
   zIndex: number;
   // Brightness for shading
   brightness: number;
+  // Tint type to apply (grass or foliage)
+  tintType?: "grass" | "foliage";
 }
 
 // Represents a complete element with its faces
@@ -172,6 +180,59 @@ function calculateFaceOffsets(
 }
 
 /**
+ * Check if a texture ID represents a leaf texture that needs foliage tinting
+ * Only vanilla leaves that use grayscale textures should be tinted:
+ * - Oak, Birch, Jungle, Acacia, Dark Oak (biome-dependent in vanilla)
+ * - NOT Cherry (pink), Azalea (fixed color), or leaves with _inventory suffix
+ */
+function needsFoliageTint(textureId: string): boolean {
+  if (!textureId.includes("leaves")) {
+    return false;
+  }
+
+  // Skip leaves that already have color baked in
+  if (textureId.includes("_inventory")) {
+    return false;
+  }
+
+  // Skip leaves with fixed colors (not biome-dependent)
+  const fixedColorLeaves = ["cherry", "azalea", "flowering_azalea"];
+  for (const leafType of fixedColorLeaves) {
+    if (textureId.includes(leafType)) {
+      return false;
+    }
+  }
+
+  // These are the biome-dependent leaves that need tinting
+  return true;
+}
+
+/**
+ * Check if a texture ID represents grass/plant texture that needs grass tinting
+ * Includes: grass blocks, tall grass, ferns, sugar cane, vines, lily pads, etc.
+ */
+function needsGrassTint(textureId: string): boolean {
+  const grassTextures = [
+    "grass_block_top",
+    "grass_block_side",
+    "grass_block_side_overlay",
+    "tall_grass",
+    "grass",
+    "fern",
+    "large_fern",
+    "sugar_cane",
+    "vine",
+    "lily_pad",
+    "attached_melon_stem",
+    "attached_pumpkin_stem",
+    "melon_stem",
+    "pumpkin_stem",
+  ];
+
+  return grassTextures.some((pattern) => textureId.includes(pattern));
+}
+
+/**
  * Processes block model elements into renderable face data
  */
 function processElements(
@@ -190,13 +251,26 @@ function processElements(
     const [x1, y1, z1] = element.from;
     const [x2, y2, z2] = element.to;
 
+    // Check if this is a rotated element (like bushy leaves cross-planes)
+    const hasRotation = element.rotation && element.rotation.angle !== 0;
+
     // Element dimensions in Minecraft units
     const width = x2 - x1;
     const height = y2 - y1;
     const depth = z2 - z1;
 
     // Calculate face positions
-    const offsets = calculateFaceOffsets(element, scale, blockCenter);
+    let offsets = calculateFaceOffsets(element, scale, blockCenter);
+
+    // For rotated elements (like bushy leaves cross-planes), center them at origin
+    // These are typically diagonal planes that extend beyond block bounds
+    if (hasRotation) {
+      offsets = {
+        top: { x: 0, y: offsets.top.y, z: 0 },
+        left: { x: 0, y: offsets.left.y, z: 0 },
+        right: { x: 0, y: offsets.right.y, z: 0 },
+      };
+    }
 
     // Z-index base for this element (higher Y = rendered on top)
     const centerY = (y1 + y2) / 2;
@@ -209,6 +283,14 @@ function processElements(
       const textureUrl = textureId ? textureUrls.get(textureId) : null;
 
       if (textureUrl) {
+        const tintType = textureId
+          ? needsGrassTint(textureId)
+            ? "grass"
+            : needsFoliageTint(textureId)
+              ? "foliage"
+              : undefined
+          : undefined;
+
         faces.push({
           type: "top",
           textureUrl,
@@ -220,6 +302,7 @@ function processElements(
           uv: normalizeUV(face.uv),
           zIndex: Math.round(centerY * 10 + 100),
           brightness: 1.0,
+          tintType,
         });
       }
     }
@@ -231,6 +314,14 @@ function processElements(
       const textureUrl = textureId ? textureUrls.get(textureId) : null;
 
       if (textureUrl) {
+        const tintType = textureId
+          ? needsGrassTint(textureId)
+            ? "grass"
+            : needsFoliageTint(textureId)
+              ? "foliage"
+              : undefined
+          : undefined;
+
         faces.push({
           type: "left",
           textureUrl,
@@ -242,6 +333,7 @@ function processElements(
           uv: normalizeUV(face.uv),
           zIndex: Math.round(centerY * 10 + 50),
           brightness: 0.8,
+          tintType,
         });
       }
     }
@@ -253,6 +345,14 @@ function processElements(
       const textureUrl = textureId ? textureUrls.get(textureId) : null;
 
       if (textureUrl) {
+        const tintType = textureId
+          ? needsGrassTint(textureId)
+            ? "grass"
+            : needsFoliageTint(textureId)
+              ? "foliage"
+              : undefined
+          : undefined;
+
         faces.push({
           type: "right",
           textureUrl,
@@ -264,6 +364,7 @@ function processElements(
           uv: normalizeUV(face.uv),
           zIndex: Math.round(centerY * 10),
           brightness: 0.6,
+          tintType,
         });
       }
     }
@@ -420,11 +521,52 @@ export default function MinecraftCSSBlock({
   );
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [tintedTextures, setTintedTextures] = useState<Map<string, string>>(
+    new Map(),
+  );
 
   // Get pack info from store
   const packs = useStore((state) => state.packs);
   const packsDir = useStore((state) => state.packsDir);
   const pack = packId ? packs[packId] : null;
+
+  // Get selected biome/colors for tinting
+  const selectedBiomeId = useStore((state) => state.selectedBiomeId);
+  const selectedGrassColor = useStore((state) => state.selectedGrassColor);
+  const selectedFoliageColor = useStore((state) => state.selectedFoliageColor);
+
+  // Subscribe to colormap URLs to trigger re-render when pack order changes
+  useStore((state) => state.grassColormapUrl);
+  useStore((state) => state.foliageColormapUrl);
+
+  // Compute grass tint color
+  const grassColor: TintColor | null = useMemo(() => {
+    console.log(
+      "[MinecraftCSSBlock] Computing grass color - selectedGrassColor:",
+      selectedGrassColor,
+    );
+    if (selectedGrassColor) {
+      return selectedGrassColor;
+    }
+    // Default grass color if none selected
+    return { r: 127, g: 204, b: 25 };
+  }, [selectedGrassColor]);
+
+  // Compute foliage tint color
+  const foliageColor: TintColor | null = useMemo(() => {
+    console.log(
+      "[MinecraftCSSBlock] Computing foliage color - selectedFoliageColor:",
+      selectedFoliageColor,
+    );
+    if (selectedFoliageColor) {
+      return selectedFoliageColor;
+    }
+    if (selectedBiomeId) {
+      return getFoliageColorForBiome(selectedBiomeId);
+    }
+    // Default foliage color
+    return getFoliageColorForBiome("plains");
+  }, [selectedBiomeId, selectedFoliageColor]);
 
   // Scale factor: convert 16-unit Minecraft space to pixel size
   // 0.5 gives a good fill of the card while leaving padding for isometric projection
@@ -618,6 +760,106 @@ export default function MinecraftCSSBlock({
     };
   }, [assetId, packId, pack, packsDir, scale, onError]);
 
+  // Apply foliage tinting to leaf textures
+  useEffect(() => {
+    console.log(
+      "[MinecraftCSSBlock] Tinting effect triggered - foliageColor:",
+      foliageColor,
+      "renderedElements:",
+      renderedElements.length,
+    );
+    if (!foliageColor || renderedElements.length === 0) {
+      console.log(
+        "[MinecraftCSSBlock] Skipping tinting - foliageColor:",
+        foliageColor,
+        "elements:",
+        renderedElements.length,
+      );
+      setTintedTextures(new Map());
+      return;
+    }
+
+    let mounted = true;
+
+    const applyTinting = async () => {
+      const newTintedTextures = new Map<string, string>();
+
+      // Collect all unique texture URLs that need tinting, grouped by type
+      const grassTextures = new Set<string>();
+      const foliageTextures = new Set<string>();
+
+      for (const element of renderedElements) {
+        for (const face of element.faces) {
+          if (face.tintType === "grass" && face.textureUrl) {
+            grassTextures.add(face.textureUrl);
+          } else if (face.tintType === "foliage" && face.textureUrl) {
+            foliageTextures.add(face.textureUrl);
+          }
+        }
+      }
+
+      console.log(
+        "[MinecraftCSSBlock] Tinting",
+        grassTextures.size,
+        "grass textures with color",
+        grassColor,
+        "and",
+        foliageTextures.size,
+        "foliage textures with color",
+        foliageColor,
+      );
+
+      // Tint grass textures
+      for (const textureUrl of grassTextures) {
+        try {
+          const tintedUrl = await tintTexture(textureUrl, grassColor);
+          if (mounted) {
+            newTintedTextures.set(textureUrl, tintedUrl);
+          }
+        } catch (error) {
+          console.error(
+            "[MinecraftCSSBlock] Failed to tint grass texture:",
+            error,
+          );
+          newTintedTextures.set(textureUrl, textureUrl);
+        }
+      }
+
+      // Tint foliage textures
+      for (const textureUrl of foliageTextures) {
+        try {
+          const tintedUrl = await tintTexture(textureUrl, foliageColor);
+          if (mounted) {
+            newTintedTextures.set(textureUrl, tintedUrl);
+          }
+        } catch (error) {
+          console.error(
+            "[MinecraftCSSBlock] Failed to tint foliage texture:",
+            error,
+          );
+          newTintedTextures.set(textureUrl, textureUrl);
+        }
+      }
+
+      if (mounted) {
+        setTintedTextures(newTintedTextures);
+      }
+    };
+
+    applyTinting();
+
+    return () => {
+      mounted = false;
+    };
+  }, [grassColor, foliageColor, renderedElements]);
+
+  // Cleanup tint cache on unmount
+  useEffect(() => {
+    return () => {
+      clearTintCache();
+    };
+  }, []);
+
   // Collect and sort all faces by z-index for proper depth rendering
   const sortedFaces = useMemo(() => {
     const allFaces: RenderedFace[] = [];
@@ -667,7 +909,7 @@ export default function MinecraftCSSBlock({
         {sortedFaces.map((face, index) => (
           <div
             key={index}
-            className={`${s.face} ${s[`face${face.type.charAt(0).toUpperCase()}${face.type.slice(1)}`]}`}
+            className={`${s.face} ${s[`face${face.type.charAt(0).toUpperCase()}${face.type.slice(1)}`]} ${face.tintType ? s[`${face.tintType}Tint`] : ""}`}
             style={
               {
                 "--face-x": `${face.x}px`,
@@ -682,12 +924,17 @@ export default function MinecraftCSSBlock({
                 "--uv-height": face.uv.height,
                 "--uv-flip-x": face.uv.flipX,
                 "--uv-flip-y": face.uv.flipY,
+                "--foliage-color": rgbToCSS(foliageColor),
                 zIndex: face.zIndex,
               } as React.CSSProperties
             }
           >
             <img
-              src={face.textureUrl}
+              src={
+                face.tintType && tintedTextures.has(face.textureUrl)
+                  ? tintedTextures.get(face.textureUrl)!
+                  : face.textureUrl
+              }
               alt={`${alt} ${face.type}`}
               onError={() => {
                 setError(true);

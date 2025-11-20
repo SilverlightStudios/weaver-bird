@@ -125,3 +125,10 @@
         translate3d(var(--face-x), var(--face-y), var(--face-z, 0))
         rotateY(90deg);
 }
+
+// Note: Foliage tinting disabled
+// CSS multiply blend mode doesn't work properly with transparent PNGs
+// The _inventory texture approach is the correct solution
+.foliageTint {
+    // No special styling
+}

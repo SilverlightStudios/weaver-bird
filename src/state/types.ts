@@ -91,6 +91,18 @@ export interface UIState {
   availableLaunchers: LauncherInfo[];
   currentPage: number;
   itemsPerPage: number;
+
+  // Colormap State - Centralized colormap management
+  colormapCoordinates?: { x: number; y: number }; // Current position on colormap (0-255, 0-255)
+  grassColormapUrl?: string; // Resolved URL of active grass colormap
+  foliageColormapUrl?: string; // Resolved URL of active foliage colormap
+  selectedGrassColor?: { r: number; g: number; b: number }; // Sampled grass color at coordinates
+  selectedFoliageColor?: { r: number; g: number; b: number }; // Sampled foliage color at coordinates
+  selectedBiomeId?: string; // Biome ID if coordinates match a biome, null otherwise
+
+  // Legacy - kept for backward compatibility during migration
+  selectedGrassColormapAssetId?: string; // DEPRECATED: Use overrides system instead
+  selectedFoliageColormapAssetId?: string; // DEPRECATED: Use overrides system instead
 }
 
 /**
