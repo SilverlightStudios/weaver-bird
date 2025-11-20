@@ -160,21 +160,19 @@ function AssetCard({
               <span className={s.placeholderIcon}>⏳</span>
             </div>
           )
+        ) : // Blocks display as 3D CSS cubes
+        isVisible ? (
+          <MinecraftCSSBlock
+            assetId={asset.id}
+            packId={winnerPackId || undefined}
+            alt={displayName}
+            size={120}
+            onError={() => setImageError(true)}
+          />
         ) : (
-          // Blocks display as 3D CSS cubes
-          isVisible ? (
-            <MinecraftCSSBlock
-              assetId={asset.id}
-              packId={winnerPackId || undefined}
-              alt={displayName}
-              size={80}
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className={s.placeholder}>
-              <span className={s.placeholderIcon}>⏳</span>
-            </div>
-          )
+          <div className={s.placeholder}>
+            <span className={s.placeholderIcon}>⏳</span>
+          </div>
         )}
         {isPenciled && (
           <div
@@ -252,7 +250,9 @@ export default function AssetResults({
     // Prefer inventory variant as display icon since that's what players recognize
     const displayAssets = packFilteredGroups.map((group) => {
       // Find inventory variant to use as primary display, fall back to first variant
-      const inventoryVariant = group.variantIds.find((id) => isInventoryVariant(id));
+      const inventoryVariant = group.variantIds.find((id) =>
+        isInventoryVariant(id),
+      );
       const primaryId = inventoryVariant || group.variantIds[0];
       const canonicalId = primaryId.includes(":colormap/")
         ? primaryId

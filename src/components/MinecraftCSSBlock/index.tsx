@@ -30,6 +30,7 @@ interface RenderedFace {
   // Position in isometric space (pixels)
   x: number;
   y: number;
+  z: number;
   // Size of the face (pixels)
   width: number;
   height: number;
@@ -88,22 +89,21 @@ function normalizeUV(uv: [number, number, number, number] | undefined): {
 }
 
 /**
- * Calculates face positions for isometric rendering
+ * Calculates face positions for true 3D isometric rendering
  * Returns pixel offsets from center for each face type
  *
- * For a standard isometric view (30° angles):
- * - Top face: centered above, forms a diamond
- * - Left face: below-left of top, shares top-left edge
- * - Right face: below-right of top, shares top-right edge
+ * With rotateX(-30deg) rotateY(-45deg) on the scene:
+ * - Faces are positioned in 3D space and CSS handles the projection
+ * - All positions are relative to element center
  */
 function calculateFaceOffsets(
   element: { from: number[]; to: number[] },
   scale: number,
   blockCenter: { x: number; y: number; z: number },
 ): {
-  top: { x: number; y: number };
-  left: { x: number; y: number };
-  right: { x: number; y: number };
+  top: { x: number; y: number; z: number };
+  left: { x: number; y: number; z: number };
+  right: { x: number; y: number; z: number };
 } {
   const [x1, y1, z1] = element.from;
   const [x2, y2, z2] = element.to;
@@ -113,42 +113,33 @@ function calculateFaceOffsets(
   const height = y2 - y1;
   const depth = z2 - z1;
 
-  // Calculate element vertical center relative to block center (8,8,8)
-  const relY = (y1 + y2) / 2 - blockCenter.y;
+  // Element center relative to block center (8,8,8)
+  const centerX = (x1 + x2) / 2 - blockCenter.x;
+  const centerY = (y1 + y2) / 2 - blockCenter.y;
+  const centerZ = (z1 + z2) / 2 - blockCenter.z;
 
-  // For isometric projection with:
-  // - Top face: rotate(45deg) scaleY(0.577)
-  // - Side faces: skewY(±30deg)
+  // For true 3D positioning, faces need to be offset by half their size
+  // to position them at the edges of the block, not the center
 
-  // The top face after transforms has effective height of width * 0.577 * sqrt(2) / 2
-  // But we need to position based on the visual result
+  // Top face: at the top of the element (Y+ direction)
+  const topX = centerX * scale;
+  const topY = (centerY + height / 2) * scale;
+  const topZ = centerZ * scale;
 
-  // Tan(30°) ≈ 0.577
-  const tan30 = 0.577;
+  // Left face (south): aligned to its local center, only needs Z push for depth
+  const leftX = centerX * scale;
+  const leftY = -centerY * scale;
+  const leftZ = (centerZ + depth / 2) * scale;
 
-  // Top face width after 45deg rotation becomes diagonal = width * sqrt(2) * 0.707 = width
-  // Its visual height = width * 0.577
-  const topVisualHeight = Math.max(width, depth) * scale * tan30;
-
-  // Top face center Y: element top minus half the visual height of top face
-  const topY = -relY * scale - (height / 2) * scale - topVisualHeight / 2;
-
-  // Left face (south) - positioned to the left
-  // After skewY(30deg), the top edge shifts right by height * tan(30)
-  // So we offset left to compensate
-  const leftX = -(width / 2) * scale;
-  const leftY = -relY * scale;
-
-  // Right face (east) - positioned to the right
-  // After skewY(-30deg), the top edge shifts left by height * tan(30)
-  // So we offset right to compensate
-  const rightX = (depth / 2) * scale;
-  const rightY = -relY * scale;
+  // Right face (east): offset right by half the depth (after rotateY 90deg)
+  const rightX = (centerZ + depth / 2) * scale;
+  const rightY = -centerY * scale;
+  const rightZ = centerZ * scale;
 
   return {
-    top: { x: 0, y: topY },
-    left: { x: leftX, y: leftY },
-    right: { x: rightX, y: rightY },
+    top: { x: topX, y: -topY, z: topZ },
+    left: { x: leftX, y: leftY, z: leftZ },
+    right: { x: rightX, y: rightY, z: rightZ },
   };
 }
 
@@ -195,6 +186,7 @@ function processElements(
           textureUrl,
           x: offsets.top.x,
           y: offsets.top.y,
+          z: offsets.top.z,
           width: width * scale,
           height: depth * scale,
           uv: normalizeUV(face.uv),
@@ -216,6 +208,7 @@ function processElements(
           textureUrl,
           x: offsets.left.x,
           y: offsets.left.y,
+          z: offsets.left.z,
           width: width * scale,
           height: height * scale,
           uv: normalizeUV(face.uv),
@@ -237,6 +230,7 @@ function processElements(
           textureUrl,
           x: offsets.right.x,
           y: offsets.right.y,
+          z: offsets.right.z,
           width: depth * scale,
           height: height * scale,
           uv: normalizeUV(face.uv),
@@ -352,7 +346,8 @@ export default function MinecraftCSSBlock({
   const pack = packId ? packs[packId] : null;
 
   // Scale factor: convert 16-unit Minecraft space to pixel size
-  const scale = useMemo(() => (size * 0.6) / 16, [size]);
+  // 0.5 gives a good fill of the card while leaving padding for isometric projection
+  const scale = useMemo(() => (size * 0.5) / 16, [size]);
 
   useEffect(() => {
     let mounted = true;
@@ -541,6 +536,7 @@ export default function MinecraftCSSBlock({
               {
                 "--face-x": `${face.x}px`,
                 "--face-y": `${face.y}px`,
+                "--face-z": `${face.z}px`,
                 "--face-width": `${face.width}px`,
                 "--face-height": `${face.height}px`,
                 "--face-brightness": face.brightness,

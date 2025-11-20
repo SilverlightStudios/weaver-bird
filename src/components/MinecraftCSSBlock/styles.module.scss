@@ -59,6 +59,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    // Enable 3D transforms for proper face positioning
+    transform-style: preserve-3d;
+    // Isometric view: rotate the whole scene
+    // rotateX(-30deg) tilts down to see top, rotateY(-45deg) rotates to see two sides
+    transform: translateY(10%) rotateX(-30deg) rotateY(-45deg);
 }
 
 // Base face styles
@@ -69,6 +74,10 @@
     top: 50%;
     transform-origin: center center;
     overflow: hidden;
+    // Slight scale up to eliminate subpixel gaps between faces
+    // Using padding instead of scale to avoid blurring textures
+    margin: -0.5px;
+    padding: 0.5px;
 
     img {
         // Position and scale image for UV mapping
@@ -88,30 +97,29 @@
     }
 }
 
-// Top face - diamond shape using 2D skew transforms
+// Top face - horizontal plane rotated to face up
 .faceTop {
     width: var(--face-width);
     height: var(--face-height);
-    // Position and transform - create diamond with skew to match side faces
-    transform: translate(calc(-50% + var(--face-x)), calc(-50% + var(--face-y)))
-        rotate(30deg) scaleY(0.577);
+    transform: translate(-50%, -50%)
+        translate3d(var(--face-x), var(--face-y), var(--face-z, 0))
+        rotateX(90deg);
 }
 
-// Left face (south) - vertical parallelogram on the left
+// Left face (south) - vertical plane facing south
+// translateZ pushes face to front of block, which lowers it after scene rotateX
 .faceLeft {
     width: var(--face-width);
     height: var(--face-height);
-    // Position and transform
-    transform: translate(calc(-50% + var(--face-x)), calc(-50% + var(--face-y)))
-        skewY(30deg);
+    transform: translate(-50%, -50%)
+        translate3d(var(--face-x), var(--face-y), var(--face-z, 0));
 }
 
-// Right face (east) - vertical parallelogram on the right
+// Right face (east) - vertical plane facing east
 .faceRight {
     width: var(--face-width);
     height: var(--face-height);
-    // Position and transform
-    transform: translate(calc(-50% + var(--face-x)), calc(-50% + var(--face-y)))
-        skewY(-30deg);
-}
+    transform: translate(-50%, -50%)
+        translate3d(var(--face-x), var(--face-y), var(--face-z, 0))
+        rotateY(90deg);
 }
