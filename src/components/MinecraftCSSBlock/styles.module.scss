@@ -1,14 +1,14 @@
 /**
- * CSS Isometric Minecraft Block
+ * CSS Isometric Minecraft Block - Dynamic Element Rendering
  *
- * Creates a 3D-looking block using 2D transforms (skew/rotate).
- * This is more performant than true CSS 3D transforms and works
- * well for the card thumbnail use case.
+ * Renders block model elements as isometric 3D using CSS transforms.
+ * Supports multiple elements for complex blocks like fences, stairs, etc.
  *
- * The block consists of three parallelogram faces:
- * - Top: horizontal parallelogram tilted back
- * - Left: vertical parallelogram skewed left
- * - Right: vertical parallelogram skewed right
+ * Each face receives CSS custom properties for:
+ * - Position (--face-x, --face-y)
+ * - Size (--face-width, --face-height)
+ * - UV coordinates (--uv-x, --uv-y, --uv-width, --uv-height)
+ * - Brightness for shading (--face-brightness)
  */
 
 .blockContainer {
@@ -16,6 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .loading {
@@ -41,92 +42,85 @@
   }
 }
 
-.block {
+.blockScene {
   position: relative;
-  // Size is set via CSS custom property --face-size
-  width: var(--face-size);
-  height: var(--face-size);
-  // Shift the block to center it in the container
-  transform: translateY(-10%);
+  width: 100%;
+  height: 100%;
+  // Center the isometric projection
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-// Common face styles
-.faceTop,
-.faceLeft,
-.faceRight {
+// Base face styles
+.face {
   position: absolute;
-  width: var(--face-size);
-  height: var(--face-size);
+  // Position from center using custom properties
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
   overflow: hidden;
 
   img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    // Position and scale image for UV mapping
+    position: absolute;
+    // Scale image to show only the UV portion
+    width: calc(100% / var(--uv-width, 1));
+    height: calc(100% / var(--uv-height, 1));
+    // Offset for UV coordinates
+    left: calc(-100% * var(--uv-x, 0) / var(--uv-width, 1));
+    top: calc(-100% * var(--uv-y, 0) / var(--uv-height, 1));
+    // Pixelated rendering
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
-    // Remove any gaps between faces
-    display: block;
+    // Apply brightness
+    filter: brightness(var(--face-brightness, 1));
   }
 }
 
-// Top face - horizontal parallelogram
+// Top face - horizontal parallelogram tilted back
 .faceTop {
-  // Scale and rotate to create the top face perspective
-  transform-origin: 0% 100%;
+  width: var(--face-width);
+  height: var(--face-height);
+  // Position and transform
   transform:
+    translate(
+      calc(-50% + var(--face-x)),
+      calc(-50% + var(--face-y))
+    )
     rotate(-45deg)
     skewX(15deg)
     skewY(15deg)
-    scaleY(0.866); // cos(30deg) for isometric projection
-
-  // Position at top
-  left: 50%;
-  top: 0;
-  margin-left: calc(var(--face-size) * -0.5);
-  margin-top: calc(var(--face-size) * -0.29);
-
-  // Slightly brighten top face (like Minecraft lighting)
-  img {
-    filter: brightness(1.0);
-  }
+    scaleY(0.866);
 }
 
-// Left face - front-left side
+// Left face (south) - vertical parallelogram skewed left
 .faceLeft {
-  transform-origin: 100% 0%;
+  width: var(--face-width);
+  height: var(--face-height);
+  // Position and transform
   transform:
+    translate(
+      calc(-50% + var(--face-x)),
+      calc(-50% + var(--face-y))
+    )
     rotate(-30deg)
     skewX(-30deg)
     scaleY(0.864);
-
-  // Position at bottom-left
-  left: 0;
-  top: 50%;
-  margin-top: calc(var(--face-size) * -0.14);
-
-  // Darker shading for side face
-  img {
-    filter: brightness(0.85);
-  }
 }
 
-// Right face - front-right side
+// Right face (east) - vertical parallelogram skewed right
 .faceRight {
-  transform-origin: 0% 0%;
+  width: var(--face-width);
+  height: var(--face-height);
+  // Position and transform
   transform:
+    translate(
+      calc(-50% + var(--face-x)),
+      calc(-50% + var(--face-y))
+    )
     rotate(30deg)
     skewX(30deg)
     scaleY(0.864);
-
-  // Position at bottom-right
-  right: 0;
-  top: 50%;
-  margin-top: calc(var(--face-size) * -0.14);
-
-  // Darkest shading for right face (like Minecraft)
-  img {
-    filter: brightness(0.7);
-  }
 }
