@@ -79,7 +79,7 @@
   }
 }
 
-// Top face - horizontal parallelogram tilted back
+// Top face - diamond shape for isometric top
 .faceTop {
   width: var(--face-width);
   height: var(--face-height);
@@ -89,11 +89,11 @@
       calc(-50% + var(--face-x)),
       calc(-50% + var(--face-y))
     )
-    rotate(-45deg)
+    rotateZ(-45deg)
     scaleY(0.866);
 }
 
-// Left face (south) - vertical parallelogram skewed left
+// Left face (south) - parallelogram with top leaning left
 .faceLeft {
   width: var(--face-width);
   height: var(--face-height);
@@ -103,12 +103,10 @@
       calc(-50% + var(--face-x)),
       calc(-50% + var(--face-y))
     )
-    rotate(30deg)
-    skewX(-30deg)
-    scaleY(0.866);
+    skewY(-30deg);
 }
 
-// Right face (east) - vertical parallelogram skewed right
+// Right face (east) - parallelogram with top leaning right
 .faceRight {
   width: var(--face-width);
   height: var(--face-height);
@@ -118,7 +116,5 @@
       calc(-50% + var(--face-x)),
       calc(-50% + var(--face-y))
     )
-    rotate(-30deg)
-    skewX(30deg)
-    scaleY(0.866);
+    skewY(30deg);
 }
