@@ -35,7 +35,7 @@ function getCacheKey(textureUrl: string, color: TintColor): string {
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous'; // Enable CORS for local files
+    img.crossOrigin = "anonymous"; // Enable CORS for local files
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
     img.src = url;
@@ -70,13 +70,13 @@ export async function tintTexture(
     const img = await loadImage(textureUrl);
 
     // Create an off-screen canvas
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = img.width;
     canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     if (!ctx) {
-      throw new Error('Failed to get canvas context');
+      throw new Error("Failed to get canvas context");
     }
 
     // Draw the original image
@@ -111,7 +111,7 @@ export async function tintTexture(
     ctx.putImageData(imageData, 0, 0);
 
     // Convert to data URL
-    const dataUrl = canvas.toDataURL('image/png');
+    const dataUrl = canvas.toDataURL("image/png");
 
     // Cache the result (with LRU eviction)
     if (tintedTextureCache.size >= MAX_CACHE_SIZE) {
@@ -125,7 +125,7 @@ export async function tintTexture(
 
     return dataUrl;
   } catch (error) {
-    console.error('[textureColorization] Failed to tint texture:', error);
+    console.error("[textureColorization] Failed to tint texture:", error);
     // Return original URL as fallback
     return textureUrl;
   }
@@ -146,9 +146,9 @@ export function clearTintCache(): void {
 export function clearTextureFromCache(textureUrl: string): void {
   const keysToDelete: string[] = [];
   for (const key of tintedTextureCache.keys()) {
-    if (key.startsWith(textureUrl + '|')) {
+    if (key.startsWith(`${textureUrl}|`)) {
       keysToDelete.push(key);
     }
   }
-  keysToDelete.forEach(key => tintedTextureCache.delete(key));
+  keysToDelete.forEach((key) => tintedTextureCache.delete(key));
 }

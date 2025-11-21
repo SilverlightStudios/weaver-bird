@@ -32,7 +32,14 @@
  * - 3D preview: Updates don't block UI (previously blocking)
  * - Overall: Smooth 60fps experience with 100+ packs
  */
-import { useCallback, useEffect, useMemo, useState, useRef, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useTransition,
+} from "react";
 import s from "./main.module.scss";
 
 import PackList from "@components/PackList";
@@ -227,7 +234,7 @@ export default function MainRoute() {
   const setPacksDirInStore = useSetPacksDir();
 
   // React 18 transition for non-blocking colormap updates
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
 
   // Debounce timer for pack order changes
   const packOrderDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -401,7 +408,9 @@ export default function MainRoute() {
 
             // Step 5: Update colors in state
             useStore.getState().setSelectedGrassColor(grassColor || undefined);
-            useStore.getState().setSelectedFoliageColor(foliageColor || undefined);
+            useStore
+              .getState()
+              .setSelectedFoliageColor(foliageColor || undefined);
 
             // Step 6: Determine if coordinates match a biome
             const biomeId = coordinatesToBiome(coords.x, coords.y);
@@ -442,7 +451,8 @@ export default function MainRoute() {
       }
 
       // Defer color sampling to idle time to avoid blocking UI
-      const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+      const idleCallback =
+        window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
       idleCallback(async () => {
         try {
           const { grassColor, foliageColor } = await sampleColormapColors(
@@ -453,7 +463,9 @@ export default function MainRoute() {
           );
 
           useStore.getState().setSelectedGrassColor(grassColor || undefined);
-          useStore.getState().setSelectedFoliageColor(foliageColor || undefined);
+          useStore
+            .getState()
+            .setSelectedFoliageColor(foliageColor || undefined);
 
           // Update biome ID based on new coordinates
           const biomeId = coordinatesToBiome(

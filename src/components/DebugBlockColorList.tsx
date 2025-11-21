@@ -7,11 +7,18 @@
 
 import { useState } from "react";
 import { useBlockColors } from "@/hooks/useBlockColors";
-import { DEFAULT_MC_VERSION, getSupportedVersions } from "@/utils/blockColors/yarnVersions";
-import { clearBlockColorsCache, type ParsedTintEntry } from "@/utils/blockColors/fetchBlockColors";
+import {
+  DEFAULT_MC_VERSION,
+  getSupportedVersions,
+} from "@/utils/blockColors/yarnVersions";
+import {
+  clearBlockColorsCache,
+  type ParsedTintEntry,
+} from "@/utils/blockColors/fetchBlockColors";
 
 export default function DebugBlockColorList() {
-  const [selectedVersion, setSelectedVersion] = useState<string>(DEFAULT_MC_VERSION);
+  const [selectedVersion, setSelectedVersion] =
+    useState<string>(DEFAULT_MC_VERSION);
   const { loading, error, data, refetch } = useBlockColors(selectedVersion);
 
   const handleClearCache = () => {
@@ -25,17 +32,18 @@ export default function DebugBlockColorList() {
   };
 
   // Group entries by tint type
-  const groupedEntries = data?.entries.reduce(
-    (acc, entry) => {
-      const key = entry.tint;
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(entry);
-      return acc;
-    },
-    {} as Record<string, ParsedTintEntry[]>,
-  ) || {};
+  const groupedEntries =
+    data?.entries.reduce(
+      (acc, entry) => {
+        const key = entry.tint;
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(entry);
+        return acc;
+      },
+      {} as Record<string, ParsedTintEntry[]>,
+    ) || {};
 
   const sortedTintTypes = Object.keys(groupedEntries).sort((a, b) => {
     // Sort order: grass, foliage, water, fixed_*, special
@@ -47,7 +55,8 @@ export default function DebugBlockColorList() {
     if (aIndex !== -1) return -1;
     if (bIndex !== -1) return 1;
 
-    if (a.startsWith("fixed_") && b.startsWith("fixed_")) return a.localeCompare(b);
+    if (a.startsWith("fixed_") && b.startsWith("fixed_"))
+      return a.localeCompare(b);
     if (a.startsWith("fixed_")) return -1;
     if (b.startsWith("fixed_")) return 1;
 
@@ -74,11 +83,26 @@ export default function DebugBlockColorList() {
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "monospace", backgroundColor: "#1e1e1e", color: "#d4d4d4", minHeight: "100vh" }}>
+    <div
+      style={{
+        padding: "20px",
+        fontFamily: "monospace",
+        backgroundColor: "#1e1e1e",
+        color: "#d4d4d4",
+        minHeight: "100vh",
+      }}
+    >
       <h1 style={{ marginBottom: "20px" }}>Minecraft BlockColors Debug</h1>
 
       {/* Version selector */}
-      <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+      <div
+        style={{
+          marginBottom: "20px",
+          display: "flex",
+          gap: "10px",
+          alignItems: "center",
+        }}
+      >
         <label htmlFor="version-select">Minecraft Version:</label>
         <select
           id="version-select"
@@ -144,14 +168,28 @@ export default function DebugBlockColorList() {
 
       {/* Loading state */}
       {loading && (
-        <div style={{ padding: "20px", backgroundColor: "#2d2d2d", borderRadius: "4px" }}>
+        <div
+          style={{
+            padding: "20px",
+            backgroundColor: "#2d2d2d",
+            borderRadius: "4px",
+          }}
+        >
           Loading block colors for {selectedVersion}...
         </div>
       )}
 
       {/* Error state */}
       {error && (
-        <div style={{ padding: "20px", backgroundColor: "#3e1e1e", color: "#ff6b6b", borderRadius: "4px", marginBottom: "20px" }}>
+        <div
+          style={{
+            padding: "20px",
+            backgroundColor: "#3e1e1e",
+            color: "#ff6b6b",
+            borderRadius: "4px",
+            marginBottom: "20px",
+          }}
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -159,42 +197,96 @@ export default function DebugBlockColorList() {
       {/* Data display */}
       {data && (
         <>
-          <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#2d2d2d", borderRadius: "4px" }}>
-            <div><strong>Version:</strong> {data.version}</div>
-            <div><strong>Yarn Tag:</strong> {data.yarnTag}</div>
-            <div><strong>Fetched:</strong> {new Date(data.fetchedAt).toLocaleString()}</div>
-            <div><strong>Total Entries:</strong> {data.entries.length}</div>
-            <div><strong>Total Blocks:</strong> {data.entries.reduce((sum, entry) => sum + entry.blocks.length, 0)}</div>
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              backgroundColor: "#2d2d2d",
+              borderRadius: "4px",
+            }}
+          >
+            <div>
+              <strong>Version:</strong> {data.version}
+            </div>
+            <div>
+              <strong>Yarn Tag:</strong> {data.yarnTag}
+            </div>
+            <div>
+              <strong>Fetched:</strong>{" "}
+              {new Date(data.fetchedAt).toLocaleString()}
+            </div>
+            <div>
+              <strong>Total Entries:</strong> {data.entries.length}
+            </div>
+            <div>
+              <strong>Total Blocks:</strong>{" "}
+              {data.entries.reduce(
+                (sum, entry) => sum + entry.blocks.length,
+                0,
+              )}
+            </div>
           </div>
 
           {/* Grouped entries */}
           {sortedTintTypes.map((tintType) => {
             const entries = groupedEntries[tintType];
-            const totalBlocks = entries.reduce((sum, entry) => sum + entry.blocks.length, 0);
+            const totalBlocks = entries.reduce(
+              (sum, entry) => sum + entry.blocks.length,
+              0,
+            );
             const color = getTintTypeColor(tintType);
 
             return (
               <div key={tintType} style={{ marginBottom: "30px" }}>
                 <h2 style={{ color, marginBottom: "10px" }}>
-                  {getTintTypeLabel(tintType)} ({entries.length} entries, {totalBlocks} blocks)
+                  {getTintTypeLabel(tintType)} ({entries.length} entries,{" "}
+                  {totalBlocks} blocks)
                 </h2>
 
-                <table style={{ width: "100%", backgroundColor: "#2d2d2d", borderCollapse: "collapse" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#2d2d2d",
+                    borderCollapse: "collapse",
+                  }}
+                >
                   <thead>
                     <tr style={{ backgroundColor: "#3e3e3e" }}>
-                      <th style={{ padding: "10px", textAlign: "left", borderBottom: "2px solid #5e5e5e" }}>
+                      <th
+                        style={{
+                          padding: "10px",
+                          textAlign: "left",
+                          borderBottom: "2px solid #5e5e5e",
+                        }}
+                      >
                         Blocks
                       </th>
-                      <th style={{ padding: "10px", textAlign: "left", borderBottom: "2px solid #5e5e5e", width: "200px" }}>
+                      <th
+                        style={{
+                          padding: "10px",
+                          textAlign: "left",
+                          borderBottom: "2px solid #5e5e5e",
+                          width: "200px",
+                        }}
+                      >
                         Tint Type
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {entries.map((entry, index) => (
-                      <tr key={index} style={{ borderBottom: "1px solid #3e3e3e" }}>
+                      <tr
+                        key={index}
+                        style={{ borderBottom: "1px solid #3e3e3e" }}
+                      >
                         <td style={{ padding: "10px", verticalAlign: "top" }}>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "5px",
+                            }}
+                          >
                             {entry.blocks.map((block) => (
                               <span
                                 key={block}
@@ -214,7 +306,7 @@ export default function DebugBlockColorList() {
                           <span
                             style={{
                               padding: "4px 8px",
-                              backgroundColor: color + "33",
+                              backgroundColor: `${color}33`,
                               color: color,
                               borderRadius: "4px",
                               fontSize: "12px",

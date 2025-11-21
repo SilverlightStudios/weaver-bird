@@ -6,7 +6,6 @@
  */
 
 import {
-  normalizeAssetId,
   beautifyAssetName,
   getVariantGroupKey,
   isNumberedVariant,

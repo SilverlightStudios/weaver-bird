@@ -37,7 +37,6 @@ import {
   isInventoryVariant,
 } from "@lib/assetUtils";
 import { assetGroupingWorker } from "@lib/assetGroupingWorker";
-import type { AssetGroup } from "@/workers/assetGrouping.worker";
 import {
   useSelectWinner,
   useSelectIsPenciled,
@@ -90,38 +89,42 @@ const AssetCard = memo(
     // OPTIMIZATION: Selective subscriptions - only subscribe to colors/colormaps if this asset uses them
     // Determine if this block uses tinting (grass, leaves, vines, etc.)
     const needsGrassTint = useMemo(() => {
-      return asset.id.includes('grass') ||
-             asset.id.includes('fern') ||
-             asset.id.includes('tall_grass') ||
-             asset.id.includes('sugar_cane');
+      return (
+        asset.id.includes("grass") ||
+        asset.id.includes("fern") ||
+        asset.id.includes("tall_grass") ||
+        asset.id.includes("sugar_cane")
+      );
     }, [asset.id]);
 
     const needsFoliageTint = useMemo(() => {
-      return asset.id.includes('leaves') ||
-             asset.id.includes('vine') ||
-             asset.id.includes('oak_leaves') ||
-             asset.id.includes('spruce_leaves') ||
-             asset.id.includes('birch_leaves') ||
-             asset.id.includes('jungle_leaves') ||
-             asset.id.includes('acacia_leaves') ||
-             asset.id.includes('dark_oak_leaves') ||
-             asset.id.includes('mangrove_leaves') ||
-             asset.id.includes('cherry_leaves');
+      return (
+        asset.id.includes("leaves") ||
+        asset.id.includes("vine") ||
+        asset.id.includes("oak_leaves") ||
+        asset.id.includes("spruce_leaves") ||
+        asset.id.includes("birch_leaves") ||
+        asset.id.includes("jungle_leaves") ||
+        asset.id.includes("acacia_leaves") ||
+        asset.id.includes("dark_oak_leaves") ||
+        asset.id.includes("mangrove_leaves") ||
+        asset.id.includes("cherry_leaves")
+      );
     }, [asset.id]);
 
     // Only subscribe to colors and colormap URLs if this asset actually uses them
     // This prevents 95%+ of cards from re-rendering on pack order changes
     const selectedGrassColor = useStore((state) =>
-      needsGrassTint ? state.selectedGrassColor : undefined
+      needsGrassTint ? state.selectedGrassColor : undefined,
     );
     const selectedFoliageColor = useStore((state) =>
-      needsFoliageTint ? state.selectedFoliageColor : undefined
+      needsFoliageTint ? state.selectedFoliageColor : undefined,
     );
     const grassColormapUrl = useStore((state) =>
-      needsGrassTint ? state.grassColormapUrl : undefined
+      needsGrassTint ? state.grassColormapUrl : undefined,
     );
     const foliageColormapUrl = useStore((state) =>
-      needsFoliageTint ? state.foliageColormapUrl : undefined
+      needsFoliageTint ? state.foliageColormapUrl : undefined,
     );
 
     // Prevent unused variable warnings
@@ -211,7 +214,14 @@ const AssetCard = memo(
       return () => {
         mounted = false;
       };
-    }, [isVisible, isColormap, asset.id, winnerPackId, winnerPackPath, winnerPack]);
+    }, [
+      isVisible,
+      isColormap,
+      asset.id,
+      winnerPackId,
+      winnerPackPath,
+      winnerPack,
+    ]);
 
     const displayName = asset.name || beautifyAssetName(asset.id);
 
@@ -297,7 +307,10 @@ export default function AssetResults({
   const providersByAsset = useStore((state) => state.providersByAsset);
   const packOrder = useStore((state) => state.packOrder);
   const disabledPackIds = useStore((state) => state.disabledPackIds);
-  const disabledSet = useMemo(() => new Set(disabledPackIds), [disabledPackIds]);
+  const disabledSet = useMemo(
+    () => new Set(disabledPackIds),
+    [disabledPackIds],
+  );
 
   // OPTIMIZATION: Progressive rendering - stagger card mounting to avoid initial lag
   // Render cards in batches to prevent overwhelming the browser with 50+ MinecraftCSSBlocks at once
@@ -316,7 +329,8 @@ export default function AssetResults({
     }
 
     // Use requestIdleCallback to render next batch during browser idle time
-    const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+    const idleCallback =
+      window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
     const handle = idleCallback(() => {
       setRenderCount((prev) => Math.min(prev + renderBatchSize, assets.length));
     });

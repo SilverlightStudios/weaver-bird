@@ -199,7 +199,7 @@ function getFaceUVs(faceData: ElementFace): number[] {
 function processModel(
   model: BlockModel,
   resolvedTextures: Record<string, string>,
-  resolvedModel?: ResolvedModel,
+  _resolvedModel?: ResolvedModel,
 ): ElementGeometryData[] {
   if (!model.elements || model.elements.length === 0) {
     console.warn("[ThreeGeometrySync] No elements in model");

@@ -17,7 +17,6 @@ import type {
   BlockModel,
   ModelElement,
   ElementFace,
-  ElementRotation,
   ResolvedModel,
 } from "@lib/tauri/blockModels";
 
@@ -71,44 +70,6 @@ export interface ElementGeometryData {
 }
 
 /**
- * Resolve all texture variables in the model
- */
-function resolveAllTextures(
-  textures: Record<string, string>,
-): Record<string, string> {
-  const resolved: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(textures)) {
-    let currentValue = value;
-    const visited = new Set<string>();
-
-    while (currentValue.startsWith("#")) {
-      const varName = currentValue.substring(1);
-
-      if (visited.has(varName)) {
-        console.warn(`[ThreeGeometryWorker] Circular texture reference: ${varName}`);
-        break;
-      }
-      visited.add(varName);
-
-      const nextValue = textures[varName];
-      if (!nextValue) {
-        console.warn(
-          `[ThreeGeometryWorker] Unresolved texture variable: #${varName}`,
-        );
-        break;
-      }
-
-      currentValue = nextValue;
-    }
-
-    resolved[key] = currentValue;
-  }
-
-  return resolved;
-}
-
-/**
  * Compute geometry data for a single element
  */
 function computeElementGeometry(
@@ -133,10 +94,10 @@ function computeElementGeometry(
   }> = [];
 
   const faceMapping: Record<string, number> = {
-    east: 0,  // right (+X)
-    west: 1,  // left (-X)
-    up: 2,    // top (+Y)
-    down: 3,  // bottom (-Y)
+    east: 0, // right (+X)
+    west: 1, // left (-X)
+    up: 2, // top (+Y)
+    down: 3, // bottom (-Y)
     south: 4, // front (+Z)
     north: 5, // back (-Z)
   };
@@ -241,45 +202,93 @@ function getFaceVertices(
   switch (faceName) {
     case "east": // right (+X)
       return [
-        w2, -h2, -d2, // bottom-left
-        w2, -h2,  d2, // bottom-right
-        w2,  h2,  d2, // top-right
-        w2,  h2, -d2, // top-left
+        w2,
+        -h2,
+        -d2, // bottom-left
+        w2,
+        -h2,
+        d2, // bottom-right
+        w2,
+        h2,
+        d2, // top-right
+        w2,
+        h2,
+        -d2, // top-left
       ];
     case "west": // left (-X)
       return [
-        -w2, -h2,  d2, // bottom-left
-        -w2, -h2, -d2, // bottom-right
-        -w2,  h2, -d2, // top-right
-        -w2,  h2,  d2, // top-left
+        -w2,
+        -h2,
+        d2, // bottom-left
+        -w2,
+        -h2,
+        -d2, // bottom-right
+        -w2,
+        h2,
+        -d2, // top-right
+        -w2,
+        h2,
+        d2, // top-left
       ];
     case "up": // top (+Y)
       return [
-        -w2, h2, -d2, // bottom-left
-         w2, h2, -d2, // bottom-right
-         w2, h2,  d2, // top-right
-        -w2, h2,  d2, // top-left
+        -w2,
+        h2,
+        -d2, // bottom-left
+        w2,
+        h2,
+        -d2, // bottom-right
+        w2,
+        h2,
+        d2, // top-right
+        -w2,
+        h2,
+        d2, // top-left
       ];
     case "down": // bottom (-Y)
       return [
-        -w2, -h2,  d2, // bottom-left
-         w2, -h2,  d2, // bottom-right
-         w2, -h2, -d2, // top-right
-        -w2, -h2, -d2, // top-left
+        -w2,
+        -h2,
+        d2, // bottom-left
+        w2,
+        -h2,
+        d2, // bottom-right
+        w2,
+        -h2,
+        -d2, // top-right
+        -w2,
+        -h2,
+        -d2, // top-left
       ];
     case "south": // front (+Z)
       return [
-        -w2, -h2, d2, // bottom-left
-         w2, -h2, d2, // bottom-right
-         w2,  h2, d2, // top-right
-        -w2,  h2, d2, // top-left
+        -w2,
+        -h2,
+        d2, // bottom-left
+        w2,
+        -h2,
+        d2, // bottom-right
+        w2,
+        h2,
+        d2, // top-right
+        -w2,
+        h2,
+        d2, // top-left
       ];
     case "north": // back (-Z)
       return [
-         w2, -h2, -d2, // bottom-left
-        -w2, -h2, -d2, // bottom-right
-        -w2,  h2, -d2, // top-right
-         w2,  h2, -d2, // top-left
+        w2,
+        -h2,
+        -d2, // bottom-left
+        -w2,
+        -h2,
+        -d2, // bottom-right
+        -w2,
+        h2,
+        -d2, // top-right
+        w2,
+        h2,
+        -d2, // top-left
       ];
     default:
       return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -291,13 +300,20 @@ function getFaceVertices(
  */
 function getFaceNormal(faceName: string): [number, number, number] {
   switch (faceName) {
-    case "east":  return [ 1,  0,  0];
-    case "west":  return [-1,  0,  0];
-    case "up":    return [ 0,  1,  0];
-    case "down":  return [ 0, -1,  0];
-    case "south": return [ 0,  0,  1];
-    case "north": return [ 0,  0, -1];
-    default:      return [ 0,  0,  0];
+    case "east":
+      return [1, 0, 0];
+    case "west":
+      return [-1, 0, 0];
+    case "up":
+      return [0, 1, 0];
+    case "down":
+      return [0, -1, 0];
+    case "south":
+      return [0, 0, 1];
+    case "north":
+      return [0, 0, -1];
+    default:
+      return [0, 0, 0];
   }
 }
 
@@ -309,10 +325,14 @@ function getFaceUVs(faceData: ElementFace): number[] {
   if (!faceData.uv) {
     // Default UVs (full texture)
     return [
-      0, 1, // bottom-left
-      1, 1, // bottom-right
-      1, 0, // top-right
-      0, 0, // top-left
+      0,
+      1, // bottom-left
+      1,
+      1, // bottom-right
+      1,
+      0, // top-right
+      0,
+      0, // top-left
     ];
   }
 
@@ -331,31 +351,29 @@ function getFaceUVs(faceData: ElementFace): number[] {
   switch (rotation) {
     case 90:
       return [
-        u1, v2, // rotated
-        u1, v1,
-        u2, v1,
-        u2, v2,
+        u1,
+        v2, // rotated
+        u1,
+        v1,
+        u2,
+        v1,
+        u2,
+        v2,
       ];
     case 180:
-      return [
-        u2, v2,
-        u1, v2,
-        u1, v1,
-        u2, v1,
-      ];
+      return [u2, v2, u1, v2, u1, v1, u2, v1];
     case 270:
-      return [
-        u2, v1,
-        u2, v2,
-        u1, v2,
-        u1, v1,
-      ];
+      return [u2, v1, u2, v2, u1, v2, u1, v1];
     default: // 0
       return [
-        u1, v2, // bottom-left (v2 because Y is flipped)
-        u2, v2, // bottom-right
-        u2, v1, // top-right
-        u1, v1, // top-left
+        u1,
+        v2, // bottom-left (v2 because Y is flipped)
+        u2,
+        v2, // bottom-right
+        u2,
+        v1, // top-right
+        u1,
+        v1, // top-left
       ];
   }
 }
@@ -366,7 +384,7 @@ function getFaceUVs(faceData: ElementFace): number[] {
 function processModel(
   model: BlockModel,
   resolvedTextures: Record<string, string>,
-  resolvedModel?: ResolvedModel,
+  _resolvedModel?: ResolvedModel,
 ): ElementGeometryData[] {
   if (!model.elements || model.elements.length === 0) {
     console.warn("[ThreeGeometryWorker] No elements in model");
@@ -416,7 +434,7 @@ function processModel(
 
 // Worker message handler
 self.onmessage = (event: MessageEvent<WorkerRequest>) => {
-  const { id, model, resolvedTextures, biomeColor, resolvedModel } = event.data;
+  const { id, model, resolvedTextures, resolvedModel } = event.data;
 
   try {
     // Process the model

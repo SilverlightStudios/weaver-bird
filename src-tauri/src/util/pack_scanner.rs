@@ -10,7 +10,7 @@ use zip::ZipArchive;
 
 enum PackEntry {
     Zip(PathBuf, String, u64), // path, name, size
-    Dir(PathBuf, String), // path, name
+    Dir(PathBuf, String),      // path, name
 }
 
 /// Scan a directory for resource packs (.zip files and uncompressed folders)
@@ -45,9 +45,9 @@ pub fn scan_packs(packs_dir: &str) -> Result<Vec<PackMeta>> {
         if entry_path.is_file() && entry_path.extension().map_or(false, |ext| ext == "zip") {
             if let Ok(metadata) = entry.metadata() {
                 pack_entries.push(PackEntry::Zip(
-                    entry_path,
-                    file_name_str,
-                    metadata.len()
+                    entry_path.clone(),
+                    file_name_str.clone(),
+                    metadata.len(),
                 ));
             }
         }
@@ -61,42 +61,43 @@ pub fn scan_packs(packs_dir: &str) -> Result<Vec<PackMeta>> {
         }
     }
 
-    println!("[scan_packs] Found {} packs, extracting metadata in PARALLEL", pack_entries.len());
+    println!(
+        "[scan_packs] Found {} packs, extracting metadata in PARALLEL",
+        pack_entries.len()
+    );
 
     // Second pass: extract metadata in parallel
     let packs: Vec<PackMeta> = pack_entries
         .par_iter()
-        .filter_map(|entry| {
-            match entry {
-                PackEntry::Zip(entry_path, file_name_str, size) => {
-                    println!("[scan_packs] Processing ZIP: {}", file_name_str);
-                    let (description, icon_data) = extract_pack_metadata_from_zip(entry_path);
+        .filter_map(|entry| match entry {
+            PackEntry::Zip(entry_path, file_name_str, size) => {
+                println!("[scan_packs] Processing ZIP: {}", file_name_str);
+                let (description, icon_data) = extract_pack_metadata_from_zip(entry_path);
 
-                    Some(PackMeta {
-                        id: file_name_str.clone(),
-                        name: file_name_str.trim_end_matches(".zip").to_string(),
-                        path: entry_path.to_string_lossy().to_string(),
-                        size: *size,
-                        is_zip: true,
-                        description,
-                        icon_data,
-                    })
-                }
-                PackEntry::Dir(entry_path, file_name_str) => {
-                    println!("[scan_packs] Processing directory: {}", file_name_str);
-                    let size = calculate_dir_size(entry_path);
-                    let (description, icon_data) = extract_pack_metadata_from_dir(entry_path);
+                Some(PackMeta {
+                    id: file_name_str.clone(),
+                    name: file_name_str.trim_end_matches(".zip").to_string(),
+                    path: entry_path.to_string_lossy().to_string(),
+                    size: *size,
+                    is_zip: true,
+                    description,
+                    icon_data,
+                })
+            }
+            PackEntry::Dir(entry_path, file_name_str) => {
+                println!("[scan_packs] Processing directory: {}", file_name_str);
+                let size = calculate_dir_size(entry_path);
+                let (description, icon_data) = extract_pack_metadata_from_dir(entry_path);
 
-                    Some(PackMeta {
-                        id: file_name_str.clone(),
-                        name: file_name_str.clone(),
-                        path: entry_path.to_string_lossy().to_string(),
-                        size,
-                        is_zip: false,
-                        description,
-                        icon_data,
-                    })
-                }
+                Some(PackMeta {
+                    id: file_name_str.clone(),
+                    name: file_name_str.clone(),
+                    path: entry_path.to_string_lossy().to_string(),
+                    size,
+                    is_zip: false,
+                    description,
+                    icon_data,
+                })
             }
         })
         .collect();
@@ -292,7 +293,10 @@ mod tests {
         assert_eq!(packs.len(), 1);
         assert_eq!(packs[0].name, "test_pack");
         assert_eq!(packs[0].is_zip, false);
-        assert_eq!(packs[0].description, Some("Test pack description".to_string()));
+        assert_eq!(
+            packs[0].description,
+            Some("Test pack description".to_string())
+        );
     }
 
     #[test]
