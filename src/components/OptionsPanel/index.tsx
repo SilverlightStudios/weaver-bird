@@ -255,6 +255,7 @@ export default function OptionsPanel({
           assetId={colormapAssetId}
           type={effectiveColormapType}
           onColorSelect={onBiomeColorChange}
+          updateGlobalState={false}
         />
       </div>
     );
@@ -339,6 +340,7 @@ export default function OptionsPanel({
                 assetId={colormapAssetId}
                 type={effectiveColormapType}
                 onColorSelect={onBiomeColorChange}
+                updateGlobalState={false}
               />
             )}
           </TabsContent>

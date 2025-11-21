@@ -72,8 +72,8 @@ Component gets { grassColor, foliageColor }
 - Support batch operations for multiple coordinates
 
 **Key Features:**
-- Uses OffscreenCanvas when available (modern browsers)
-- Falls back to regular Canvas for older browsers
+- Uses fetch() + createImageBitmap() (Web Worker compatible)
+- Uses OffscreenCanvas for pixel extraction
 - Maintains image cache to avoid reloading
 - Handles errors gracefully
 
@@ -220,9 +220,10 @@ function BiomeColorPicker() {
 |---------|--------|---------|--------|------|
 | Web Workers | ✅ All | ✅ All | ✅ All | ✅ All |
 | OffscreenCanvas | ✅ 69+ | ✅ 105+ | ✅ 16.4+ | ✅ 79+ |
-| Canvas Fallback | ✅ All | ✅ All | ✅ All | ✅ All |
+| createImageBitmap | ✅ 50+ | ✅ 42+ | ✅ 15+ | ✅ 79+ |
+| Sync Fallback | ✅ All | ✅ All | ✅ All | ✅ All |
 
-**Note:** Worker gracefully falls back to regular Canvas for older browsers without OffscreenCanvas.
+**Note:** Worker requires OffscreenCanvas and createImageBitmap. Falls back to synchronous version if worker initialization fails.
 
 ---
 

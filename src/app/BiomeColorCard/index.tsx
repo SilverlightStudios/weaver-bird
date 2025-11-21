@@ -33,6 +33,38 @@ import {
 } from "@components/BiomeColorPicker/biomeData";
 import s from "./styles.module.scss";
 
+/**
+ * BiomeColorCard Component
+ *
+ * Interactive colormap selector for grass/foliage biome tinting.
+ *
+ * DUAL-SAMPLING ARCHITECTURE:
+ * ---------------------------
+ * This component performs TWO types of color sampling:
+ *
+ * 1. INLINE CANVAS SAMPLING (Immediate feedback):
+ *    - Uses document.createElement('canvas') on main thread
+ *    - Provides instant visual feedback when clicking
+ *    - Called via onColorSelect callback (for 3D preview temporary override)
+ *
+ * 2. WEB WORKER SAMPLING (Global state via colormapManager):
+ *    - Triggered when updateGlobalState=true (default)
+ *    - Calls setColormapCoordinates() which updates global state
+ *    - main.tsx listens to coordinates and triggers worker sampling
+ *    - Results stored in global state (affects all tinted blocks)
+ *
+ * USAGE MODES:
+ * ------------
+ * - Settings Page (updateGlobalState=true):
+ *   Both inline + global worker sampling → affects all blocks
+ *
+ * - 3D Preview Biome Tab (updateGlobalState=false):
+ *   Only inline sampling → temporary override for current preview only
+ *
+ * This design provides instant UI feedback while maintaining proper
+ * global state management through the worker system.
+ */
+
 interface ColormapSourceOption {
   id: string;
   assetId: string;
@@ -51,6 +83,13 @@ export interface BiomeColorCardProps {
   showSourceSelector?: boolean;
   readOnly?: boolean;
   accent?: "emerald" | "gold" | "berry";
+  /**
+   * Whether to update global colormap coordinates when clicking
+   * - true: Updates global state (affects all tinted blocks) - used in Settings
+   * - false: Only calls onColorSelect callback (temporary override) - used in 3D preview
+   * @default true
+   */
+  updateGlobalState?: boolean;
 }
 
 export default function BiomeColorCard({
@@ -60,6 +99,7 @@ export default function BiomeColorCard({
   showSourceSelector = true,
   readOnly = false,
   accent = "emerald",
+  updateGlobalState = true,
 }: BiomeColorCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [colormapSrc, setColormapSrc] = useState<string>("");
@@ -293,11 +333,13 @@ export default function BiomeColorCard({
       ((event.clientY - rect.top) / rect.height) * canvas.height,
     );
 
-    // Update global colormap coordinates - this will trigger color sampling
-    setColormapCoordinates({ x, y });
+    // Update global colormap coordinates if enabled (affects all tinted blocks)
+    if (updateGlobalState) {
+      setColormapCoordinates({ x, y });
+    }
     setSelectedBiome(null);
 
-    // Call the optional callback if provided
+    // Call the optional callback if provided (for temporary override in 3D preview)
     if (onColorSelect) {
       const color = sampleColor(x, y);
       if (color) {
@@ -309,11 +351,13 @@ export default function BiomeColorCard({
   function handleBiomeSelect(biome: BiomeData, x: number, y: number) {
     if (readOnly) return;
 
-    // Update global colormap coordinates - this will trigger color sampling
-    setColormapCoordinates({ x, y });
+    // Update global colormap coordinates if enabled (affects all tinted blocks)
+    if (updateGlobalState) {
+      setColormapCoordinates({ x, y });
+    }
     setSelectedBiome(biome.id);
 
-    // Call the optional callback if provided
+    // Call the optional callback if provided (for temporary override in 3D preview)
     if (onColorSelect) {
       const color = sampleColor(x, y);
       if (color) {
