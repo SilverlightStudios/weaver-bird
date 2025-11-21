@@ -4,9 +4,6 @@
  * Minecraft uses a 16x16x16 coordinate system, while Three.js uses world units.
  * We scale down by 16 to make a block 1 unit in Three.js.
  *
- * This module now uses a Web Worker for geometry pre-computation to avoid blocking
- * the main thread during CPU-intensive vertex/UV calculations.
- *
  * References:
  * - https://minecraft.wiki/w/Model
  * - @xmcl/model implementation for Three.js conversion patterns
@@ -19,8 +16,6 @@ import type {
   ElementFace,
   ElementRotation,
 } from "@lib/tauri/blockModels";
-import { threeGeometryWorker } from "@lib/threeGeometryWorker";
-import type { ElementGeometryData } from "@lib/threeGeometryWorker";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
 
@@ -96,30 +91,19 @@ export async function blockModelToThreeJs(
     JSON.stringify(resolvedTextures, null, 2),
   );
 
-  // Use Web Worker to compute geometry data (runs off main thread)
-  console.log("[modelConverter] Computing geometry in worker...");
-  const workerStartTime = performance.now();
-  const workerResult = await threeGeometryWorker.computeGeometry(
-    model,
-    resolvedTextures,
-    biomeColor,
-    resolvedModel,
-  );
-  const workerTime = performance.now() - workerStartTime;
-  console.log(`[modelConverter] Worker computation took ${workerTime.toFixed(2)}ms`);
-
-  // Create meshes from the pre-computed geometry data
+  // Convert each element to a mesh using simple BoxGeometry approach
   console.log(
-    `[modelConverter] Creating ${workerResult.elements.length} mesh(es) from worker data...`,
+    `[modelConverter] Converting ${model.elements.length} element(s) to meshes...`,
   );
-  for (let i = 0; i < workerResult.elements.length; i++) {
-    const elementData = workerResult.elements[i];
+  for (let i = 0; i < model.elements.length; i++) {
+    const element = model.elements[i];
     try {
       console.log(
-        `[modelConverter] → Element ${i + 1}/${workerResult.elements.length}`,
+        `[modelConverter] → Element ${i + 1}/${model.elements.length}`,
       );
-      const mesh = await createMeshFromGeometryData(
-        elementData,
+      const mesh = await createElementMesh(
+        element,
+        resolvedTextures,
         textureLoader,
         biomeColor,
       );
@@ -142,25 +126,28 @@ export async function blockModelToThreeJs(
   );
 
   // Apply blockstate rotations if provided
-  if (workerResult.blockstateRotation) {
-    const rot = workerResult.blockstateRotation;
+  if (resolvedModel) {
     console.log("[modelConverter] Applying blockstate rotations:");
-    console.log(`[modelConverter] - X rotation: ${rot.rotX}°`);
-    console.log(`[modelConverter] - Y rotation: ${rot.rotY}°`);
-    console.log(`[modelConverter] - Z rotation: ${rot.rotZ}°`);
-    console.log(`[modelConverter] - UV Lock: ${rot.uvlock}`);
+    console.log(`[modelConverter] - X rotation: ${resolvedModel.rotX}°`);
+    console.log(`[modelConverter] - Y rotation: ${resolvedModel.rotY}°`);
+    console.log(`[modelConverter] - Z rotation: ${resolvedModel.rotZ}°`);
+    console.log(`[modelConverter] - UV Lock: ${resolvedModel.uvlock}`);
 
-    if (rot.rotX !== 0) {
-      group.rotateX(THREE.MathUtils.degToRad(rot.rotX));
+    // Apply rotations in order: X, Y, Z (Minecraft order)
+    // Convert degrees to radians
+    if (resolvedModel.rotX !== 0) {
+      group.rotateX(THREE.MathUtils.degToRad(resolvedModel.rotX));
     }
-    if (rot.rotY !== 0) {
-      group.rotateY(THREE.MathUtils.degToRad(rot.rotY));
+    if (resolvedModel.rotY !== 0) {
+      group.rotateY(THREE.MathUtils.degToRad(resolvedModel.rotY));
     }
-    if (rot.rotZ !== 0) {
-      group.rotateZ(THREE.MathUtils.degToRad(rot.rotZ));
+    if (resolvedModel.rotZ !== 0) {
+      group.rotateZ(THREE.MathUtils.degToRad(resolvedModel.rotZ));
     }
 
-    if (rot.uvlock) {
+    // TODO: Implement uvlock if needed (rotates UV coordinates to compensate for model rotation)
+    // For now, this is a placeholder - uvlock requires rotating UV coordinates in the opposite direction
+    if (resolvedModel.uvlock) {
       console.log(
         "[modelConverter] Note: uvlock is set but not yet fully implemented",
       );
@@ -215,131 +202,7 @@ function resolveAllTextures(
 }
 
 /**
- * Create a Three.js mesh from pre-computed geometry data (from worker)
- */
-async function createMeshFromGeometryData(
-  elementData: ElementGeometryData,
-  textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
-  biomeColor?: { r: number; g: number; b: number } | null,
-): Promise<THREE.Mesh | null> {
-  const { geometry: geometryData, position, rotation } = elementData;
-
-  // Create BufferGeometry from pre-computed arrays
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(geometryData.positions, 3),
-  );
-  geometry.setAttribute(
-    "normal",
-    new THREE.BufferAttribute(geometryData.normals, 3),
-  );
-  geometry.setAttribute("uv", new THREE.BufferAttribute(geometryData.uvs, 2));
-  geometry.setIndex(new THREE.BufferAttribute(geometryData.indices, 1));
-
-  // Create materials for each material group
-  const materials: THREE.Material[] = [];
-  const uniqueTextures = new Map<string, number>(); // textureId -> material index
-
-  for (const group of geometryData.materialGroups) {
-    let materialIndex = uniqueTextures.get(group.textureId);
-
-    if (materialIndex === undefined) {
-      // Load texture and create material
-      const texture = await textureLoader(group.textureId);
-
-      if (texture) {
-        // Configure texture for Minecraft-style rendering
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-
-        // Apply biome color tint if needed
-        let materialColor: THREE.Color | undefined = undefined;
-        if (group.tintindex !== undefined && group.tintindex !== null && biomeColor) {
-          materialColor = new THREE.Color(
-            biomeColor.r / 255,
-            biomeColor.g / 255,
-            biomeColor.b / 255,
-          );
-        }
-
-        const material = new THREE.MeshStandardMaterial({
-          map: texture,
-          color: materialColor,
-          transparent: true,
-          alphaTest: 0.1,
-          roughness: 0.8,
-          metalness: 0.2,
-          flatShading: false,
-        });
-
-        materialIndex = materials.length;
-        materials.push(material);
-        uniqueTextures.set(group.textureId, materialIndex);
-      } else {
-        // Use transparent material for missing textures
-        const material = new THREE.MeshStandardMaterial({
-          transparent: true,
-          opacity: 0,
-          roughness: 0.8,
-          metalness: 0.2,
-        });
-        materialIndex = materials.length;
-        materials.push(material);
-        uniqueTextures.set(group.textureId, materialIndex);
-      }
-    }
-
-    // Add material group to geometry
-    geometry.addGroup(group.start, group.count, materialIndex);
-  }
-
-  // Create mesh
-  const mesh = new THREE.Mesh(geometry, materials);
-  mesh.position.set(position[0], position[1], position[2]);
-
-  // Enable shadows
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-
-  // Apply rotation if specified
-  if (rotation) {
-    const origin = new THREE.Vector3(
-      rotation.origin[0],
-      rotation.origin[1],
-      rotation.origin[2],
-    );
-
-    const angleRad = THREE.MathUtils.degToRad(rotation.angle);
-    const axis = new THREE.Vector3(
-      rotation.axis === "x" ? 1 : 0,
-      rotation.axis === "y" ? 1 : 0,
-      rotation.axis === "z" ? 1 : 0,
-    );
-
-    // Rotate around the specified origin
-    mesh.position.sub(origin);
-    mesh.position.applyAxisAngle(axis, angleRad);
-    mesh.position.add(origin);
-    mesh.rotateOnAxis(axis, angleRad);
-
-    // Apply rescaling if specified
-    if (rotation.rescale && Math.abs(rotation.angle % 45) < 0.01) {
-      const scale = Math.sqrt(2);
-      mesh.scale.multiplyScalar(scale);
-    }
-  }
-
-  return mesh;
-}
-
-/**
  * Create a Three.js mesh from a Minecraft model element
- *
- * @deprecated This function is kept for backward compatibility but is no longer used.
- * The worker-based approach (createMeshFromGeometryData) is now preferred.
  */
 async function createElementMesh(
   element: ModelElement,
