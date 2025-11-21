@@ -19,6 +19,12 @@
  * 4. Lazy Loading with IntersectionObserver (lines 103-122):
  *    - Only loads textures for visible cards (200px buffer)
  *    - Drastically reduces initial load time for large asset lists
+ *
+ * 5. Progressive/Staggered Rendering (lines 292-321):
+ *    - Renders cards in batches of 12 using requestIdleCallback
+ *    - Prevents browser lockup when loading 50+ cards at once
+ *    - Shows "Loading more..." indicator while batches process
+ *    - IMPACT: Initial page load feels instant, cards appear progressively
  */
 import { useEffect, useState, useRef, useMemo, useCallback, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -289,6 +295,37 @@ export default function AssetResults({
   const disabledPackIds = useStore((state) => state.disabledPackIds);
   const disabledSet = useMemo(() => new Set(disabledPackIds), [disabledPackIds]);
 
+  // OPTIMIZATION: Progressive rendering - stagger card mounting to avoid initial lag
+  // Render cards in batches to prevent overwhelming the browser with 50+ MinecraftCSSBlocks at once
+  const [renderCount, setRenderCount] = useState(12); // Start with first 12 cards
+  const renderBatchSize = 12; // Render 12 more cards per batch
+
+  // Reset render count when assets change (new search, pagination, etc.)
+  useEffect(() => {
+    setRenderCount(12);
+  }, [assets]);
+
+  // Progressively render more cards using requestIdleCallback for non-blocking updates
+  useEffect(() => {
+    if (renderCount >= assets.length) {
+      return; // All cards rendered
+    }
+
+    // Use requestIdleCallback to render next batch during browser idle time
+    const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+    const handle = idleCallback(() => {
+      setRenderCount((prev) => Math.min(prev + renderBatchSize, assets.length));
+    });
+
+    return () => {
+      if (window.cancelIdleCallback) {
+        window.cancelIdleCallback(handle);
+      } else {
+        clearTimeout(handle as unknown as number);
+      }
+    };
+  }, [renderCount, assets.length, renderBatchSize]);
+
   // Helper to get winning pack for an asset
   const getWinningPack = useCallback(
     (assetId: string): string | undefined => {
@@ -384,6 +421,10 @@ export default function AssetResults({
     );
   }
 
+  // Only render the first `renderCount` cards for progressive loading
+  const visibleGroupedAssets = groupedAssets.slice(0, renderCount);
+  const hasMoreToRender = renderCount < groupedAssets.length;
+
   return (
     <div className={s.root}>
       {totalItems && displayRange && (
@@ -392,7 +433,7 @@ export default function AssetResults({
         </div>
       )}
       <div className={s.results}>
-        {groupedAssets.map((group) => (
+        {visibleGroupedAssets.map((group) => (
           <AssetCard
             key={group.id}
             asset={{ id: group.id, name: group.name }}
@@ -404,6 +445,11 @@ export default function AssetResults({
             variantCount={group.variantCount}
           />
         ))}
+        {hasMoreToRender && (
+          <div className={s.loadingMore} key="loading-more">
+            Loading more assets...
+          </div>
+        )}
       </div>
     </div>
   );
