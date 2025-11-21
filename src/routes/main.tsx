@@ -120,6 +120,8 @@ const useSelectedGrassColor = () =>
   useStore((state) => state.selectedGrassColor);
 const useSetSelectedFoliageColor = () =>
   useStore((state) => state.setSelectedFoliageColor);
+const useSetSelectedGrassColor = () =>
+  useStore((state) => state.setSelectedGrassColor);
 import type { PackMeta, AssetRecord } from "@state";
 
 const MESSAGE_TIMEOUT_MS = 3000;
@@ -247,7 +249,8 @@ export default function MainRoute() {
   // Get both grass and foliage colors from global state
   const selectedGrassColor = useSelectedGrassColor();
   const selectedFoliageColor = useSelectedFoliageColor();
-  const setBiomeColor = useSetSelectedFoliageColor();
+  const setSelectedFoliageColor = useSetSelectedFoliageColor();
+  const setSelectedGrassColor = useSetSelectedGrassColor();
 
   // Determine which color to use based on the selected asset's colormap type
   const selectedAssetColormapType = uiState.selectedAssetId
@@ -259,6 +262,18 @@ export default function MainRoute() {
     selectedAssetColormapType === "grass"
       ? selectedGrassColor
       : selectedFoliageColor;
+
+  // Create a callback that sets the correct color based on the asset's colormap type
+  const setBiomeColor = useCallback(
+    (color: { r: number; g: number; b: number }) => {
+      if (selectedAssetColormapType === "grass") {
+        setSelectedGrassColor(color);
+      } else {
+        setSelectedFoliageColor(color);
+      }
+    },
+    [selectedAssetColormapType, setSelectedGrassColor, setSelectedFoliageColor],
+  );
   const packOrder = useSelectPackOrder();
   const overridesRecord = useSelectOverridesRecord();
   const selectedLauncher = useSelectSelectedLauncher();
