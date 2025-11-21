@@ -22,6 +22,7 @@ import {
   isPottedPlant,
   getPottedAssetId,
 } from "@lib/assetUtils";
+import { getBlockTintType } from "@/constants/vanillaBlockColors";
 
 interface Props {
   assetId: string;
@@ -305,11 +306,30 @@ function BlockModel({
           hasTintindex,
         );
         if (onTintDetected) {
-          const tintType = tintIndices.has(1)
-            ? "foliage"
-            : tintIndices.has(0)
-              ? "grass"
+          // Determine tint type from vanilla block colors registry
+          // Convert assetId to blockId: "minecraft:block/oak_leaves" -> "minecraft:oak_leaves"
+          let blockId = normalizeAssetId(assetId);
+          if (blockId.includes("/block/")) {
+            blockId = blockId.replace("/block/", ":");
+          } else if (blockId.includes("/item/")) {
+            blockId = blockId.replace("/item/", ":");
+          }
+
+          // Check registry for this block's tint type
+          const registryTintType = hasTintindex
+            ? getBlockTintType(blockId)
+            : undefined;
+
+          // Only report grass/foliage (we don't handle water/special in renderer yet)
+          const tintType =
+            registryTintType === "grass" || registryTintType === "foliage"
+              ? registryTintType
               : undefined;
+
+          console.log(
+            `[BlockModel] Tint detection - blockId: ${blockId}, hasTintindex: ${hasTintindex}, registryTintType: ${registryTintType}, tintType: ${tintType}`,
+          );
+
           onTintDetected({ hasTint: hasTintindex, tintType });
         }
 

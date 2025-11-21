@@ -55,6 +55,7 @@ export interface OverrideWirePayload {
 export interface EntitiesState {
   packs: Record<PackId, PackMeta>;
   packOrder: PackId[];
+  disabledPackIds: PackId[];
   assets: Record<AssetId, AssetRecord>;
   providersByAsset: Record<AssetId, PackId[]>;
   overrides: Record<AssetId, OverrideEntry | undefined>;

@@ -2,34 +2,34 @@
  * Hook to make a pack list item sortable with dnd-kit
  */
 
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { RestrictToVerticalAxis } from "@dnd-kit/abstract/modifiers";
+import { useSortable } from "@dnd-kit/react/sortable";
 
 interface UseSortReturn {
-  attributes: ReturnType<typeof useSortable>['attributes']
-  listeners: ReturnType<typeof useSortable>['listeners']
-  setNodeRef: ReturnType<typeof useSortable>['setNodeRef']
-  transform: string | undefined
-  transition: string | null | undefined
-  isDragging: boolean
+  setNodeRef: (element: HTMLElement | null) => void;
+  isDragging: boolean;
+  isDropTarget: boolean;
 }
 
-export function useSort(id: string): UseSortReturn {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id })
+export function useSort(
+  id: string,
+  containerId: string,
+  index: number,
+  disabled: boolean = false,
+): UseSortReturn {
+  const { ref, isDragging, isDropTarget } = useSortable({
+    id,
+    index,
+    group: containerId,
+    type: "pack",
+    accept: ["pack"],
+    modifiers: [RestrictToVerticalAxis],
+    disabled,
+  });
 
   return {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform: CSS.Transform.toString(transform),
-    transition,
+    setNodeRef: ref,
     isDragging,
-  }
+    isDropTarget,
+  };
 }

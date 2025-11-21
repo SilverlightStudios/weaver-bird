@@ -222,18 +222,22 @@ export default function AssetResults({
   const winners = useStore((state) => state.overrides);
   const providersByAsset = useStore((state) => state.providersByAsset);
   const packOrder = useStore((state) => state.packOrder);
+  const disabledPackIds = useStore((state) => state.disabledPackIds);
+  const disabledSet = useMemo(() => new Set(disabledPackIds), [disabledPackIds]);
 
   // Helper to get winning pack for an asset
   const getWinningPack = useCallback(
     (assetId: string): string | undefined => {
       // Check if asset is penciled to a specific pack
       const override = winners[assetId];
-      if (override) {
+      if (override && !disabledSet.has(override.packId)) {
         return override.packId;
       }
 
       // Otherwise, get first provider in pack order
-      const providers = providersByAsset[assetId] ?? [];
+      const providers = (providersByAsset[assetId] ?? []).filter(
+        (packId) => !disabledSet.has(packId),
+      );
       if (providers.length === 0) return undefined;
 
       const sorted = [...providers].sort(
@@ -241,7 +245,7 @@ export default function AssetResults({
       );
       return sorted[0];
     },
-    [winners, providersByAsset, packOrder],
+    [winners, providersByAsset, packOrder, disabledSet],
   );
 
   // Group assets by variant, but only group variants from the same winning pack

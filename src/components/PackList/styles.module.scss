@@ -171,8 +171,22 @@
     flex-direction: column;
     gap: var(--spacing-md);
     list-style: none;
-    padding: 0;
+    padding: var(--spacing-sm);
+    margin: 0;
     min-width: 0;
+    border: 2px dashed transparent;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-block);
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+    &[data-dropping='true'] {
+        border-color: var(--color-gold);
+        background-color: color-mix(in srgb, var(--color-gold) 20%, var(--color-block));
+        box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.08);
+    }
 }
 
 .itemWrapper {
@@ -183,4 +197,132 @@
     &:active {
         cursor: grabbing;
     }
+
+    &[data-dragging='true'] {
+        opacity: 0.4;
+    }
+
+    &[data-droptarget='true'] {
+        outline: 2px dashed var(--color-gold);
+        border-radius: var(--radius-sm);
+    }
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.sectionHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sectionTitle {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text);
+}
+
+.sectionHint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.cardWrapper {
+    position: relative;
+}
+
+.actionButton {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 2px solid var(--color-border);
+    background-color: var(--color-block-muted);
+    color: var(--color-text);
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 0.2s var(--spring-bezier),
+        box-shadow 0.2s var(--spring-bezier);
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 0 var(--color-ink);
+    }
+}
+
+.disableButton {
+    background-color: var(--color-berry);
+    color: var(--color-bg);
+}
+
+.enableButton {
+    background-color: var(--color-emerald);
+    color: var(--color-ink);
+}
+
+.disabledList {
+    background-color: var(--color-block-muted);
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    &[data-dropping='true']::after {
+        content: "Release to disable pack";
+        position: absolute;
+        inset: var(--spacing-sm);
+        border: 2px dashed var(--color-berry);
+        border-radius: var(--radius-sm);
+        color: var(--color-berry);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: color-mix(in srgb, var(--color-berry) 12%, var(--color-block-muted));
+        pointer-events: none;
+    }
+
+    .cardWrapper {
+        filter: saturate(0.5);
+        .card {
+            border-color: color-mix(in srgb, var(--color-ink) 40%, #999);
+            box-shadow: 0 6px 0 color-mix(in srgb, var(--color-ink) 25%, #777);
+
+            &::before,
+            &::after {
+                opacity: 0.5;
+            }
+        }
+    }
+}
+
+.disabledEmpty {
+    padding: var(--spacing-md);
+    text-align: center;
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-block);
 }

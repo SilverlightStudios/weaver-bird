@@ -87,22 +87,27 @@ export interface TestOptions {
  */
 function getWinnerPackId(assetId: string): string | undefined {
   const state = useStore.getState();
+  const disabledSet = new Set(state.disabledPackIds || []);
 
   // Check for override
   const override = state.overrides[assetId];
-  if (override) {
+  if (override && !disabledSet.has(override.packId)) {
     return override.packId;
   }
 
   // Get first provider in pack order
-  const providers = state.providersByAsset[assetId] ?? [];
+  const providers = (state.providersByAsset[assetId] ?? []).filter(
+    (packId) => !disabledSet.has(packId),
+  );
   if (providers.length === 0) {
     // Try base asset (for numbered variants)
     const variantGroupKey = getVariantGroupKey(assetId);
     const baseAssetId = assetId.startsWith("minecraft:")
       ? `minecraft:block/${variantGroupKey}`
       : variantGroupKey;
-    const baseProviders = state.providersByAsset[baseAssetId] ?? [];
+    const baseProviders = (state.providersByAsset[baseAssetId] ?? []).filter(
+      (packId) => !disabledSet.has(packId),
+    );
     if (baseProviders.length === 0) return undefined;
 
     const sorted = [...baseProviders].sort(

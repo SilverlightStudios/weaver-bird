@@ -14,14 +14,17 @@ import { AssetId, PackId, OverrideEntry, OverrideWirePayload } from "./types";
 export const useSelectProvidersSorted = (assetId: AssetId) => {
   const providersByAsset = useStore((state) => state.providersByAsset);
   const packOrder = useStore((state) => state.packOrder);
+  const disabledPackIds = useStore((state) => state.disabledPackIds);
 
   return useMemo(() => {
+    const disabledSet = new Set(disabledPackIds);
     const providers = providersByAsset[assetId] ?? [];
-    const sorted = [...providers].sort(
+    const filtered = providers.filter((id) => !disabledSet.has(id));
+    const sorted = [...filtered].sort(
       (a, b) => packOrder.indexOf(a) - packOrder.indexOf(b),
     );
     return sorted;
-  }, [assetId, providersByAsset, packOrder]);
+  }, [assetId, providersByAsset, packOrder, disabledPackIds]);
 };
 
 /**
@@ -31,23 +34,27 @@ export const useSelectWinner = (assetId: AssetId) => {
   const overrides = useStore((state) => state.overrides);
   const providersByAsset = useStore((state) => state.providersByAsset);
   const packOrder = useStore((state) => state.packOrder);
+  const disabledPackIds = useStore((state) => state.disabledPackIds);
 
   return useMemo(() => {
+    const disabledSet = new Set(disabledPackIds);
     // Check if asset is penciled to a specific pack
     const override = overrides[assetId];
-    if (override) {
+    if (override && !disabledSet.has(override.packId)) {
       return override.packId;
     }
 
     // Otherwise, get first provider in pack order
-    const providers = providersByAsset[assetId] ?? [];
+    const providers = (providersByAsset[assetId] ?? []).filter(
+      (id) => !disabledSet.has(id),
+    );
     if (providers.length === 0) return undefined;
 
     const sorted = [...providers].sort(
       (a, b) => packOrder.indexOf(a) - packOrder.indexOf(b),
     );
     return sorted[0];
-  }, [assetId, overrides, providersByAsset, packOrder]);
+  }, [assetId, overrides, providersByAsset, packOrder, disabledPackIds]);
 };
 
 /**
@@ -82,6 +89,18 @@ export const useSelectPacksInOrder = () => {
   return useMemo(() => {
     return packOrder.map((id) => packs[id]).filter(Boolean);
   }, [packs, packOrder]);
+};
+
+/**
+ * Get disabled packs in their disabled order
+ */
+export const useSelectDisabledPacks = () => {
+  const packs = useStore((state) => state.packs);
+  const disabledPackIds = useStore((state) => state.disabledPackIds);
+
+  return useMemo(() => {
+    return disabledPackIds.map((id) => packs[id]).filter(Boolean);
+  }, [packs, disabledPackIds]);
 };
 
 /**
@@ -197,6 +216,13 @@ export const useSelectPackOrder = () => {
 };
 
 /**
+ * Get disabled pack IDs
+ */
+export const useSelectDisabledPackIds = () => {
+  return useStore((state) => state.disabledPackIds);
+};
+
+/**
  * Get all action methods individually (avoid destructuring object references)
  */
 export const useSelectSetSearchQuery = () =>
@@ -205,6 +231,8 @@ export const useSelectSetSelectedAsset = () =>
   useStore((state) => state.setSelectedAsset);
 export const useSelectSetPackOrder = () =>
   useStore((state) => state.setPackOrder);
+export const useSelectSetDisabledPackOrder = () =>
+  useStore((state) => state.setDisabledPackOrder);
 export const useSelectSetOverride = () =>
   useStore((state) => state.setOverride);
 export const useSelectSetOutputDir = () =>
@@ -213,6 +241,10 @@ export const useSelectSetPackFormat = () =>
   useStore((state) => state.setPackFormat);
 export const useSelectIngestPacks = () =>
   useStore((state) => state.ingestPacks);
+export const useSelectDisablePack = () =>
+  useStore((state) => state.disablePack);
+export const useSelectEnablePack = () =>
+  useStore((state) => state.enablePack);
 export const useSelectIngestAssets = () =>
   useStore((state) => state.ingestAssets);
 export const useSelectIngestProviders = () =>
@@ -272,19 +304,27 @@ export const useSelectProvidersWithWinner = (assetId?: AssetId) => {
   const overrides = useStore((state) => state.overrides);
   const providersByAsset = useStore((state) => state.providersByAsset);
   const packOrder = useStore((state) => state.packOrder);
+  const disabledPackIds = useStore((state) => state.disabledPackIds);
 
   return useMemo(() => {
     if (!assetId) return [];
 
+    const disabledSet = new Set(disabledPackIds);
     // Get sorted providers for this asset
-    const providers = providersByAsset[assetId] ?? [];
+    const providers = (providersByAsset[assetId] ?? []).filter(
+      (id) => !disabledSet.has(id),
+    );
     const sortedProviders = [...providers].sort(
       (a, b) => packOrder.indexOf(a) - packOrder.indexOf(b),
     );
 
     // Get winner and pencil status
     const override = overrides[assetId];
-    const winner = override?.packId || sortedProviders[0];
+    const penciledPackId =
+      override && !disabledSet.has(override.packId)
+        ? override.packId
+        : undefined;
+    const winner = penciledPackId || sortedProviders[0];
     const isPenciled = override !== undefined;
 
     return sortedProviders.map((packId) => ({
@@ -293,7 +333,14 @@ export const useSelectProvidersWithWinner = (assetId?: AssetId) => {
       isWinner: packId === winner,
       isPenciled,
     }));
-  }, [assetId, packs, overrides, providersByAsset, packOrder]);
+  }, [
+    assetId,
+    packs,
+    overrides,
+    providersByAsset,
+    packOrder,
+    disabledPackIds,
+  ]);
 };
 
 /**

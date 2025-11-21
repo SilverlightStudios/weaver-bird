@@ -58,6 +58,7 @@ export default function BiomeColorPicker({
   const providersByAsset = useStore((state) => state.providersByAsset);
   const packs = useStore((state) => state.packs);
   const packOrder = useStore((state) => state.packOrder);
+  const disabledPackIds = useStore((state) => state.disabledPackIds);
 
   const setOverride = useSelectSetOverride();
   const winnerPackId = useSelectWinner(assetId);
@@ -71,6 +72,7 @@ export default function BiomeColorPicker({
     const seen = new Set<string>();
     const orderLookup = new Map<string, number>();
     packOrder.forEach((id, index) => orderLookup.set(id, index));
+    const disabledSet = new Set(disabledPackIds);
 
     Object.values(assets)
       .filter((asset) => {
@@ -79,7 +81,9 @@ export default function BiomeColorPicker({
       })
       .forEach((asset) => {
         const variantLabel = getColormapVariantLabel(asset.id);
-        const providers = providersByAsset[asset.id] ?? [];
+        const providers = (providersByAsset[asset.id] ?? []).filter(
+          (packId) => !disabledSet.has(packId),
+        );
 
         providers.forEach((packId) => {
           const packName = packs[packId]?.name ?? packId;
@@ -126,7 +130,15 @@ export default function BiomeColorPicker({
       }
       return a.label.localeCompare(b.label);
     });
-  }, [assets, providersByAsset, packs, packOrder, assetId, resolvedType]);
+  }, [
+    assets,
+    providersByAsset,
+    packs,
+    packOrder,
+    assetId,
+    resolvedType,
+    disabledPackIds,
+  ]);
 
   const selectedSource = useMemo(() => {
     if (!sourceOptions.length) return null;

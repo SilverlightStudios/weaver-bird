@@ -23,15 +23,19 @@ export function resolveColormapWinner(
   packOrder: string[],
   providersByAsset: Record<string, string[]>,
   overrides: Record<string, { packId: string } | undefined>,
+  disabledPackIds: string[],
 ): string | null {
+  const disabledSet = new Set(disabledPackIds);
   // Check if user has penciled a specific pack
   const override = overrides[assetId];
-  if (override?.packId) {
+  if (override?.packId && !disabledSet.has(override.packId)) {
     return override.packId;
   }
 
   // Get providers for this colormap
-  const providers = providersByAsset[assetId] || [];
+  const providers = (providersByAsset[assetId] || []).filter(
+    (id) => !disabledSet.has(id),
+  );
   if (providers.length === 0) {
     console.warn(`[ColormapManager] No providers found for ${assetId}`);
     return null;
@@ -42,7 +46,7 @@ export function resolveColormapWinner(
     (a, b) => packOrder.indexOf(a) - packOrder.indexOf(b),
   );
 
-  return sorted[0];
+  return sorted[0] ?? null;
 }
 
 /**

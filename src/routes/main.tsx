@@ -56,9 +56,12 @@ import {
   useSelectUIState,
   useSelectProvidersWithWinner,
   useSelectPackOrder,
+  useSelectDisabledPacks,
+  useSelectDisabledPackIds,
   useSelectSetSearchQuery,
   useSelectSetSelectedAsset,
   useSelectSetPackOrder,
+  useSelectSetDisabledPackOrder,
   useSelectSetOverride,
   useSelectSetOutputDir,
   useSelectSetPackFormat,
@@ -71,6 +74,8 @@ import {
   useSelectSetSelectedLauncher,
   useSelectSetAvailableLaunchers,
   useSelectSetCurrentPage,
+  useSelectDisablePack,
+  useSelectEnablePack,
 } from "@state";
 
 // Get the setPacksDir action from store
@@ -193,6 +198,8 @@ export default function MainRoute() {
 
   // State selectors
   const packs = useSelectPacksInOrder();
+  const disabledPacks = useSelectDisabledPacks();
+  const disabledPackIds = useSelectDisabledPackIds();
   const paginatedData = useSelectPaginatedAssets();
   const allAssets = useSelectAllAssets();
   const uiState = useSelectUIState();
@@ -217,6 +224,9 @@ export default function MainRoute() {
   const selectedLauncher = useSelectSelectedLauncher();
   const availableLaunchers = useSelectAvailableLaunchers();
   const providersByAsset = useStore((state) => state.providersByAsset);
+  const disablePack = useSelectDisablePack();
+  const enablePack = useSelectEnablePack();
+  const setDisabledPackOrder = useSelectSetDisabledPackOrder();
 
   // Individual action selectors (stable references prevent infinite loops)
   const setSearchQuery = useSelectSetSearchQuery();
@@ -272,6 +282,7 @@ export default function MainRoute() {
           packOrder,
           providersByAsset,
           overridesRecord,
+          disabledPackIds,
         );
 
         const foliageWinner = resolveColormapWinner(
@@ -279,6 +290,7 @@ export default function MainRoute() {
           packOrder,
           providersByAsset,
           overridesRecord,
+          disabledPackIds,
         );
 
         // Step 2: Load colormap URLs
@@ -341,6 +353,7 @@ export default function MainRoute() {
     packs,
     providersByAsset,
     overridesRecord,
+    disabledPackIds,
     // Note: colormapCoordinates is NOT in dependencies - we read it directly
     // This prevents infinite loops when we update coordinates
   ]);
@@ -400,6 +413,18 @@ export default function MainRoute() {
     [packs],
   );
 
+  const disabledPackListItems = useMemo(
+    () =>
+      disabledPacks.map((p: PackMeta) => ({
+        id: p.id,
+        name: p.name,
+        size: p.size,
+        description: p.description,
+        icon_data: p.icon_data,
+      })),
+    [disabledPacks],
+  );
+
   const assetListItems = useMemo(
     () =>
       paginatedData.assets.map((a: AssetRecord) => ({
@@ -427,6 +452,27 @@ export default function MainRoute() {
       setPackOrder(newOrder);
     },
     [setPackOrder],
+  );
+
+  const handleReorderDisabledPacks = useCallback(
+    (newOrder: string[]) => {
+      setDisabledPackOrder(newOrder);
+    },
+    [setDisabledPackOrder],
+  );
+
+  const handleDisablePack = useCallback(
+    (packId: string, targetIndex?: number) => {
+      disablePack(packId, targetIndex);
+    },
+    [disablePack],
+  );
+
+  const handleEnablePack = useCallback(
+    (packId: string, targetIndex?: number) => {
+      enablePack(packId, targetIndex);
+    },
+    [enablePack],
   );
 
   const handleSelectProvider = useCallback(
@@ -663,7 +709,11 @@ export default function MainRoute() {
               {!isLeftSidebarCollapsed && (
                 <PackList
                   packs={packListItems}
+                  disabledPacks={disabledPackListItems}
                   onReorder={handleReorderPacks}
+                  onReorderDisabled={handleReorderDisabledPacks}
+                  onDisable={handleDisablePack}
+                  onEnable={handleEnablePack}
                   onBrowse={handleBrowsePacksFolder}
                   packsDir={packsDir}
                   selectedLauncher={selectedLauncher}

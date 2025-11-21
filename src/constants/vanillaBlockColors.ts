@@ -8,7 +8,7 @@
  *
  * Generation info:
  * - Source: https://minecraft.wiki/w/Block_colors
- * - Generated: 2025-11-20T19:45:22.032Z
+ * - Generated: 2025-11-21T03:26:41.871Z
  * - Script: scripts/scrapeBlockColors.ts
  *
  * To regenerate:
@@ -144,7 +144,7 @@ export function hasFixedColor(blockId: string): boolean {
  */
 export const BLOCK_COLORS_METADATA = {
   source: "https://minecraft.wiki/w/Block_colors",
-  generatedAt: "2025-11-20T19:45:22.032Z",
+  generatedAt: "2025-11-21T03:26:41.871Z",
   totalBlocks: 27,
   grassBlocks: 14,
   foliageBlocks: 6,

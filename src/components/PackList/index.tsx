@@ -1,20 +1,18 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import {
-  DndContext,
-  closestCenter,
+  DragDropProvider,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  type PointerSensorOptions,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+  useDroppable,
+  type DragDropEvents,
+} from "@dnd-kit/react";
+import { move } from "@dnd-kit/helpers";
+import { CollisionPriority } from "@dnd-kit/abstract";
 import { useSort } from "./useSort";
 import { minecraftTextToHTML } from "@/utils/minecraftColors";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -40,7 +38,11 @@ interface PackItem {
 
 interface Props {
   packs: PackItem[];
+  disabledPacks?: PackItem[];
   onReorder?: (order: string[]) => void;
+  onReorderDisabled?: (order: string[]) => void;
+  onDisable?: (packId: string, targetIndex?: number) => void;
+  onEnable?: (packId: string, targetIndex?: number) => void;
   onBrowse?: () => void;
   packsDir?: string;
   selectedLauncher?: LauncherInfo;
@@ -50,22 +52,62 @@ interface Props {
 
 interface SortablePackItemProps {
   item: PackItem;
+  containerId: "enabled" | "disabled";
+  index: number;
+  isDraggable?: boolean;
+  actionLabel: string;
+  actionIcon: string;
+  onActionClick?: () => void;
 }
 
-function SortablePackItem({ item }: SortablePackItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSort(item.id);
+const ENABLED_CONTAINER_ID: PackContainer = "enabled";
+const DISABLED_CONTAINER_ID: PackContainer = "disabled";
+type PackContainer = "enabled" | "disabled";
+type PreviewState = Record<PackContainer, string[]>;
 
-  const style = {
-    transform,
-    transition: transition ?? undefined,
-  } as const;
+type DragStartEventType = Parameters<DragDropEvents["dragstart"]>[0];
+type DragOverEventType = Parameters<DragDropEvents["dragover"]>[0];
+type DragEndEventType = Parameters<DragDropEvents["dragend"]>[0];
+type MoveEvent = DragOverEventType | DragEndEventType;
+
+type DroppableRenderProps = {
+  setNodeRef: (element: HTMLElement | null) => void;
+  isDropTarget: boolean;
+};
+
+interface DroppableAreaProps {
+  id: string;
+  children: (props: DroppableRenderProps) => React.ReactNode;
+}
+
+function DroppableArea({ id, children }: DroppableAreaProps) {
+  const { isDropTarget, ref } = useDroppable({
+    id,
+    type: "column",
+    accept: ["pack"],
+    collisionPriority: CollisionPriority.Low,
+  });
+  return <>{children({ isDropTarget, setNodeRef: ref })}</>;
+}
+
+const arraysEqual = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((value, index) => value === b[index]);
+
+function SortablePackItem({
+  item,
+  containerId,
+  index,
+  isDraggable = true,
+  actionIcon,
+  actionLabel,
+  onActionClick,
+}: SortablePackItemProps) {
+  const { setNodeRef, isDragging, isDropTarget } = useSort(
+    item.id,
+    containerId,
+    index,
+    !isDraggable,
+  );
 
   const descriptionHTML = useMemo(() => {
     if (!item.description) return "";
@@ -82,25 +124,61 @@ function SortablePackItem({ item }: SortablePackItemProps) {
     return `data:image/png;base64,${item.icon_data}`;
   }, [item.icon_data]);
 
+  const handleActionPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+    },
+    [],
+  );
+
+  const handleActionClick = useCallback(
+    (event: ReactMouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      onActionClick?.();
+    },
+    [onActionClick],
+  );
+
+  const wrapperClassName = s.itemWrapper;
+
+  const actionButtonClassName = [
+    s.actionButton,
+    containerId === "disabled" ? s.enableButton : s.disableButton,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <li
       ref={setNodeRef}
-      style={style}
-      className={s.itemWrapper}
-      {...attributes}
-      {...listeners}
+      className={wrapperClassName}
+      data-dragging={isDragging || undefined}
+      data-droptarget={isDropTarget || undefined}
     >
-      <ResourcePackCard
-        name={item.name}
-        iconSrc={iconSrc}
-        metadata={metadata}
-        description={
-          item.description ? (
-            <span dangerouslySetInnerHTML={{ __html: descriptionHTML }} />
-          ) : undefined
-        }
-        isDragging={isDragging}
-      />
+      <div className={s.cardWrapper}>
+        <ResourcePackCard
+          name={item.name}
+          iconSrc={iconSrc}
+          metadata={metadata}
+          description={
+            item.description ? (
+              <span dangerouslySetInnerHTML={{ __html: descriptionHTML }} />
+            ) : undefined
+          }
+          isDragging={isDragging}
+        />
+        {onActionClick && (
+          <button
+            type="button"
+            className={actionButtonClassName}
+            onClick={handleActionClick}
+            onPointerDown={handleActionPointerDown}
+            aria-label={actionLabel}
+          >
+            {actionIcon}
+          </button>
+        )}
+      </div>
     </li>
   );
 }
@@ -121,43 +199,145 @@ function formatPackSize(size?: number) {
 
 export default function PackList({
   packs,
+  disabledPacks = [],
   onReorder,
+  onReorderDisabled,
+  onDisable,
+  onEnable,
   onBrowse,
   packsDir,
   selectedLauncher,
   availableLaunchers = [],
   onLauncherChange,
 }: Props) {
-  const pointerSensorOptions: PointerSensorOptions = {
-    activationConstraint: {
-      distance: 8,
-    },
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, pointerSensorOptions),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+  const sensors = useMemo(
+    () => [
+      PointerSensor.configure({
+        activationConstraints: {
+          distance: { value: 8 },
+        },
+      }),
+      KeyboardSensor,
+    ],
+    [],
   );
 
-  const itemIds = useMemo(() => packs.map((p) => p.id), [packs]);
+  const enabledIds = useMemo(() => packs.map((p) => p.id), [packs]);
+  const disabledIds = useMemo(
+    () => disabledPacks.map((p) => p.id),
+    [disabledPacks],
+  );
+  const packLookup = useMemo(() => {
+    const lookup = new Map<string, PackItem>();
+    [...packs, ...disabledPacks].forEach((pack) => lookup.set(pack.id, pack));
+    return lookup;
+  }, [packs, disabledPacks]);
+
+  const actualStructure = useMemo<PreviewState>(
+    () => ({
+      enabled: enabledIds,
+      disabled: disabledIds,
+    }),
+    [enabledIds, disabledIds],
+  );
+
+  const previewRef = useRef<PreviewState>(actualStructure);
+  const [previewItems, setPreviewItemsState] =
+    useState<PreviewState>(actualStructure);
+  const [activeItem, setActiveItem] = useState<PackItem | null>(null);
+
+  useEffect(() => {
+    if (!activeItem) {
+      previewRef.current = actualStructure;
+      setPreviewItemsState(actualStructure);
+    }
+  }, [actualStructure, activeItem]);
+
+  const applyPreviewMove = useCallback(
+    (event: MoveEvent) => {
+      const next = move(previewRef.current, event);
+      previewRef.current = next;
+      setPreviewItemsState(next);
+      return next;
+    },
+    [],
+  );
+
+  const handleDragStart = useCallback(
+    (event: DragStartEventType) => {
+      const sourceId = event.operation.source?.id;
+      if (!sourceId) return;
+      const pack = packLookup.get(String(sourceId));
+      if (pack) {
+        setActiveItem(pack);
+      }
+    },
+    [packLookup],
+  );
+
+  const handleDragOver = useCallback(
+    (event: DragOverEventType) => {
+      applyPreviewMove(event);
+    },
+    [applyPreviewMove],
+  );
 
   const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
+    (event: DragEndEventType) => {
+      const updated = applyPreviewMove(event);
+      const sourceId = event.operation.source?.id;
+      if (!sourceId) {
+        setActiveItem(null);
+        previewRef.current = actualStructure;
+        setPreviewItemsState(actualStructure);
+        return;
+      }
 
-      if (!over || active.id === over.id) return;
+      const packId = String(sourceId);
 
-      const oldIndex = itemIds.indexOf(active.id as string);
-      const newIndex = itemIds.indexOf(over.id as string);
+      if (event.canceled) {
+        setActiveItem(null);
+        previewRef.current = actualStructure;
+        setPreviewItemsState(actualStructure);
+        return;
+      }
 
-      const newOrder = arrayMove(itemIds, oldIndex, newIndex);
-      onReorder?.(newOrder);
+      const wasEnabled = enabledIds.includes(packId);
+      const nowEnabled = updated.enabled.includes(packId);
+      const targetIndex = nowEnabled
+        ? updated.enabled.indexOf(packId)
+        : updated.disabled.indexOf(packId);
+
+      if (wasEnabled && nowEnabled) {
+        if (!arraysEqual(enabledIds, updated.enabled)) {
+          onReorder?.(updated.enabled);
+        }
+      } else if (!wasEnabled && !nowEnabled) {
+        if (!arraysEqual(disabledIds, updated.disabled)) {
+          onReorderDisabled?.(updated.disabled);
+        }
+      } else if (wasEnabled && !nowEnabled) {
+        onDisable?.(packId, targetIndex === -1 ? undefined : targetIndex);
+      } else if (!wasEnabled && nowEnabled) {
+        onEnable?.(packId, targetIndex === -1 ? undefined : targetIndex);
+      }
+
+      setActiveItem(null);
     },
-    [itemIds, onReorder],
+    [
+      actualStructure,
+      applyPreviewMove,
+      disabledIds,
+      enabledIds,
+      onDisable,
+      onEnable,
+      onReorder,
+      onReorderDisabled,
+    ],
   );
 
+  const renderEnabledIds = previewItems.enabled;
+  const renderDisabledIds = previewItems.disabled;
   const handleLauncherSelect = useCallback(
     (value: string) => {
       const launcher = availableLaunchers.find(
@@ -181,9 +361,10 @@ export default function PackList({
   );
 
   return (
-    <DndContext
+    <DragDropProvider
       sensors={sensors}
-      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className={s.root}>
@@ -242,21 +423,124 @@ export default function PackList({
           )}
         </div>
         {packsDir && <div className={s.packsDir}>{packsDir}</div>}
-        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          <ul className={s.list}>
-            {packs.length === 0 ? (
-              <li className={s.emptyState}>
-                No resource packs found. Click "Browse" to select your resource
-                packs directory.
-              </li>
-            ) : (
-              packs.map((pack) => (
-                <SortablePackItem key={pack.id} item={pack} />
-              ))
+        <div className={s.section}>
+          <div className={s.sectionHeader}>
+            <h3 className={s.sectionTitle}>Enabled Packs</h3>
+            <p className={s.sectionHint}>Higher packs override lower ones.</p>
+          </div>
+          <DroppableArea id={ENABLED_CONTAINER_ID}>
+            {({ setNodeRef, isDropTarget }) => (
+              <ul
+                ref={setNodeRef}
+                className={s.list}
+                data-dropping={isDropTarget || undefined}
+              >
+                {packs.length === 0 ? (
+                  <li className={s.emptyState}>
+                    No resource packs found. Click "Browse" to select your
+                    resource packs directory.
+                  </li>
+                ) : (
+                    renderEnabledIds.map((packId, index) => {
+                      const pack = packLookup.get(packId);
+                      if (!pack) return null;
+                      const isVanilla = pack.id === "minecraft:vanilla";
+                      return (
+                        <SortablePackItem
+                          key={pack.id}
+                          item={pack}
+                          containerId="enabled"
+                          index={index}
+                          isDraggable={!isVanilla}
+                          actionLabel={`Disable ${pack.name}`}
+                          actionIcon="X"
+                          onActionClick={
+                            !isVanilla && onDisable
+                              ? () => onDisable(pack.id)
+                              : undefined
+                          }
+                        />
+                      );
+                    })
+                )}
+              </ul>
             )}
-          </ul>
-        </SortableContext>
+          </DroppableArea>
+        </div>
+
+        <div className={s.section}>
+          <div className={s.sectionHeader}>
+            <h3 className={s.sectionTitle}>Disabled Packs</h3>
+            <p className={s.sectionHint}>
+              Drag packs here or press X to keep them out of calculations.
+            </p>
+          </div>
+          <DroppableArea id={DISABLED_CONTAINER_ID}>
+            {({ setNodeRef, isDropTarget }) => (
+              <ul
+                ref={setNodeRef}
+                className={`${s.list} ${s.disabledList}`}
+                data-dropping={isDropTarget || undefined}
+              >
+                {disabledPacks.length === 0 ? (
+                  <li className={s.disabledEmpty}>
+                    Disabled packs will appear here.
+                  </li>
+                ) : (
+                    renderDisabledIds.map((packId, index) => {
+                      const pack = packLookup.get(packId);
+                      if (!pack) return null;
+                      return (
+                        <SortablePackItem
+                          key={pack.id}
+                          item={pack}
+                          containerId="disabled"
+                          index={index}
+                          isDraggable={true}
+                          actionLabel={`Enable ${pack.name}`}
+                          actionIcon="+"
+                          onActionClick={
+                            onEnable ? () => onEnable(pack.id) : undefined
+                          }
+                      />
+                    );
+                  })
+                )}
+              </ul>
+            )}
+          </DroppableArea>
+        </div>
+
+        <DragOverlay>
+          {activeItem ? (
+            <div className={s.cardWrapper}>
+              <ResourcePackCard
+                name={activeItem.name}
+                iconSrc={
+                  activeItem.icon_data
+                    ? `data:image/png;base64,${activeItem.icon_data}`
+                    : undefined
+                }
+                metadata={
+                  activeItem.size
+                    ? [{ label: "Size", value: formatPackSize(activeItem.size) }]
+                    : []
+                }
+                description={
+                  activeItem.description ? (
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: minecraftTextToHTML(activeItem.description),
+                      }}
+                    />
+                  ) : undefined
+                }
+                isDragging
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
       </div>
-    </DndContext>
+    </DragDropProvider>
   );
 }

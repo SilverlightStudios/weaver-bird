@@ -11,6 +11,9 @@ interface StoreActions {
   // Pack management
   setPackOrder: (order: PackId[]) => void;
   ingestPacks: (packs: PackMeta[]) => void;
+  disablePack: (packId: PackId, targetIndex?: number) => void;
+  enablePack: (packId: PackId, targetIndex?: number) => void;
+  setDisabledPackOrder: (order: PackId[]) => void;
 
   // Asset management
   ingestAssets: (assets: AssetRecord[]) => void;
@@ -66,6 +69,7 @@ const initialState: AppState = {
   // Entities
   packs: {},
   packOrder: [],
+  disabledPackIds: [],
   assets: {},
   providersByAsset: {},
   overrides: {},
@@ -98,7 +102,15 @@ export const useStore = create<WeaverbirdStore>()(
     // Pack management
     setPackOrder: (order: PackId[]) => {
       set((state) => {
-        state.packOrder = order;
+        const disabledSet = new Set(state.disabledPackIds);
+        const seen = new Set<string>();
+        state.packOrder = order.filter((id) => {
+          if (disabledSet.has(id) || seen.has(id)) {
+            return false;
+          }
+          seen.add(id);
+          return true;
+        });
       });
     },
 
@@ -107,6 +119,65 @@ export const useStore = create<WeaverbirdStore>()(
         for (const pack of packs) {
           state.packs[pack.id] = pack;
         }
+      });
+    },
+
+    disablePack: (packId: PackId, targetIndex?: number) => {
+      set((state) => {
+        const currentIndex = state.packOrder.indexOf(packId);
+        if (currentIndex === -1) {
+          return;
+        }
+
+        state.packOrder.splice(currentIndex, 1);
+
+        const existingDisabledIndex = state.disabledPackIds.indexOf(packId);
+        if (existingDisabledIndex !== -1) {
+          state.disabledPackIds.splice(existingDisabledIndex, 1);
+        }
+
+        const maxIndex = state.disabledPackIds.length;
+        const insertAt =
+          targetIndex === undefined
+            ? maxIndex
+            : Math.min(Math.max(targetIndex, 0), maxIndex);
+
+        state.disabledPackIds.splice(insertAt, 0, packId);
+      });
+    },
+
+    enablePack: (packId: PackId, targetIndex?: number) => {
+      set((state) => {
+        const disabledIndex = state.disabledPackIds.indexOf(packId);
+        if (disabledIndex === -1) {
+          return;
+        }
+
+        state.disabledPackIds.splice(disabledIndex, 1);
+
+        const maxIndex = state.packOrder.length;
+        const insertAt =
+          targetIndex === undefined
+            ? maxIndex
+            : Math.min(Math.max(targetIndex, 0), maxIndex);
+
+        state.packOrder.splice(insertAt, 0, packId);
+      });
+    },
+
+    setDisabledPackOrder: (order: PackId[]) => {
+      set((state) => {
+        const disabledSet = new Set(state.disabledPackIds);
+        const seen = new Set<string>();
+        const filtered = order.filter((id) => {
+          if (!disabledSet.has(id) || seen.has(id)) {
+            return false;
+          }
+          seen.add(id);
+          return true;
+        });
+        const remainder = state.disabledPackIds.filter((id) => !seen.has(id));
+        state.disabledPackIds = [...filtered, ...remainder];
       });
     },
 

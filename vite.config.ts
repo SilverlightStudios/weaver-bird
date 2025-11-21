@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+const testEnvironment = process.env.VITEST_ENV || "node";
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -34,7 +36,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: "jsdom",
+    environment: testEnvironment,
     setupFiles: "./src/test/setup.ts",
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
