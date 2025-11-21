@@ -41,6 +41,7 @@ const colormapCache = new Map<string, ImageData>();
 
 /**
  * Load a colormap image and extract its pixel data
+ * Uses fetch + createImageBitmap which work in Web Workers
  */
 async function loadColormapImageData(url: string): Promise<ImageData> {
   // Check cache first
@@ -49,44 +50,36 @@ async function loadColormapImageData(url: string): Promise<ImageData> {
     return cached;
   }
 
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
+  try {
+    // Fetch the image as a blob
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch colormap: ${response.statusText}`);
+    }
 
-    img.onload = () => {
-      try {
-        // Workers have access to OffscreenCanvas (modern browsers)
-        // Fallback to regular Canvas for older browsers
-        const canvas = typeof OffscreenCanvas !== 'undefined'
-          ? new OffscreenCanvas(img.width, img.height)
-          : document.createElement('canvas');
+    const blob = await response.blob();
 
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
+    // Decode the image using createImageBitmap (works in workers)
+    const imageBitmap = await createImageBitmap(blob);
 
-        if (!ctx) {
-          reject(new Error('Failed to get canvas context'));
-          return;
-        }
+    // Use OffscreenCanvas to extract pixel data
+    const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+    const ctx = canvas.getContext('2d');
 
-        ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    if (!ctx) {
+      throw new Error('Failed to get canvas context');
+    }
 
-        // Cache the result
-        colormapCache.set(url, imageData);
-        resolve(imageData);
-      } catch (error) {
-        reject(error);
-      }
-    };
+    ctx.drawImage(imageBitmap, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-    img.onerror = () => {
-      reject(new Error(`Failed to load colormap: ${url}`));
-    };
+    // Cache the result
+    colormapCache.set(url, imageData);
 
-    img.src = url;
-  });
+    return imageData;
+  } catch (error) {
+    throw new Error(`Failed to load colormap from ${url}: ${error}`);
+  }
 }
 
 /**
