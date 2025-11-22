@@ -22,6 +22,8 @@ import VariantChooser from "@components/VariantChooser";
 import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
 import TextureVariantSelector from "@components/TextureVariantSelector";
 import PaintingSelector from "@components/PaintingSelector";
+import DecoratedPotConfigurator from "@components/DecoratedPotConfigurator";
+import DecoratedPotBlockView from "@components/DecoratedPotBlockView";
 import { groupAssetsByVariant } from "@lib/assetUtils";
 import {
   Combobox,
@@ -170,6 +172,14 @@ export default function OptionsPanel({
     const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
     return path.startsWith("painting/");
   })() : false;
+  const isPotteryShard = assetId ? (() => {
+    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+    return path.startsWith("item/pottery_shard_");
+  })() : false;
+  const isDecoratedPot = assetId ? (() => {
+    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+    return path === "block/decorated_pot";
+  })() : false;
   const selectedWinnerPackId = useSelectWinner(assetId ?? "");
   const winnerPackId = assetId ? selectedWinnerPackId : null;
   const packsDir = useSelectPacksDir();
@@ -247,11 +257,19 @@ export default function OptionsPanel({
   const shouldShowBlockStateTab =
     !isColormapSelection && !isItem && (schema?.properties.length ?? 0) > 0;
   // Item tab shows item display controls (rotation, display mode)
-  const shouldShowItemTab = isItem;
+  const shouldShowItemTab = isItem && !isPotteryShard; // Exclude pottery shards from item tab
   // Painting tab shows all available paintings to select from
   const shouldShowPaintingTab = isPainting && allAssets.length > 0;
+  // Pottery shard tab shows 3D decorated pot preview with this shard
+  const shouldShowPotteryShardTab = isPotteryShard;
+  // Decorated pot tab shows configurator for each side
+  const shouldShowDecoratedPotTab = isDecoratedPot && allAssets.length > 0;
 
-  const defaultTab = shouldShowPaintingTab
+  const defaultTab = shouldShowPotteryShardTab
+    ? "pottery-shard"
+    : shouldShowDecoratedPotTab
+    ? "decorated-pot"
+    : shouldShowPaintingTab
     ? "painting"
     : shouldShowItemTab
     ? "item"
@@ -297,6 +315,12 @@ export default function OptionsPanel({
     <div className={s.root}>
       <Tabs defaultValue={defaultTab}>
         <TabsList>
+          {shouldShowPotteryShardTab && (
+            <TabIcon icon="🏺" label="Pottery Shard" value="pottery-shard" />
+          )}
+          {shouldShowDecoratedPotTab && (
+            <TabIcon icon="🏺" label="Decorated Pot" value="decorated-pot" />
+          )}
           {shouldShowPaintingTab && onSelectVariant && (
             <TabIcon icon="🖼" label="Painting" value="painting" />
           )}
@@ -320,6 +344,23 @@ export default function OptionsPanel({
           )}
           <TabIcon icon="⚡" label="Advanced" value="advanced" />
         </TabsList>
+
+        {shouldShowPotteryShardTab && (
+          <TabsContent value="pottery-shard">
+            <DecoratedPotBlockView singleShard={assetId} />
+          </TabsContent>
+        )}
+
+        {shouldShowDecoratedPotTab && (
+          <TabsContent value="decorated-pot">
+            <div style={{ padding: "1rem" }}>
+              <DecoratedPotConfigurator
+                assetId={assetId}
+                allAssets={allAssets}
+              />
+            </div>
+          </TabsContent>
+        )}
 
         {shouldShowPaintingTab && onSelectVariant && (
           <TabsContent value="painting">

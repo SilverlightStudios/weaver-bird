@@ -1,0 +1,78 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary, #fafafa);
+}
+
+.header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-primary, #fff);
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary, #333);
+}
+
+.description {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+}
+
+.canvas {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  background: var(--bg-canvas, #f0f0f0);
+}
+
+.info {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-primary, #fff);
+}
+
+.infoText {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+  line-height: 1.5;
+}
+
+.sidesList {
+  margin-top: 0.75rem;
+}
+
+.sidesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.sideInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 4px;
+}
+
+.sideName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-tertiary, #999);
+  letter-spacing: 0.05em;
+}
+
+.shardName {
+  font-size: 0.875rem;
+  color: var(--text-primary, #333);
+}

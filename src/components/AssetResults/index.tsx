@@ -229,7 +229,7 @@ const AssetCard = memo(
       winnerPack,
     ]);
 
-    // Generate display name with special handling for paintings
+    // Generate display name with special handling for paintings and pottery shards
     const displayName = useMemo(() => {
       const baseName = asset.name || beautifyAssetName(asset.id);
 
@@ -242,6 +242,16 @@ const AssetCard = memo(
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(" ");
         return `Painting - ${formattedPaintingName}`;
+      }
+
+      // Special handling for pottery shards: show "Pottery Shard - Type" instead of just "Pottery Shard"
+      if (path.startsWith("item/pottery_shard_")) {
+        const shardType = path.replace("item/pottery_shard_", "");
+        const formattedShardType = shardType
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        return `Pottery Shard - ${formattedShardType}`;
       }
 
       return baseName;
