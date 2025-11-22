@@ -248,7 +248,18 @@ export default function Preview3DItem({
           alpha: true,
         }}
       >
-        <PerspectiveCamera makeDefault position={[2, 1.5, 2]} fov={50} />
+        <PerspectiveCamera
+          makeDefault
+          position={[2, 1.5, 2]}
+          fov={50}
+          near={0.01}
+          far={100}
+          onUpdate={(camera) => {
+            if (camera) {
+              console.log('[Camera] near:', camera.near, 'far:', camera.far, 'position:', camera.position.toArray());
+            }
+          }}
+        />
 
         <OrbitControls
           enablePan={true}
