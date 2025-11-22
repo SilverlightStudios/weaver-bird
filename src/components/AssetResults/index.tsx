@@ -229,7 +229,23 @@ const AssetCard = memo(
       winnerPack,
     ]);
 
-    const displayName = asset.name || beautifyAssetName(asset.id);
+    // Generate display name with special handling for paintings
+    const displayName = useMemo(() => {
+      const baseName = asset.name || beautifyAssetName(asset.id);
+
+      // Special handling for paintings: show "Painting - Name" instead of just "Painting"
+      const path = asset.id.includes(":") ? asset.id.split(":")[1] : asset.id;
+      if (path.startsWith("painting/")) {
+        const paintingName = path.replace("painting/", "");
+        const formattedPaintingName = paintingName
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        return `Painting - ${formattedPaintingName}`;
+      }
+
+      return baseName;
+    }, [asset.name, asset.id]);
 
     return (
       <div

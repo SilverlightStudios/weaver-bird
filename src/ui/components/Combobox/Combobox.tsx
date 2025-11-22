@@ -91,12 +91,9 @@ export function Combobox({
     const updatePosition = () => {
       const triggerRect = trigger.getBoundingClientRect();
 
-      // For position: absolute, we need viewport coordinates + scroll offset
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      const scrollX = window.scrollX || document.documentElement.scrollLeft;
-
-      content.style.top = `${triggerRect.bottom + scrollY + 8}px`;
-      content.style.left = `${triggerRect.left + scrollX}px`;
+      // For position: fixed, we use viewport coordinates directly (no scroll offset needed)
+      content.style.top = `${triggerRect.bottom + 8}px`;
+      content.style.left = `${triggerRect.left}px`;
       content.style.width = `${triggerRect.width}px`;
     };
 

@@ -59,10 +59,10 @@
     @include tokens.shadow-xl;
     @include tokens.rotate-slight;
 
-    position: absolute;
+    position: fixed;
     min-width: 12rem;
     max-width: 20rem;
-    z-index: 50;
+    z-index: 9999;
 
     @include tokens.gradient-surface;
 

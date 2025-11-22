@@ -21,10 +21,20 @@ export default function PaintingSelector({
         const path = asset.id.includes(":") ? asset.id.split(":")[1] : asset.id;
         return path.startsWith("painting/");
       })
-      .map((asset) => ({
-        value: asset.id,
-        label: beautifyAssetName(asset.id),
-      }))
+      .map((asset) => {
+        // Extract just the painting name without the "painting/" prefix
+        const path = asset.id.includes(":") ? asset.id.split(":")[1] : asset.id;
+        const paintingName = path.replace("painting/", "");
+        // Capitalize and format the name (e.g., "alban" -> "Alban", "aztec_2" -> "Aztec 2")
+        const formattedName = paintingName
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        return {
+          value: asset.id,
+          label: formattedName,
+        };
+      })
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [allAssets]);
 
