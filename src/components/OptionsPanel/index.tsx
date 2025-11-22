@@ -33,7 +33,10 @@ import {
   getBlockStateIdFromAssetId,
   isBiomeColormapAsset,
   isPottedPlant,
+  isMinecraftItem,
 } from "@lib/assetUtils";
+import type { ItemDisplayMode } from "@lib/itemDisplayModes";
+import { getDisplayModeName, supportsRotation } from "@lib/itemDisplayModes";
 import {
   getBlockStateSchema,
   type BlockStateSchema,
@@ -87,6 +90,11 @@ interface Props {
   // Props for texture variant selector
   allAssets?: Array<{ id: string; name: string }>;
   onSelectVariant?: (variantId: string) => void;
+  // Props for item display
+  itemDisplayMode?: ItemDisplayMode;
+  onItemDisplayModeChange?: (mode: ItemDisplayMode) => void;
+  itemRotate?: boolean;
+  onItemRotateChange?: (rotate: boolean) => void;
 }
 
 const FOLIAGE_PREVIEW_OPTIONS: ComboboxOption[] = [
@@ -113,6 +121,10 @@ export default function OptionsPanel({
   onSeedChange,
   allAssets = [],
   onSelectVariant,
+  itemDisplayMode = "ground",
+  onItemDisplayModeChange,
+  itemRotate = true,
+  onItemRotateChange,
 }: Props) {
   const [blockProps, setBlockProps] = useState<Record<string, string>>({});
   const [seed, setSeed] = useState(0);
@@ -148,6 +160,7 @@ export default function OptionsPanel({
 
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
   const isColormapSelection = assetId ? isBiomeColormapAsset(assetId) : false;
+  const isItem = assetId ? isMinecraftItem(assetId) : false;
   const selectedWinnerPackId = useSelectWinner(assetId ?? "");
   const winnerPackId = assetId ? selectedWinnerPackId : null;
   const packsDir = useSelectPacksDir();
@@ -223,9 +236,15 @@ export default function OptionsPanel({
   const shouldShowPotTab = !isColormapSelection && isPlantPotted;
   // Block State tab shows blockstate properties (facing, half, etc.) and seed
   const shouldShowBlockStateTab =
-    !isColormapSelection && (schema?.properties.length ?? 0) > 0;
+    !isColormapSelection && !isItem && (schema?.properties.length ?? 0) > 0;
+  // Item tab shows item display controls (rotation, display mode)
+  const shouldShowItemTab = isItem;
 
-  const defaultTab = shouldShowBlockStateTab ? "block-state" : "advanced";
+  const defaultTab = shouldShowItemTab
+    ? "item"
+    : shouldShowBlockStateTab
+      ? "block-state"
+      : "advanced";
 
   if (!assetId) {
     return (
@@ -265,6 +284,9 @@ export default function OptionsPanel({
     <div className={s.root}>
       <Tabs defaultValue={defaultTab}>
         <TabsList>
+          {shouldShowItemTab && (
+            <TabIcon icon="🗡️" label="Item Display" value="item" />
+          )}
           {shouldShowBlockStateTab && (
             <TabIcon icon="⚙" label="Block State" value="block-state" />
           )}
@@ -282,6 +304,73 @@ export default function OptionsPanel({
           )}
           <TabIcon icon="⚡" label="Advanced" value="advanced" />
         </TabsList>
+
+        {shouldShowItemTab && (
+          <TabsContent value="item">
+            <div style={{ padding: "1rem" }}>
+              <h3>Item Display</h3>
+              <Separator style={{ margin: "0.75rem 0" }} />
+
+              {/* Rotation toggle */}
+              {supportsRotation(itemDisplayMode) && (
+                <label
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={itemRotate}
+                    onChange={(e) =>
+                      onItemRotateChange?.(e.target.checked)
+                    }
+                    style={{
+                      cursor: "pointer",
+                      width: "18px",
+                      height: "18px",
+                    }}
+                  />
+                  <span
+                    style={{
+                      textTransform: "uppercase",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Rotate Item
+                  </span>
+                </label>
+              )}
+
+              {/* Display mode info */}
+              <p style={{ fontSize: "0.85rem", marginTop: "1rem", color: "#666" }}>
+                <strong>Display Mode:</strong> {getDisplayModeName(itemDisplayMode)}
+              </p>
+              <p style={{ fontSize: "0.85rem", marginTop: "0.5rem", color: "#888" }}>
+                Items are rendered as 3D dropped items with 1px thickness, just like in Minecraft.
+              </p>
+
+              {/* Future: Display mode selector */}
+              {/* <div style={{ marginTop: "1rem" }}>
+                <label>View Mode</label>
+                <select
+                  value={itemDisplayMode}
+                  onChange={(e) =>
+                    onItemDisplayModeChange?.(e.target.value as ItemDisplayMode)
+                  }
+                >
+                  <option value="ground">Dropped (Ground)</option>
+                  <option value="hand_right">Right Hand</option>
+                  <option value="hand_left">Left Hand</option>
+                  <option value="head">Head Slot</option>
+                  <option value="item_frame">Item Frame</option>
+                </select>
+              </div> */}
+            </div>
+          </TabsContent>
+        )}
 
         {shouldShowBlockStateTab && (
           <TabsContent value="block-state">

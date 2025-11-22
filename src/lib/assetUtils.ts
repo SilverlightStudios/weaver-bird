@@ -121,7 +121,9 @@ export function isBiomeColormapAsset(assetId: string): boolean {
 
 /**
  * Check if an asset is a 2D-only texture (GUI, particle, entity, etc.)
- * These textures should be displayed as flat 2D sprites, not as 3D blocks
+ * These textures should be displayed as flat 2D sprites, not as 3D objects
+ *
+ * NOTE: Items are NOT included here - they use Preview3DItem for 3D dropped item rendering
  */
 export function is2DOnlyTexture(assetId: string): boolean {
   // Extract the path after the namespace (e.g., "minecraft:gui/container" -> "gui/container")
@@ -136,7 +138,6 @@ export function is2DOnlyTexture(assetId: string): boolean {
     'font/',          // Font textures
     'misc/',          // Miscellaneous textures
     'entity/',        // Entity textures (mob skins, etc.)
-    'item/',          // Item textures (some may have 3D models, but default to 2D)
     'map/',           // Map decorations
     'models/',        // Model textures
     'environment/',   // Environment textures (moon, sun, clouds)
@@ -144,6 +145,14 @@ export function is2DOnlyTexture(assetId: string): boolean {
   ];
 
   return twoDOnlyPaths.some(prefix => path.startsWith(prefix));
+}
+
+/**
+ * Check if an asset is a Minecraft item texture
+ * Items are rendered as 3D dropped items (not flat 2D sprites)
+ */
+export function isMinecraftItem(assetId: string): boolean {
+  return assetId.includes(':item/');
 }
 
 /**

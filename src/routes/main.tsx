@@ -48,6 +48,7 @@ import BiomeSelector from "@components/BiomeSelector";
 import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import Preview2D from "@components/Preview2D";
+import Preview3DItem from "@components/Preview3DItem";
 import OptionsPanel from "@components/OptionsPanel";
 import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
@@ -89,7 +90,12 @@ import {
   GRASS_COLORMAP_ASSET_ID,
   FOLIAGE_COLORMAP_ASSET_ID,
 } from "@lib/colormapManager";
-import { getColormapTypeFromAssetId, is2DOnlyTexture } from "@lib/assetUtils";
+import {
+  getColormapTypeFromAssetId,
+  is2DOnlyTexture,
+  isMinecraftItem,
+} from "@lib/assetUtils";
+import type { ItemDisplayMode } from "@lib/itemDisplayModes";
 import {
   useStore,
   useSelectPacksInOrder,
@@ -234,6 +240,10 @@ export default function MainRoute() {
   const leftSidebarRef = useRef<ImperativePanelHandle>(null);
   const setPacksDirInStore = useSetPacksDir();
 
+  // Item display state
+  const [itemDisplayMode, setItemDisplayMode] = useState<ItemDisplayMode>("ground");
+  const [itemRotate, setItemRotate] = useState(true);
+
   // React 18 transition for non-blocking colormap updates
   const [_isPending, startTransition] = useTransition();
 
@@ -312,6 +322,9 @@ export default function MainRoute() {
     setTintInfo({ hasTint: false, tintType: undefined });
     setBlockProps({});
     setSeed(0);
+    // Reset item display mode when switching assets
+    setItemDisplayMode("ground");
+    setItemRotate(true);
   }, [uiState.selectedAssetId]);
 
   // Cleanup debounce timer on unmount
@@ -897,6 +910,12 @@ export default function MainRoute() {
             <div className={s.previewSection}>
               {uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId) ? (
                 <Preview2D assetId={uiState.selectedAssetId} />
+              ) : uiState.selectedAssetId && isMinecraftItem(uiState.selectedAssetId) ? (
+                <Preview3DItem
+                  assetId={uiState.selectedAssetId}
+                  displayMode={itemDisplayMode}
+                  rotate={itemRotate}
+                />
               ) : (
                 <Preview3D
                   assetId={uiState.selectedAssetId}
@@ -932,6 +951,10 @@ export default function MainRoute() {
                   name: a.id,
                 }))}
                 onSelectVariant={setSelectedAsset}
+                itemDisplayMode={itemDisplayMode}
+                onItemDisplayModeChange={setItemDisplayMode}
+                itemRotate={itemRotate}
+                onItemRotateChange={setItemRotate}
               />
             </div>
           </ResizablePanel>
