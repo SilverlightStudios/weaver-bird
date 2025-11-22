@@ -146,6 +146,7 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
         alphaTest={0.01}
         side={THREE.DoubleSide}
         flatShading={false}
+        vertexColors
       />
     </mesh>
   );

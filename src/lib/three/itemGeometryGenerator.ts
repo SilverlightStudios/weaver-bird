@@ -73,6 +73,7 @@ export function generateItemGeometry(
   const indices: number[] = [];
   const uvs: number[] = [];
   const normals: number[] = [];
+  const colors: number[] = [];
 
   // Pixel size in normalized coordinates (texture covers -0.5 to 0.5)
   const pixelWidth = 1.0 / width;
@@ -88,7 +89,8 @@ export function generateItemGeometry(
     uv2: [number, number],
     uv3: [number, number],
     uv4: [number, number],
-    normal: [number, number, number]
+    normal: [number, number, number],
+    color: [number, number, number] = [1, 1, 1]
   ) {
     const startIdx = vertices.length / 3;
 
@@ -100,6 +102,9 @@ export function generateItemGeometry(
 
     // Add normals (same for all 4 vertices)
     normals.push(...normal, ...normal, ...normal, ...normal);
+
+    // Add colors (same for all 4 vertices)
+    colors.push(...color, ...color, ...color, ...color);
 
     // Add indices for two triangles
     indices.push(
@@ -147,7 +152,7 @@ export function generateItemGeometry(
   const v1 = minY / height;
   const v2 = maxY / height;
 
-  // Front face (z = halfThickness)
+  // Front face (z = halfThickness) - CYAN for debugging
   addQuad(
     [x1, y1, halfThickness],
     [x2, y1, halfThickness],
@@ -157,10 +162,11 @@ export function generateItemGeometry(
     [u2, 1 - v1],
     [u2, 1 - v2],
     [u1, 1 - v2],
-    [0, 0, 1]
+    [0, 0, 1],
+    [0, 1, 1] // Cyan
   );
 
-  // Back face (z = -halfThickness)
+  // Back face (z = -halfThickness) - MAGENTA for debugging
   addQuad(
     [x2, y1, -halfThickness],
     [x1, y1, -halfThickness],
@@ -170,11 +176,12 @@ export function generateItemGeometry(
     [u1, 1 - v1],
     [u1, 1 - v2],
     [u2, 1 - v2],
-    [0, 0, -1]
+    [0, 0, -1],
+    [1, 0, 1] // Magenta
   );
 
   // Second pass: Create pixel-perfect edge faces
-  // For each opaque pixel, check its neighbors and create edge faces where exposed
+  // DEBUG MODE: Create ALL edge faces for ALL opaque pixels to see which ones render
 
   for (let py = 0; py < height; py++) {
     for (let px = 0; px < width; px++) {
@@ -197,69 +204,61 @@ export function generateItemGeometry(
       // For edges, we want to sample from the edge of the pixel
       // Use the same UV for all edge vertices of a given edge
 
-      // Check left neighbor (x - 1)
-      if (!isPixelOpaque(pixelData, px - 1, py)) {
-        // Left edge exposed - mirror right edge pattern (swap front/back)
-        addQuad(
-          [pixelX1, pixelY1, halfThickness],
-          [pixelX1, pixelY1, -halfThickness],
-          [pixelX1, pixelY2, -halfThickness],
-          [pixelX1, pixelY2, halfThickness],
-          [pixelU1, 1 - pixelV1],
-          [pixelU1, 1 - pixelV1],
-          [pixelU1, 1 - pixelV2],
-          [pixelU1, 1 - pixelV2],
-          [-1, 0, 0]
-        );
-      }
+      // LEFT edge - RED for debugging
+      addQuad(
+        [pixelX1, pixelY1, halfThickness],
+        [pixelX1, pixelY1, -halfThickness],
+        [pixelX1, pixelY2, -halfThickness],
+        [pixelX1, pixelY2, halfThickness],
+        [pixelU1, 1 - pixelV1],
+        [pixelU1, 1 - pixelV1],
+        [pixelU1, 1 - pixelV2],
+        [pixelU1, 1 - pixelV2],
+        [-1, 0, 0],
+        [1, 0, 0] // RED
+      );
 
-      // Check right neighbor (x + 1)
-      if (!isPixelOpaque(pixelData, px + 1, py)) {
-        // Right edge exposed - works correctly
-        addQuad(
-          [pixelX2, pixelY1, -halfThickness],
-          [pixelX2, pixelY1, halfThickness],
-          [pixelX2, pixelY2, halfThickness],
-          [pixelX2, pixelY2, -halfThickness],
-          [pixelU2, 1 - pixelV1],
-          [pixelU2, 1 - pixelV1],
-          [pixelU2, 1 - pixelV2],
-          [pixelU2, 1 - pixelV2],
-          [1, 0, 0]
-        );
-      }
+      // RIGHT edge - GREEN for debugging
+      addQuad(
+        [pixelX2, pixelY1, -halfThickness],
+        [pixelX2, pixelY1, halfThickness],
+        [pixelX2, pixelY2, halfThickness],
+        [pixelX2, pixelY2, -halfThickness],
+        [pixelU2, 1 - pixelV1],
+        [pixelU2, 1 - pixelV1],
+        [pixelU2, 1 - pixelV2],
+        [pixelU2, 1 - pixelV2],
+        [1, 0, 0],
+        [0, 1, 0] // GREEN
+      );
 
-      // Check top neighbor (y - 1)
-      if (!isPixelOpaque(pixelData, px, py - 1)) {
-        // Top edge exposed - mirror bottom edge pattern (reversed order)
-        addQuad(
-          [pixelX2, pixelY1, -halfThickness],
-          [pixelX1, pixelY1, -halfThickness],
-          [pixelX1, pixelY1, halfThickness],
-          [pixelX2, pixelY1, halfThickness],
-          [pixelU2, 1 - pixelV1],
-          [pixelU1, 1 - pixelV1],
-          [pixelU1, 1 - pixelV1],
-          [pixelU2, 1 - pixelV1],
-          [0, 1, 0]
-        );
-      }
+      // TOP edge - BLUE for debugging
+      addQuad(
+        [pixelX2, pixelY1, -halfThickness],
+        [pixelX1, pixelY1, -halfThickness],
+        [pixelX1, pixelY1, halfThickness],
+        [pixelX2, pixelY1, halfThickness],
+        [pixelU2, 1 - pixelV1],
+        [pixelU1, 1 - pixelV1],
+        [pixelU1, 1 - pixelV1],
+        [pixelU2, 1 - pixelV1],
+        [0, 1, 0],
+        [0, 0, 1] // BLUE
+      );
 
-      // Check bottom neighbor (y + 1)
-      if (!isPixelOpaque(pixelData, px, py + 1)) {
-        // Bottom edge exposed - works correctly
-        addQuad(
-          [pixelX2, pixelY2, halfThickness],
-          [pixelX1, pixelY2, halfThickness],
-          [pixelX1, pixelY2, -halfThickness],
-          [pixelX2, pixelY2, -halfThickness],
-          [pixelU2, 1 - pixelV2],
-          [pixelU1, 1 - pixelV2],
-          [pixelU1, 1 - pixelV2],
-          [pixelU2, 1 - pixelV2],
-          [0, -1, 0]
-        );
-      }
+      // BOTTOM edge - YELLOW for debugging
+      addQuad(
+        [pixelX2, pixelY2, halfThickness],
+        [pixelX1, pixelY2, halfThickness],
+        [pixelX1, pixelY2, -halfThickness],
+        [pixelX2, pixelY2, -halfThickness],
+        [pixelU2, 1 - pixelV2],
+        [pixelU1, 1 - pixelV2],
+        [pixelU1, 1 - pixelV2],
+        [pixelU2, 1 - pixelV2],
+        [0, -1, 0],
+        [1, 1, 0] // YELLOW
+      );
     }
   }
 
@@ -269,6 +268,7 @@ export function generateItemGeometry(
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geometry.setIndex(indices);
 
   return geometry;
