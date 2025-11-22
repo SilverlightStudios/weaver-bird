@@ -141,16 +141,21 @@ function normalizeUV(
     return { u: 0, v: 0, width: 1, height: 1, flipX: 1, flipY: 1 };
   }
 
+  // Determine if we need to flip the texture
+  // When UV coordinates are reversed (u2 < u1 or v2 < v1), use CSS flip transform
+  const flipX = widthDelta >= 0 ? 1 : -1;
+  const flipY = heightDelta >= 0 ? 1 : -1;
+
   // Always use minimum UV values as start position
-  // Don't use CSS flipping - it causes positioning issues with our current CSS
-  // The visual flipping is already handled by choosing the correct start position
+  // The flip is handled by CSS scaleX(-1)/scaleY(-1) transform in styles.module.scss
+  // This correctly flips the texture content around the image's top-left corner
   return {
     u: widthDelta >= 0 ? rawU1 : rawU2,
     v: heightDelta >= 0 ? rawV1 : rawV2,
     width,
     height,
-    flipX: 1, // No CSS flip on X
-    flipY: 1, // No CSS flip on Y
+    flipX,
+    flipY,
   };
 }
 
