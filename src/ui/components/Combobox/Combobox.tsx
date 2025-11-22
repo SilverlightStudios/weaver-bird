@@ -166,7 +166,7 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   onSelect={handleSelect}
-                  disabled={option.disabled}
+                  disabled={option.disabled === true}
                   className={s.item}
                 >
                   <span className={s.itemCheck}>
