@@ -48,7 +48,7 @@ import BiomeSelector from "@components/BiomeSelector";
 import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import Preview2D from "@components/Preview2D";
-import Preview3DItem from "@components/Preview3DItem";
+import PreviewItem from "@components/PreviewItem";
 import OptionsPanel from "@components/OptionsPanel";
 import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
@@ -911,7 +911,7 @@ export default function MainRoute() {
               {uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId) ? (
                 <Preview2D assetId={uiState.selectedAssetId} />
               ) : uiState.selectedAssetId && isMinecraftItem(uiState.selectedAssetId) ? (
-                <Preview3DItem
+                <PreviewItem
                   assetId={uiState.selectedAssetId}
                   displayMode={itemDisplayMode}
                   rotate={itemRotate}

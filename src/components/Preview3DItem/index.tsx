@@ -41,7 +41,7 @@ interface ItemMeshProps {
  * Emulates Minecraft's dropped item rendering (very thin 3D plane)
  */
 function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<THREE.Group>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
@@ -88,25 +88,6 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
     return null;
   }
 
-  // Calculate geometry based on display mode
-  const getGeometry = () => {
-    switch (displayMode) {
-      case "ground":
-      case "ground_fixed":
-        // Dropped item: very thin 3D plane (1px = 1/16 of a block in Minecraft)
-        // We use 0.0625 (1/16) for thickness to match Minecraft's pixel-to-block ratio
-        return (
-          <boxGeometry args={[1, 1, 0.0625]} />
-        );
-      case "gui":
-        // Flat for GUI view
-        return <planeGeometry args={[1, 1]} />;
-      default:
-        // Default to thin plane for future modes
-        return <boxGeometry args={[1, 1, 0.0625]} />;
-    }
-  };
-
   // Calculate rotation and position based on display mode
   const getTransform = () => {
     switch (displayMode) {
@@ -131,21 +112,52 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
   };
 
   const transform = getTransform();
+  const thickness = 0.0625; // 1/16 block (1 pixel in Minecraft)
 
+  // Render as a card: single textured face with thin edges
   return (
-    <mesh
-      ref={meshRef}
+    <group
+      ref={meshRef as React.RefObject<THREE.Group>}
       rotation={transform.rotation}
       position={transform.position}
     >
-      {getGeometry()}
-      <meshStandardMaterial
-        map={texture}
-        transparent
-        alphaTest={0.01}
-        side={THREE.DoubleSide} // Render both sides of the item
-      />
-    </mesh>
+      {/* Main textured face */}
+      <mesh position={[0, 0, thickness / 2]}>
+        <planeGeometry args={[1, 1]} />
+        <meshStandardMaterial
+          map={texture}
+          transparent
+          alphaTest={0.01}
+          side={THREE.FrontSide}
+        />
+      </mesh>
+
+      {/* Thin edges to give it thickness */}
+      {displayMode !== "gui" && (
+        <>
+          {/* Top edge */}
+          <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[1, thickness]} />
+            <meshStandardMaterial color="#444444" />
+          </mesh>
+          {/* Bottom edge */}
+          <mesh position={[0, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[1, thickness]} />
+            <meshStandardMaterial color="#444444" />
+          </mesh>
+          {/* Left edge */}
+          <mesh position={[-0.5, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+            <planeGeometry args={[thickness, 1]} />
+            <meshStandardMaterial color="#444444" />
+          </mesh>
+          {/* Right edge */}
+          <mesh position={[0.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+            <planeGeometry args={[thickness, 1]} />
+            <meshStandardMaterial color="#444444" />
+          </mesh>
+        </>
+      )}
+    </group>
   );
 }
 
