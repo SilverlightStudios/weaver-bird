@@ -94,11 +94,20 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
     };
   }, [texturePath]);
 
-  // Rotation animation for dropped items
+  // Rotation and bobbing animation for dropped items
   useFrame((state, delta) => {
-    if (meshRef.current && rotate && displayMode === "ground") {
-      // Minecraft items rotate at about 1 revolution per 4 seconds (90 degrees/sec = π/2 rad/sec)
-      meshRef.current.rotation.y += delta * (Math.PI / 2);
+    if (meshRef.current && displayMode === "ground") {
+      if (rotate) {
+        // Minecraft items rotate at about 1 revolution per 4 seconds (90 degrees/sec = π/2 rad/sec)
+        meshRef.current.rotation.y += delta * (Math.PI / 2);
+      }
+
+      // Bobbing animation - items float up and down slightly
+      // Using a slow sine wave with small amplitude (0.05 units)
+      // Period of ~3 seconds matches Minecraft's gentle bobbing
+      const bobSpeed = 2; // Radians per second (full cycle in ~3.14 seconds)
+      const bobAmplitude = 0.05; // Small vertical movement
+      meshRef.current.position.y = Math.sin(state.clock.elapsedTime * bobSpeed) * bobAmplitude;
     }
   });
 
@@ -111,9 +120,9 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
     switch (displayMode) {
       case "ground":
       case "ground_fixed":
-        // Dropped items are rotated at a slight angle for better visibility
+        // Dropped items are vertical (no tilt) like in Minecraft
         return {
-          rotation: [Math.PI / 6, 0, 0] as [number, number, number], // 30 degree tilt
+          rotation: [0, 0, 0] as [number, number, number],
           position: [0, 0, 0] as [number, number, number],
         };
       case "gui":
