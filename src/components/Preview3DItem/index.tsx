@@ -22,6 +22,7 @@ import { getVanillaTexturePath, getPackTexturePath } from "@lib/tauri";
 import { normalizeAssetId } from "@lib/assetUtils";
 import { useSelectWinner, useSelectPack } from "@state/selectors";
 import type { ItemDisplayMode } from "@lib/itemDisplayModes";
+import { getItemGeometry } from "@lib/three/itemGeometryGenerator";
 import s from "./styles.module.scss";
 
 interface Props {
@@ -38,11 +39,12 @@ interface ItemMeshProps {
 
 /**
  * ItemMesh - Renders a 3D item with the texture applied
- * Emulates Minecraft's dropped item rendering (very thin 3D plane)
+ * Emulates Minecraft's dropped item rendering with proper thickness effect
  */
 function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
 
   useEffect(() => {
     const loader = new THREE.TextureLoader();
@@ -59,9 +61,23 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
 
         setTexture(loadedTexture);
 
-        console.log(
-          `[Preview3DItem] Loaded texture: ${loadedTexture.image.width}x${loadedTexture.image.height}`,
-        );
+        // Generate custom geometry based on texture alpha channel
+        try {
+          const customGeometry = getItemGeometry(loadedTexture, 0.0625);
+          setGeometry(customGeometry);
+
+          console.log(
+            `[Preview3DItem] Loaded texture: ${loadedTexture.image.width}x${loadedTexture.image.height}`,
+          );
+          console.log(
+            `[Preview3DItem] Generated geometry with ${customGeometry.attributes.position.count} vertices`,
+          );
+        } catch (error) {
+          console.error("[Preview3DItem] Failed to generate geometry:", error);
+          // Fall back to simple box geometry
+          const fallbackGeometry = new THREE.BoxGeometry(1, 1, 0.0625);
+          setGeometry(fallbackGeometry);
+        }
       },
       undefined,
       (error) => {
@@ -73,6 +89,8 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
       if (texture) {
         texture.dispose();
       }
+      // Note: geometry from cache shouldn't be disposed here
+      // It will be managed by the cache
     };
   }, [texturePath]);
 
@@ -84,7 +102,7 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
     }
   });
 
-  if (!texture) {
+  if (!texture || !geometry) {
     return null;
   }
 
@@ -112,22 +130,22 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
   };
 
   const transform = getTransform();
-  const thickness = 0.0625; // 1/16 block (1 pixel in Minecraft)
 
-  // Render as a thin box with texture on both faces
-  // The thin depth naturally creates edge visibility from texture edge pixels
+  // Render with custom geometry that follows the texture shape
+  // Front/back faces show full texture, edges show 1-pixel texture slices
   return (
     <mesh
       ref={meshRef as React.RefObject<THREE.Mesh>}
       rotation={transform.rotation}
       position={transform.position}
+      geometry={geometry}
     >
-      <boxGeometry args={[1, 1, thickness]} />
       <meshStandardMaterial
         map={texture}
         transparent
         alphaTest={0.01}
         side={THREE.DoubleSide}
+        flatShading={false}
       />
     </mesh>
   );
