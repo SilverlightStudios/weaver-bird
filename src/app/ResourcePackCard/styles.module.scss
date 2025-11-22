@@ -27,7 +27,7 @@
     background-color: var(--color-block);
 
     // Shadow & rotation using tokens
-    @include tokens.shadow-lg;
+    @include tokens.shadow-sm;
     @include tokens.rotate-slight;
 
     // Transitions
@@ -59,7 +59,7 @@
 
     // Hover state using tokens
     &:hover {
-        @include tokens.shadow-xl;
+        @include tokens.shadow-md;
         rotate: 0deg;
         translate: 0 -4px;
         box-shadow-color: var(--ink);
