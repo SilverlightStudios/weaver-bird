@@ -215,34 +215,32 @@ export function generateItemGeometry(
 
       // Check right neighbor (x + 1)
       if (!isPixelOpaque(pixelData, px + 1, py)) {
-        // Right edge exposed
-        // Fix vertex winding order for correct outward-facing normal
+        // Right edge exposed - match left edge vertex pattern
         addQuad(
+          [pixelX2, pixelY1, -halfThickness],
           [pixelX2, pixelY1, halfThickness],
           [pixelX2, pixelY2, halfThickness],
           [pixelX2, pixelY2, -halfThickness],
-          [pixelX2, pixelY1, -halfThickness],
+          [pixelU2, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
           [pixelU2, 1 - pixelV2],
           [pixelU2, 1 - pixelV2],
-          [pixelU2, 1 - pixelV1],
           [1, 0, 0]
         );
       }
 
       // Check top neighbor (y - 1)
       if (!isPixelOpaque(pixelData, px, py - 1)) {
-        // Top edge exposed
-        // Fix vertex winding order for correct outward-facing normal
+        // Top edge exposed - match bottom edge vertex pattern
         addQuad(
           [pixelX1, pixelY1, halfThickness],
-          [pixelX1, pixelY1, -halfThickness],
-          [pixelX2, pixelY1, -halfThickness],
           [pixelX2, pixelY1, halfThickness],
-          [pixelU1, 1 - pixelV1],
+          [pixelX2, pixelY1, -halfThickness],
+          [pixelX1, pixelY1, -halfThickness],
           [pixelU1, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
+          [pixelU1, 1 - pixelV1],
           [0, 1, 0]
         );
       }
