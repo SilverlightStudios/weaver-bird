@@ -35,6 +35,7 @@ import {
   isBiomeColormapAsset,
   normalizeAssetId,
   isInventoryVariant,
+  is2DOnlyTexture,
 } from "@lib/assetUtils";
 import { assetGroupingWorker } from "@lib/assetGroupingWorker";
 import {
@@ -80,6 +81,7 @@ const AssetCard = memo(
     const [isVisible, setIsVisible] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
     const isColormap = isBiomeColormapAsset(asset.id);
+    const is2DTexture = is2DOnlyTexture(asset.id);
 
     // Get the winning pack for this asset
     const winnerPackId = useSelectWinner(asset.id);
@@ -155,15 +157,15 @@ const AssetCard = memo(
       };
     }, []);
 
-    // Only load image when visible - only needed for colormaps
-    // MinecraftCSSBlock handles its own texture loading for blocks
+    // Only load image when visible - needed for colormaps and 2D textures
+    // MinecraftCSSBlock handles its own texture loading for 3D blocks
     // OPTIMIZATION: Memoize winning pack path to prevent reloads when pack hasn't changed
     const winnerPackPath = useMemo(() => {
       return winnerPack ? `${winnerPack.path}:${winnerPack.is_zip}` : null;
     }, [winnerPack]);
 
     useEffect(() => {
-      if (!isVisible || !isColormap) return;
+      if (!isVisible || (!isColormap && !is2DTexture)) return;
 
       let mounted = true;
 
@@ -217,6 +219,7 @@ const AssetCard = memo(
     }, [
       isVisible,
       isColormap,
+      is2DTexture,
       asset.id,
       winnerPackId,
       winnerPackPath,
@@ -232,18 +235,20 @@ const AssetCard = memo(
         onClick={onSelect}
       >
         <div className={s.imageContainer}>
-          {isColormap ? (
-            // Colormaps display as flat images
+          {isColormap || is2DTexture ? (
+            // Colormaps and 2D textures display as flat images
             imageSrc && !imageError ? (
               <img
                 src={imageSrc}
                 alt={displayName}
-                className={s.colormapTexture}
+                className={is2DTexture ? s.texture2D : s.colormapTexture}
                 onError={() => setImageError(true)}
               />
             ) : imageError ? (
               <div className={s.placeholder}>
-                <span className={s.placeholderIcon}>🎨</span>
+                <span className={s.placeholderIcon}>
+                  {is2DTexture ? "🖼️" : "🎨"}
+                </span>
               </div>
             ) : (
               <div className={s.placeholder}>

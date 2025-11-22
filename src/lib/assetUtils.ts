@@ -120,6 +120,46 @@ export function isBiomeColormapAsset(assetId: string): boolean {
 }
 
 /**
+ * Check if an asset is a 2D-only texture (GUI, particle, entity, etc.)
+ * These textures should be displayed as flat 2D sprites, not as 3D blocks
+ */
+export function is2DOnlyTexture(assetId: string): boolean {
+  // Extract the path after the namespace (e.g., "minecraft:gui/container" -> "gui/container")
+  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
+
+  // List of texture categories that are 2D-only
+  const twoDOnlyPaths = [
+    'gui/',           // GUI elements (containers, widgets, buttons)
+    'particle/',      // Particle effects
+    'painting/',      // Painting textures
+    'mob_effect/',    // Potion/status effect icons
+    'font/',          // Font textures
+    'misc/',          // Miscellaneous textures
+    'entity/',        // Entity textures (mob skins, etc.)
+    'item/',          // Item textures (some may have 3D models, but default to 2D)
+    'map/',           // Map decorations
+    'models/',        // Model textures
+    'environment/',   // Environment textures (moon, sun, clouds)
+    'effect/',        // Effect textures
+  ];
+
+  return twoDOnlyPaths.some(prefix => path.startsWith(prefix));
+}
+
+/**
+ * Get the texture category from an asset ID
+ * Returns the category path (e.g., "gui", "particle", "block", "item")
+ */
+export function getTextureCategory(assetId: string): string | null {
+  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
+  const firstSlash = path.indexOf('/');
+
+  if (firstSlash === -1) return null;
+
+  return path.substring(0, firstSlash);
+}
+
+/**
  * Get the biome colormap type ("grass" or "foliage") from an asset ID
  */
 export function getColormapTypeFromAssetId(

@@ -47,6 +47,7 @@ import SearchBar from "@components/SearchBar";
 import BiomeSelector from "@components/BiomeSelector";
 import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
+import Preview2D from "@components/Preview2D";
 import OptionsPanel from "@components/OptionsPanel";
 import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
@@ -88,7 +89,7 @@ import {
   GRASS_COLORMAP_ASSET_ID,
   FOLIAGE_COLORMAP_ASSET_ID,
 } from "@lib/colormapManager";
-import { getColormapTypeFromAssetId } from "@lib/assetUtils";
+import { getColormapTypeFromAssetId, is2DOnlyTexture } from "@lib/assetUtils";
 import {
   useStore,
   useSelectPacksInOrder,
@@ -894,17 +895,21 @@ export default function MainRoute() {
             className={s.rightPanel}
           >
             <div className={s.previewSection}>
-              <Preview3D
-                assetId={uiState.selectedAssetId}
-                biomeColor={biomeColor}
-                onTintDetected={setTintInfo}
-                showPot={showPot}
-                onShowPotChange={setShowPot}
-                blockProps={blockProps}
-                seed={seed}
-                foliagePreviewBlock={foliagePreviewBlock}
-                allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
-              />
+              {uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId) ? (
+                <Preview2D assetId={uiState.selectedAssetId} />
+              ) : (
+                <Preview3D
+                  assetId={uiState.selectedAssetId}
+                  biomeColor={biomeColor}
+                  onTintDetected={setTintInfo}
+                  showPot={showPot}
+                  onShowPotChange={setShowPot}
+                  blockProps={blockProps}
+                  seed={seed}
+                  foliagePreviewBlock={foliagePreviewBlock}
+                  allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
+                />
+              )}
             </div>
 
             <div className={s.optionsSection}>
