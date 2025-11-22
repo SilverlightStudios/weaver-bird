@@ -21,6 +21,7 @@ import BiomeColorCard from "@app/BiomeColorCard";
 import VariantChooser from "@components/VariantChooser";
 import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
 import TextureVariantSelector from "@components/TextureVariantSelector";
+import PaintingSelector from "@components/PaintingSelector";
 import { groupAssetsByVariant } from "@lib/assetUtils";
 import {
   Combobox,
@@ -161,6 +162,10 @@ export default function OptionsPanel({
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
   const isColormapSelection = assetId ? isBiomeColormapAsset(assetId) : false;
   const isItem = assetId ? isMinecraftItem(assetId) : false;
+  const isPainting = assetId ? (() => {
+    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+    return path.startsWith("painting/");
+  })() : false;
   const selectedWinnerPackId = useSelectWinner(assetId ?? "");
   const winnerPackId = assetId ? selectedWinnerPackId : null;
   const packsDir = useSelectPacksDir();
@@ -239,8 +244,12 @@ export default function OptionsPanel({
     !isColormapSelection && !isItem && (schema?.properties.length ?? 0) > 0;
   // Item tab shows item display controls (rotation, display mode)
   const shouldShowItemTab = isItem;
+  // Painting tab shows all available paintings to select from
+  const shouldShowPaintingTab = isPainting && allAssets.length > 0;
 
-  const defaultTab = shouldShowItemTab
+  const defaultTab = shouldShowPaintingTab
+    ? "painting"
+    : shouldShowItemTab
     ? "item"
     : shouldShowBlockStateTab
       ? "block-state"
@@ -284,6 +293,9 @@ export default function OptionsPanel({
     <div className={s.root}>
       <Tabs defaultValue={defaultTab}>
         <TabsList>
+          {shouldShowPaintingTab && onSelectVariant && (
+            <TabIcon icon="🖼" label="Painting" value="painting" />
+          )}
           {shouldShowItemTab && (
             <TabIcon icon="🗡️" label="Item Display" value="item" />
           )}
@@ -304,6 +316,18 @@ export default function OptionsPanel({
           )}
           <TabIcon icon="⚡" label="Advanced" value="advanced" />
         </TabsList>
+
+        {shouldShowPaintingTab && onSelectVariant && (
+          <TabsContent value="painting">
+            <div style={{ padding: "1rem" }}>
+              <PaintingSelector
+                assetId={assetId}
+                allAssets={allAssets}
+                onSelectPainting={onSelectVariant}
+              />
+            </div>
+          </TabsContent>
+        )}
 
         {shouldShowItemTab && (
           <TabsContent value="item">
