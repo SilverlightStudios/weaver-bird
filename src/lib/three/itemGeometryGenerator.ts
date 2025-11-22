@@ -90,7 +90,8 @@ export function generateItemGeometry(
     uv3: [number, number],
     uv4: [number, number],
     normal: [number, number, number],
-    color: [number, number, number] = [1, 1, 1]
+    color: [number, number, number] = [1, 1, 1],
+    reverseWinding: boolean = false
   ) {
     const startIdx = vertices.length / 3;
 
@@ -107,10 +108,18 @@ export function generateItemGeometry(
     colors.push(...color, ...color, ...color, ...color);
 
     // Add indices for two triangles
-    indices.push(
-      startIdx, startIdx + 1, startIdx + 2,
-      startIdx, startIdx + 2, startIdx + 3
-    );
+    // Reverse winding if needed by swapping triangle vertex order
+    if (reverseWinding) {
+      indices.push(
+        startIdx, startIdx + 2, startIdx + 1,
+        startIdx, startIdx + 3, startIdx + 2
+      );
+    } else {
+      indices.push(
+        startIdx, startIdx + 1, startIdx + 2,
+        startIdx, startIdx + 2, startIdx + 3
+      );
+    }
   }
 
   // First pass: Create front and back faces as single textured quads
@@ -231,46 +240,48 @@ export function generateItemGeometry(
 
       // RIGHT edge - GREEN for debugging (only if right neighbor is transparent)
       if (!hasRightNeighbor) {
-        // REVERSED vertex order to fix winding
+        console.log('[DEBUG-RIGHT] Creating right edge at px=' + px + ', vertices will be logged...');
         addQuad(
-          [pixelX2, pixelY2, -halfThickness],
-          [pixelX2, pixelY2, halfThickness],
-          [pixelX2, pixelY1, halfThickness],
           [pixelX2, pixelY1, -halfThickness],
-          [pixelU2, 1 - pixelV2],
-          [pixelU2, 1 - pixelV2],
+          [pixelX2, pixelY1, halfThickness],
+          [pixelX2, pixelY2, halfThickness],
+          [pixelX2, pixelY2, -halfThickness],
           [pixelU2, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
+          [pixelU2, 1 - pixelV2],
+          [pixelU2, 1 - pixelV2],
           [1, 0, 0],
-          [0, 1, 0] // GREEN
+          [0, 1, 0], // GREEN
+          true // REVERSE WINDING
         );
         edgeCounts.right++;
       }
 
       // TOP edge - BLUE for debugging (only if top neighbor is transparent)
       if (!hasTopNeighbor) {
-        // REVERSED vertex order to fix winding (opposite of bottom)
         const topVerts = [
-          [pixelX1, pixelY1, -halfThickness],
-          [pixelX1, pixelY1, halfThickness],
           [pixelX2, pixelY1, halfThickness],
+          [pixelX1, pixelY1, halfThickness],
+          [pixelX1, pixelY1, -halfThickness],
           [pixelX2, pixelY1, -halfThickness],
         ] as [number, number, number][];
 
         // Log first top edge only
         if (edgeCounts.top === 0) {
-          console.log('[DEBUG] First TOP edge vertices (REVERSED):', topVerts);
-          console.log('[DEBUG] Pixel coords:', { px, py, pixelY1, pixelY2, halfThickness });
+          console.log('[DEBUG-TOP] First TOP edge vertices:', topVerts);
+          console.log('[DEBUG-TOP] Using REVERSE WINDING for top edge');
+          console.log('[DEBUG-TOP] Pixel coords:', { px, py, pixelY1, pixelY2, halfThickness });
         }
 
         addQuad(
           topVerts[0], topVerts[1], topVerts[2], topVerts[3],
-          [pixelU1, 1 - pixelV1],
-          [pixelU1, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
+          [pixelU1, 1 - pixelV1],
+          [pixelU1, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
           [0, 1, 0],
-          [0, 0, 1] // BLUE
+          [0, 0, 1], // BLUE
+          true // REVERSE WINDING
         );
         edgeCounts.top++;
       }
