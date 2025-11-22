@@ -197,9 +197,13 @@ export function generateItemGeometry(
 
   let edgeCounts = { left: 0, right: 0, top: 0, bottom: 0 };
 
+  // Track which pixels create edges for debugging
+  const edgeMap: string[][] = Array(height).fill(null).map(() => Array(width).fill('.'));
+
   for (let py = 0; py < height; py++) {
     for (let px = 0; px < width; px++) {
       if (!isPixelOpaque(pixelData, px, py)) {
+        edgeMap[py][px] = 'O'; // Air
         continue;
       }
 
@@ -209,17 +213,24 @@ export function generateItemGeometry(
       const pixelY1 = -((py / height) - 0.5); // Flip Y
       const pixelY2 = -(((py + 1) / height) - 0.5); // Flip Y
 
-      // UV coordinates for this pixel (use the pixel's center for edge faces)
-      const pixelU1 = px / width;
-      const pixelU2 = (px + 1) / width;
-      const pixelV1 = py / height;
-      const pixelV2 = (py + 1) / height;
+      // UV coordinates for this pixel
+      // Add small epsilon to avoid sampling exactly at texture boundaries (0.0 or 1.0)
+      // which can cause precision issues in WebGL texture sampling
+      const uvEpsilon = 0.5 / width; // Half a pixel offset
+      const pixelU1 = (px / width) + uvEpsilon;
+      const pixelU2 = ((px + 1) / width) - uvEpsilon;
+      const pixelV1 = (py / height) + uvEpsilon;
+      const pixelV2 = ((py + 1) / height) - uvEpsilon;
 
       // Check each neighbor and create edge face ONLY if neighbor is transparent
       const hasLeftNeighbor = isPixelOpaque(pixelData, px - 1, py);
       const hasRightNeighbor = isPixelOpaque(pixelData, px + 1, py);
       const hasTopNeighbor = isPixelOpaque(pixelData, px, py - 1);
       const hasBottomNeighbor = isPixelOpaque(pixelData, px, py + 1);
+
+      // Determine if this pixel has any edges (E) or is internal (X)
+      const hasAnyEdge = !hasLeftNeighbor || !hasRightNeighbor || !hasTopNeighbor || !hasBottomNeighbor;
+      edgeMap[py][px] = hasAnyEdge ? 'E' : 'X';
 
       // LEFT edge - TEST: Use GREEN to see if green color works here
       if (!hasLeftNeighbor) {
@@ -318,6 +329,13 @@ export function generateItemGeometry(
     }
   }
 
+  // Print edge map for verification
+  console.log('[ItemGeometry] Edge map (O=air, E=edge pixel, X=internal):');
+  console.log('   ', Array.from({length: width}, (_, i) => i.toString().padStart(2)).join(' '));
+  edgeMap.forEach((row, y) => {
+    console.log(y.toString().padStart(2), ' ', row.map(c => c + ' ').join(' '));
+  });
+
   console.log('[ItemGeometry] Edge face counts (perimeter only):', edgeCounts);
   console.log('[ItemGeometry] Total vertices:', vertices.length / 3);
   console.log('[ItemGeometry] Total indices:', indices.length);
@@ -357,11 +375,17 @@ export function generateItemGeometry(
     console.error('[ItemGeometry] Found ' + invalidVertices + ' invalid vertices (NaN or Infinity)!');
   }
 
-  // Log sample vertices from each edge type for inspection
   console.log('[ItemGeometry] Sample vertices by type (first 12 vertices):');
   for (let i = 0; i < Math.min(12, vertices.length / 3); i++) {
     const vIdx = i * 3;
     console.log(`  Vertex ${i}: [${vertices[vIdx].toFixed(4)}, ${vertices[vIdx + 1].toFixed(4)}, ${vertices[vIdx + 2].toFixed(4)}]`);
+  }
+
+  // Log indices for first few quads to verify they're correct
+  console.log('[ItemGeometry] Sample indices (first 6 triangles = 3 quads):');
+  for (let i = 0; i < Math.min(18, indices.length); i += 3) {
+    const i0 = indices[i], i1 = indices[i+1], i2 = indices[i+2];
+    console.log(`  Triangle ${Math.floor(i/3)}: indices [${i0}, ${i1}, ${i2}] => verts [${i0}]=[${vertices[i0*3].toFixed(3)},${vertices[i0*3+1].toFixed(3)},${vertices[i0*3+2].toFixed(3)}], [${i1}]=[${vertices[i1*3].toFixed(3)},${vertices[i1*3+1].toFixed(3)},${vertices[i1*3+2].toFixed(3)}], [${i2}]=[${vertices[i2*3].toFixed(3)},${vertices[i2*3+1].toFixed(3)},${vertices[i2*3+2].toFixed(3)}]`);
   }
 
   // Create BufferGeometry
