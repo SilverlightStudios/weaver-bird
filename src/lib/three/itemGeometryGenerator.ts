@@ -245,11 +245,12 @@ export function generateItemGeometry(
 
       // TOP edge - BLUE for debugging (only if top neighbor is transparent)
       if (!hasTopNeighbor) {
+        // Match BOTTOM pattern: start with front, not back
         addQuad(
-          [pixelX2, pixelY1, -halfThickness],
-          [pixelX1, pixelY1, -halfThickness],
-          [pixelX1, pixelY1, halfThickness],
           [pixelX2, pixelY1, halfThickness],
+          [pixelX1, pixelY1, halfThickness],
+          [pixelX1, pixelY1, -halfThickness],
+          [pixelX2, pixelY1, -halfThickness],
           [pixelU2, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
