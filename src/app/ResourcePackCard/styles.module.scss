@@ -7,12 +7,13 @@
     // Layout
     position: relative;
     display: grid;
-    grid-template-columns: 56px 1fr;
-    gap: var(--spacing-sm);
-    padding: 0.75rem;
+    grid-template-columns: 45px 1fr;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    padding-right: 2rem;
     overflow: clip;
     isolation: isolate;
-    max-height: 160px;
+    max-height: 140px;
     min-width: 0;
     box-sizing: border-box;
 
@@ -74,9 +75,9 @@
 }
 
 .iconFrame {
-    width: 56px;
-    height: 56px;
-    padding: 0.3rem;
+    width: 45px;
+    height: 45px;
+    padding: 0.25rem;
     display: grid;
     place-items: center;
 
@@ -106,7 +107,7 @@
 .body {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.25rem;
     min-width: 0;
 }
 
@@ -121,15 +122,17 @@
 .name {
     @include tokens.text-shadow-bold;
 
-    font-size: 0.8rem;
-    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--ink);
     line-height: 1.1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.1rem;
+    flex: 1;
+    min-width: 0;
 }
 
 .badges {
@@ -156,13 +159,13 @@
     @include tokens.shadow-inset;
 
     font-family: var(--font-family);
-    font-size: 0.56rem;
-    line-height: 1.3;
+    font-size: 0.45rem;
+    line-height: 1.25;
     color: var(--color-text);
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     background: rgb(255 255 255 / 40%);
-    padding: 0.25rem 0.4rem;
+    padding: 0.2rem 0.35rem;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -171,7 +174,7 @@
 
 .metadata {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: 0.35rem;
     flex-wrap: wrap;
 }
 
@@ -182,22 +185,22 @@
     position: relative;
     background: var(--accent-color);
     color: var(--color-bg);
-    padding: 0.15rem 0.35rem;
+    padding: 0.12rem 0.3rem;
     rotate: -2deg;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
 
     &:nth-child(2n) {
         rotate: 3deg;
     }
 
     dt {
-        font-size: 0.4rem;
+        font-size: 0.35rem;
         opacity: 0.7;
     }
 
     dd {
-        font-size: 0.56rem;
+        font-size: 0.5rem;
         font-weight: 700;
     }
 }
