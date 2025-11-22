@@ -180,6 +180,7 @@ function calculateFaceOffsets(
   const [x2, y2, z2] = element.to;
 
   // Element dimensions
+  const width = x2 - x1;
   const height = y2 - y1;
   const depth = z2 - z1;
 
@@ -201,8 +202,8 @@ function calculateFaceOffsets(
   const leftY = -centerY * scale;
   const leftZ = (centerZ + depth / 2) * scale;
 
-  // Right face (east): offset right by half the depth (after rotateY 90deg)
-  const rightX = (centerZ + depth / 2) * scale;
+  // Right face (east): offset right by half the width (positioned at east edge)
+  const rightX = (centerX + width / 2) * scale;
   const rightY = -centerY * scale;
   const rightZ = centerZ * scale;
 
