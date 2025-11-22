@@ -251,23 +251,23 @@ export function generateItemGeometry(
         edgeCounts.left++;
       }
 
-      // RIGHT edge - TEST: Use RED to see if red color works here
+      // RIGHT edge - RADICAL TEST: Copy LEFT pattern exactly (same vertex order, no reverse)
       if (!hasRightNeighbor) {
         const rightVerts: [number, number, number][] = [
-          [pixelX2, pixelY1, -halfThickness],
-          [pixelX2, pixelY1, halfThickness],
-          [pixelX2, pixelY2, halfThickness],
-          [pixelX2, pixelY2, -halfThickness],
+          [pixelX2, pixelY1, halfThickness],    // Match LEFT: top-front first
+          [pixelX2, pixelY1, -halfThickness],   // Match LEFT: top-back second
+          [pixelX2, pixelY2, -halfThickness],   // Match LEFT: bottom-back third
+          [pixelX2, pixelY2, halfThickness],    // Match LEFT: bottom-front fourth
         ];
 
         // Log first right edge for comparison
         if (edgeCounts.right === 0) {
-          console.log('[COMPARE-RIGHT] px=' + px + ', pixelX1=' + pixelX1 + ', pixelX2=' + pixelX2);
-          console.log('[COMPARE-RIGHT] Vertices:', rightVerts);
-          console.log('[COMPARE-RIGHT] Normal:', [1, 0, 0]);
-          console.log('[COMPARE-RIGHT] Color: RED', [1, 0, 0]);
-          console.log('[COMPARE-RIGHT] Reverse winding: true');
-          console.log('[COMPARE-RIGHT] Indices will be: [0,2,1] and [0,3,2] instead of [0,1,2] and [0,2,3]');
+          console.log('[TEST-RIGHT] COPYING LEFT PATTERN EXACTLY');
+          console.log('[TEST-RIGHT] px=' + px + ', pixelX1=' + pixelX1 + ', pixelX2=' + pixelX2);
+          console.log('[TEST-RIGHT] Vertices (matching LEFT order):', rightVerts);
+          console.log('[TEST-RIGHT] Normal:', [1, 0, 0]);
+          console.log('[TEST-RIGHT] Color: RED', [1, 0, 0]);
+          console.log('[TEST-RIGHT] Reverse winding: FALSE (like LEFT)');
         }
 
         addQuad(
@@ -277,8 +277,8 @@ export function generateItemGeometry(
           [pixelU2, 1 - pixelV2],
           [pixelU2, 1 - pixelV2],
           [1, 0, 0],
-          [1, 0, 0], // RED (swapped from GREEN)
-          true // REVERSE WINDING
+          [1, 0, 0], // RED
+          false // NO REVERSE - exact copy of LEFT
         );
         edgeCounts.right++;
       }
