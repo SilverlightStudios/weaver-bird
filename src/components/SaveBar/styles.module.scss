@@ -96,3 +96,28 @@
     background-color: rgba(0, 0, 0, 0.1);
   }
 }
+
+.info {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.infoItem {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+  font-size: var(--font-size-xs);
+}
+
+.infoLabel {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.infoValue {
+  color: var(--color-text);
+  white-space: nowrap;
+}

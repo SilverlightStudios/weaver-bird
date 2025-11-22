@@ -459,6 +459,7 @@ export default function MainRoute() {
   const colormapCoordinates = useStore((state) => state.colormapCoordinates);
   const grassColormapUrl = useStore((state) => state.grassColormapUrl);
   const foliageColormapUrl = useStore((state) => state.foliageColormapUrl);
+  const selectedBiomeId = useStore((state) => state.selectedBiomeId);
 
   useEffect(() => {
     const resampleColors = async () => {
@@ -781,15 +782,18 @@ export default function MainRoute() {
             <h1>Weaverbird</h1>
             <p>Minecraft Resource Pack Manager</p>
           </div>
-          <Button
-            className={s.settingsButton}
-            onClick={() => setSettingsOpen(true)}
-            aria-label="Open settings"
-            variant="ghost"
-            size="md"
-          >
-            ⚙️
-          </Button>
+          <div className={s.headerRight}>
+            <BiomeSelector />
+            <Button
+              className={s.settingsButton}
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Open settings"
+              variant="ghost"
+              size="md"
+            >
+              ⚙️
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -852,7 +856,6 @@ export default function MainRoute() {
                 onChange={setSearchQuery}
                 placeholder="Search blocks, mobs, textures..."
               />
-              <BiomeSelector />
             </div>
 
             <div className={s.resultsSection}>
@@ -992,6 +995,9 @@ export default function MainRoute() {
             setSuccessMessage("");
             setErrorMessage(error);
           }}
+          grassColormapUrl={grassColormapUrl}
+          foliageColormapUrl={foliageColormapUrl}
+          selectedBiomeId={selectedBiomeId}
         />
       </div>
 

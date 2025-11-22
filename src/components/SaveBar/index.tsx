@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { buildWeaverNest, formatError } from "@lib/tauri";
 import type { OverrideWirePayload } from "@state";
 import Button from "@/ui/components/buttons/Button";
+import { BIOMES } from "@components/BiomeColorPicker/biomeData";
 import s from "./styles.module.scss";
 
 interface Progress {
@@ -26,6 +27,38 @@ interface Props {
   statusMessage?: string;
   statusType?: StatusType;
   onClearStatus?: () => void;
+  grassColormapUrl?: string;
+  foliageColormapUrl?: string;
+  selectedBiomeId?: string;
+}
+
+/**
+ * Extract pack name from colormap URL
+ * URL format: "asset://PACK_ID/assets/minecraft/textures/colormap/..."
+ */
+function extractPackNameFromUrl(url?: string): string {
+  if (!url) return "None";
+
+  // Extract pack ID from asset:// URL
+  const match = url.match(/^asset:\/\/([^/]+)\//);
+  if (match && match[1]) {
+    // Decode URI component and clean up the pack ID
+    const packId = decodeURIComponent(match[1]);
+    // If it looks like a pack name, return it cleaned up
+    return packId.replace(/_/g, " ");
+  }
+
+  return "Unknown";
+}
+
+/**
+ * Get biome display name from biome ID
+ */
+function getBiomeName(biomeId?: string): string {
+  if (!biomeId) return "None";
+
+  const biome = BIOMES.find((b) => b.id === biomeId);
+  return biome ? biome.name : biomeId;
 }
 
 const SaveIcon = () => (
@@ -58,6 +91,9 @@ export default function SaveBar({
   statusMessage,
   statusType = "idle",
   onClearStatus,
+  grassColormapUrl,
+  foliageColormapUrl,
+  selectedBiomeId,
 }: Props) {
   const percent = progress
     ? Math.round((progress.completed / Math.max(progress.total, 1)) * 100)
@@ -125,6 +161,25 @@ export default function SaveBar({
             )}
           </div>
         ) : null}
+      </div>
+
+      <div className={s.info}>
+        <div className={s.infoItem}>
+          <span className={s.infoLabel}>Foliage:</span>
+          <span className={s.infoValue}>
+            {extractPackNameFromUrl(foliageColormapUrl)}
+          </span>
+        </div>
+        <div className={s.infoItem}>
+          <span className={s.infoLabel}>Grass:</span>
+          <span className={s.infoValue}>
+            {extractPackNameFromUrl(grassColormapUrl)}
+          </span>
+        </div>
+        <div className={s.infoItem}>
+          <span className={s.infoLabel}>Biome:</span>
+          <span className={s.infoValue}>{getBiomeName(selectedBiomeId)}</span>
+        </div>
       </div>
     </div>
   );
