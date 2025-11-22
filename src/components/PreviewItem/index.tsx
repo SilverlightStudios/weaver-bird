@@ -38,10 +38,10 @@ export default function PreviewItem({
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "3d" | "2d")}>
         <TabsList className={s.tabsList}>
           <TabsTrigger value="3d" className={s.tabTrigger}>
-            3D View
+            3D
           </TabsTrigger>
           <TabsTrigger value="2d" className={s.tabTrigger}>
-            2D View
+            2D
           </TabsTrigger>
         </TabsList>
 

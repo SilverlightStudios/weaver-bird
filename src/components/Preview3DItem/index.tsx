@@ -41,7 +41,7 @@ interface ItemMeshProps {
  * Emulates Minecraft's dropped item rendering (very thin 3D plane)
  */
 function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
-  const meshRef = useRef<THREE.Group>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
@@ -114,50 +114,22 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
   const transform = getTransform();
   const thickness = 0.0625; // 1/16 block (1 pixel in Minecraft)
 
-  // Render as a card: single textured face with thin edges
+  // Render as a thin box with texture on both faces
+  // The thin depth naturally creates edge visibility from texture edge pixels
   return (
-    <group
-      ref={meshRef as React.RefObject<THREE.Group>}
+    <mesh
+      ref={meshRef as React.RefObject<THREE.Mesh>}
       rotation={transform.rotation}
       position={transform.position}
     >
-      {/* Main textured face */}
-      <mesh position={[0, 0, thickness / 2]}>
-        <planeGeometry args={[1, 1]} />
-        <meshStandardMaterial
-          map={texture}
-          transparent
-          alphaTest={0.01}
-          side={THREE.FrontSide}
-        />
-      </mesh>
-
-      {/* Thin edges to give it thickness */}
-      {displayMode !== "gui" && (
-        <>
-          {/* Top edge */}
-          <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[1, thickness]} />
-            <meshStandardMaterial color="#444444" />
-          </mesh>
-          {/* Bottom edge */}
-          <mesh position={[0, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[1, thickness]} />
-            <meshStandardMaterial color="#444444" />
-          </mesh>
-          {/* Left edge */}
-          <mesh position={[-0.5, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
-            <planeGeometry args={[thickness, 1]} />
-            <meshStandardMaterial color="#444444" />
-          </mesh>
-          {/* Right edge */}
-          <mesh position={[0.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
-            <planeGeometry args={[thickness, 1]} />
-            <meshStandardMaterial color="#444444" />
-          </mesh>
-        </>
-      )}
-    </group>
+      <boxGeometry args={[1, 1, thickness]} />
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        alphaTest={0.01}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
   );
 }
 
