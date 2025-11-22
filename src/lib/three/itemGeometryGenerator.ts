@@ -4,8 +4,9 @@
  * Creates custom BufferGeometry from texture alpha channel to achieve
  * the Minecraft item rendering effect where:
  * - Front/back faces show the full texture
- * - Edge faces show a 1-pixel slice from the texture edges
- * - Shape follows the non-transparent pixels
+ * - Edge faces are pixel-perfect rectangular quads (no smooth interpolation)
+ * - Each pixel gets its own edge faces where exposed
+ * - Sharp, blocky appearance matching Minecraft's aesthetic
  */
 
 import * as THREE from 'three';
@@ -14,11 +15,6 @@ interface PixelData {
   width: number;
   height: number;
   data: Uint8ClampedArray;
-}
-
-interface Point {
-  x: number;
-  y: number;
 }
 
 /**
@@ -61,17 +57,68 @@ function isPixelOpaque(pixelData: PixelData, x: number, y: number, threshold = 1
 }
 
 /**
- * Finds the bounding box of non-transparent pixels
+ * Generates custom BufferGeometry for a Minecraft-style item with pixel-perfect edges
  */
-function findBoundingBox(pixelData: PixelData): { minX: number; minY: number; maxX: number; maxY: number } {
-  let minX = pixelData.width;
-  let minY = pixelData.height;
-  let maxX = 0;
-  let maxY = 0;
+export function generateItemGeometry(
+  texture: THREE.Texture,
+  thickness: number = 0.0625 // 1/16 block (1 pixel in Minecraft scale)
+): THREE.BufferGeometry {
+  const pixelData = readTexturePixels(texture);
 
-  for (let y = 0; y < pixelData.height; y++) {
-    for (let x = 0; x < pixelData.width; x++) {
+  const width = pixelData.width;
+  const height = pixelData.height;
+  const halfThickness = thickness / 2;
+
+  const vertices: number[] = [];
+  const indices: number[] = [];
+  const uvs: number[] = [];
+  const normals: number[] = [];
+
+  // Pixel size in normalized coordinates (texture covers -0.5 to 0.5)
+  const pixelWidth = 1.0 / width;
+  const pixelHeight = 1.0 / height;
+
+  // Helper to add a quad (two triangles)
+  function addQuad(
+    v1: [number, number, number],
+    v2: [number, number, number],
+    v3: [number, number, number],
+    v4: [number, number, number],
+    uv1: [number, number],
+    uv2: [number, number],
+    uv3: [number, number],
+    uv4: [number, number],
+    normal: [number, number, number]
+  ) {
+    const startIdx = vertices.length / 3;
+
+    // Add vertices
+    vertices.push(...v1, ...v2, ...v3, ...v4);
+
+    // Add UVs
+    uvs.push(...uv1, ...uv2, ...uv3, ...uv4);
+
+    // Add normals (same for all 4 vertices)
+    normals.push(...normal, ...normal, ...normal, ...normal);
+
+    // Add indices for two triangles
+    indices.push(
+      startIdx, startIdx + 1, startIdx + 2,
+      startIdx, startIdx + 2, startIdx + 3
+    );
+  }
+
+  // First pass: Create front and back faces as single textured quads
+  // This is more efficient than per-pixel quads and looks correct with texture mapping
+
+  // Find bounding box of opaque pixels
+  let minX = width, minY = height, maxX = 0, maxY = 0;
+  let hasOpaquePixels = false;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
       if (isPixelOpaque(pixelData, x, y)) {
+        hasOpaquePixels = true;
         minX = Math.min(minX, x);
         minY = Math.min(minY, y);
         maxX = Math.max(maxX, x);
@@ -80,225 +127,140 @@ function findBoundingBox(pixelData: PixelData): { minX: number; minY: number; ma
     }
   }
 
-  return { minX, minY, maxX, maxY };
-}
+  if (!hasOpaquePixels) {
+    // Return empty geometry if no opaque pixels
+    return new THREE.BufferGeometry();
+  }
 
-/**
- * Traces the outline of the shape using marching squares algorithm
- * Returns a simplified polygon outline
- */
-function traceOutline(pixelData: PixelData): Point[] {
-  const bbox = findBoundingBox(pixelData);
+  // Add 1 to max to include the full pixel
+  maxX += 1;
+  maxY += 1;
 
-  // For now, we'll create a simple rectangular outline based on the bounding box
-  // This is a good starting point and works well for most items
-  // Can be enhanced later with true marching squares for complex shapes
+  // Convert pixel coordinates to normalized coordinates (-0.5 to 0.5, centered)
+  const x1 = (minX / width) - 0.5;
+  const x2 = (maxX / width) - 0.5;
+  const y1 = -((minY / height) - 0.5); // Flip Y
+  const y2 = -((maxY / height) - 0.5); // Flip Y
 
-  const outline: Point[] = [];
+  const u1 = minX / width;
+  const u2 = maxX / width;
+  const v1 = minY / height;
+  const v2 = maxY / height;
 
-  // Convert pixel coordinates to normalized coordinates (0-1)
-  // and center them
-  const width = pixelData.width;
-  const height = pixelData.height;
+  // Front face (z = halfThickness)
+  addQuad(
+    [x1, y1, halfThickness],
+    [x2, y1, halfThickness],
+    [x2, y2, halfThickness],
+    [x1, y2, halfThickness],
+    [u1, 1 - v1],
+    [u2, 1 - v1],
+    [u2, 1 - v2],
+    [u1, 1 - v2],
+    [0, 0, 1]
+  );
 
-  // Create outline points for the bounding box
-  // We'll scan the edges to create a more detailed outline
-  const points = new Set<string>();
+  // Back face (z = -halfThickness)
+  addQuad(
+    [x2, y1, -halfThickness],
+    [x1, y1, -halfThickness],
+    [x1, y2, -halfThickness],
+    [x2, y2, -halfThickness],
+    [u2, 1 - v1],
+    [u1, 1 - v1],
+    [u1, 1 - v2],
+    [u2, 1 - v2],
+    [0, 0, -1]
+  );
 
-  // Scan top and bottom edges
-  for (let x = bbox.minX; x <= bbox.maxX; x++) {
-    // Top edge
-    for (let y = bbox.minY; y <= bbox.maxY; y++) {
-      if (isPixelOpaque(pixelData, x, y)) {
-        points.add(`${x},${y}`);
-        break;
+  // Second pass: Create pixel-perfect edge faces
+  // For each opaque pixel, check its neighbors and create edge faces where exposed
+
+  for (let py = 0; py < height; py++) {
+    for (let px = 0; px < width; px++) {
+      if (!isPixelOpaque(pixelData, px, py)) {
+        continue;
+      }
+
+      // Convert pixel coordinates to normalized coordinates
+      const pixelX1 = (px / width) - 0.5;
+      const pixelX2 = ((px + 1) / width) - 0.5;
+      const pixelY1 = -((py / height) - 0.5); // Flip Y
+      const pixelY2 = -(((py + 1) / height) - 0.5); // Flip Y
+
+      // UV coordinates for this pixel (use the pixel's center for edge faces)
+      const pixelU1 = px / width;
+      const pixelU2 = (px + 1) / width;
+      const pixelV1 = py / height;
+      const pixelV2 = (py + 1) / height;
+
+      // For edges, we want to sample from the edge of the pixel
+      // Use the same UV for all edge vertices of a given edge
+
+      // Check left neighbor (x - 1)
+      if (!isPixelOpaque(pixelData, px - 1, py)) {
+        // Left edge exposed - create a vertical face
+        addQuad(
+          [pixelX1, pixelY1, -halfThickness],
+          [pixelX1, pixelY1, halfThickness],
+          [pixelX1, pixelY2, halfThickness],
+          [pixelX1, pixelY2, -halfThickness],
+          [pixelU1, 1 - pixelV1],
+          [pixelU1, 1 - pixelV1],
+          [pixelU1, 1 - pixelV2],
+          [pixelU1, 1 - pixelV2],
+          [-1, 0, 0]
+        );
+      }
+
+      // Check right neighbor (x + 1)
+      if (!isPixelOpaque(pixelData, px + 1, py)) {
+        // Right edge exposed
+        addQuad(
+          [pixelX2, pixelY1, halfThickness],
+          [pixelX2, pixelY1, -halfThickness],
+          [pixelX2, pixelY2, -halfThickness],
+          [pixelX2, pixelY2, halfThickness],
+          [pixelU2, 1 - pixelV1],
+          [pixelU2, 1 - pixelV1],
+          [pixelU2, 1 - pixelV2],
+          [pixelU2, 1 - pixelV2],
+          [1, 0, 0]
+        );
+      }
+
+      // Check top neighbor (y - 1)
+      if (!isPixelOpaque(pixelData, px, py - 1)) {
+        // Top edge exposed
+        addQuad(
+          [pixelX1, pixelY1, halfThickness],
+          [pixelX2, pixelY1, halfThickness],
+          [pixelX2, pixelY1, -halfThickness],
+          [pixelX1, pixelY1, -halfThickness],
+          [pixelU1, 1 - pixelV1],
+          [pixelU2, 1 - pixelV1],
+          [pixelU2, 1 - pixelV1],
+          [pixelU1, 1 - pixelV1],
+          [0, 1, 0]
+        );
+      }
+
+      // Check bottom neighbor (y + 1)
+      if (!isPixelOpaque(pixelData, px, py + 1)) {
+        // Bottom edge exposed
+        addQuad(
+          [pixelX2, pixelY2, halfThickness],
+          [pixelX1, pixelY2, halfThickness],
+          [pixelX1, pixelY2, -halfThickness],
+          [pixelX2, pixelY2, -halfThickness],
+          [pixelU2, 1 - pixelV2],
+          [pixelU1, 1 - pixelV2],
+          [pixelU1, 1 - pixelV2],
+          [pixelU2, 1 - pixelV2],
+          [0, -1, 0]
+        );
       }
     }
-    // Bottom edge
-    for (let y = bbox.maxY; y >= bbox.minY; y--) {
-      if (isPixelOpaque(pixelData, x, y)) {
-        points.add(`${x},${y}`);
-        break;
-      }
-    }
-  }
-
-  // Scan left and right edges
-  for (let y = bbox.minY; y <= bbox.maxY; y++) {
-    // Left edge
-    for (let x = bbox.minX; x <= bbox.maxX; x++) {
-      if (isPixelOpaque(pixelData, x, y)) {
-        points.add(`${x},${y}`);
-        break;
-      }
-    }
-    // Right edge
-    for (let x = bbox.maxX; x >= bbox.minX; x--) {
-      if (isPixelOpaque(pixelData, x, y)) {
-        points.add(`${x},${y}`);
-        break;
-      }
-    }
-  }
-
-  // Convert to array and sort to create a proper outline
-  const pointArray = Array.from(points).map(p => {
-    const [x, y] = p.split(',').map(Number);
-    return { x, y };
-  });
-
-  // Sort points to create a clockwise outline
-  // Group by edges
-  const topEdge = pointArray.filter(p => p.y === bbox.minY).sort((a, b) => a.x - b.x);
-  const rightEdge = pointArray.filter(p => p.x === bbox.maxX && p.y !== bbox.minY && p.y !== bbox.maxY).sort((a, b) => a.y - b.y);
-  const bottomEdge = pointArray.filter(p => p.y === bbox.maxY).sort((a, b) => b.x - a.x);
-  const leftEdge = pointArray.filter(p => p.x === bbox.minX && p.y !== bbox.minY && p.y !== bbox.maxY).sort((a, b) => b.y - a.y);
-
-  // Combine edges
-  outline.push(...topEdge, ...rightEdge, ...bottomEdge, ...leftEdge);
-
-  // If we didn't get enough points, fall back to simple bounding box
-  if (outline.length < 4) {
-    outline.length = 0;
-    outline.push(
-      { x: bbox.minX, y: bbox.minY },
-      { x: bbox.maxX, y: bbox.minY },
-      { x: bbox.maxX, y: bbox.maxY },
-      { x: bbox.minX, y: bbox.maxY }
-    );
-  }
-
-  return outline;
-}
-
-/**
- * Generates custom BufferGeometry for a Minecraft-style item
- */
-export function generateItemGeometry(
-  texture: THREE.Texture,
-  thickness: number = 0.0625 // 1/16 block (1 pixel in Minecraft scale)
-): THREE.BufferGeometry {
-  const pixelData = readTexturePixels(texture);
-  const outline = traceOutline(pixelData);
-
-  const width = pixelData.width;
-  const height = pixelData.height;
-
-  // Normalize outline points to -0.5 to 0.5 range (centered)
-  const normalizedOutline = outline.map(p => ({
-    x: (p.x / width) - 0.5,
-    y: -((p.y / height) - 0.5), // Flip Y for Three.js coordinate system
-    u: p.x / width,
-    v: p.y / height,
-  }));
-
-  const vertices: number[] = [];
-  const indices: number[] = [];
-  const uvs: number[] = [];
-  const normals: number[] = [];
-
-  const halfThickness = thickness / 2;
-
-  // Create vertices for front and back faces
-  const numOutlinePoints = normalizedOutline.length;
-
-  // Front face vertices (z = halfThickness)
-  for (let i = 0; i < numOutlinePoints; i++) {
-    const p = normalizedOutline[i];
-    vertices.push(p.x, p.y, halfThickness);
-    uvs.push(p.u, 1 - p.v); // Flip V coordinate for Three.js
-    normals.push(0, 0, 1); // Front face normal
-  }
-
-  // Back face vertices (z = -halfThickness)
-  for (let i = 0; i < numOutlinePoints; i++) {
-    const p = normalizedOutline[i];
-    vertices.push(p.x, p.y, -halfThickness);
-    uvs.push(p.u, 1 - p.v); // Same UV as front
-    normals.push(0, 0, -1); // Back face normal
-  }
-
-  // Triangulate front face using fan triangulation from center
-  // Calculate center point for fan triangulation
-  const centerX = normalizedOutline.reduce((sum, p) => sum + p.x, 0) / numOutlinePoints;
-  const centerY = normalizedOutline.reduce((sum, p) => sum + p.y, 0) / numOutlinePoints;
-  const centerU = normalizedOutline.reduce((sum, p) => sum + p.u, 0) / numOutlinePoints;
-  const centerV = normalizedOutline.reduce((sum, p) => sum + p.v, 0) / numOutlinePoints;
-
-  // Add center vertex for front face
-  const frontCenterIndex = vertices.length / 3;
-  vertices.push(centerX, centerY, halfThickness);
-  uvs.push(centerU, 1 - centerV);
-  normals.push(0, 0, 1);
-
-  // Add center vertex for back face
-  const backCenterIndex = vertices.length / 3;
-  vertices.push(centerX, centerY, -halfThickness);
-  uvs.push(centerU, 1 - centerV);
-  normals.push(0, 0, -1);
-
-  // Create front face triangles (counter-clockwise)
-  for (let i = 0; i < numOutlinePoints; i++) {
-    const next = (i + 1) % numOutlinePoints;
-    indices.push(frontCenterIndex, i, next);
-  }
-
-  // Create back face triangles (clockwise for correct facing)
-  for (let i = 0; i < numOutlinePoints; i++) {
-    const next = (i + 1) % numOutlinePoints;
-    indices.push(backCenterIndex, numOutlinePoints + next, numOutlinePoints + i);
-  }
-
-  // Create edge faces connecting front and back
-  for (let i = 0; i < numOutlinePoints; i++) {
-    const next = (i + 1) % numOutlinePoints;
-
-    const frontIdx1 = i;
-    const frontIdx2 = next;
-    const backIdx1 = numOutlinePoints + i;
-    const backIdx2 = numOutlinePoints + next;
-
-    // Calculate edge normal (perpendicular to edge direction)
-    const p1 = normalizedOutline[i];
-    const p2 = normalizedOutline[next];
-    const edgeX = p2.x - p1.x;
-    const edgeY = p2.y - p1.y;
-    const edgeLength = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
-
-    // Normal perpendicular to edge (pointing outward)
-    const normalX = -edgeY / edgeLength;
-    const normalY = edgeX / edgeLength;
-
-    // Create two triangles for this edge face
-    // We need to add new vertices for the edge because they need different UVs and normals
-    const edgeVertexStart = vertices.length / 3;
-
-    // Add 4 vertices for this edge quad
-    // Front-left
-    vertices.push(p1.x, p1.y, halfThickness);
-    uvs.push(p1.u, 1 - p1.v); // Use edge pixel UV
-    normals.push(normalX, normalY, 0);
-
-    // Front-right
-    vertices.push(p2.x, p2.y, halfThickness);
-    uvs.push(p2.u, 1 - p2.v);
-    normals.push(normalX, normalY, 0);
-
-    // Back-right
-    vertices.push(p2.x, p2.y, -halfThickness);
-    uvs.push(p2.u, 1 - p2.v);
-    normals.push(normalX, normalY, 0);
-
-    // Back-left
-    vertices.push(p1.x, p1.y, -halfThickness);
-    uvs.push(p1.u, 1 - p1.v);
-    normals.push(normalX, normalY, 0);
-
-    // Create two triangles for the quad
-    indices.push(
-      edgeVertexStart, edgeVertexStart + 1, edgeVertexStart + 2,
-      edgeVertexStart, edgeVertexStart + 2, edgeVertexStart + 3
-    );
   }
 
   // Create BufferGeometry
@@ -308,9 +270,6 @@ export function generateItemGeometry(
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
   geometry.setIndex(indices);
-
-  // Compute vertex normals for smooth shading (optional, we already set normals)
-  // geometry.computeVertexNormals();
 
   return geometry;
 }
