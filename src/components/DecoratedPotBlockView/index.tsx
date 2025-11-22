@@ -19,9 +19,10 @@ export interface DecoratedPotSides {
 interface Props {
   sides?: DecoratedPotSides;
   singleShard?: string; // For pottery shard items, show this on all sides
+  entityTexture?: string; // For entity decorated pot textures
 }
 
-export default function DecoratedPotBlockView({ sides, singleShard }: Props) {
+export default function DecoratedPotBlockView({ sides, singleShard, entityTexture }: Props) {
   // Determine which decorated pot asset to show
   // For now, we'll use the basic decorated_pot block
   const decoratedPotAssetId = "minecraft:block/decorated_pot";
@@ -33,6 +34,11 @@ export default function DecoratedPotBlockView({ sides, singleShard }: Props) {
         {singleShard && (
           <p className={s.description}>
             Preview of this pottery shard on a decorated pot
+          </p>
+        )}
+        {entityTexture && (
+          <p className={s.description}>
+            Preview of this pattern on a decorated pot
           </p>
         )}
         {sides && (
@@ -109,6 +115,8 @@ export default function DecoratedPotBlockView({ sides, singleShard }: Props) {
         <p className={s.infoText}>
           {singleShard
             ? "This pottery shard pattern would appear on each side of a decorated pot."
+            : entityTexture
+            ? "This pattern would appear on the side of a decorated pot. Rotate the view to see all sides."
             : "Rotate the view to see all sides of the decorated pot."}
         </p>
         {!singleShard && sides && (
@@ -121,7 +129,7 @@ export default function DecoratedPotBlockView({ sides, singleShard }: Props) {
                   ?.replace("pottery_shard_", "")
                   ?.replace("_", " ")
                   ?.split(" ")
-                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
                   .join(" ") || "Brick";
                 return (
                   <div key={side} className={s.sideInfo}>

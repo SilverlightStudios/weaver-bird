@@ -229,7 +229,7 @@ const AssetCard = memo(
       winnerPack,
     ]);
 
-    // Generate display name with special handling for paintings and pottery shards
+    // Generate display name with special handling for paintings, pottery shards, and entity decorated pots
     const displayName = useMemo(() => {
       const baseName = asset.name || beautifyAssetName(asset.id);
 
@@ -252,6 +252,16 @@ const AssetCard = memo(
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(" ");
         return `Pottery Shard - ${formattedShardType}`;
+      }
+
+      // Special handling for entity decorated pot textures: show "Pattern - Decorated Pot"
+      if (path.startsWith("entity/decorated_pot/")) {
+        const patternName = path.replace("entity/decorated_pot/", "").replace(/\.png$/, "");
+        const formattedPatternName = patternName
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        return `${formattedPatternName} - Decorated Pot`;
       }
 
       return baseName;

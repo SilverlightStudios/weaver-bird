@@ -22,6 +22,7 @@ import VariantChooser from "@components/VariantChooser";
 import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
 import TextureVariantSelector from "@components/TextureVariantSelector";
 import PaintingSelector from "@components/PaintingSelector";
+import PotteryShardSelector from "@components/PotteryShardSelector";
 import DecoratedPotConfigurator from "@components/DecoratedPotConfigurator";
 import DecoratedPotBlockView from "@components/DecoratedPotBlockView";
 import { groupAssetsByVariant } from "@lib/assetUtils";
@@ -180,6 +181,10 @@ export default function OptionsPanel({
     const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
     return path === "block/decorated_pot";
   })() : false;
+  const isEntityDecoratedPot = assetId ? (() => {
+    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+    return path.startsWith("entity/decorated_pot/");
+  })() : false;
   const selectedWinnerPackId = useSelectWinner(assetId ?? "");
   const winnerPackId = assetId ? selectedWinnerPackId : null;
   const packsDir = useSelectPacksDir();
@@ -257,16 +262,20 @@ export default function OptionsPanel({
   const shouldShowBlockStateTab =
     !isColormapSelection && !isItem && (schema?.properties.length ?? 0) > 0;
   // Item tab shows item display controls (rotation, display mode)
-  const shouldShowItemTab = isItem && !isPotteryShard; // Exclude pottery shards from item tab
+  const shouldShowItemTab = isItem && !isPotteryShard && !isEntityDecoratedPot; // Exclude pottery shards and entity decorated pots from item tab
   // Painting tab shows all available paintings to select from
   const shouldShowPaintingTab = isPainting && allAssets.length > 0;
   // Pottery shard tab shows 3D decorated pot preview with this shard
   const shouldShowPotteryShardTab = isPotteryShard;
   // Decorated pot tab shows configurator for each side
   const shouldShowDecoratedPotTab = isDecoratedPot && allAssets.length > 0;
+  // Entity decorated pot texture tab shows 2D texture view and 3D pot preview
+  const shouldShowEntityDecoratedPotTab = isEntityDecoratedPot;
 
   const defaultTab = shouldShowPotteryShardTab
     ? "pottery-shard"
+    : shouldShowEntityDecoratedPotTab
+    ? "entity-pot-texture"
     : shouldShowDecoratedPotTab
     ? "decorated-pot"
     : shouldShowPaintingTab
@@ -318,6 +327,12 @@ export default function OptionsPanel({
           {shouldShowPotteryShardTab && (
             <TabIcon icon="🏺" label="Pottery Shard" value="pottery-shard" />
           )}
+          {shouldShowEntityDecoratedPotTab && (
+            <>
+              <TabIcon icon="🖼" label="Texture" value="entity-pot-texture" />
+              <TabIcon icon="🏺" label="3D Pot" value="entity-pot" />
+            </>
+          )}
           {shouldShowDecoratedPotTab && (
             <TabIcon icon="🏺" label="Decorated Pot" value="decorated-pot" />
           )}
@@ -347,8 +362,66 @@ export default function OptionsPanel({
 
         {shouldShowPotteryShardTab && (
           <TabsContent value="pottery-shard">
-            <DecoratedPotBlockView singleShard={assetId} />
+            <div style={{ padding: "1rem" }}>
+              {onSelectVariant && allAssets.length > 0 && (
+                <>
+                  <PotteryShardSelector
+                    assetId={assetId}
+                    allAssets={allAssets}
+                    onSelectShard={onSelectVariant}
+                    includeItems={true}
+                    includeEntity={false}
+                  />
+                  <Separator style={{ margin: "1rem 0" }} />
+                </>
+              )}
+              <DecoratedPotBlockView singleShard={assetId} />
+            </div>
           </TabsContent>
+        )}
+
+        {shouldShowEntityDecoratedPotTab && (
+          <>
+            <TabsContent value="entity-pot-texture">
+              <div style={{ padding: "1rem" }}>
+                {onSelectVariant && allAssets.length > 0 && (
+                  <>
+                    <PotteryShardSelector
+                      assetId={assetId}
+                      allAssets={allAssets}
+                      onSelectShard={onSelectVariant}
+                      includeItems={false}
+                      includeEntity={true}
+                    />
+                    <Separator style={{ margin: "1rem 0" }} />
+                  </>
+                )}
+                <h3>Decorated Pot Texture</h3>
+                <Separator style={{ margin: "0.75rem 0" }} />
+                <p style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
+                  This is the 2D texture pattern used on decorated pots.
+                </p>
+                {/* Texture preview will be shown in the main preview area */}
+              </div>
+            </TabsContent>
+            <TabsContent value="entity-pot">
+              <div style={{ padding: "1rem" }}>
+                {onSelectVariant && allAssets.length > 0 && (
+                  <>
+                    <PotteryShardSelector
+                      assetId={assetId}
+                      allAssets={allAssets}
+                      onSelectShard={onSelectVariant}
+                      includeItems={false}
+                      includeEntity={true}
+                    />
+                    <Separator style={{ margin: "1rem 0" }} />
+                  </>
+                )}
+                <DecoratedPotBlockView entityTexture={assetId} />
+              </div>
+            </TabsContent>
+          </>
         )}
 
         {shouldShowDecoratedPotTab && (
