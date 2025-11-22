@@ -161,9 +161,7 @@ export function generateItemGeometry(
   const v1 = minY / height;
   const v2 = maxY / height;
 
-  // Front face (z = halfThickness) - CYAN for debugging
-  // TEMPORARILY DISABLED to see edges more clearly
-  /*
+  // Front face (z = halfThickness)
   addQuad(
     [x1, y1, halfThickness],
     [x2, y1, halfThickness],
@@ -173,11 +171,10 @@ export function generateItemGeometry(
     [u2, 1 - v1],
     [u2, 1 - v2],
     [u1, 1 - v2],
-    [0, 0, 1],
-    [0, 1, 1] // Cyan
+    [0, 0, 1]
   );
 
-  // Back face (z = -halfThickness) - MAGENTA for debugging
+  // Back face (z = -halfThickness)
   addQuad(
     [x2, y1, -halfThickness],
     [x1, y1, -halfThickness],
@@ -187,23 +184,15 @@ export function generateItemGeometry(
     [u1, 1 - v1],
     [u1, 1 - v2],
     [u2, 1 - v2],
-    [0, 0, -1],
-    [1, 0, 1] // Magenta
+    [0, 0, -1]
   );
-  */
 
   // Second pass: Create pixel-perfect edge faces
   // ONLY at perimeter (where there's a transparent neighbor or texture edge)
 
-  let edgeCounts = { left: 0, right: 0, top: 0, bottom: 0 };
-
-  // Track which pixels create edges for debugging
-  const edgeMap: string[][] = Array(height).fill(null).map(() => Array(width).fill('.'));
-
   for (let py = 0; py < height; py++) {
     for (let px = 0; px < width; px++) {
       if (!isPixelOpaque(pixelData, px, py)) {
-        edgeMap[py][px] = 'O'; // Air
         continue;
       }
 
@@ -214,8 +203,10 @@ export function generateItemGeometry(
       const pixelY2 = -(((py + 1) / height) - 0.5); // Flip Y
 
       // UV coordinates for this pixel
-      // Add small epsilon to avoid sampling exactly at texture boundaries (0.0 or 1.0)
-      // which can cause precision issues in WebGL texture sampling
+      // IMPORTANT: Offset UVs slightly inward from pixel boundaries to avoid sampling at
+      // exactly 0.0 or 1.0 in texture space, which can cause WebGL precision issues where
+      // the sampler may grab values outside valid texture range, resulting in transparent
+      // pixels that fail alphaTest and cause faces to be discarded.
       const uvEpsilon = 0.5 / width; // Half a pixel offset
       const pixelU1 = (px / width) + uvEpsilon;
       const pixelU2 = ((px + 1) / width) - uvEpsilon;
@@ -228,89 +219,52 @@ export function generateItemGeometry(
       const hasTopNeighbor = isPixelOpaque(pixelData, px, py - 1);
       const hasBottomNeighbor = isPixelOpaque(pixelData, px, py + 1);
 
-      // Determine if this pixel has any edges (E) or is internal (X)
-      const hasAnyEdge = !hasLeftNeighbor || !hasRightNeighbor || !hasTopNeighbor || !hasBottomNeighbor;
-      edgeMap[py][px] = hasAnyEdge ? 'E' : 'X';
-
-      // LEFT edge - TEST: Use GREEN to see if green color works here
+      // LEFT edge
       if (!hasLeftNeighbor) {
-        const leftVerts: [number, number, number][] = [
+        addQuad(
           [pixelX1, pixelY1, halfThickness],
           [pixelX1, pixelY1, -halfThickness],
           [pixelX1, pixelY2, -halfThickness],
           [pixelX1, pixelY2, halfThickness],
-        ];
-
-        // Log every left edge
-        console.log(`[LEFT-${edgeCounts.left}] px=${px}, X=${pixelX1.toFixed(4)}, verts: [${leftVerts[0][0].toFixed(3)},${leftVerts[0][1].toFixed(3)},${leftVerts[0][2].toFixed(3)}]...`);
-
-        addQuad(
-          leftVerts[0], leftVerts[1], leftVerts[2], leftVerts[3],
           [pixelU1, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
           [pixelU1, 1 - pixelV2],
           [pixelU1, 1 - pixelV2],
-          [-1, 0, 0],
-          [0, 1, 0] // GREEN (swapped from RED)
+          [-1, 0, 0]
         );
-        edgeCounts.left++;
       }
 
-      // RIGHT edge - RADICAL TEST: Copy LEFT pattern exactly (same vertex order, no reverse)
+      // RIGHT edge
       if (!hasRightNeighbor) {
-        const rightVerts: [number, number, number][] = [
-          [pixelX2, pixelY1, halfThickness],    // Match LEFT: top-front first
-          [pixelX2, pixelY1, -halfThickness],   // Match LEFT: top-back second
-          [pixelX2, pixelY2, -halfThickness],   // Match LEFT: bottom-back third
-          [pixelX2, pixelY2, halfThickness],    // Match LEFT: bottom-front fourth
-        ];
-
-        // Log every right edge
-        console.log(`[RIGHT-${edgeCounts.right}] px=${px}, X=${pixelX2.toFixed(4)}, verts: [${rightVerts[0][0].toFixed(3)},${rightVerts[0][1].toFixed(3)},${rightVerts[0][2].toFixed(3)}]...`);
-
         addQuad(
-          rightVerts[0], rightVerts[1], rightVerts[2], rightVerts[3],
+          [pixelX2, pixelY1, halfThickness],
+          [pixelX2, pixelY1, -halfThickness],
+          [pixelX2, pixelY2, -halfThickness],
+          [pixelX2, pixelY2, halfThickness],
           [pixelU2, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
           [pixelU2, 1 - pixelV2],
           [pixelU2, 1 - pixelV2],
-          [1, 0, 0],
-          [1, 0, 0], // RED
-          false // NO REVERSE - exact copy of LEFT
+          [1, 0, 0]
         );
-        edgeCounts.right++;
       }
 
-      // TOP edge - TEST: Use YELLOW to see if yellow color works here
+      // TOP edge
       if (!hasTopNeighbor) {
-        const topVerts = [
+        addQuad(
           [pixelX2, pixelY1, halfThickness],
           [pixelX1, pixelY1, halfThickness],
           [pixelX1, pixelY1, -halfThickness],
           [pixelX2, pixelY1, -halfThickness],
-        ] as [number, number, number][];
-
-        // Log first top edge only
-        if (edgeCounts.top === 0) {
-          console.log('[DEBUG-TOP] First TOP edge vertices:', topVerts);
-          console.log('[DEBUG-TOP] Using REVERSE WINDING for top edge');
-          console.log('[DEBUG-TOP] Pixel coords:', { px, py, pixelY1, pixelY2, halfThickness });
-        }
-
-        addQuad(
-          topVerts[0], topVerts[1], topVerts[2], topVerts[3],
           [pixelU2, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
-          [0, 1, 0],
-          [1, 1, 0], // YELLOW (swapped from BLUE)
-          true // REVERSE WINDING
+          [0, 1, 0]
         );
-        edgeCounts.top++;
       }
 
-      // BOTTOM edge - TEST: Use BLUE to see if blue color works here
+      // BOTTOM edge
       if (!hasBottomNeighbor) {
         addQuad(
           [pixelX2, pixelY2, halfThickness],
@@ -321,71 +275,10 @@ export function generateItemGeometry(
           [pixelU1, 1 - pixelV2],
           [pixelU1, 1 - pixelV2],
           [pixelU2, 1 - pixelV2],
-          [0, -1, 0],
-          [0, 0, 1] // BLUE (swapped from YELLOW)
+          [0, -1, 0]
         );
-        edgeCounts.bottom++;
       }
     }
-  }
-
-  // Print edge map for verification
-  console.log('[ItemGeometry] Edge map (O=air, E=edge pixel, X=internal):');
-  console.log('   ', Array.from({length: width}, (_, i) => i.toString().padStart(2)).join(' '));
-  edgeMap.forEach((row, y) => {
-    console.log(y.toString().padStart(2), ' ', row.map(c => c + ' ').join(' '));
-  });
-
-  console.log('[ItemGeometry] Edge face counts (perimeter only):', edgeCounts);
-  console.log('[ItemGeometry] Total vertices:', vertices.length / 3);
-  console.log('[ItemGeometry] Total indices:', indices.length);
-  console.log('[ItemGeometry] Bounding box used for front/back (disabled):', { x1, x2, y1, y2, minX, maxX, minY, maxY });
-
-  // Calculate actual vertex bounds to check for clipping
-  let minVertX = Infinity, maxVertX = -Infinity;
-  let minVertY = Infinity, maxVertY = -Infinity;
-  let minVertZ = Infinity, maxVertZ = -Infinity;
-  let invalidVertices = 0;
-
-  for (let i = 0; i < vertices.length; i += 3) {
-    const x = vertices[i];
-    const y = vertices[i + 1];
-    const z = vertices[i + 2];
-
-    if (!isFinite(x) || !isFinite(y) || !isFinite(z)) {
-      invalidVertices++;
-      continue;
-    }
-
-    minVertX = Math.min(minVertX, x);
-    maxVertX = Math.max(maxVertX, x);
-    minVertY = Math.min(minVertY, y);
-    maxVertY = Math.max(maxVertY, y);
-    minVertZ = Math.min(minVertZ, z);
-    maxVertZ = Math.max(maxVertZ, z);
-  }
-
-  console.log('[ItemGeometry] ACTUAL vertex bounds:', {
-    x: [minVertX, maxVertX],
-    y: [minVertY, maxVertY],
-    z: [minVertZ, maxVertZ]
-  });
-
-  if (invalidVertices > 0) {
-    console.error('[ItemGeometry] Found ' + invalidVertices + ' invalid vertices (NaN or Infinity)!');
-  }
-
-  console.log('[ItemGeometry] Sample vertices by type (first 12 vertices):');
-  for (let i = 0; i < Math.min(12, vertices.length / 3); i++) {
-    const vIdx = i * 3;
-    console.log(`  Vertex ${i}: [${vertices[vIdx].toFixed(4)}, ${vertices[vIdx + 1].toFixed(4)}, ${vertices[vIdx + 2].toFixed(4)}]`);
-  }
-
-  // Log indices for first few quads to verify they're correct
-  console.log('[ItemGeometry] Sample indices (first 6 triangles = 3 quads):');
-  for (let i = 0; i < Math.min(18, indices.length); i += 3) {
-    const i0 = indices[i], i1 = indices[i+1], i2 = indices[i+2];
-    console.log(`  Triangle ${Math.floor(i/3)}: indices [${i0}, ${i1}, ${i2}] => verts [${i0}]=[${vertices[i0*3].toFixed(3)},${vertices[i0*3+1].toFixed(3)},${vertices[i0*3+2].toFixed(3)}], [${i1}]=[${vertices[i1*3].toFixed(3)},${vertices[i1*3+1].toFixed(3)},${vertices[i1*3+2].toFixed(3)}], [${i2}]=[${vertices[i2*3].toFixed(3)},${vertices[i2*3+1].toFixed(3)},${vertices[i2*3+2].toFixed(3)}]`);
   }
 
   // Create BufferGeometry

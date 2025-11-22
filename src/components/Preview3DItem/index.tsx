@@ -146,7 +146,6 @@ function ItemMesh({ texturePath, rotate, displayMode }: ItemMeshProps) {
         alphaTest={0.01}
         side={THREE.DoubleSide}
         flatShading={false}
-        vertexColors
       />
     </mesh>
   );
@@ -254,11 +253,6 @@ export default function Preview3DItem({
           fov={50}
           near={0.01}
           far={100}
-          onUpdate={(camera) => {
-            if (camera) {
-              console.log('[Camera] near:', camera.near, 'far:', camera.far, 'position:', camera.position.toArray());
-            }
-          }}
         />
 
         <OrbitControls
