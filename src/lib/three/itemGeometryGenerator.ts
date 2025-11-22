@@ -153,6 +153,8 @@ export function generateItemGeometry(
   const v2 = maxY / height;
 
   // Front face (z = halfThickness) - CYAN for debugging
+  // TEMPORARILY DISABLED to see edges more clearly
+  /*
   addQuad(
     [x1, y1, halfThickness],
     [x2, y1, halfThickness],
@@ -179,6 +181,7 @@ export function generateItemGeometry(
     [0, 0, -1],
     [1, 0, 1] // Magenta
   );
+  */
 
   // Second pass: Create pixel-perfect edge faces
   // ONLY at perimeter (where there's a transparent neighbor or texture edge)
@@ -246,11 +249,21 @@ export function generateItemGeometry(
       // TOP edge - BLUE for debugging (only if top neighbor is transparent)
       if (!hasTopNeighbor) {
         // Match BOTTOM pattern: start with front, not back
-        addQuad(
+        const topVerts = [
           [pixelX2, pixelY1, halfThickness],
           [pixelX1, pixelY1, halfThickness],
           [pixelX1, pixelY1, -halfThickness],
           [pixelX2, pixelY1, -halfThickness],
+        ] as [number, number, number][];
+
+        // Log first top edge only
+        if (edgeCounts.top === 0) {
+          console.log('[DEBUG] First TOP edge vertices:', topVerts);
+          console.log('[DEBUG] Pixel coords:', { px, py, pixelY1, pixelY2, halfThickness });
+        }
+
+        addQuad(
+          topVerts[0], topVerts[1], topVerts[2], topVerts[3],
           [pixelU2, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
