@@ -357,11 +357,17 @@ export function generateItemGeometry(
     console.error('[ItemGeometry] Found ' + invalidVertices + ' invalid vertices (NaN or Infinity)!');
   }
 
-  // Log sample vertices from each edge type for inspection
   console.log('[ItemGeometry] Sample vertices by type (first 12 vertices):');
   for (let i = 0; i < Math.min(12, vertices.length / 3); i++) {
     const vIdx = i * 3;
     console.log(`  Vertex ${i}: [${vertices[vIdx].toFixed(4)}, ${vertices[vIdx + 1].toFixed(4)}, ${vertices[vIdx + 2].toFixed(4)}]`);
+  }
+
+  // Log indices for first few quads to verify they're correct
+  console.log('[ItemGeometry] Sample indices (first 6 triangles = 3 quads):');
+  for (let i = 0; i < Math.min(18, indices.length); i += 3) {
+    const i0 = indices[i], i1 = indices[i+1], i2 = indices[i+2];
+    console.log(`  Triangle ${Math.floor(i/3)}: indices [${i0}, ${i1}, ${i2}] => verts [${i0}]=[${vertices[i0*3].toFixed(3)},${vertices[i0*3+1].toFixed(3)},${vertices[i0*3+2].toFixed(3)}], [${i1}]=[${vertices[i1*3].toFixed(3)},${vertices[i1*3+1].toFixed(3)},${vertices[i1*3+2].toFixed(3)}], [${i2}]=[${vertices[i2*3].toFixed(3)},${vertices[i2*3+1].toFixed(3)},${vertices[i2*3+2].toFixed(3)}]`);
   }
 
   // Create BufferGeometry
