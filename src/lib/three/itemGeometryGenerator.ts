@@ -231,15 +231,16 @@ export function generateItemGeometry(
 
       // RIGHT edge - GREEN for debugging (only if right neighbor is transparent)
       if (!hasRightNeighbor) {
+        // REVERSED vertex order to fix winding
         addQuad(
-          [pixelX2, pixelY1, -halfThickness],
-          [pixelX2, pixelY1, halfThickness],
-          [pixelX2, pixelY2, halfThickness],
           [pixelX2, pixelY2, -halfThickness],
-          [pixelU2, 1 - pixelV1],
-          [pixelU2, 1 - pixelV1],
+          [pixelX2, pixelY2, halfThickness],
+          [pixelX2, pixelY1, halfThickness],
+          [pixelX2, pixelY1, -halfThickness],
           [pixelU2, 1 - pixelV2],
           [pixelU2, 1 - pixelV2],
+          [pixelU2, 1 - pixelV1],
+          [pixelU2, 1 - pixelV1],
           [1, 0, 0],
           [0, 1, 0] // GREEN
         );
@@ -248,25 +249,25 @@ export function generateItemGeometry(
 
       // TOP edge - BLUE for debugging (only if top neighbor is transparent)
       if (!hasTopNeighbor) {
-        // Match BOTTOM pattern: start with front, not back
+        // REVERSED vertex order to fix winding (opposite of bottom)
         const topVerts = [
-          [pixelX2, pixelY1, halfThickness],
-          [pixelX1, pixelY1, halfThickness],
           [pixelX1, pixelY1, -halfThickness],
+          [pixelX1, pixelY1, halfThickness],
+          [pixelX2, pixelY1, halfThickness],
           [pixelX2, pixelY1, -halfThickness],
         ] as [number, number, number][];
 
         // Log first top edge only
         if (edgeCounts.top === 0) {
-          console.log('[DEBUG] First TOP edge vertices:', topVerts);
+          console.log('[DEBUG] First TOP edge vertices (REVERSED):', topVerts);
           console.log('[DEBUG] Pixel coords:', { px, py, pixelY1, pixelY2, halfThickness });
         }
 
         addQuad(
           topVerts[0], topVerts[1], topVerts[2], topVerts[3],
+          [pixelU1, 1 - pixelV1],
+          [pixelU1, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
-          [pixelU1, 1 - pixelV1],
-          [pixelU1, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
           [0, 1, 0],
           [0, 0, 1] // BLUE
