@@ -213,11 +213,14 @@ export function generateItemGeometry(
       const pixelY1 = -((py / height) - 0.5); // Flip Y
       const pixelY2 = -(((py + 1) / height) - 0.5); // Flip Y
 
-      // UV coordinates for this pixel (use the pixel's center for edge faces)
-      const pixelU1 = px / width;
-      const pixelU2 = (px + 1) / width;
-      const pixelV1 = py / height;
-      const pixelV2 = (py + 1) / height;
+      // UV coordinates for this pixel
+      // Add small epsilon to avoid sampling exactly at texture boundaries (0.0 or 1.0)
+      // which can cause precision issues in WebGL texture sampling
+      const uvEpsilon = 0.5 / width; // Half a pixel offset
+      const pixelU1 = (px / width) + uvEpsilon;
+      const pixelU2 = ((px + 1) / width) - uvEpsilon;
+      const pixelV1 = (py / height) + uvEpsilon;
+      const pixelV2 = ((py + 1) / height) - uvEpsilon;
 
       // Check each neighbor and create edge face ONLY if neighbor is transparent
       const hasLeftNeighbor = isPixelOpaque(pixelData, px - 1, py);
