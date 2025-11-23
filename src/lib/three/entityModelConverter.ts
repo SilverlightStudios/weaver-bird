@@ -176,16 +176,25 @@ function createBoxMesh(
   const mesh = new THREE.Mesh(geometry, material);
 
   // Position the mesh
-  // JEM box coordinates are RELATIVE to the part's pivot point
-  // They should NOT be negated based on invertAxis - only the part pivot is negated
-  // Calculate center of box from corner position
-  const centerX = (x + width / 2) / MINECRAFT_UNIT;
-  const centerY = (y + height / 2) / MINECRAFT_UNIT;
-  const centerZ = (z + depth / 2) / MINECRAFT_UNIT;
+  // CRITICAL: Box coordinates in JEM are in the same coordinate system as translate
+  // Both need to be negated to convert from JEM space to Three.js space
+  // Then make origin-relative by subtracting part origin (which is negated translate)
+
+  // First, negate the box coordinates (JEM → Three.js coordinate system)
+  const negX = -x;
+  const negY = -y;
+  const negZ = -z;
+
+  // Calculate center of box from corner position (in pixels)
+  const centerX = (negX + width / 2) / MINECRAFT_UNIT;
+  const centerY = (negY + height / 2) / MINECRAFT_UNIT;
+  const centerZ = (negZ + depth / 2) / MINECRAFT_UNIT;
 
   mesh.position.set(centerX, centerY, centerZ);
 
-  console.log(`  - Box center (relative to part): [${centerX.toFixed(3)}, ${centerY.toFixed(3)}, ${centerZ.toFixed(3)}]`);
+  console.log(`  - Box pos (JEM): [${x}, ${y}, ${z}]`);
+  console.log(`  - Box pos (negated): [${negX}, ${negY}, ${negZ}]`);
+  console.log(`  - Box center (Three.js): [${centerX.toFixed(3)}, ${centerY.toFixed(3)}, ${centerZ.toFixed(3)}]`);
 
   // Enable shadows
   mesh.castShadow = true;
