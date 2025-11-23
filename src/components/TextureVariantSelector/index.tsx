@@ -7,6 +7,9 @@ import {
   isInventoryVariant,
   isNumberedVariant,
 } from "@lib/assetUtils";
+import { useSelectWinner } from "@state/selectors";
+import { useStore } from "@state/store";
+import { TextureVariantDropdown } from "./TextureVariantDropdown";
 import s from "./styles.module.scss";
 
 interface Props {
@@ -33,6 +36,10 @@ export default function TextureVariantSelector({
     }
   }, [assetId]);
 
+  // Get the winning pack for the current asset
+  const winnerPackId = useSelectWinner(assetId ?? "");
+  const providersByAsset = useStore((state) => state.providersByAsset);
+
   // Find all variants for the currently selected asset
   const { worldVariants, inventoryVariants } = useMemo(() => {
     if (!assetId) return { worldVariants: [], inventoryVariants: [] };
@@ -56,9 +63,18 @@ export default function TextureVariantSelector({
       (id) => !isPottedPlant(id),
     );
 
+    // Filter to only include variants from the winning pack
+    // This ensures we only show variants from the currently selected resource pack
+    const filteredVariants = winnerPackId
+      ? nonPottedVariants.filter((variantId) => {
+          const providers = providersByAsset[variantId] ?? [];
+          return providers.includes(winnerPackId);
+        })
+      : nonPottedVariants;
+
     // Categorize into world and inventory variants
-    return categorizeVariants(nonPottedVariants);
-  }, [assetId, allAssets]);
+    return categorizeVariants(filteredVariants);
+  }, [assetId, allAssets, winnerPackId, providersByAsset]);
 
   // Determine which variants to show based on current view mode
   const currentVariants = viewMode === "world" ? worldVariants : inventoryVariants;
@@ -116,21 +132,12 @@ export default function TextureVariantSelector({
       {/* Variant selector */}
       {currentVariants.length > 1 ? (
         <>
-          <label className={s.label} htmlFor="texture-variant-select">
-            {viewMode === "world" ? "Texture Variant" : "Inventory Variant"}
-          </label>
-          <select
-            id="texture-variant-select"
-            className={s.select}
-            value={assetId}
-            onChange={(e) => onSelectVariant(e.target.value)}
-          >
-            {currentVariants.map((variantId, index) => (
-              <option key={variantId} value={variantId}>
-                {getVariantDisplayName(variantId, index)}
-              </option>
-            ))}
-          </select>
+          <TextureVariantDropdown
+            variants={currentVariants}
+            selectedVariantId={assetId!}
+            onSelectVariant={onSelectVariant}
+            label={viewMode === "world" ? "Texture Variant" : "Inventory Variant"}
+          />
           <div className={s.hint}>
             {currentVariants.length} variant{currentVariants.length !== 1 ? "s" : ""} available
           </div>
