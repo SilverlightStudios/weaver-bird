@@ -37,6 +37,13 @@ export function beautifyAssetName(assetId: string): string {
   // Remove "minecraft:block/" or "minecraft:" prefix
   let name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
 
+  // For multi-level paths (gui/sprites/hud/jump_bar_background, mob_effect/jump_boost),
+  // extract just the last part of the path for cleaner display names
+  if (name.includes('/')) {
+    const parts = name.split('/');
+    name = parts[parts.length - 1]; // Get the last part (e.g., "jump_bar_background")
+  }
+
   // Handle numbered variants at the end (e.g., "acacia_planks1" -> "acacia_planks (1)")
   const numberMatch = name.match(/^(.+?)(\d+)$/);
   let suffix = "";

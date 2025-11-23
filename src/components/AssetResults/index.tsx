@@ -464,7 +464,7 @@ export default function AssetResults({
           isInventoryVariant(id),
         );
         const primaryId = inventoryVariant || group.variantIds[0];
-        const canonicalId = primaryId.includes(":colormap/")
+        const canonicalId = primaryId.includes(":colormap/") || is2DOnlyTexture(primaryId)
           ? primaryId
           : getBlockStateIdFromAssetId(primaryId);
 
