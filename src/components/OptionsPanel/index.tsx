@@ -630,7 +630,7 @@ export default function OptionsPanel({
         {hasVariantsTab && onSelectProvider && (
           <TabsContent value="variants">
             <div style={{ padding: "1rem" }}>
-              <h3>Texture Variants</h3>
+              <h3>Resource Pack Variants</h3>
               <Separator style={{ margin: "0.75rem 0" }} />
               <p style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
                 This texture has variants from {providers.length} different
