@@ -1,0 +1,305 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "stick1",
+      "id": "stick1",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick2",
+      "id": "stick2",
+      "translate": [
+        1.1021821E-15,
+        -25.122408,
+        -9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick3",
+      "id": "stick3",
+      "translate": [
+        -9.0,
+        -25.459667,
+        -1.1021821E-15
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick4",
+      "id": "stick4",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick5",
+      "id": "stick5",
+      "translate": [
+        4.9497476,
+        -22.41608,
+        -4.9497476
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick6",
+      "id": "stick6",
+      "translate": [
+        -4.9497476,
+        -22.80109,
+        -4.9497476
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick7",
+      "id": "stick7",
+      "translate": [
+        -4.9497476,
+        -22.98999,
+        4.9497476
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick8",
+      "id": "stick8",
+      "translate": [
+        4.9497476,
+        -22.936468,
+        4.9497476
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick9",
+      "id": "stick9",
+      "translate": [
+        4.455076,
+        -12.039837,
+        -2.269867
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick10",
+      "id": "stick10",
+      "translate": [
+        -2.269867,
+        -12.106992,
+        -4.455076
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick11",
+      "id": "stick11",
+      "translate": [
+        -4.455076,
+        -12.65329,
+        2.269867
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick12",
+      "id": "stick12",
+      "translate": [
+        2.269867,
+        -13.385693,
+        4.455076
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    32
+  ]
+}

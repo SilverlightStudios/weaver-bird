@@ -1,0 +1,108 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "paddle_right",
+      "id": "paddle_right",
+      "translate": [
+        3.0,
+        -28.0,
+        9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            64
+          ],
+          "textureOffset": [
+            40,
+            24
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            64
+          ],
+          "textureOffset": [
+            40,
+            24
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "bottom",
+      "id": "bottom",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            64
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            64
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "paddle_left",
+      "id": "paddle_left",
+      "translate": [
+        3.0,
+        -28.0,
+        -9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            64
+          ],
+          "textureOffset": [
+            0,
+            24
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            64
+          ],
+          "textureOffset": [
+            0,
+            24
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    128,
+    64
+  ]
+}

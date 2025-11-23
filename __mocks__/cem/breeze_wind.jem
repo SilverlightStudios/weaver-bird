@@ -1,0 +1,137 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "wind_body",
+      "id": "wind_body",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "wind_top",
+      "id": "wind_top",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            6,
+            6
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            105,
+            57
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "wind_middle",
+      "id": "wind_middle",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            74,
+            28
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            78,
+            32
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            49,
+            71
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "wind_bottom",
+      "id": "wind_bottom",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            1,
+            83
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "rods",
+      "id": "rods",
+      "scale": 1.0,
+      "boxes": []
+    }
+  ],
+  "textureSize": [
+    128,
+    128
+  ]
+}

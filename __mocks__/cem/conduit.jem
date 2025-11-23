@@ -1,0 +1,27 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "cage",
+      "id": "cage",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            16
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    32,
+    16
+  ]
+}

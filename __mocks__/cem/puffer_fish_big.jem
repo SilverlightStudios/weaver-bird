@@ -1,0 +1,285 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "spikes_front_right",
+      "id": "spikes_front_right",
+      "translate": [
+        -4.0,
+        -2.0,
+        4.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            5,
+            17
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_front_left",
+      "id": "spikes_front_left",
+      "translate": [
+        4.0,
+        -2.0,
+        4.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            1,
+            17
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_back_right",
+      "id": "spikes_back_right",
+      "translate": [
+        -4.0,
+        -2.0,
+        -4.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            9,
+            17
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_middle_top",
+      "id": "spikes_middle_top",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            14,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_front_top",
+      "id": "spikes_front_top",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            15,
+            17
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_back_top",
+      "id": "spikes_back_top",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            23,
+            18
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_middle_bottom",
+      "id": "spikes_middle_bottom",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            15,
+            20
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "fin_left",
+      "id": "fin_left",
+      "translate": [
+        4.0,
+        -9.0,
+        2.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            24,
+            3
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_back_left",
+      "id": "spikes_back_left",
+      "translate": [
+        4.0,
+        -2.0,
+        -4.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            9,
+            17
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "fin_right",
+      "id": "fin_right",
+      "translate": [
+        -4.0,
+        -9.0,
+        2.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            24,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_back_bottom",
+      "id": "spikes_back_bottom",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            15,
+            20
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "spikes_front_bottom",
+      "id": "spikes_front_bottom",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            15,
+            20
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    32,
+    32
+  ]
+}

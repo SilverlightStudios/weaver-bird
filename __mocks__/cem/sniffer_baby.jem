@@ -1,0 +1,306 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "left_ear",
+      "id": "left_ear",
+      "translate": [
+        6.51,
+        -20.0,
+        23.99
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            2,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "middle_left_leg",
+      "id": "middle_left_leg",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            0,
+            105
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "lower_beak",
+      "id": "lower_beak",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            10,
+            57
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right_ear",
+      "id": "right_ear",
+      "translate": [
+        -6.51,
+        -20.0,
+        23.99
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            48,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "front_left_leg",
+      "id": "front_left_leg",
+      "translate": [
+        7.5,
+        -9.0,
+        15.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            0,
+            87
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "front_right_leg",
+      "id": "front_right_leg",
+      "translate": [
+        -7.5,
+        -9.0,
+        15.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            32,
+            87
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            8,
+            15
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            8,
+            4
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "nose",
+      "id": "nose",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            10,
+            45
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "back_left_leg",
+      "id": "back_left_leg",
+      "translate": [
+        7.5,
+        -9.0,
+        -15.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            0,
+            123
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            62,
+            68
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            62,
+            0
+          ],
+          "sizeAdd": 0.5
+        },
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            87,
+            68
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "bone",
+      "id": "bone",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "middle_right_leg",
+      "id": "middle_right_leg",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            32,
+            105
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "back_right_leg",
+      "id": "back_right_leg",
+      "translate": [
+        -7.5,
+        -9.0,
+        -15.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            192,
+            192
+          ],
+          "textureOffset": [
+            32,
+            123
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    192,
+    192
+  ]
+}

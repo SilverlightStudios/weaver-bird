@@ -1,0 +1,84 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "left_eye",
+      "id": "left_eye",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            32,
+            4
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            16
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right_eye",
+      "id": "right_eye",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            32,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "mouth",
+      "id": "mouth",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            32,
+            8
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    32
+  ]
+}

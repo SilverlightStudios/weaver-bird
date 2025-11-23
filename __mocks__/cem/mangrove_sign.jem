@@ -1,0 +1,32 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "board",
+      "id": "board"
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stick",
+      "id": "stick",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            14
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    32
+  ]
+}

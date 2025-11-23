@@ -1,0 +1,84 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "body3",
+      "id": "body3",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            14
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body4",
+      "id": "body4",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            18
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body1",
+      "id": "body1",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body2",
+      "id": "body2",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            5
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    32
+  ]
+}

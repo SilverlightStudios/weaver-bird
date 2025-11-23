@@ -1,0 +1,170 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            9
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "left_wing",
+      "id": "left_wing",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            24,
+            13
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "left_leg",
+      "id": "left_leg",
+      "translate": [
+        1.0,
+        -5.0,
+        -1.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            26,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "bill",
+      "id": "bill",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            14,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "chin",
+      "id": "chin",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            14,
+            4
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right_leg",
+      "id": "right_leg",
+      "translate": [
+        -2.0,
+        -5.0,
+        -1.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            26,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right_wing",
+      "id": "right_wing",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            24,
+            13
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    32
+  ]
+}

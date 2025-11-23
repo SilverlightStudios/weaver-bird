@@ -1,0 +1,65 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "foot",
+      "id": "foot",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            0,
+            22
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg3",
+      "id": "leg3",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            50,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg4",
+      "id": "leg4",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            50,
+            12
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    64
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "water_patch",
+      "id": "water_patch",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            0,
+            0
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "root",
+      "id": "root",
+      "scale": 1.0,
+      "boxes": []
+    }
+  ],
+  "textureSize": [
+    0,
+    0
+  ]
+}

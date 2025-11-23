@@ -1,0 +1,27 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "wind",
+      "id": "wind",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    32
+  ]
+}

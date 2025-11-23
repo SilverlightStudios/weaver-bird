@@ -1,0 +1,175 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "leg1",
+      "id": "leg1",
+      "translate": [
+        -5.5,
+        -9.0,
+        -9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            40,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg2",
+      "id": "leg2",
+      "translate": [
+        5.5,
+        -9.0,
+        -9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            40,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg3",
+      "id": "leg3",
+      "translate": [
+        -5.5,
+        -9.0,
+        9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            40,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            0,
+            25
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg4",
+      "id": "leg4",
+      "translate": [
+        5.5,
+        -9.0,
+        9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            40,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            0,
+            6
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            45,
+            16
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            52,
+            25
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            52,
+            25
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    64
+  ]
+}

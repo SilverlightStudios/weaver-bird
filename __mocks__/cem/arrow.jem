@@ -1,0 +1,65 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "cross_1",
+      "id": "cross_1",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            25
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "cross_2",
+      "id": "cross_2",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            25
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "back",
+      "id": "back",
+      "scale": 0.8,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    32,
+    32
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "headwear2",
+      "id": "headwear2",
+      "translate": [
+        -5.0,
+        -34.03125,
+        5.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            30,
+            47
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "bodywear",
+      "id": "bodywear",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            0,
+            38
+          ],
+          "sizeAdd": 0.5
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "left_leg",
+      "id": "left_leg",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            0,
+            22
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "nose",
+      "id": "nose",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            24,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            16,
+            20
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right_leg",
+      "id": "right_leg",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            0,
+            22
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "headwear",
+      "id": "headwear",
+      "translate": [
+        -5.0,
+        -34.03125,
+        5.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            0,
+            64
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "arms",
+      "id": "arms",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            44,
+            22
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            44,
+            22
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            40,
+            38
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "mole",
+      "id": "mole",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            128
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": -0.25
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    128
+  ]
+}

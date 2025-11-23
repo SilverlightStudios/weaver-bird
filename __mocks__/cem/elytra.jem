@@ -1,0 +1,53 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "right_wing",
+      "id": "right_wing",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            22,
+            0
+          ],
+          "sizeAdd": 1.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "left_wing",
+      "id": "left_wing",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            32
+          ],
+          "textureOffset": [
+            22,
+            0
+          ],
+          "sizeAdd": 1.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "root",
+      "id": "root",
+      "scale": 1.0,
+      "boxes": []
+    }
+  ],
+  "textureSize": [
+    64,
+    32
+  ]
+}

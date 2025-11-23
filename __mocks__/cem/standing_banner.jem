@@ -1,0 +1,51 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "slate",
+      "id": "slate"
+    },
+    {
+      "invertAxis": "xy",
+      "part": "stand",
+      "id": "stand",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            44,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "top",
+      "id": "top",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            0,
+            42
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    64
+  ]
+}

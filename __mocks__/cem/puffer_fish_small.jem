@@ -1,0 +1,132 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "eye_left",
+      "id": "eye_left",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            28,
+            6
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "fin_right",
+      "id": "fin_right",
+      "translate": [
+        -1.5,
+        -2.0,
+        1.5
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            25,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "eye_right",
+      "id": "eye_right",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            24,
+            6
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "fin_left",
+      "id": "fin_left",
+      "translate": [
+        1.5,
+        -2.0,
+        1.5
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            25,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            27
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "tail",
+      "id": "tail",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            -3,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    32,
+    32
+  ]
+}

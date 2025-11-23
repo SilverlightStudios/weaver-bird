@@ -1,0 +1,239 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "top_gills",
+      "id": "top_gills",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            3,
+            37
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            0,
+            11
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            2,
+            17
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg1",
+      "id": "leg1",
+      "translate": [
+        -3.5,
+        -3.0,
+        -4.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            2,
+            13
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            0,
+            1
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg2",
+      "id": "leg2",
+      "translate": [
+        3.5,
+        -3.0,
+        -4.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            2,
+            13
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg3",
+      "id": "leg3",
+      "translate": [
+        -3.5,
+        -3.0,
+        3.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            2,
+            13
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "leg4",
+      "id": "leg4",
+      "translate": [
+        3.5,
+        -3.0,
+        3.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            2,
+            13
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right_gills",
+      "id": "right_gills",
+      "translate": [
+        4.0,
+        -4.0,
+        5.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            11,
+            40
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "left_gills",
+      "id": "left_gills",
+      "translate": [
+        -4.0,
+        -4.0,
+        5.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            0,
+            40
+          ],
+          "sizeAdd": 0.001
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "tail",
+      "id": "tail",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            64,
+            64
+          ],
+          "textureOffset": [
+            2,
+            19
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    64,
+    64
+  ]
+}

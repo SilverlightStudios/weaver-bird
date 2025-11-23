@@ -1,0 +1,104 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "front",
+      "id": "front",
+      "translate": [
+        1.0,
+        -8.0,
+        -15.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            16,
+            16
+          ],
+          "textureOffset": [
+            1,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right",
+      "id": "right",
+      "translate": [
+        15.0,
+        -8.0,
+        -15.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            16,
+            16
+          ],
+          "textureOffset": [
+            1,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "back",
+      "id": "back",
+      "translate": [
+        15.0,
+        -8.0,
+        -1.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            16,
+            16
+          ],
+          "textureOffset": [
+            1,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "left",
+      "id": "left",
+      "translate": [
+        1.0,
+        -8.0,
+        -1.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            16,
+            16
+          ],
+          "textureOffset": [
+            1,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    16,
+    16
+  ]
+}

@@ -1,0 +1,250 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "chest_lid",
+      "id": "chest_lid",
+      "translate": [
+        -2.0,
+        -33.0,
+        6.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            59
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "chest_base",
+      "id": "chest_base",
+      "translate": [
+        -2.0,
+        -29.0,
+        6.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            76
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "left",
+      "id": "left",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            43
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "paddle_left",
+      "id": "paddle_left",
+      "translate": [
+        3.0,
+        -29.0,
+        -9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            62,
+            0
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            62,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "paddle_right",
+      "id": "paddle_right",
+      "translate": [
+        3.0,
+        -29.0,
+        9.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            62,
+            20
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            62,
+            20
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "chest_knob",
+      "id": "chest_knob",
+      "translate": [
+        -1.0,
+        -30.0,
+        1.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            59
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "back",
+      "id": "back",
+      "translate": [
+        -15.0,
+        -20.0,
+        -4.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            19
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "right",
+      "id": "right",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            35
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "front",
+      "id": "front",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            27
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "bottom",
+      "id": "bottom",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            128,
+            128
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    128,
+    128
+  ]
+}

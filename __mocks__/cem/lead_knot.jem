@@ -1,0 +1,27 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "knot",
+      "id": "knot",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    32,
+    32
+  ]
+}

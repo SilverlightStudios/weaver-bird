@@ -1,0 +1,80 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "wind_body",
+      "id": "wind_body",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "wind_top",
+      "id": "wind_top",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            4,
+            24
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "wind_middle",
+      "id": "wind_middle",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "wind_bottom",
+      "id": "wind_bottom",
+      "scale": 1.0,
+      "boxes": []
+    },
+    {
+      "invertAxis": "xy",
+      "part": "rods",
+      "id": "rods",
+      "scale": 1.0,
+      "boxes": []
+    }
+  ],
+  "textureSize": [
+    32,
+    32
+  ]
+}

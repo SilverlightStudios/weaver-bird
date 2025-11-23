@@ -1,0 +1,86 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "neck",
+      "id": "neck",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": -0.1
+        },
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            5
+          ],
+          "sizeAdd": 0.2
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "top",
+      "id": "top",
+      "translate": [
+        1.0,
+        -8.0,
+        -1.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            -14,
+            13
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "bottom",
+      "id": "bottom",
+      "translate": [
+        1.0,
+        -24.0,
+        -1.0
+      ],
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            -14,
+            13
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    32,
+    32
+  ]
+}

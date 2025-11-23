@@ -1,0 +1,101 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "jaw",
+      "id": "jaw",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            256,
+            256
+          ],
+          "textureOffset": [
+            176,
+            65
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "head",
+      "id": "head",
+      "scale": 0.75,
+      "boxes": [
+        {
+          "textureSize": [
+            256,
+            256
+          ],
+          "textureOffset": [
+            176,
+            44
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            256,
+            256
+          ],
+          "textureOffset": [
+            112,
+            30
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            256,
+            256
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            256,
+            256
+          ],
+          "textureOffset": [
+            112,
+            0
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            256,
+            256
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.0
+        },
+        {
+          "textureSize": [
+            256,
+            256
+          ],
+          "textureOffset": [
+            112,
+            0
+          ],
+          "sizeAdd": 0.0
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    256,
+    256
+  ]
+}

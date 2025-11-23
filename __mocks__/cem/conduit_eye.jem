@@ -1,0 +1,27 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "eye",
+      "id": "eye",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            16,
+            16
+          ],
+          "textureOffset": [
+            0,
+            0
+          ],
+          "sizeAdd": 0.01
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    16,
+    16
+  ]
+}

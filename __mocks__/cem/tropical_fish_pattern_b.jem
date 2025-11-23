@@ -1,0 +1,122 @@
+{
+  "models": [
+    {
+      "invertAxis": "xy",
+      "part": "fin_right",
+      "id": "fin_right",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            2,
+            16
+          ],
+          "sizeAdd": 0.008
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "fin_left",
+      "id": "fin_left",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            2,
+            12
+          ],
+          "sizeAdd": 0.008
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "fin_bottom",
+      "id": "fin_bottom",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            20,
+            21
+          ],
+          "sizeAdd": 0.008
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "fin_top",
+      "id": "fin_top",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            20,
+            11
+          ],
+          "sizeAdd": 0.008
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "body",
+      "id": "body",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            0,
+            20
+          ],
+          "sizeAdd": 0.008
+        }
+      ]
+    },
+    {
+      "invertAxis": "xy",
+      "part": "tail",
+      "id": "tail",
+      "scale": 1.0,
+      "boxes": [
+        {
+          "textureSize": [
+            32,
+            32
+          ],
+          "textureOffset": [
+            21,
+            16
+          ],
+          "sizeAdd": 0.008
+        }
+      ]
+    }
+  ],
+  "textureSize": [
+    32,
+    32
+  ]
+}
