@@ -834,14 +834,14 @@ export function getVariantGroupKey(assetId: string): string {
   // This groups block states/faces on the same card (e.g., activator_rail + activator_rail_on)
   // Note: Variant counting logic separately determines what's a "texture variant"
   blockName = blockName.replace(
-    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|north|south|east|west|inventory|bushy|bushy_inventory|stage\d+|stalk|large_leaves|small_leaves|singleleaf|occupied|empty|inner|base|round|pivot|overlay|moist|corner|flow|still|arm|inside|outside|eye|conditional|dead|compost|ready|bloom|hanging|particle|post|walls|tip|frustum|merge|middle|crafting|ejecting|ominous)\d*$/,
+    /_(top|bottom|upper|lower|head|foot|side|front|back|left|right|north|south|east|west|inventory|bushy|bushy_inventory|stage\d+|stalk|stem|large_leaves|small_leaves|singleleaf|occupied|empty|inner|base|round|pivot|overlay|moist|corner|flow|still|arm|inside|outside|eye|conditional|dead|compost|ready|bloom|hanging|particle|post|walls|tip|frustum|merge|middle|crafting|ejecting|ominous)\d*$/,
     "",
   );
 
   // Remove block state suffixes (on/off, lit, powered, open/closed, etc.)
   // This keeps block states on the same card
   blockName = blockName.replace(
-    /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+)$/,
+    /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|honey|partial_tilt|full_tilt|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+)$/,
     "",
   );
 
