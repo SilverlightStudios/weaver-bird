@@ -71,7 +71,8 @@
 .searchSection {
     flex: 0 0 auto;
     border-bottom: 1px solid var(--color-border);
-    overflow: hidden;
+    overflow: visible; // Allow search dropdown to overflow
+    z-index: 100; // Ensure dropdown appears above other elements
 }
 
 .resultsSection {

@@ -80,7 +80,27 @@ export default function SearchBar({
   // Handle input change
   const handleInputChange = (newValue: string) => {
     setInputValue(newValue);
+    // Show dropdown when user has typed >= 2 characters
     setOpen(newValue.length >= 2);
+  };
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Don't let cmdk handle Enter - we want to just search what's typed
+    if (e.key === "Enter" && !e.defaultPrevented) {
+      // If user hasn't navigated to a suggestion, just close dropdown
+      // and let the debounced search happen
+      setOpen(false);
+      e.stopPropagation();
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      e.stopPropagation();
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      // Open dropdown when user starts navigating with arrows
+      if (!open && inputValue.length >= 2) {
+        setOpen(true);
+      }
+    }
   };
 
   // Close dropdown when clicking outside
@@ -91,22 +111,14 @@ export default function SearchBar({
       setOpen(false);
     };
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
     // Small delay to avoid immediate close on click
     const timer = setTimeout(() => {
       document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleEscape);
     }, 0);
 
     return () => {
       clearTimeout(timer);
       document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
     };
   }, [open]);
 
@@ -115,6 +127,7 @@ export default function SearchBar({
       <CommandPrimitive
         className={s.command}
         shouldFilter={false} // We handle filtering ourselves
+        onKeyDown={handleKeyDown}
       >
         <div className={s.inputWrapper}>
           <span className={s.searchIcon}>🔍</span>

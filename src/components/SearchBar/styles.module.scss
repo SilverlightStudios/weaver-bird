@@ -4,11 +4,15 @@
     padding: var(--spacing-sm);
     background-color: var(--color-bg);
     position: relative;
+    // Allow dropdown to overflow
+    overflow: visible;
 }
 
 .command {
     position: relative;
     width: 100%;
+    // Allow dropdown to overflow
+    overflow: visible;
 }
 
 .inputWrapper {
@@ -78,9 +82,9 @@
     @include tokens.shadow-lg;
 
     position: absolute;
-    top: calc(100% + 0.5rem);
-    left: var(--spacing-sm);
-    right: var(--spacing-sm);
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
     z-index: 1000;
 
     max-height: 400px;
@@ -90,6 +94,9 @@
     background: white;
 
     padding: 0.5rem;
+
+    // Ensure it's visible above other elements
+    pointer-events: auto;
 
     // Custom scrollbar
     &::-webkit-scrollbar {
