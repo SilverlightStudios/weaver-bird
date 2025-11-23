@@ -127,18 +127,18 @@ export function isBiomeColormapAsset(assetId: string): boolean {
 }
 
 /**
- * Check if an asset is a 2D-only texture (GUI, particle, entity, etc.)
+ * Check if an asset is a 2D-only texture (GUI, particle, etc.)
  * These textures should be displayed as flat 2D sprites, not as 3D objects
  *
- * NOTE: Items are NOT included here - they use Preview3DItem for 3D dropped item rendering
- * NOTE: Entity decorated pots are NOT included here - they use PreviewDecoratedPotEntity with 2D/3D toggle
+ * NOTE: Items are NOT included here - they use PreviewItem for 3D dropped item rendering
+ * NOTE: Entity textures are NOT included here - they use PreviewEntity with 2D/3D toggle
  */
 export function is2DOnlyTexture(assetId: string): boolean {
   // Extract the path after the namespace (e.g., "minecraft:gui/container" -> "gui/container")
   const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
 
-  // Entity decorated pots have their own special preview component
-  if (path.startsWith('entity/decorated_pot/')) {
+  // Entity textures have their own universal preview component
+  if (path.startsWith('entity/')) {
     return false;
   }
 
@@ -161,8 +161,19 @@ export function is2DOnlyTexture(assetId: string): boolean {
 }
 
 /**
+ * Check if an asset is an entity texture (any entity)
+ * Entity textures are rendered with a 2D/3D toggle preview using the universal entity renderer
+ *
+ * Includes: chests, shulker boxes, mobs, decorated pots, beds, signs, etc.
+ */
+export function isEntityTexture(assetId: string): boolean {
+  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
+  return path.startsWith('entity/');
+}
+
+/**
  * Check if an asset is an entity decorated pot texture
- * These are rendered with a special 2D/3D toggle preview
+ * @deprecated Use isEntityTexture() instead - kept for backward compatibility
  */
 export function isEntityDecoratedPot(assetId: string): boolean {
   const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
