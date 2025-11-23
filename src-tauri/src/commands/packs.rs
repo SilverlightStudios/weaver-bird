@@ -926,6 +926,64 @@ pub fn resolve_block_state_impl(
     Ok(resolution)
 }
 
+/// Read a file from a resource pack (directory or ZIP)
+///
+/// Generic file reading command for loading any file from a pack.
+/// Supports both directory-based packs and ZIP packs.
+///
+/// # Arguments
+/// * `pack_path` - Path to the pack (directory or ZIP file), or "." for project root
+/// * `file_path` - Relative path to file within the pack (e.g., "assets/minecraft/optifine/cem/chest.jem")
+/// * `is_zip` - Whether the pack is a ZIP file
+///
+/// # Returns
+/// File contents as a string
+pub fn read_pack_file_impl(
+    pack_path: String,
+    file_path: String,
+    is_zip: bool,
+) -> Result<String, AppError> {
+    use std::fs;
+    use std::path::Path;
+
+    println!(
+        "[read_pack_file] pack_path: {}, file_path: {}, is_zip: {}",
+        pack_path, file_path, is_zip
+    );
+
+    if is_zip {
+        // Read from ZIP file
+        let zip_file = fs::File::open(&pack_path)
+            .map_err(|e| AppError::io(format!("Failed to open ZIP: {}", e)))?;
+
+        let mut archive = zip::ZipArchive::new(zip_file)
+            .map_err(|e| AppError::io(format!("Failed to read ZIP: {}", e)))?;
+
+        let mut file = archive
+            .by_name(&file_path)
+            .map_err(|e| AppError::io(format!("File not found in ZIP: {}", e)))?;
+
+        let mut contents = String::new();
+        std::io::Read::read_to_string(&mut file, &mut contents)
+            .map_err(|e| AppError::io(format!("Failed to read file from ZIP: {}", e)))?;
+
+        Ok(contents)
+    } else {
+        // Read from directory
+        let full_path = if pack_path == "." {
+            // Special case: read from project root (for __mocks__/cem/)
+            PathBuf::from(&file_path)
+        } else {
+            Path::new(&pack_path).join(&file_path)
+        };
+
+        println!("[read_pack_file] Reading from: {}", full_path.display());
+
+        fs::read_to_string(&full_path)
+            .map_err(|e| AppError::io(format!("Failed to read file: {}", e)))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -9,8 +9,8 @@ use weaverbird_lib::commands::{
     get_launcher_resourcepacks_dir_impl, get_pack_texture_path_impl,
     get_suggested_minecraft_paths_impl, get_vanilla_texture_path_impl, identify_launcher_impl,
     initialize_vanilla_textures_from_custom_dir_impl, initialize_vanilla_textures_impl,
-    load_model_json_impl, read_block_model_impl, resolve_block_state_impl, scan_packs_folder_impl,
-    BuildWeaverNestRequest,
+    load_model_json_impl, read_block_model_impl, read_pack_file_impl, resolve_block_state_impl,
+    scan_packs_folder_impl, BuildWeaverNestRequest,
 };
 
 /// Tauri command wrapper for scanning resource packs (async for non-blocking UI)
@@ -131,6 +131,17 @@ fn read_block_model(
     read_block_model_impl(pack_id, model_id, packs_dir)
 }
 
+/// Tauri command wrapper for reading any file from a pack (directory or ZIP)
+/// Used for loading JEM files from __mocks__/cem/ or resource packs
+#[tauri::command]
+fn read_pack_file(
+    pack_path: String,
+    file_path: String,
+    is_zip: bool,
+) -> Result<String, weaverbird_lib::AppError> {
+    read_pack_file_impl(pack_path, file_path, is_zip)
+}
+
 /// Tauri command wrapper for loading model JSON directly by model ID
 #[tauri::command]
 fn load_model_json(
@@ -230,6 +241,7 @@ fn main() {
             get_launcher_resourcepacks_dir,
             get_pack_texture_path,
             read_block_model,
+            read_pack_file,
             load_model_json,
             get_block_state_schema,
             resolve_block_state

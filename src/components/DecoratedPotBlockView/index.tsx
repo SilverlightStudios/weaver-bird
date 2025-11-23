@@ -5,7 +5,7 @@ import {
   ContactShadows,
 } from "@react-three/drei";
 import * as THREE from "three";
-import BlockModel from "@components/Preview3D/BlockModel";
+import EntityModel from "@components/Preview3D/EntityModel";
 import GridFloor from "@components/Preview3D/GridFloor";
 import s from "./styles.module.scss";
 
@@ -23,9 +23,11 @@ interface Props {
 }
 
 export default function DecoratedPotBlockView({ sides, singleShard, entityTexture }: Props) {
-  // Determine which decorated pot asset to show
-  // For now, we'll use the basic decorated_pot block
-  const decoratedPotAssetId = "minecraft:block/decorated_pot";
+  // Use entity decorated pot instead of block model
+  // Decorated pots are block entities that use entity-style rendering
+  const decoratedPotAssetId = entityTexture
+    ? `minecraft:${entityTexture}`
+    : "minecraft:entity/decorated_pot/decorated_pot_base";
 
   return (
     <div className={s.root}>
@@ -76,11 +78,11 @@ export default function DecoratedPotBlockView({ sides, singleShard, entityTextur
           <directionalLight position={[-5, 5, -5]} intensity={0.4} />
           <pointLight position={[0, -5, 0]} intensity={0.5} color="#ffffff" />
 
-          {/* Decorated pot model */}
-          <BlockModel
+          {/* Decorated pot model - using EntityModel instead of BlockModel */}
+          {/* Decorated pots are block entities with entity-style rendering */}
+          <EntityModel
             assetId={decoratedPotAssetId}
-            blockProps={{}}
-            seed={0}
+            positionOffset={[0, 0, 0]}
           />
 
           {/* Grid floor */}

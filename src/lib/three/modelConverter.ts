@@ -16,10 +16,6 @@ import type {
   ElementFace,
   ElementRotation,
 } from "@lib/tauri/blockModels";
-import {
-  createDecoratedPotGeometry,
-  isDecoratedPot,
-} from "./decoratedPotGeometry";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
 
@@ -30,7 +26,6 @@ const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
  * @param textureLoader - Function to load textures (returns THREE.Texture or null)
  * @param biomeColor - Optional biome color for tinting
  * @param resolvedModel - Optional resolved model with rotations and uvlock
- * @param assetId - Optional asset ID for special case detection (e.g., decorated pots)
  * @returns Three.js Group containing all model elements
  */
 export async function blockModelToThreeJs(
@@ -38,7 +33,6 @@ export async function blockModelToThreeJs(
   textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
   biomeColor?: { r: number; g: number; b: number } | null,
   resolvedModel?: ResolvedModel,
-  assetId?: string,
 ): Promise<THREE.Group> {
   console.log("=== [modelConverter] Converting Model to Three.js ===");
   const startTime = performance.now();
@@ -70,16 +64,24 @@ export async function blockModelToThreeJs(
   }
 
   if (!model.elements || model.elements.length === 0) {
-    // Check if this is a decorated pot - they have special procedural geometry
-    if (assetId && isDecoratedPot(assetId)) {
-      console.log(
-        "[modelConverter] ✓ Detected decorated pot - using procedural geometry",
-      );
-      const potGeometry = await createDecoratedPotGeometry(textureLoader);
-      group.add(potGeometry);
-      console.log("=================================================");
-      return group;
-    }
+    // TODO: Implement proper entity rendering for block entities like decorated pots
+    // See ENTITY_RENDERING_ANALYSIS.md and implementation plan discussion
+    //
+    // Decorated pots are block entities that use entity-style rendering, not block models.
+    // They need:
+    // 1. A .jem (Java Entity Model) file defining the pot geometry (base, body, neck)
+    // 2. Entity texture mapping from entity/decorated_pot/* folder
+    // 3. Support for 4-sided pottery shard textures (north/south/east/west)
+    // 4. Integration with existing EntityModel.tsx component
+    //
+    // Resources for creating JEM models:
+    // - Blockbench: Export via CEM Template
+    // - JsonEM mod: Dump vanilla models with dump_models=true
+    // - EMF mod: Export examples to [MC_DIRECTORY]/emf/export/
+    // - OptiFine docs: https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_model.txt
+    //
+    // For now, these will render as orange placeholders in 3D view.
+    // MinecraftCSSBlock handles 2D rendering using the particle texture.
 
     console.warn("[modelConverter] Creating orange placeholder (no elements)");
     // Create a simple cube as fallback

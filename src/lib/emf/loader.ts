@@ -1,9 +1,12 @@
 /**
  * EMF/JEM model loader
  *
- * Loads entity models from:
- * 1. Resource pack (assets/minecraft/optifine/cem/*.jem)
- * 2. Fallback to embedded vanilla models
+ * Loads entity models with the following priority:
+ * 1. Resource pack (assets/minecraft/optifine/cem/*.jem or assets/minecraft/emf/cem/*.jem)
+ * 2. Vanilla models from __mocks__/cem/*.jem (480+ models exported from EMF)
+ * 3. Embedded vanilla models (legacy fallback - 17 models)
+ *
+ * Future: Direct extraction from Minecraft JAR without EMF/ETF dependency
  */
 
 import { invoke } from '@tauri-apps/api/core';
@@ -135,6 +138,33 @@ const TEXTURE_TO_ENTITY: Record<string, string> = {
 
   // Shulker
   'entity/shulker/shulker': 'shulker_box',
+
+  // Decorated pots (block entities with entity-style rendering)
+  'entity/decorated_pot/decorated_pot_base': 'decorated_pot',
+  'entity/decorated_pot/decorated_pot_side': 'decorated_pot',
+  'entity/decorated_pot/angler_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/archer_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/arms_up_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/blade_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/brewer_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/burn_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/danger_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/explorer_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/flow_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/friend_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/guster_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/heart_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/heartbreak_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/howl_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/miner_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/mourner_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/plenty_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/prize_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/scrape_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/sheaf_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/shelter_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/skull_pottery_pattern': 'decorated_pot',
+  'entity/decorated_pot/snort_pottery_pattern': 'decorated_pot',
 };
 
 // Add shulker color variants
@@ -195,9 +225,14 @@ export function isEntityTexture(assetId: string): boolean {
 }
 
 /**
- * Load an entity model from a resource pack or vanilla fallback
+ * Load an entity model with priority fallback system
  *
- * @param entityType - Entity type (e.g., "chest", "cow")
+ * Priority order:
+ * 1. Resource pack (if provided)
+ * 2. __mocks__/cem/ (vanilla models from EMF export - 480+ models)
+ * 3. Embedded models (legacy fallback - 17 models)
+ *
+ * @param entityType - Entity type (e.g., "chest", "cow", "decorated_pot")
  * @param packPath - Path to resource pack
  * @param isZip - Whether pack is a ZIP file
  * @returns Parsed entity model or null if not found
@@ -209,45 +244,72 @@ export async function loadEntityModel(
 ): Promise<ParsedEntityModel | null> {
   console.log(`[EMF Loader] Loading entity model: ${entityType}`);
 
-  // Try loading from pack first
+  // 1. Try loading from resource pack first
   if (packPath) {
     try {
       const packModel = await loadJEMFromPack(entityType, packPath, isZip || false);
       if (packModel) {
-        console.log(`[EMF Loader] Loaded ${entityType} from pack`);
+        console.log(`[EMF Loader] ✓ Loaded ${entityType} from pack`);
         return parseJEM(packModel, entityType);
       }
     } catch (err) {
-      console.log(`[EMF Loader] Pack model not found, using vanilla: ${err}`);
+      console.log(`[EMF Loader] Pack model not found: ${err}`);
     }
   }
 
-  // Fall back to vanilla model
-  const vanillaModel = VANILLA_MODELS[entityType];
-  if (vanillaModel) {
-    console.log(`[EMF Loader] Using vanilla model for ${entityType}`);
-    return parseJEM(vanillaModel, entityType);
+  // 2. Try loading from __mocks__/cem/ (vanilla models from EMF export)
+  try {
+    const mocksModel = await loadJEMFromMocks(entityType);
+    if (mocksModel) {
+      console.log(`[EMF Loader] ✓ Loaded ${entityType} from vanilla mocks`);
+      return parseJEM(mocksModel, entityType);
+    }
+  } catch (err) {
+    console.log(`[EMF Loader] Mocks model not found: ${err}`);
   }
 
-  console.warn(`[EMF Loader] No model found for entity: ${entityType}`);
+  // 3. Fall back to embedded vanilla model (legacy)
+  const embeddedModel = VANILLA_MODELS[entityType];
+  if (embeddedModel) {
+    console.log(`[EMF Loader] ✓ Using embedded vanilla model for ${entityType}`);
+    return parseJEM(embeddedModel, entityType);
+  }
+
+  console.warn(`[EMF Loader] ✗ No model found for entity: ${entityType}`);
   return null;
 }
 
 /**
  * Load JEM file from a resource pack
+ * Tries both OptiFine and EMF directory structures
  */
 async function loadJEMFromPack(
   entityType: string,
   packPath: string,
   isZip: boolean,
 ): Promise<JEMFile | null> {
+  // Try OptiFine directory first (most common)
   try {
-    // Try to load from optifine/cem directory
-    const jemPath = `assets/minecraft/optifine/cem/${entityType}.jem`;
-
+    const optifinePath = `assets/minecraft/optifine/cem/${entityType}.jem`;
     const content = await invoke<string>('read_pack_file', {
       packPath,
-      filePath: jemPath,
+      filePath: optifinePath,
+      isZip,
+    });
+
+    if (content) {
+      return JSON.parse(content) as JEMFile;
+    }
+  } catch {
+    // File not found, try EMF directory
+  }
+
+  // Try EMF directory (EMF-specific overrides)
+  try {
+    const emfPath = `assets/minecraft/emf/cem/${entityType}.jem`;
+    const content = await invoke<string>('read_pack_file', {
+      packPath,
+      filePath: emfPath,
       isZip,
     });
 
@@ -256,6 +318,32 @@ async function loadJEMFromPack(
     }
   } catch {
     // File not found in pack
+  }
+
+  return null;
+}
+
+/**
+ * Load JEM file from __mocks__/cem/ directory
+ * This is the vanilla source of truth (480+ models exported from EMF)
+ */
+async function loadJEMFromMocks(entityType: string): Promise<JEMFile | null> {
+  try {
+    // Use Tauri's file reading to load from __mocks__/cem/
+    // This works because __mocks__ is part of the project directory
+    const mocksPath = `__mocks__/cem/${entityType}.jem`;
+
+    const content = await invoke<string>('read_pack_file', {
+      packPath: '.', // Current directory (project root)
+      filePath: mocksPath,
+      isZip: false,
+    });
+
+    if (content) {
+      return JSON.parse(content) as JEMFile;
+    }
+  } catch {
+    // File not found in mocks
   }
 
   return null;

@@ -295,7 +295,6 @@ function BlockModel({
             textureLoader,
             biomeColor,
             resolvedModel, // Pass resolved model for rotations and uvlock
-            assetId, // Pass asset ID for special case detection (e.g., decorated pots)
           );
 
           console.log("[BlockModel] Model converted successfully");

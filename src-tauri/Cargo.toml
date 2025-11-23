@@ -16,7 +16,7 @@ name = "weaverbird"
 path = "src/main.rs"
 
 [dependencies]
-tauri = { version = "2.5", features = ["protocol-asset"] }
+tauri = { version = "2.5", features = ["macos-private-api", "protocol-asset"] }
 tauri-plugin-dialog = "2.1"
 tauri-plugin-fs = "2.1"
 tauri-plugin-shell = "2.1"
