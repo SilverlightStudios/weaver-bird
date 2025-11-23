@@ -109,28 +109,26 @@ function convertPart(
   );
 
   // Apply rotation (degrees to radians)
-  // Invert rotations based on invertAxis property
+  // When axes are inverted, rotations around OTHER axes need to be negated
+  // For example, if Y is inverted, rotations around X and Z need to be negated
   const [rx, ry, rz] = part.rotate;
+
+  // Determine which rotations to negate based on axis inversions
+  // If both X and Y are inverted, rotation around Z stays the same
+  // If only one axis of a plane is inverted, rotations in that plane are negated
+  const negateRx = invertY !== invertZ; // Negate X rotation if Y or Z (but not both) are inverted
+  const negateRy = invertX !== invertZ; // Negate Y rotation if X or Z (but not both) are inverted
+  const negateRz = invertX !== invertY; // Negate Z rotation if X or Y (but not both) are inverted
+
   partGroup.rotation.set(
-    THREE.MathUtils.degToRad(invertX ? -rx : rx),
-    THREE.MathUtils.degToRad(invertY ? -ry : ry),
-    THREE.MathUtils.degToRad(invertZ ? -rz : rz),
+    THREE.MathUtils.degToRad(negateRx ? -rx : rx),
+    THREE.MathUtils.degToRad(negateRy ? -ry : ry),
+    THREE.MathUtils.degToRad(negateRz ? -rz : rz),
   );
 
-  // Apply scale based on axis inversions
-  // Use negative scale to flip geometry along inverted axes
-  const scaleX = invertX ? -1 : 1;
-  const scaleY = invertY ? -1 : 1;
-  const scaleZ = invertZ ? -1 : 1;
-
+  // Apply scale (no axis flipping via scale - we handle it via coordinate transformation)
   if (part.scale !== 1.0) {
-    partGroup.scale.set(
-      scaleX * part.scale,
-      scaleY * part.scale,
-      scaleZ * part.scale,
-    );
-  } else {
-    partGroup.scale.set(scaleX, scaleY, scaleZ);
+    partGroup.scale.setScalar(part.scale);
   }
 
   return partGroup;
@@ -172,7 +170,6 @@ function createBoxMesh(
       alphaTest: 0.1,
       roughness: 0.8,
       metalness: 0.2,
-      side: THREE.DoubleSide, // Render both sides to handle flipped geometry
     });
   } else {
     // Fallback material when texture is missing
@@ -180,7 +177,6 @@ function createBoxMesh(
       color: 0x8b4513, // Brown placeholder
       roughness: 0.8,
       metalness: 0.2,
-      side: THREE.DoubleSide,
     });
   }
 
@@ -188,11 +184,16 @@ function createBoxMesh(
 
   // Position the mesh
   // JEM coordinates are the corner of the box, need to offset to center
-  // Don't invert here - we use scale transformation on the parent group instead
+  // Apply axis inversions to box positions
   const centerX = (x + width / 2) / MINECRAFT_UNIT;
   const centerY = (y + height / 2) / MINECRAFT_UNIT;
   const centerZ = (z + depth / 2) / MINECRAFT_UNIT;
-  mesh.position.set(centerX, centerY, centerZ);
+
+  mesh.position.set(
+    invertX ? -centerX : centerX,
+    invertY ? -centerY : centerY,
+    invertZ ? -centerZ : centerZ,
+  );
 
   // Enable shadows
   mesh.castShadow = true;
