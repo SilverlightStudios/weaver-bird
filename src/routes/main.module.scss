@@ -3,6 +3,9 @@
     flex-direction: column;
     height: 100%;
     background-color: var(--color-bg);
+    border: 3px solid var(--color-ink);
+    border-radius: var(--radius-quirky-lg);
+    overflow: hidden;
 }
 
 .mainContent {
@@ -133,12 +136,14 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-lg);
+    position: relative;
 }
 
 .headerLeft {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    flex: 0 0 auto;
 }
 
 .headerTitle {
@@ -159,6 +164,66 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    flex: 0 0 auto;
+}
+
+.dragRegion {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: move;
+    cursor: grab;
+    padding: var(--spacing-xs) var(--spacing-md);
+    min-width: 100px;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+.dragHandle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: var(--color-block);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-quirky-sm);
+    box-shadow: var(--shadow-sm);
+    transition: all 180ms var(--spring-bezier);
+    position: relative;
+
+    &:hover {
+        box-shadow: var(--shadow-md);
+        translate: 0 -1px;
+        background: var(--color-bg);
+    }
+
+    &:active {
+        box-shadow: 2px 2px 0 var(--color-ink);
+        translate: 0 1px;
+    }
+}
+
+.dragIndicator {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--color-ink) 0px,
+        var(--color-ink) 3px,
+        transparent 3px,
+        transparent 7px
+    );
+    border-radius: 2px;
+    opacity: 0.6;
+    transition: opacity 180ms ease;
+
+    .dragHandle:hover & {
+        opacity: 0.9;
+    }
 }
 
 .settingsButton {

@@ -783,13 +783,18 @@ export default function MainRoute() {
   return (
     <div className={s.container}>
       {/* Header */}
-      <div className={s.header} data-tauri-drag-region>
+      <div className={s.header}>
         <div className={s.headerContent}>
           <div className={s.headerLeft}>
             <WindowControls />
             <div className={s.headerTitle}>
               <h1>Weaverbird</h1>
               <p>Minecraft Resource Pack Manager</p>
+            </div>
+          </div>
+          <div className={s.dragRegion} data-tauri-drag-region>
+            <div className={s.dragHandle}>
+              <span className={s.dragIndicator}></span>
             </div>
           </div>
           <div className={s.headerRight}>
