@@ -57,6 +57,7 @@ import Settings from "@components/Settings";
 import MinecraftLocations from "@components/Settings/MinecraftLocations";
 import ColormapSettings from "@components/Settings/ColormapSettings";
 import WindowControls from "@components/WindowControls";
+import ResizeHandle from "@components/ResizeHandle";
 import Button from "@/ui/components/buttons/Button";
 import {
   Pagination,
@@ -82,6 +83,7 @@ import {
   detectLaunchers,
   getLauncherResourcepacksDir,
 } from "@lib/tauri";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { LauncherInfo } from "@lib/tauri";
 import {
   resolveColormapWinner,
@@ -626,6 +628,15 @@ export default function MainRoute() {
     }
   }, [isLeftSidebarCollapsed]);
 
+  const handleDragWindow = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await getCurrentWindow().startDragging();
+    } catch (error) {
+      console.error("Failed to start window dragging:", error);
+    }
+  }, []);
+
   const handleBrowsePacksFolder = useCallback(async () => {
     try {
       console.log("[handleBrowsePacksFolder] Opening folder dialog...");
@@ -794,7 +805,7 @@ export default function MainRoute() {
               <p>Minecraft Resource Pack Manager</p>
             </div>
           </div>
-          <div className={s.dragRegion} data-tauri-drag-region>
+          <div className={s.dragRegion} onMouseDown={handleDragWindow}>
             <div className={s.dragHandle}>
               <span className={s.dragIndicator}></span>
             </div>
@@ -1038,6 +1049,9 @@ export default function MainRoute() {
         }
         colormapTab={<ColormapSettings />}
       />
+
+      {/* Resize Handle */}
+      <ResizeHandle />
     </div>
   );
 }

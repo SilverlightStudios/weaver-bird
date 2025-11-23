@@ -1,0 +1,61 @@
+.resizeHandle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  cursor: nwse-resize;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 4px;
+  user-select: none;
+
+  &:hover .resizeIndicator {
+    opacity: 1;
+    background: var(--color-bg);
+  }
+
+  &:active .resizeIndicator {
+    background: var(--color-block);
+  }
+}
+
+.resizeIndicator {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+  padding: 3px;
+  background: var(--color-block);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-quirky-sm);
+  box-shadow: var(--shadow-sm);
+  opacity: 0.7;
+  transition: all 180ms var(--spring-bezier);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.gripLine {
+  display: block;
+  height: 2px;
+  background: var(--color-ink);
+  border-radius: 1px;
+  opacity: 0.6;
+
+  &:nth-child(1) {
+    width: 12px;
+  }
+
+  &:nth-child(2) {
+    width: 8px;
+  }
+
+  &:nth-child(3) {
+    width: 4px;
+  }
+}
