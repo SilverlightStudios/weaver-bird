@@ -3,6 +3,12 @@
 .root {
     padding: var(--spacing-sm);
     background-color: var(--color-bg);
+    position: relative;
+}
+
+.command {
+    position: relative;
+    width: 100%;
 }
 
 .inputWrapper {
@@ -65,9 +71,124 @@
     }
 }
 
+// Suggestions dropdown
+.suggestionsList {
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-sm;
+    @include tokens.shadow-lg;
+
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: var(--spacing-sm);
+    right: var(--spacing-sm);
+    z-index: 1000;
+
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    background: white;
+
+    padding: 0.5rem;
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--color-bg);
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--color-primary);
+        border-radius: 4px;
+
+        &:hover {
+            background: var(--color-primary-dark, var(--color-primary));
+        }
+    }
+}
+
+.suggestionItem {
+    @include tokens.radius-quirky-sm;
+
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.25rem;
+
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+
+    cursor: pointer;
+    user-select: none;
+
+    transition:
+        background 120ms var(--spring-bezier),
+        transform 120ms var(--spring-bezier);
+
+    &:hover,
+    &[aria-selected="true"] {
+        background: var(--color-bg);
+        transform: translateX(4px);
+    }
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.categoryIcon,
+.assetIcon {
+    font-size: 1.2rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.suggestionText {
+    flex: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestionCount {
+    font-size: var(--font-size-xs);
+    color: var(--color-text);
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+}
+
+.separator {
+    height: 1px;
+    background: var(--color-border, #e0e0e0);
+    margin: 0.5rem 0;
+}
+
+.noResults {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
-    .input {
+    .input,
+    .suggestionItem {
         transition-duration: 0.01ms;
     }
 }

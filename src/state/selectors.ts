@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useStore } from "./store";
 import { AssetId, PackId, OverrideEntry, OverrideWirePayload } from "./types";
+import { assetMatchesQuery } from "@lib/searchUtils";
 
 /**
  * Get providers for an asset, sorted by current pack order
@@ -116,6 +117,7 @@ export const useSelectAsset = (assetId?: AssetId) => {
 
 /**
  * Get filtered assets based on search query
+ * Uses fuzzy matching that supports space-to-underscore conversion
  */
 export const useSelectFilteredAssets = () => {
   const assets = useStore((state) => state.assets);
@@ -126,11 +128,8 @@ export const useSelectFilteredAssets = () => {
       return Object.values(assets);
     }
 
-    const lowerQuery = searchQuery.toLowerCase();
-    return Object.values(assets).filter(
-      (asset) =>
-        asset.id.toLowerCase().includes(lowerQuery) ||
-        asset.labels.some((label) => label.toLowerCase().includes(lowerQuery)),
+    return Object.values(assets).filter((asset) =>
+      assetMatchesQuery(asset.id, asset.labels, searchQuery)
     );
   }, [assets, searchQuery]);
 };
@@ -138,6 +137,7 @@ export const useSelectFilteredAssets = () => {
 /**
  * Get paginated assets based on current page and items per page
  * This selector filters first (by search query), then paginates the results
+ * Uses fuzzy matching that supports space-to-underscore conversion
  */
 export const useSelectPaginatedAssets = () => {
   const assets = useStore((state) => state.assets);
@@ -150,13 +150,8 @@ export const useSelectPaginatedAssets = () => {
     let filteredAssets = Object.values(assets);
 
     if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase();
-      filteredAssets = filteredAssets.filter(
-        (asset) =>
-          asset.id.toLowerCase().includes(lowerQuery) ||
-          asset.labels.some((label) =>
-            label.toLowerCase().includes(lowerQuery),
-          ),
+      filteredAssets = filteredAssets.filter((asset) =>
+        assetMatchesQuery(asset.id, asset.labels, searchQuery)
       );
     }
 
