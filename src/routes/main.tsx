@@ -49,7 +49,7 @@ import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import Preview2D from "@components/Preview2D";
 import PreviewItem from "@components/PreviewItem";
-import PreviewDecoratedPotEntity from "@components/PreviewDecoratedPotEntity";
+import PreviewEntity from "@components/PreviewEntity";
 import OptionsPanel from "@components/OptionsPanel";
 import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
@@ -98,7 +98,7 @@ import {
   getColormapTypeFromAssetId,
   is2DOnlyTexture,
   isMinecraftItem,
-  isEntityDecoratedPot,
+  isEntityTexture,
 } from "@lib/assetUtils";
 import type { ItemDisplayMode } from "@lib/itemDisplayModes";
 import {
@@ -949,8 +949,8 @@ export default function MainRoute() {
           >
             <div className={s.previewSection}>
               {uiState.selectedAssetId &&
-              isEntityDecoratedPot(uiState.selectedAssetId) ? (
-                <PreviewDecoratedPotEntity assetId={uiState.selectedAssetId} />
+              isEntityTexture(uiState.selectedAssetId) ? (
+                <PreviewEntity assetId={uiState.selectedAssetId} />
               ) : uiState.selectedAssetId &&
                 is2DOnlyTexture(uiState.selectedAssetId) ? (
                 <Preview2D assetId={uiState.selectedAssetId} />

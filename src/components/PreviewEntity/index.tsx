@@ -1,9 +1,11 @@
 /**
- * PreviewDecoratedPotEntity Component - Wrapper for entity decorated pot previews with 2D/3D view tabs
+ * PreviewEntity Component - Wrapper for entity texture previews with 2D/3D view tabs
  *
- * Allows users to switch between:
- * - 3D entity preview using Preview3D (default) - automatically detects entities
- * - 2D flat texture view
+ * Provides a tabbed interface for viewing entity textures:
+ * - 3D entity preview using Preview3D (default) - automatically detects and renders entities
+ * - 2D flat texture view for inspecting the texture map
+ *
+ * Used for all entity textures (chests, mobs, decorated pots, etc.)
  */
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui/components/tabs";
@@ -15,14 +17,14 @@ interface Props {
   assetId?: string;
 }
 
-export default function PreviewDecoratedPotEntity({ assetId }: Props) {
+export default function PreviewEntity({ assetId }: Props) {
   const [activeTab, setActiveTab] = useState<"3d" | "2d">("3d");
   const [showPot, setShowPot] = useState(false);
 
   if (!assetId) {
     return (
       <div className={s.root}>
-        <div className={s.placeholder}>Select a decorated pot texture to preview</div>
+        <div className={s.placeholder}>Select an entity texture to preview</div>
       </div>
     );
   }
