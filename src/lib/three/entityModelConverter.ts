@@ -191,20 +191,16 @@ function createBoxMesh(
   const mesh = new THREE.Mesh(geometry, material);
 
   // Position the mesh
-  // JEM coordinates are the corner of the box, need to offset to center
-  // Apply axis inversions to box positions
+  // JEM box coordinates are RELATIVE to the part's pivot point
+  // They should NOT be negated based on invertAxis - only the part pivot is negated
+  // Calculate center of box from corner position
   const centerX = (x + width / 2) / MINECRAFT_UNIT;
   const centerY = (y + height / 2) / MINECRAFT_UNIT;
   const centerZ = (z + depth / 2) / MINECRAFT_UNIT;
 
-  const finalBoxX = invertX ? -centerX : centerX;
-  const finalBoxY = invertY ? -centerY : centerY;
-  const finalBoxZ = invertZ ? -centerZ : centerZ;
+  mesh.position.set(centerX, centerY, centerZ);
 
-  mesh.position.set(finalBoxX, finalBoxY, finalBoxZ);
-
-  console.log(`  - Box center (before inversion): [${centerX.toFixed(3)}, ${centerY.toFixed(3)}, ${centerZ.toFixed(3)}]`);
-  console.log(`  - Box center (after inversion): [${finalBoxX.toFixed(3)}, ${finalBoxY.toFixed(3)}, ${finalBoxZ.toFixed(3)}]`);
+  console.log(`  - Box center (relative to part): [${centerX.toFixed(3)}, ${centerY.toFixed(3)}, ${centerZ.toFixed(3)}]`);
 
   // Enable shadows
   mesh.castShadow = true;
