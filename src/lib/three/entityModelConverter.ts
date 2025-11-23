@@ -67,6 +67,7 @@ function convertPart(
   console.log(`[entityModelConverter] Converting part: ${part.name}`);
   console.log(`[entityModelConverter] - Translate: [${part.translate.join(", ")}]`);
   console.log(`[entityModelConverter] - Rotate: [${part.rotate.join(", ")}]`);
+  console.log(`[entityModelConverter] - InvertAxis: ${part.invertAxis}`);
   console.log(`[entityModelConverter] - Boxes: ${part.boxes.length}`);
   console.log(`[entityModelConverter] - Children: ${part.children.length}`);
 
@@ -76,10 +77,15 @@ function convertPart(
     return partGroup; // Return empty group
   }
 
+  // Determine which axes to invert based on invertAxis property
+  const invertX = part.invertAxis.includes('x');
+  const invertY = part.invertAxis.includes('y');
+  const invertZ = part.invertAxis.includes('z');
+
   // Convert each box in this part
   for (let i = 0; i < part.boxes.length; i++) {
     const box = part.boxes[i];
-    const mesh = createBoxMesh(box, textureSize, texture);
+    const mesh = createBoxMesh(box, textureSize, texture, invertX, invertY, invertZ);
     if (mesh) {
       partGroup.add(mesh);
     }
@@ -92,29 +98,39 @@ function convertPart(
   }
 
   // Apply transformations
-  // JEM uses inverted axes (invertAxis: "xy"), so we need to flip Y and potentially X
   const [tx, ty, tz] = part.translate;
 
   // Apply translation (convert from pixels to block units)
-  // JEM coordinates are inverted on Y axis
+  // Apply inversions based on invertAxis property
   partGroup.position.set(
-    tx / MINECRAFT_UNIT,
-    -ty / MINECRAFT_UNIT, // Invert Y
-    tz / MINECRAFT_UNIT,
+    (invertX ? -tx : tx) / MINECRAFT_UNIT,
+    (invertY ? -ty : ty) / MINECRAFT_UNIT,
+    (invertZ ? -tz : tz) / MINECRAFT_UNIT,
   );
 
   // Apply rotation (degrees to radians)
-  // JEM rotations are also inverted
+  // Invert rotations based on invertAxis property
   const [rx, ry, rz] = part.rotate;
   partGroup.rotation.set(
-    THREE.MathUtils.degToRad(-rx), // Invert X rotation
-    THREE.MathUtils.degToRad(-ry), // Invert Y rotation
-    THREE.MathUtils.degToRad(rz),
+    THREE.MathUtils.degToRad(invertX ? -rx : rx),
+    THREE.MathUtils.degToRad(invertY ? -ry : ry),
+    THREE.MathUtils.degToRad(invertZ ? -rz : rz),
   );
 
-  // Apply scale
+  // Apply scale based on axis inversions
+  // Use negative scale to flip geometry along inverted axes
+  const scaleX = invertX ? -1 : 1;
+  const scaleY = invertY ? -1 : 1;
+  const scaleZ = invertZ ? -1 : 1;
+
   if (part.scale !== 1.0) {
-    partGroup.scale.setScalar(part.scale);
+    partGroup.scale.set(
+      scaleX * part.scale,
+      scaleY * part.scale,
+      scaleZ * part.scale,
+    );
+  } else {
+    partGroup.scale.set(scaleX, scaleY, scaleZ);
   }
 
   return partGroup;
@@ -127,6 +143,9 @@ function createBoxMesh(
   box: ParsedBox,
   textureSize: [number, number],
   texture: THREE.Texture | null,
+  invertX: boolean,
+  invertY: boolean,
+  invertZ: boolean,
 ): THREE.Mesh | null {
   const [x, y, z] = box.position;
   const [width, height, depth] = box.size;
@@ -142,7 +161,7 @@ function createBoxMesh(
   const geometry = new THREE.BoxGeometry(w, h, d);
 
   // Apply UV coordinates
-  applyJEMUVs(geometry, box.uv, textureSize, box.mirror);
+  applyJEMUVs(geometry, box.uv, textureSize, box.mirror, invertX, invertY, invertZ);
 
   // Create material
   let material: THREE.Material;
@@ -153,6 +172,7 @@ function createBoxMesh(
       alphaTest: 0.1,
       roughness: 0.8,
       metalness: 0.2,
+      side: THREE.DoubleSide, // Render both sides to handle flipped geometry
     });
   } else {
     // Fallback material when texture is missing
@@ -160,6 +180,7 @@ function createBoxMesh(
       color: 0x8b4513, // Brown placeholder
       roughness: 0.8,
       metalness: 0.2,
+      side: THREE.DoubleSide,
     });
   }
 
@@ -167,9 +188,9 @@ function createBoxMesh(
 
   // Position the mesh
   // JEM coordinates are the corner of the box, need to offset to center
-  // Also invert Y axis
+  // Don't invert here - we use scale transformation on the parent group instead
   const centerX = (x + width / 2) / MINECRAFT_UNIT;
-  const centerY = -(y + height / 2) / MINECRAFT_UNIT; // Invert Y
+  const centerY = (y + height / 2) / MINECRAFT_UNIT;
   const centerZ = (z + depth / 2) / MINECRAFT_UNIT;
   mesh.position.set(centerX, centerY, centerZ);
 
@@ -190,6 +211,9 @@ function applyJEMUVs(
   uv: ParsedBox['uv'],
   textureSize: [number, number],
   mirror: boolean,
+  invertX: boolean,
+  invertY: boolean,
+  invertZ: boolean,
 ): void {
   const [texWidth, texHeight] = textureSize;
 
