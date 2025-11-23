@@ -257,7 +257,10 @@ const AssetCard = memo(
 
       // Special handling for entity decorated pot textures: show "Pattern - Decorated Pot"
       if (path.startsWith("entity/decorated_pot/")) {
-        const patternName = path.replace("entity/decorated_pot/", "").replace(/\.png$/, "");
+        const patternName = path
+          .replace("entity/decorated_pot/", "")
+          .replace(/\.png$/, "")
+          .replace(/_pottery_pattern$/, ""); // Remove "_pottery_pattern" suffix
         const formattedPatternName = patternName
           .split("_")
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

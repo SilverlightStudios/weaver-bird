@@ -131,10 +131,16 @@ export function isBiomeColormapAsset(assetId: string): boolean {
  * These textures should be displayed as flat 2D sprites, not as 3D objects
  *
  * NOTE: Items are NOT included here - they use Preview3DItem for 3D dropped item rendering
+ * NOTE: Entity decorated pots are NOT included here - they use PreviewDecoratedPotEntity with 2D/3D toggle
  */
 export function is2DOnlyTexture(assetId: string): boolean {
   // Extract the path after the namespace (e.g., "minecraft:gui/container" -> "gui/container")
   const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
+
+  // Entity decorated pots have their own special preview component
+  if (path.startsWith('entity/decorated_pot/')) {
+    return false;
+  }
 
   // List of texture categories that are 2D-only
   const twoDOnlyPaths = [
@@ -152,6 +158,15 @@ export function is2DOnlyTexture(assetId: string): boolean {
   ];
 
   return twoDOnlyPaths.some(prefix => path.startsWith(prefix));
+}
+
+/**
+ * Check if an asset is an entity decorated pot texture
+ * These are rendered with a special 2D/3D toggle preview
+ */
+export function isEntityDecoratedPot(assetId: string): boolean {
+  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
+  return path.startsWith('entity/decorated_pot/');
 }
 
 /**

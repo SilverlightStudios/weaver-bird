@@ -282,7 +282,7 @@ export default function OptionsPanel({
   const defaultTab = shouldShowPotteryShardTab
     ? "pottery-shard"
     : shouldShowEntityDecoratedPotTab
-    ? "entity-pot-texture"
+    ? "entity-pot"
     : shouldShowDecoratedPotTab
     ? "decorated-pot"
     : shouldShowPaintingTab
@@ -335,10 +335,7 @@ export default function OptionsPanel({
             <TabIcon icon="🏺" label="Pottery Shard" value="pottery-shard" />
           )}
           {shouldShowEntityDecoratedPotTab && (
-            <>
-              <TabIcon icon="🖼" label="Texture" value="entity-pot-texture" />
-              <TabIcon icon="🏺" label="3D Pot" value="entity-pot" />
-            </>
+            <TabIcon icon="🏺" label="Decorated Pot" value="entity-pot" />
           )}
           {shouldShowDecoratedPotTab && (
             <TabIcon icon="🏺" label="Decorated Pot" value="decorated-pot" />
@@ -388,47 +385,19 @@ export default function OptionsPanel({
         )}
 
         {shouldShowEntityDecoratedPotTab && (
-          <>
-            <TabsContent value="entity-pot-texture">
-              <div style={{ padding: "1rem" }}>
-                {onSelectVariant && allAssets.length > 0 && (
-                  <>
-                    <PotteryShardSelector
-                      assetId={assetId}
-                      allAssets={allAssets}
-                      onSelectShard={onSelectVariant}
-                      includeItems={false}
-                      includeEntity={true}
-                    />
-                    <Separator style={{ margin: "1rem 0" }} />
-                  </>
-                )}
-                <h3>Decorated Pot Texture</h3>
-                <Separator style={{ margin: "0.75rem 0" }} />
-                <p style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
-                  This is the 2D texture pattern used on decorated pots.
-                </p>
-                {/* Texture preview will be shown in the main preview area */}
-              </div>
-            </TabsContent>
-            <TabsContent value="entity-pot">
-              <div style={{ padding: "1rem" }}>
-                {onSelectVariant && allAssets.length > 0 && (
-                  <>
-                    <PotteryShardSelector
-                      assetId={assetId}
-                      allAssets={allAssets}
-                      onSelectShard={onSelectVariant}
-                      includeItems={false}
-                      includeEntity={true}
-                    />
-                    <Separator style={{ margin: "1rem 0" }} />
-                  </>
-                )}
-                <DecoratedPotBlockView entityTexture={assetId} />
-              </div>
-            </TabsContent>
-          </>
+          <TabsContent value="entity-pot">
+            <div style={{ padding: "1rem" }}>
+              {onSelectVariant && allAssets.length > 0 && (
+                <PotteryShardSelector
+                  assetId={assetId}
+                  allAssets={allAssets}
+                  onSelectShard={onSelectVariant}
+                  includeItems={false}
+                  includeEntity={true}
+                />
+              )}
+            </div>
+          </TabsContent>
         )}
 
         {shouldShowDecoratedPotTab && (
