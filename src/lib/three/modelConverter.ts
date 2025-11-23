@@ -16,6 +16,10 @@ import type {
   ElementFace,
   ElementRotation,
 } from "@lib/tauri/blockModels";
+import {
+  createDecoratedPotGeometry,
+  isDecoratedPot,
+} from "./decoratedPotGeometry";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
 
@@ -26,6 +30,7 @@ const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
  * @param textureLoader - Function to load textures (returns THREE.Texture or null)
  * @param biomeColor - Optional biome color for tinting
  * @param resolvedModel - Optional resolved model with rotations and uvlock
+ * @param assetId - Optional asset ID for special case detection (e.g., decorated pots)
  * @returns Three.js Group containing all model elements
  */
 export async function blockModelToThreeJs(
@@ -33,6 +38,7 @@ export async function blockModelToThreeJs(
   textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
   biomeColor?: { r: number; g: number; b: number } | null,
   resolvedModel?: ResolvedModel,
+  assetId?: string,
 ): Promise<THREE.Group> {
   console.log("=== [modelConverter] Converting Model to Three.js ===");
   const startTime = performance.now();
@@ -64,6 +70,17 @@ export async function blockModelToThreeJs(
   }
 
   if (!model.elements || model.elements.length === 0) {
+    // Check if this is a decorated pot - they have special procedural geometry
+    if (assetId && isDecoratedPot(assetId)) {
+      console.log(
+        "[modelConverter] ✓ Detected decorated pot - using procedural geometry",
+      );
+      const potGeometry = await createDecoratedPotGeometry(textureLoader);
+      group.add(potGeometry);
+      console.log("=================================================");
+      return group;
+    }
+
     console.warn("[modelConverter] Creating orange placeholder (no elements)");
     // Create a simple cube as fallback
     const geometry = new THREE.BoxGeometry(1, 1, 1);
