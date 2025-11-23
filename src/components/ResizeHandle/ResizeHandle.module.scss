@@ -2,14 +2,14 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   cursor: nwse-resize;
-  z-index: 1000;
+  z-index: 1001;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  padding: 4px;
+  padding: 6px;
   user-select: none;
 
   &:hover .resizeIndicator {
@@ -30,7 +30,7 @@
   padding: 3px;
   background: var(--color-block);
   border: 2px solid var(--color-ink);
-  border-radius: var(--radius-quirky-sm);
+  border-radius: 0.4rem 0.4rem 1rem 0.4rem; /* top-left, top-right, bottom-right (large), bottom-left */
   box-shadow: var(--shadow-sm);
   opacity: 0.7;
   transition: all 180ms var(--spring-bezier);
