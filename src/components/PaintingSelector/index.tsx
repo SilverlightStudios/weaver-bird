@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { Combobox, type ComboboxOption } from "@/ui/components/Combobox/Combobox";
-import { beautifyAssetName } from "@lib/assetUtils";
+import {
+  Combobox,
+  type ComboboxOption,
+} from "@/ui/components/Combobox/Combobox";
 import s from "./styles.module.scss";
 
 interface Props {
@@ -58,7 +60,8 @@ export default function PaintingSelector({
         className={s.combobox}
       />
       <div className={s.hint}>
-        {paintingOptions.length} painting{paintingOptions.length !== 1 ? "s" : ""} available
+        {paintingOptions.length} painting
+        {paintingOptions.length !== 1 ? "s" : ""} available
       </div>
     </div>
   );

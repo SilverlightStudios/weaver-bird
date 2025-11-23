@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getPackTexturePath, getVanillaTexturePath } from "@lib/tauri";
 import { normalizeAssetId, getVariantNumber } from "@lib/assetUtils";
-import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
+import { useSelectWinner, useSelectPack } from "@state/selectors";
 import {
   Tooltip,
   TooltipTrigger,
@@ -22,23 +22,23 @@ interface TextureVariantDropdownProps {
 function useVariantTexture(variantId: string) {
   const [textureUrl, setTextureUrl] = useState<string | null>(null);
   const winnerPackId = useSelectWinner(variantId);
-  const packsDir = useSelectPacksDir();
+  const pack = useSelectPack(winnerPackId || "");
 
   useEffect(() => {
     let mounted = true;
 
     async function loadTexture() {
-      if (!variantId || !packsDir) return;
+      if (!variantId) return;
 
       try {
         const normalizedId = normalizeAssetId(variantId);
         let texturePath: string;
 
-        if (winnerPackId && winnerPackId !== "minecraft:vanilla") {
+        if (winnerPackId && winnerPackId !== "minecraft:vanilla" && pack) {
           texturePath = await getPackTexturePath(
-            winnerPackId,
+            pack.path,
             normalizedId,
-            packsDir,
+            pack.is_zip,
           );
         } else {
           texturePath = await getVanillaTexturePath(normalizedId);
@@ -61,7 +61,7 @@ function useVariantTexture(variantId: string) {
     return () => {
       mounted = false;
     };
-  }, [variantId, winnerPackId, packsDir]);
+  }, [variantId, winnerPackId, pack]);
 
   return textureUrl;
 }
@@ -78,7 +78,8 @@ function TextureThumbnail({
 }) {
   const textureUrl = useVariantTexture(variantId);
   const variantNumber = getVariantNumber(variantId);
-  const displayText = variantNumber !== null ? `Variant ${variantNumber}` : variantId;
+  const displayText =
+    variantNumber !== null ? `Variant ${variantNumber}` : variantId;
 
   return (
     <Tooltip delayDuration={300}>

@@ -9,7 +9,7 @@
  * - Sharp, blocky appearance matching Minecraft's aesthetic
  */
 
-import * as THREE from 'three';
+import * as THREE from "three";
 
 interface PixelData {
   width: number;
@@ -22,11 +22,11 @@ interface PixelData {
  */
 function readTexturePixels(texture: THREE.Texture): PixelData {
   const image = texture.image as HTMLImageElement;
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
 
   if (!ctx) {
-    throw new Error('Failed to get 2D context');
+    throw new Error("Failed to get 2D context");
   }
 
   canvas.width = image.width;
@@ -45,7 +45,12 @@ function readTexturePixels(texture: THREE.Texture): PixelData {
 /**
  * Checks if a pixel is opaque (alpha > threshold)
  */
-function isPixelOpaque(pixelData: PixelData, x: number, y: number, threshold = 1): boolean {
+function isPixelOpaque(
+  pixelData: PixelData,
+  x: number,
+  y: number,
+  threshold = 1,
+): boolean {
   if (x < 0 || x >= pixelData.width || y < 0 || y >= pixelData.height) {
     return false;
   }
@@ -61,7 +66,7 @@ function isPixelOpaque(pixelData: PixelData, x: number, y: number, threshold = 1
  */
 export function generateItemGeometry(
   texture: THREE.Texture,
-  thickness: number = 0.0625 // 1/16 block (1 pixel in Minecraft scale)
+  thickness: number = 0.0625, // 1/16 block (1 pixel in Minecraft scale)
 ): THREE.BufferGeometry {
   const pixelData = readTexturePixels(texture);
 
@@ -76,8 +81,7 @@ export function generateItemGeometry(
   const colors: number[] = [];
 
   // Pixel size in normalized coordinates (texture covers -0.5 to 0.5)
-  const pixelWidth = 1.0 / width;
-  const pixelHeight = 1.0 / height;
+  // Note: pixelWidth and pixelHeight are kept for potential future use in UV calculations
 
   // Helper to add a quad (two triangles)
   function addQuad(
@@ -91,7 +95,7 @@ export function generateItemGeometry(
     uv4: [number, number],
     normal: [number, number, number],
     color: [number, number, number] = [1, 1, 1],
-    reverseWinding: boolean = false
+    reverseWinding: boolean = false,
   ) {
     const startIdx = vertices.length / 3;
 
@@ -111,13 +115,21 @@ export function generateItemGeometry(
     // Reverse winding if needed by swapping triangle vertex order
     if (reverseWinding) {
       indices.push(
-        startIdx, startIdx + 2, startIdx + 1,
-        startIdx, startIdx + 3, startIdx + 2
+        startIdx,
+        startIdx + 2,
+        startIdx + 1,
+        startIdx,
+        startIdx + 3,
+        startIdx + 2,
       );
     } else {
       indices.push(
-        startIdx, startIdx + 1, startIdx + 2,
-        startIdx, startIdx + 2, startIdx + 3
+        startIdx,
+        startIdx + 1,
+        startIdx + 2,
+        startIdx,
+        startIdx + 2,
+        startIdx + 3,
       );
     }
   }
@@ -126,7 +138,10 @@ export function generateItemGeometry(
   // This is more efficient than per-pixel quads and looks correct with texture mapping
 
   // Find bounding box of opaque pixels
-  let minX = width, minY = height, maxX = 0, maxY = 0;
+  let minX = width,
+    minY = height,
+    maxX = 0,
+    maxY = 0;
   let hasOpaquePixels = false;
 
   for (let y = 0; y < height; y++) {
@@ -151,10 +166,10 @@ export function generateItemGeometry(
   maxY += 1;
 
   // Convert pixel coordinates to normalized coordinates (-0.5 to 0.5, centered)
-  const x1 = (minX / width) - 0.5;
-  const x2 = (maxX / width) - 0.5;
-  const y1 = -((minY / height) - 0.5); // Flip Y
-  const y2 = -((maxY / height) - 0.5); // Flip Y
+  const x1 = minX / width - 0.5;
+  const x2 = maxX / width - 0.5;
+  const y1 = -(minY / height - 0.5); // Flip Y
+  const y2 = -(maxY / height - 0.5); // Flip Y
 
   const u1 = minX / width;
   const u2 = maxX / width;
@@ -171,7 +186,7 @@ export function generateItemGeometry(
     [u2, 1 - v1],
     [u2, 1 - v2],
     [u1, 1 - v2],
-    [0, 0, 1]
+    [0, 0, 1],
   );
 
   // Back face (z = -halfThickness)
@@ -184,7 +199,7 @@ export function generateItemGeometry(
     [u1, 1 - v1],
     [u1, 1 - v2],
     [u2, 1 - v2],
-    [0, 0, -1]
+    [0, 0, -1],
   );
 
   // Second pass: Create pixel-perfect edge faces
@@ -197,10 +212,10 @@ export function generateItemGeometry(
       }
 
       // Convert pixel coordinates to normalized coordinates
-      const pixelX1 = (px / width) - 0.5;
-      const pixelX2 = ((px + 1) / width) - 0.5;
-      const pixelY1 = -((py / height) - 0.5); // Flip Y
-      const pixelY2 = -(((py + 1) / height) - 0.5); // Flip Y
+      const pixelX1 = px / width - 0.5;
+      const pixelX2 = (px + 1) / width - 0.5;
+      const pixelY1 = -(py / height - 0.5); // Flip Y
+      const pixelY2 = -((py + 1) / height - 0.5); // Flip Y
 
       // UV coordinates for this pixel
       // IMPORTANT: Offset UVs slightly inward from pixel boundaries to avoid sampling at
@@ -208,10 +223,10 @@ export function generateItemGeometry(
       // the sampler may grab values outside valid texture range, resulting in transparent
       // pixels that fail alphaTest and cause faces to be discarded.
       const uvEpsilon = 0.5 / width; // Half a pixel offset
-      const pixelU1 = (px / width) + uvEpsilon;
-      const pixelU2 = ((px + 1) / width) - uvEpsilon;
-      const pixelV1 = (py / height) + uvEpsilon;
-      const pixelV2 = ((py + 1) / height) - uvEpsilon;
+      const pixelU1 = px / width + uvEpsilon;
+      const pixelU2 = (px + 1) / width - uvEpsilon;
+      const pixelV1 = py / height + uvEpsilon;
+      const pixelV2 = (py + 1) / height - uvEpsilon;
 
       // Check each neighbor and create edge face ONLY if neighbor is transparent
       const hasLeftNeighbor = isPixelOpaque(pixelData, px - 1, py);
@@ -230,7 +245,7 @@ export function generateItemGeometry(
           [pixelU1, 1 - pixelV1],
           [pixelU1, 1 - pixelV2],
           [pixelU1, 1 - pixelV2],
-          [-1, 0, 0]
+          [-1, 0, 0],
         );
       }
 
@@ -245,7 +260,7 @@ export function generateItemGeometry(
           [pixelU2, 1 - pixelV1],
           [pixelU2, 1 - pixelV2],
           [pixelU2, 1 - pixelV2],
-          [1, 0, 0]
+          [1, 0, 0],
         );
       }
 
@@ -260,7 +275,7 @@ export function generateItemGeometry(
           [pixelU1, 1 - pixelV1],
           [pixelU1, 1 - pixelV1],
           [pixelU2, 1 - pixelV1],
-          [0, 1, 0]
+          [0, 1, 0],
         );
       }
 
@@ -275,7 +290,7 @@ export function generateItemGeometry(
           [pixelU1, 1 - pixelV2],
           [pixelU1, 1 - pixelV2],
           [pixelU2, 1 - pixelV2],
-          [0, -1, 0]
+          [0, -1, 0],
         );
       }
     }
@@ -284,10 +299,13 @@ export function generateItemGeometry(
   // Create BufferGeometry
   const geometry = new THREE.BufferGeometry();
 
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(vertices, 3),
+  );
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geometry.setIndex(indices);
 
   return geometry;
@@ -303,7 +321,7 @@ const geometryCache = new Map<string, THREE.BufferGeometry>();
  */
 export function getItemGeometry(
   texture: THREE.Texture,
-  thickness: number = 0.0625
+  thickness: number = 0.0625,
 ): THREE.BufferGeometry {
   const cacheKey = `${texture.uuid}_${thickness}`;
 
@@ -321,14 +339,17 @@ export function getItemGeometry(
  * Clears the geometry cache
  */
 export function clearGeometryCache(): void {
-  geometryCache.forEach(geometry => geometry.dispose());
+  geometryCache.forEach((geometry) => geometry.dispose());
   geometryCache.clear();
 }
 
 /**
  * Removes a specific geometry from cache
  */
-export function uncacheGeometry(textureUuid: string, thickness: number = 0.0625): void {
+export function uncacheGeometry(
+  textureUuid: string,
+  thickness: number = 0.0625,
+): void {
   const cacheKey = `${textureUuid}_${thickness}`;
   const geometry = geometryCache.get(cacheKey);
 

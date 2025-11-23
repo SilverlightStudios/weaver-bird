@@ -128,7 +128,6 @@ export default function OptionsPanel({
   allAssets = [],
   onSelectVariant,
   itemDisplayMode = "ground",
-  onItemDisplayModeChange,
   itemRotate = true,
   onItemRotateChange,
   itemHover = true,
@@ -176,22 +175,30 @@ export default function OptionsPanel({
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
   const isColormapSelection = assetId ? isBiomeColormapAsset(assetId) : false;
   const isItem = assetId ? isMinecraftItem(assetId) : false;
-  const isPainting = assetId ? (() => {
-    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
-    return path.startsWith("painting/");
-  })() : false;
-  const isPotteryShard = assetId ? (() => {
-    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
-    return path.startsWith("item/pottery_shard_");
-  })() : false;
-  const isDecoratedPot = assetId ? (() => {
-    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
-    return path === "block/decorated_pot";
-  })() : false;
-  const isEntityDecoratedPot = assetId ? (() => {
-    const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
-    return path.startsWith("entity/decorated_pot/");
-  })() : false;
+  const isPainting = assetId
+    ? (() => {
+        const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+        return path.startsWith("painting/");
+      })()
+    : false;
+  const isPotteryShard = assetId
+    ? (() => {
+        const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+        return path.startsWith("item/pottery_shard_");
+      })()
+    : false;
+  const isDecoratedPot = assetId
+    ? (() => {
+        const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+        return path === "block/decorated_pot";
+      })()
+    : false;
+  const isEntityDecoratedPot = assetId
+    ? (() => {
+        const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+        return path.startsWith("entity/decorated_pot/");
+      })()
+    : false;
   const selectedWinnerPackId = useSelectWinner(assetId ?? "");
   const winnerPackId = assetId ? selectedWinnerPackId : null;
   const packsDir = useSelectPacksDir();
@@ -282,16 +289,16 @@ export default function OptionsPanel({
   const defaultTab = shouldShowPotteryShardTab
     ? "pottery-shard"
     : shouldShowEntityDecoratedPotTab
-    ? "entity-pot"
-    : shouldShowDecoratedPotTab
-    ? "decorated-pot"
-    : shouldShowPaintingTab
-    ? "painting"
-    : shouldShowItemTab
-    ? "item"
-    : shouldShowBlockStateTab
-      ? "block-state"
-      : "advanced";
+      ? "entity-pot"
+      : shouldShowDecoratedPotTab
+        ? "decorated-pot"
+        : shouldShowPaintingTab
+          ? "painting"
+          : shouldShowItemTab
+            ? "item"
+            : shouldShowBlockStateTab
+              ? "block-state"
+              : "advanced";
 
   if (!assetId) {
     return (
@@ -349,14 +356,16 @@ export default function OptionsPanel({
           {shouldShowBlockStateTab && (
             <TabIcon icon="⚙" label="Block State" value="block-state" />
           )}
-          {shouldShowPotTab && (
-            <TabIcon icon="🌱" label="Pot" value="pot" />
-          )}
+          {shouldShowPotTab && <TabIcon icon="🌱" label="Pot" value="pot" />}
           {hasBiomeColorTab && (
             <TabIcon icon="🎨" label="Biome Color" value="biome" />
           )}
           {hasTextureVariants && onSelectVariant && (
-            <TabIcon icon="🖼" label="Texture Variant" value="texture-variants" />
+            <TabIcon
+              icon="🖼"
+              label="Texture Variant"
+              value="texture-variants"
+            />
           )}
           {hasVariantsTab && (
             <TabIcon icon="📦" label="Pack Variants" value="variants" />
@@ -381,7 +390,11 @@ export default function OptionsPanel({
               )}
               {/* Convert pottery shard item to entity texture for preview */}
               <Preview3D
-                assetId={assetId?.replace('item/', 'entity/decorated_pot/').replace('_pottery_shard', '_pottery_pattern') || assetId}
+                assetId={
+                  assetId
+                    ?.replace("item/", "entity/decorated_pot/")
+                    .replace("_pottery_shard", "_pottery_pattern") || assetId
+                }
                 showPot={false}
                 onShowPotChange={() => {}}
                 blockProps={{}}
@@ -451,9 +464,7 @@ export default function OptionsPanel({
                   <input
                     type="checkbox"
                     checked={itemRotate}
-                    onChange={(e) =>
-                      onItemRotateChange?.(e.target.checked)
-                    }
+                    onChange={(e) => onItemRotateChange?.(e.target.checked)}
                     style={{
                       cursor: "pointer",
                       width: "18px",
@@ -483,9 +494,7 @@ export default function OptionsPanel({
                 <input
                   type="checkbox"
                   checked={itemHover}
-                  onChange={(e) =>
-                    onItemHoverChange?.(e.target.checked)
-                  }
+                  onChange={(e) => onItemHoverChange?.(e.target.checked)}
                   style={{
                     cursor: "pointer",
                     width: "18px",
@@ -503,11 +512,25 @@ export default function OptionsPanel({
               </label>
 
               {/* Display mode info */}
-              <p style={{ fontSize: "0.85rem", marginTop: "1rem", color: "#666" }}>
-                <strong>Display Mode:</strong> {getDisplayModeName(itemDisplayMode)}
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  marginTop: "1rem",
+                  color: "#666",
+                }}
+              >
+                <strong>Display Mode:</strong>{" "}
+                {getDisplayModeName(itemDisplayMode)}
               </p>
-              <p style={{ fontSize: "0.85rem", marginTop: "0.5rem", color: "#888" }}>
-                Items are rendered as 3D dropped items with 1px thickness, just like in Minecraft.
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  marginTop: "0.5rem",
+                  color: "#888",
+                }}
+              >
+                Items are rendered as 3D dropped items with 1px thickness, just
+                like in Minecraft.
               </p>
 
               {/* Future: Display mode selector */}

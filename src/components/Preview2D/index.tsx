@@ -5,7 +5,7 @@
  * Consistent with Preview3D but optimized for 2D textures
  */
 import { useEffect, useState, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import { convertFileSrc } from "@tauri-apps/api/core";

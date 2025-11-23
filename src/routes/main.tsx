@@ -246,7 +246,8 @@ export default function MainRoute() {
   const setPacksDirInStore = useSetPacksDir();
 
   // Item display state
-  const [itemDisplayMode, setItemDisplayMode] = useState<ItemDisplayMode>("ground");
+  const [itemDisplayMode, setItemDisplayMode] =
+    useState<ItemDisplayMode>("ground");
   const [itemRotate, setItemRotate] = useState(true);
   const [itemHover, setItemHover] = useState(true);
 
@@ -254,7 +255,9 @@ export default function MainRoute() {
   const [_isPending, startTransition] = useTransition();
 
   // Debounce timer for pack order changes
-  const packOrderDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const packOrderDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   // UI messages with auto-hide
   const { message: errorMessage, setMessage: setErrorMessage } =
@@ -408,7 +411,9 @@ export default function MainRoute() {
 
             // Update URLs and pack IDs in state
             useStore.getState().setGrassColormapUrl(grassUrl || undefined);
-            useStore.getState().setGrassColormapPackId(grassWinner || undefined);
+            useStore
+              .getState()
+              .setGrassColormapPackId(grassWinner || undefined);
             useStore.getState().setFoliageColormapUrl(foliageUrl || undefined);
             useStore
               .getState()
@@ -469,7 +474,9 @@ export default function MainRoute() {
   const grassColormapUrl = useStore((state) => state.grassColormapUrl);
   const grassColormapPackId = useStore((state) => state.grassColormapPackId);
   const foliageColormapUrl = useStore((state) => state.foliageColormapUrl);
-  const foliageColormapPackId = useStore((state) => state.foliageColormapPackId);
+  const foliageColormapPackId = useStore(
+    (state) => state.foliageColormapPackId,
+  );
   const selectedBiomeId = useStore((state) => state.selectedBiomeId);
 
   useEffect(() => {
@@ -941,11 +948,14 @@ export default function MainRoute() {
             className={s.rightPanel}
           >
             <div className={s.previewSection}>
-              {uiState.selectedAssetId && isEntityDecoratedPot(uiState.selectedAssetId) ? (
+              {uiState.selectedAssetId &&
+              isEntityDecoratedPot(uiState.selectedAssetId) ? (
                 <PreviewDecoratedPotEntity assetId={uiState.selectedAssetId} />
-              ) : uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId) ? (
+              ) : uiState.selectedAssetId &&
+                is2DOnlyTexture(uiState.selectedAssetId) ? (
                 <Preview2D assetId={uiState.selectedAssetId} />
-              ) : uiState.selectedAssetId && isMinecraftItem(uiState.selectedAssetId) ? (
+              ) : uiState.selectedAssetId &&
+                isMinecraftItem(uiState.selectedAssetId) ? (
                 <PreviewItem
                   assetId={uiState.selectedAssetId}
                   displayMode={itemDisplayMode}

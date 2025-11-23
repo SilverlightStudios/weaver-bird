@@ -261,7 +261,7 @@ function getColormapType(textureId: string): "grass" | "foliage" | undefined {
  * for better performance. See src/workers/blockGeometry.worker.ts
  * Keeping this code for reference/fallback purposes.
  */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+// @ts-ignore
 function _processElements(
   elements: ModelElement[],
   textures: Record<string, string>,

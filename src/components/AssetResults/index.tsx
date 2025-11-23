@@ -327,7 +327,7 @@ const AssetCard = memo(
               ✏️
             </div>
           )}
-          {variantCount > 1 && (
+          {variantCount != null && variantCount > 1 && (
             <div className={s.variantBadge} title={`${variantCount} variants`}>
               {variantCount}
             </div>
@@ -467,9 +467,10 @@ export default function AssetResults({
           isInventoryVariant(id),
         );
         const primaryId = inventoryVariant || group.variantIds[0];
-        const canonicalId = primaryId.includes(":colormap/") || is2DOnlyTexture(primaryId)
-          ? primaryId
-          : getBlockStateIdFromAssetId(primaryId);
+        const canonicalId =
+          primaryId.includes(":colormap/") || is2DOnlyTexture(primaryId)
+            ? primaryId
+            : getBlockStateIdFromAssetId(primaryId);
 
         // Count only numbered texture variants (e.g., acacia_planks1, acacia_planks2)
         // Block states (_on, _off) and faces (_top, _side) should NOT be counted as variants

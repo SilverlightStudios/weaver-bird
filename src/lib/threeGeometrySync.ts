@@ -249,7 +249,7 @@ function processModel(
 export function computeGeometrySync(
   model: BlockModel,
   resolvedTextures: Record<string, string>,
-  biomeColor?: { r: number; g: number; b: number } | null,
+  _biomeColor?: { r: number; g: number; b: number } | null,
   resolvedModel?: ResolvedModel,
 ): WorkerResponse {
   const elements = processModel(model, resolvedTextures, resolvedModel);

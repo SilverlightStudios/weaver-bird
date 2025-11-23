@@ -466,7 +466,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       transferables.push(element.geometry.indices.buffer);
     }
 
-    self.postMessage(response, transferables);
+    self.postMessage(response, { transfer: transferables });
   } catch (error) {
     console.error("[ThreeGeometryWorker] Error processing model:", error);
     // Send empty result on error
