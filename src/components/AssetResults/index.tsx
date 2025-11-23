@@ -324,7 +324,7 @@ const AssetCard = memo(
               ✏️
             </div>
           )}
-          {variantCount && variantCount > 1 && (
+          {variantCount > 1 && (
             <div className={s.variantBadge} title={`${variantCount} variants`}>
               {variantCount}
             </div>
