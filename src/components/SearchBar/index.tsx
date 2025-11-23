@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Command as CommandPrimitive } from "cmdk";
-import { useStore } from "@state/store";
+import { useSelectAllAssets } from "@state/selectors";
 import { beautifyAssetName } from "@lib/assetUtils";
 import {
   buildSearchSuggestions,
@@ -26,8 +26,8 @@ export default function SearchBar({
   const [inputValue, setInputValue] = useState(value);
   const [open, setOpen] = useState(false);
 
-  // Get all assets from store for suggestions
-  const allAssets = useStore((state) => Object.values(state.assets));
+  // Get all assets from store for suggestions (properly memoized)
+  const allAssets = useSelectAllAssets();
 
   // Sync local state when external value changes (e.g., cleared programmatically)
   useEffect(() => {
