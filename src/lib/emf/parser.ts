@@ -115,11 +115,16 @@ function parseModelPart(
  */
 function parseBox(
   box: JEMBox,
-  _textureSize: [number, number],
+  parentTextureSize: [number, number],
   mirror: boolean,
 ): ParsedBox | null {
+  // Use per-box textureSize if provided, otherwise use parent textureSize
+  const textureSize = box.textureSize || parentTextureSize;
+
+  // Handle missing coordinates - this is common in incomplete JEM exports
   if (!box.coordinates) {
-    console.warn('[JEM Parser] Box missing coordinates');
+    console.warn('[JEM Parser] Box missing coordinates - skipping (incomplete JEM export)');
+    console.warn('[JEM Parser] Box data:', JSON.stringify(box));
     return null;
   }
 
@@ -130,7 +135,7 @@ function parseBox(
   let uv: ParsedBox['uv'];
 
   if (box.uvDown || box.uvUp || box.uvNorth || box.uvSouth || box.uvWest || box.uvEast) {
-    // Individual face UVs provided
+    // Individual face UVs provided (explicit UVs take precedence)
     uv = {
       down: box.uvDown || [0, 0, 0, 0],
       up: box.uvUp || [0, 0, 0, 0],
@@ -142,10 +147,11 @@ function parseBox(
   } else if (box.textureOffset) {
     // Calculate box UV from texture offset
     // This follows Minecraft's box UV layout convention
+    // Note: Negative offsets are valid (used for texture atlas mapping)
     const [u, v] = box.textureOffset;
     uv = calculateBoxUV(u, v, width, height, depth);
   } else {
-    // Default UV at origin
+    // Default UV at origin (fallback)
     uv = calculateBoxUV(0, 0, width, height, depth);
   }
 

@@ -77,6 +77,8 @@ export interface JEMBox {
   coordinates?: [number, number, number, number, number, number];
   /** Uniform size increment */
   sizeAdd?: number;
+  /** Per-box texture size (overrides parent textureSize) */
+  textureSize?: [number, number];
 
   // Individual face UV coordinates (alternative to textureOffset)
   /** UV for down face (-Y) [u1, v1, u2, v2] */

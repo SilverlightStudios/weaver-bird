@@ -68,6 +68,13 @@ function convertPart(
   console.log(`[entityModelConverter] - Translate: [${part.translate.join(", ")}]`);
   console.log(`[entityModelConverter] - Rotate: [${part.rotate.join(", ")}]`);
   console.log(`[entityModelConverter] - Boxes: ${part.boxes.length}`);
+  console.log(`[entityModelConverter] - Children: ${part.children.length}`);
+
+  // Skip parts with no geometry and no children (e.g., "cloak", "ear" in player model)
+  if (part.boxes.length === 0 && part.children.length === 0) {
+    console.log(`[entityModelConverter] Skipping empty part: ${part.name} (no boxes or children)`);
+    return partGroup; // Return empty group
+  }
 
   // Convert each box in this part
   for (let i = 0; i < part.boxes.length; i++) {
