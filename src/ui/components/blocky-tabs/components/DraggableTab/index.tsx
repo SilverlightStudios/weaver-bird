@@ -57,7 +57,7 @@ export const DraggableTab: React.FC<DraggableTabProps> = ({
     isActive,
     isHovered,
     activeZone,
-    closingZone
+    closingZone,
   );
 
   const handleResizeMouseDown = useDrawerResize(
@@ -65,7 +65,7 @@ export const DraggableTab: React.FC<DraggableTabProps> = ({
     drawerSize,
     onDrawerResize,
     onClose,
-    closingViaResizeRef
+    closingViaResizeRef,
   );
 
   const drawerDimensions = useDrawerDimensions(zone, drawerSize);
@@ -89,7 +89,7 @@ export const DraggableTab: React.FC<DraggableTabProps> = ({
   return (
     <>
       <div
-        className={s.wrapper}
+        className={`${s.wrapper} ${isHovered ? s.hovered : ""}`}
         style={outerWrapperStyle}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -109,9 +109,19 @@ export const DraggableTab: React.FC<DraggableTabProps> = ({
             color={tab.color}
             isActive={isActive}
             isDragging={isDragging}
+            isHovered={isHovered}
             onClick={onClick}
           />
         </div>
+
+        {/* Non-interactive visual tail - rendered after tab for natural stacking */}
+        {!isDragging && (
+          <div
+            className={`${s.tail} ${isActive ? s.tailActive : ""}`}
+            data-zone={zone}
+            style={{ backgroundColor: tab.color || "var(--color-block)" }}
+          />
+        )}
       </div>
 
       <Drawer

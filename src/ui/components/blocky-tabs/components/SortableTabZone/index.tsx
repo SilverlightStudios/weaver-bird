@@ -1,5 +1,10 @@
 import React from "react";
-import { SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import { ZoneId, TabItem } from "../../types";
 import { DRAWER_DEFAULT_SIZE } from "../../constants";
 import { DraggableTab } from "../DraggableTab";
@@ -37,6 +42,11 @@ export const SortableTabZone: React.FC<SortableTabZoneProps> = ({
       ? horizontalListSortingStrategy
       : verticalListSortingStrategy;
 
+  // Make the zone itself droppable
+  const { setNodeRef } = useDroppable({
+    id: id,
+  });
+
   const zoneClass =
     id === "top"
       ? s.zoneTop
@@ -46,11 +56,14 @@ export const SortableTabZone: React.FC<SortableTabZoneProps> = ({
           ? s.zoneLeft
           : s.zoneRight;
 
-  const className = [zoneClass, showZones && s.debug].filter(Boolean).join(" ");
+  const isEmpty = items.length === 0;
+  const className = [zoneClass, showZones && s.debug, isEmpty && s.empty]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <SortableContext id={id} items={items.map((t) => t.id)} strategy={strategy}>
-      <div className={className} style={style}>
+      <div ref={setNodeRef} className={className} style={style}>
         {items.map((tab) => (
           <DraggableTab
             key={tab.id}
@@ -60,7 +73,9 @@ export const SortableTabZone: React.FC<SortableTabZoneProps> = ({
             activeZone={activeZone}
             portalContainer={portalContainer}
             drawerSize={
-              drawerSizes[tab.id] || tab.defaultDrawerSize || DRAWER_DEFAULT_SIZE
+              drawerSizes[tab.id] ||
+              tab.defaultDrawerSize ||
+              DRAWER_DEFAULT_SIZE
             }
             onDrawerResize={(size) => onDrawerResize(tab.id, size)}
             onClick={() => {

@@ -9,6 +9,7 @@ interface TabProps {
   color?: string;
   isActive: boolean;
   isDragging: boolean;
+  isHovered?: boolean;
   onClick: () => void;
 }
 
@@ -19,12 +20,14 @@ export const Tab: React.FC<TabProps> = ({
   color,
   isActive,
   isDragging,
+  isHovered,
   onClick,
 }) => {
   const className = [
     s.tab,
     isActive && s.active,
     isDragging && s.dragging,
+    isHovered && s.hovered,
   ]
     .filter(Boolean)
     .join(" ");

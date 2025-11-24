@@ -21,6 +21,7 @@ import {
   DRAWER_DEFAULT_SIZE,
   ZONE_SHRINK_RATIO,
   CANVAS_SHRINK_RATIO,
+  TAB_EXTEND_OFFSET,
   isHorizontalZone,
 } from "./constants";
 import { SortableTabZone } from "./components/SortableTabZone";

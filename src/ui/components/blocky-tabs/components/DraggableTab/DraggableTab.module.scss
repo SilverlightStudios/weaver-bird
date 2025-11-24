@@ -1,7 +1,94 @@
+@use "@/ui/tokens" as tokens;
+
 .wrapper {
-  transition: transform 300ms ease;
+    position: relative;
+    transition:
+        transform 300ms ease,
+        scale 200ms ease;
+
+    &:hover {
+        scale: 1.05;
+        z-index: 20;
+    }
 }
 
 .tabWrapper {
-  transition: transform 300ms ease;
+    position: relative;
+    transition: transform 300ms ease;
+    z-index: 1;
+}
+
+.tail {
+    position: absolute;
+    pointer-events: none;
+    transition:
+        opacity 200ms ease,
+        transform 200ms ease,
+        box-shadow 200ms ease;
+    @include tokens.shadow-sm;
+    // backgroundColor is set via inline styles from tab.color
+
+    &[data-zone="left"] {
+        right: 48px;
+        top: 0;
+        height: 48px;
+        width: calc(
+            var(--tab-extend-offset) + 2px
+        ); // Extend 2px to overlap tab
+        @include tokens.border-standard;
+        border-right: none;
+        transform-origin: right center;
+        z-index: 0; // Behind tab so tab shadow casts onto tail
+    }
+
+    &[data-zone="right"] {
+        left: 48px;
+        top: 0;
+        height: 48px;
+        width: calc(
+            var(--tab-extend-offset) + 2px
+        ); // Extend 2px to overlap tab
+        @include tokens.border-standard;
+        border-left: none;
+        transform-origin: left center;
+        z-index: 2; // Above tab to hide tab's shadow edge
+    }
+
+    &[data-zone="top"] {
+        bottom: 48px;
+        left: 0;
+        width: 48px;
+        height: calc(
+            var(--tab-extend-offset) + 2px
+        ); // Extend 2px to overlap tab
+        @include tokens.border-standard;
+        border-bottom: none;
+        transform-origin: center bottom;
+        z-index: 0; // Behind tab so tab shadow casts onto tail
+    }
+
+    &[data-zone="bottom"] {
+        top: 48px;
+        left: 0;
+        width: 48px;
+        height: calc(
+            var(--tab-extend-offset) + 2px
+        ); // Extend 2px to overlap tab
+        @include tokens.border-standard;
+        border-top: none;
+        transform-origin: center top;
+        z-index: 2; // Above tab to hide tab's shadow edge
+    }
+}
+
+.hovered {
+    .tail {
+        @include tokens.shadow-md;
+    }
+}
+
+.tailActive {
+    scale: 1.1;
+    @include tokens.shadow-md;
+    border-color: var(--color-ink);
 }
