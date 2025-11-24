@@ -1,0 +1,70 @@
+// Base zone styles
+%zone-base {
+  position: absolute;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: none;
+  transition: all var(--animation-duration) ease;
+
+  & > * {
+    pointer-events: auto;
+  }
+}
+
+.zoneTop {
+  @extend %zone-base;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  max-height: 80px;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0 16px 16px;
+}
+
+.zoneBottom {
+  @extend %zone-base;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  max-height: 80px;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 16px 0;
+}
+
+.zoneLeft {
+  @extend %zone-base;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-width: 80px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px 16px 16px 0;
+}
+
+.zoneRight {
+  @extend %zone-base;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  max-width: 80px;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 0 16px 16px;
+}
+
+.debug {
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px dashed red;
+}

@@ -1,0 +1,86 @@
+@use "@/ui/tokens" as tokens;
+
+.tab {
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-block);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  scale: 1;
+
+  transition:
+    scale 200ms ease,
+    box-shadow 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease,
+    rotate 200ms ease;
+
+  @include tokens.border-standard;
+  @include tokens.radius-quirky-sm;
+  @include tokens.shadow-sm;
+  @include tokens.rotate-slight;
+
+  &:hover {
+    scale: 1.05;
+    z-index: 20;
+    @include tokens.shadow-md;
+  }
+
+  // Zone-specific styling
+  &[data-zone="left"] {
+    margin-left: calc(var(--tab-extend-offset) * -1);
+    padding-left: var(--tab-extend-offset);
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+  }
+
+  &[data-zone="right"] {
+    margin-right: calc(var(--tab-extend-offset) * -1);
+    padding-right: var(--tab-extend-offset);
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+  }
+
+  &[data-zone="top"] {
+    margin-top: calc(var(--tab-extend-offset) * -1);
+    padding-top: var(--tab-extend-offset);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+  }
+
+  &[data-zone="bottom"] {
+    margin-bottom: calc(var(--tab-extend-offset) * -1);
+    padding-bottom: var(--tab-extend-offset);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+  }
+
+  img {
+    width: 24px;
+    height: 24px;
+    image-rendering: pixelated;
+  }
+}
+
+.active {
+  z-index: 20;
+  background-color: var(--color-primary);
+  color: white;
+  scale: 1.1;
+  rotate: 0deg;
+  border-color: var(--color-ink);
+  @include tokens.shadow-md;
+}
+
+.dragging {
+  opacity: 0.8;
+  z-index: 100;
+  cursor: grabbing;
+  scale: 1.1;
+  rotate: 5deg;
+  @include tokens.shadow-xl;
+}
