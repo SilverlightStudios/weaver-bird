@@ -1,62 +1,35 @@
 #!/bin/bash
+# Test the vanilla JEM backend loading
 
-# Test script for Weaverbird backend with mock resource packs
-# Tests scanning and building with real resource packs
-
-set -e
-
-echo "=== Weaverbird Backend Test ==="
+echo "Testing vanilla JEM backend..."
 echo ""
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Change to the project root
+cd "$(dirname "$0")"
 
-# Paths
-PACKS_DIR="$SCRIPT_DIR/__mocks__/resourcepacks"
-OUTPUT_DIR="/tmp/weaverbird-test-output"
-BINARY="$SCRIPT_DIR/src-tauri/target/release/weaverbird"
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Check if binary exists
-if [ ! -f "$BINARY" ]; then
-  echo -e "${RED}Error: Binary not found at $BINARY${NC}"
-  echo "Please run: npm run build"
-  exit 1
+# Check if cow.jem exists
+if [ -f "__mocks__/cem/cow.jem" ]; then
+    echo "✅ cow.jem exists at __mocks__/cem/cow.jem"
+    echo "File size: $(wc -c < __mocks__/cem/cow.jem) bytes"
+else
+    echo "❌ cow.jem NOT FOUND at __mocks__/cem/cow.jem"
+    exit 1
 fi
 
-# Clean output directory
-rm -rf "$OUTPUT_DIR"
-mkdir -p "$OUTPUT_DIR"
-
-echo -e "${YELLOW}Testing with mock resource packs directory:${NC}"
-echo "  $PACKS_DIR"
 echo ""
-
-# List available packs
-echo -e "${YELLOW}Available resource packs:${NC}"
-ls -lh "$PACKS_DIR" | grep -E '\.(zip|disabled)$' | awk '{print "  " $9 " (" $5 ")"}'
-echo ""
-
-echo -e "${YELLOW}Running backend tests...${NC}"
-echo ""
-
-# Test 1: Check that the packs directory exists and is readable
-echo "✓ Packs directory exists and contains:"
-find "$PACKS_DIR" -maxdepth 1 -type f \( -name "*.zip" -o -name "*.disabled" \) | wc -l | xargs echo "  "files
+echo "Available vanilla JEM files:"
+ls -lh __mocks__/cem/*.jem | awk '{print "  - " $9 " (" $5 ")"}'
 
 echo ""
-echo -e "${GREEN}Backend verification complete!${NC}"
+echo "✅ Backend files are in place"
 echo ""
-echo "The refactored backend is ready to:"
-echo "  1. Scan resource packs with improved validation"
-echo "  2. Return structured error responses"
-echo "  3. Handle input validation DRY-style"
-echo ""
-echo "Test with the UI by running:"
-echo "  npm run dev"
-echo ""
+echo "To test the full flow:"
+echo "1. Run 'npm run dev'"
+echo "2. Open the app and navigate to Entity Textures"
+echo "3. Click on a cow texture"
+echo "4. Check browser console for these logs:"
+echo "   - '[EMF] Loading entity model: cow'"
+echo "   - '[EMF] Looking for vanilla JEM: cow'"
+echo "   - '[read_vanilla_jem] Reading vanilla JEM: __mocks__/cem/cow.jem'"
+echo "   - '[EMF] ✓ Vanilla JEM loaded successfully'"
+echo "5. The cow should render with the vanilla model (not a gray cube)"

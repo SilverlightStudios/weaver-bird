@@ -1,45 +1,85 @@
 .root {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
 .placeholder,
 .error,
 .loading {
-  color: #a0a0a0;
-  font-size: 14px;
-  text-align: center;
-  padding: 20px;
+    color: #a0a0a0;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
 }
 
 .error {
-  color: #ff6b6b;
+    color: #ff6b6b;
 }
 
 .loading {
-  color: #4ecdc4;
+    color: #4ecdc4;
 }
 
 .info {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  padding: 8px 16px;
-  border-radius: 4px;
-  pointer-events: none;
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 16px;
+    border-radius: 4px;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .infoText {
-  color: #ffffff;
-  font-size: 12px;
-  font-family: monospace;
-  white-space: nowrap;
+    color: #ffffff;
+    font-size: 12px;
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+.uvToggle {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: monospace;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.uvTooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ffffff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 10000;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }

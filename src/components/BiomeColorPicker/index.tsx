@@ -283,8 +283,8 @@ export default function BiomeColorPicker({
     setSelectedBiome(biome.id);
 
     // Update global store so dropdown reflects the selection
-    const setSelectedBiomeId = useStore.getState().setSelectedBiomeId;
-    const setColormapCoordinates = useStore.getState().setColormapCoordinates;
+    const {setSelectedBiomeId} = useStore.getState();
+    const {setColormapCoordinates} = useStore.getState();
     setSelectedBiomeId(biome.id);
 
     // If biome has coordinates, update them too

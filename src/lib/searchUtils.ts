@@ -113,7 +113,7 @@ export function beautifyCategoryName(category: string): string {
   return category
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ') + 's';
+    .join(' ');
 }
 
 /**
@@ -127,15 +127,11 @@ export function buildCategories(
   // Build category map
   const categoryMap = new Map<string, Set<string>>();
 
+  // List of mega categories to exclude
+  const megaCategories = ['block', 'item', 'entity', 'painting', 'mob_effect', 'colormap'];
+
   matchingAssets.forEach(asset => {
-    // Add main category (block, item, etc.)
-    const mainCategory = extractCategory(asset.id);
-    if (mainCategory) {
-      if (!categoryMap.has(mainCategory)) {
-        categoryMap.set(mainCategory, new Set());
-      }
-      categoryMap.get(mainCategory)!.add(asset.id);
-    }
+    // Skip main category (block, item, etc.) - we don't want these mega categories
 
     // Add keyword categories (acacia, oak, diamond, etc.)
     const keywords = extractKeywords(asset.id);
@@ -143,6 +139,9 @@ export function buildCategories(
       // Skip very common/generic keywords
       if (keyword.length < 3) return;
       if (['top', 'side', 'front', 'back', 'bottom', 'end'].includes(keyword)) return;
+
+      // Skip mega categories
+      if (megaCategories.includes(keyword)) return;
 
       if (!categoryMap.has(keyword)) {
         categoryMap.set(keyword, new Set());

@@ -261,7 +261,7 @@ function getColormapType(textureId: string): "grass" | "foliage" | undefined {
  * for better performance. See src/workers/blockGeometry.worker.ts
  * Keeping this code for reference/fallback purposes.
  */
-// @ts-ignore
+// @ts-expect-error - Kept for reference/fallback purposes
 function _processElements(
   elements: ModelElement[],
   textures: Record<string, string>,
@@ -465,7 +465,7 @@ function isSuitableFor3D(elements: ModelElement[]): boolean {
   let hasIsometricFaces = false;
 
   for (const element of elements) {
-    const faces = element.faces;
+    const { faces } = element;
     // We need at least up OR (south AND east) for a reasonable 3D render
     if (faces.up || (faces.south && faces.east)) {
       hasIsometricFaces = true;
@@ -826,7 +826,7 @@ export default function MinecraftCSSBlock({
             );
 
             if (resolution.models.length > 0) {
-              const modelId = resolution.models[0].modelId;
+              const { modelId } = resolution.models[0];
               const model = await loadModelJson(packId, modelId, packsDir);
 
               textures = model.textures || {};

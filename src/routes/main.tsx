@@ -48,7 +48,6 @@ import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import Preview2D from "@components/Preview2D";
 import PreviewItem from "@components/PreviewItem";
-import PreviewEntity from "@components/PreviewEntity";
 import OptionsPanel from "@components/OptionsPanel";
 import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
@@ -417,18 +416,18 @@ export default function MainRoute() {
             // Step 2: Load colormap URLs (deferred as low-priority)
             const grassUrl = grassWinner
               ? await loadColormapUrl(
-                  GRASS_COLORMAP_ASSET_ID,
-                  grassWinner,
-                  packsMap,
-                )
+                GRASS_COLORMAP_ASSET_ID,
+                grassWinner,
+                packsMap,
+              )
               : null;
 
             const foliageUrl = foliageWinner
               ? await loadColormapUrl(
-                  FOLIAGE_COLORMAP_ASSET_ID,
-                  foliageWinner,
-                  packsMap,
-                )
+                FOLIAGE_COLORMAP_ASSET_ID,
+                foliageWinner,
+                packsMap,
+              )
               : null;
 
             // Update URLs and pack IDs in state
@@ -1025,19 +1024,11 @@ export default function MainRoute() {
     // Auto-determine if certain modes should be disabled
     const is2DOnly =
       uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId);
-    const isEntity =
+    const _isEntity =
       uiState.selectedAssetId && isEntityTexture(uiState.selectedAssetId);
 
     // Override mode for special asset types
     let effectiveMode = canvasRenderMode;
-    if (isEntity) {
-      // Entities always use their own preview
-      return (
-        <div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
-          <PreviewEntity assetId={uiState.selectedAssetId!} />
-        </div>
-      );
-    }
     if (is2DOnly && canvasRenderMode === "3D") {
       effectiveMode = "2D";
     }
@@ -1121,13 +1112,17 @@ export default function MainRoute() {
           disabled2D={
             uiState.selectedAssetId
               ? !is2DOnlyTexture(uiState.selectedAssetId) &&
-                !isEntityTexture(uiState.selectedAssetId)
+              !isEntityTexture(uiState.selectedAssetId)
               : false
           }
           disabled3D={
             uiState.selectedAssetId
-              ? is2DOnlyTexture(uiState.selectedAssetId) ||
-                isEntityTexture(uiState.selectedAssetId)
+              ? is2DOnlyTexture(uiState.selectedAssetId)
+              : false
+          }
+          disabledItem={
+            uiState.selectedAssetId
+              ? isEntityTexture(uiState.selectedAssetId)
               : false
           }
         />

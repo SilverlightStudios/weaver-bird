@@ -7,6 +7,6 @@ pub use packs::{
     get_launcher_resourcepacks_dir_impl, get_pack_texture_path_impl,
     get_suggested_minecraft_paths_impl, get_vanilla_texture_path_impl, identify_launcher_impl,
     initialize_vanilla_textures_from_custom_dir_impl, initialize_vanilla_textures_impl,
-    load_model_json_impl, read_block_model_impl, read_pack_file_impl, resolve_block_state_impl,
-    scan_packs_folder_impl, BuildWeaverNestRequest,
+    load_model_json_impl, read_block_model_impl, read_pack_file_impl, read_vanilla_jem_impl,
+    resolve_block_state_impl, scan_packs_folder_impl, BuildWeaverNestRequest,
 };

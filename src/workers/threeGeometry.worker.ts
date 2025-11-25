@@ -86,7 +86,7 @@ function computeElementGeometry(
 
   // Each face has 4 vertices, 6 indices (2 triangles)
   // We'll build a custom geometry with only the faces that are defined
-  const faces = element.faces;
+  const {faces} = element;
   const definedFaces: Array<{
     name: string;
     data: ElementFace;

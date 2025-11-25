@@ -34,7 +34,7 @@ function computeElementGeometry(
   const height = (y2 - y1) / MINECRAFT_UNIT;
   const depth = (z2 - z1) / MINECRAFT_UNIT;
 
-  const faces = element.faces;
+  const {faces} = element;
   const definedFaces: Array<{
     name: string;
     data: ElementFace;

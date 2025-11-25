@@ -248,7 +248,7 @@ export default function PreviewItem({
               normalizedAssetId,
               winnerPack.is_zip,
             );
-          } catch (packError) {
+          } catch {
             console.warn(
               `[PreviewItem] Pack texture not found for ${normalizedAssetId}, using vanilla`,
             );

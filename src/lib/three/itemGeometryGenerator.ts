@@ -70,8 +70,8 @@ export function generateItemGeometry(
 ): THREE.BufferGeometry {
   const pixelData = readTexturePixels(texture);
 
-  const width = pixelData.width;
-  const height = pixelData.height;
+  const {width} = pixelData;
+  const {height} = pixelData;
   const halfThickness = thickness / 2;
 
   const vertices: number[] = [];

@@ -14,7 +14,10 @@ import s from "./styles.module.scss";
 export default function CanvasSettings() {
   const canvasRenderMode = useStore((state) => state.canvasRenderMode);
   const canvas3DShowGrid = useStore((state) => state.canvas3DShowGrid);
-  const canvas2DShowPixelGrid = useStore((state) => state.canvas2DShowPixelGrid);
+  const canvas2DShowPixelGrid = useStore(
+    (state) => state.canvas2DShowPixelGrid,
+  );
+  const canvas2DShowUVWrap = useStore((state) => state.canvas2DShowUVWrap);
   const canvasItemShowGrid = useStore((state) => state.canvasItemShowGrid);
   const canvasItemRotate = useStore((state) => state.canvasItemRotate);
   const canvasItemHover = useStore((state) => state.canvasItemHover);
@@ -22,6 +25,9 @@ export default function CanvasSettings() {
   const setCanvas3DShowGrid = useStore((state) => state.setCanvas3DShowGrid);
   const setCanvas2DShowPixelGrid = useStore(
     (state) => state.setCanvas2DShowPixelGrid,
+  );
+  const setCanvas2DShowUVWrap = useStore(
+    (state) => state.setCanvas2DShowUVWrap,
   );
   const setCanvasItemShowGrid = useStore(
     (state) => state.setCanvasItemShowGrid,
@@ -69,6 +75,21 @@ export default function CanvasSettings() {
       <p className={s.description}>
         Display a pixel grid overlay to help visualize individual pixels in the
         texture.
+      </p>
+
+      <label className={s.checkboxLabel}>
+        <input
+          type="checkbox"
+          checked={canvas2DShowUVWrap}
+          onChange={(e) => setCanvas2DShowUVWrap(e.target.checked)}
+          className={s.checkbox}
+        />
+        <span className={s.labelText}>Show UV Wrap</span>
+      </label>
+
+      <p className={s.description}>
+        Display colored boxes showing where entity model parts map to the
+        texture (entities only).
       </p>
     </div>
   );

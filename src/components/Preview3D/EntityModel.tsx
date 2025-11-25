@@ -9,8 +9,8 @@ import {
   loadEntityModel,
   getEntityTypeFromAssetId,
   isEntityTexture,
+  jemToThreeJS,
 } from "@lib/emf";
-import { parsedEntityModelToThreeJs } from "@lib/three/entityModelConverter";
 import { loadPackTexture, loadVanillaTexture } from "@lib/three/textureLoader";
 
 interface Props {
@@ -24,10 +24,7 @@ interface Props {
  * Uses EMF (Entity Model Features) JEM format for entity geometry.
  * Supports custom pack models with vanilla fallback.
  */
-function EntityModel({
-  assetId,
-  positionOffset = [0, 0, 0],
-}: Props) {
+function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const [entityGroup, setEntityGroup] = useState<THREE.Group | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +36,8 @@ function EntityModel({
   const vanillaPack = useSelectPack("minecraft:vanilla");
   const packsDir = useSelectPacksDir();
 
-  const resolvedPackId = storeWinnerPackId ?? (vanillaPack ? "minecraft:vanilla" : undefined);
+  const resolvedPackId =
+    storeWinnerPackId ?? (vanillaPack ? "minecraft:vanilla" : undefined);
   const resolvedPack = storeWinnerPackId ? storeWinnerPack : vanillaPack;
 
   useEffect(() => {
@@ -98,7 +96,16 @@ function EntityModel({
         );
 
         if (!parsedModel) {
-          throw new Error(`No model definition found for ${entityType}`);
+          // No custom entity model found - this is normal for packs without OptiFine CEM
+          console.log(
+            `[EntityModel] No custom JEM model found for ${entityType} in ${resolvedPackId}`,
+          );
+          console.log(
+            "[EntityModel] Entity models require OptiFine CEM files (assets/minecraft/optifine/cem/*.jem)",
+          );
+          setError(`No custom entity model available for ${entityType}`);
+          createPlaceholder();
+          return;
         }
 
         console.log("[EntityModel] Model loaded:", parsedModel.entityType);
@@ -138,15 +145,19 @@ function EntityModel({
         }
 
         if (!texture) {
-          console.warn("[EntityModel] Failed to load texture, using placeholder");
+          console.warn(
+            "[EntityModel] Failed to load texture, using placeholder",
+          );
         }
 
-        // Convert parsed entity model to Three.js
+        // Convert parsed entity model to Three.js using new loader
         console.log("[EntityModel] Converting model to Three.js...");
-        const group = parsedEntityModelToThreeJs(parsedModel, texture);
+        const group = jemToThreeJS(parsedModel, texture);
 
         if (cancelled) {
-          console.log("[EntityModel] Load cancelled after conversion, aborting");
+          console.log(
+            "[EntityModel] Load cancelled after conversion, aborting",
+          );
           return;
         }
 
@@ -161,7 +172,8 @@ function EntityModel({
         console.error("[EntityModel] Error:", err);
         console.error("=============================================");
         if (!cancelled) {
-          const errorMessage = err instanceof Error ? err.message : "Unknown error";
+          const errorMessage =
+            err instanceof Error ? err.message : "Unknown error";
           setError(errorMessage);
           setLoading(false);
           createPlaceholder();
@@ -170,18 +182,24 @@ function EntityModel({
     }
 
     function createPlaceholder() {
-      console.log("[EntityModel] Creating placeholder cube for:", assetId);
+      console.log("[EntityModel] Creating placeholder for entity:", assetId);
+      console.log(
+        "[EntityModel] Tip: Add OptiFine CEM files to resource pack to see custom entity models",
+      );
 
       try {
-        const geometry = new THREE.BoxGeometry(0.875, 0.875, 0.875);
+        // Create a simple cube placeholder to indicate entity position
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshStandardMaterial({
-          color: 0x8b4513, // Brown placeholder
+          color: 0x888888, // Gray placeholder
           roughness: 0.8,
           metalness: 0.2,
+          transparent: true,
+          opacity: 0.5,
         });
 
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.y = 0.4375;
+        mesh.position.y = 0.5;
 
         const group = new THREE.Group();
         group.add(mesh);

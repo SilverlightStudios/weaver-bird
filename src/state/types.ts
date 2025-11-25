@@ -114,6 +114,7 @@ export interface UIState {
   // Canvas-specific settings
   canvas3DShowGrid: boolean; // Show floor grid in 3D canvas
   canvas2DShowPixelGrid: boolean; // Show pixel grid in 2D canvas
+  canvas2DShowUVWrap: boolean; // Show UV wrap overlay for entity textures in 2D canvas
   canvasItemShowGrid: boolean; // Show grid in item canvas
   canvasItemRotate: boolean; // Enable rotation animation in item canvas
   canvasItemHover: boolean; // Enable hover animation in item canvas

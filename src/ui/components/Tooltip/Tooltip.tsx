@@ -250,10 +250,6 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
           }
         }
 
-        // Store the ideal position before collision detection
-        const idealLeft = left;
-        const idealTop = top;
-
         // Collision detection - keep tooltip on screen
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;

@@ -5,11 +5,7 @@
  * All 92 Java Edition biomes with accurate colormap coordinates and hex colors.
  */
 
-import {
-  ALL_BIOMES,
-  type BiomeCoords,
-  hexToRgb,
-} from "@/constants/biomeCoordinates";
+import { ALL_BIOMES } from "@/constants/biomeCoordinates";
 
 export interface BiomeData {
   id: string;

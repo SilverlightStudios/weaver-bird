@@ -984,6 +984,44 @@ pub fn read_pack_file_impl(
     }
 }
 
+/// Read a vanilla JEM file from __mocks__/cem/ directory
+///
+/// # Arguments
+/// * `entity_type` - Entity type (e.g., "cow", "pig", "chest")
+///
+/// # Returns
+/// JEM file contents as a string
+pub fn read_vanilla_jem_impl(entity_type: String) -> Result<String, AppError> {
+    use std::fs;
+    use std::path::PathBuf;
+
+    // Use the manifest directory as the base (src-tauri's parent directory)
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let base_path = PathBuf::from(manifest_dir);
+    let project_root = base_path
+        .parent()
+        .ok_or_else(|| AppError::io("Could not determine project root".to_string()))?;
+
+    // Construct path to vanilla JEM file relative to project root
+    let jem_path = project_root
+        .join("__mocks__")
+        .join("cem")
+        .join(format!("{}.jem", entity_type));
+
+    println!(
+        "[read_vanilla_jem] Reading vanilla JEM from: {}",
+        jem_path.display()
+    );
+
+    fs::read_to_string(&jem_path).map_err(|e| {
+        AppError::io(format!(
+            "Failed to read vanilla JEM at {}: {}",
+            jem_path.display(),
+            e
+        ))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

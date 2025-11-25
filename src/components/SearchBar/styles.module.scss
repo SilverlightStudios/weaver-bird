@@ -150,13 +150,14 @@
 
 .categoryIcon,
 .assetIcon {
-    font-size: 1.2rem;
+    font-size: 0.6rem; // Reduced by 50% (was 1.2rem)
     line-height: 1;
     flex-shrink: 0;
 }
 
 .suggestionText {
     flex: 1;
+    font-size: 0.6em; // Reduced by 40% from inherited size
     text-transform: uppercase;
     letter-spacing: 0.06em;
     white-space: nowrap;
@@ -165,7 +166,7 @@
 }
 
 .suggestionCount {
-    font-size: var(--font-size-xs);
+    font-size: calc(var(--font-size-xs) * 0.6); // Reduced by 40%
     color: var(--color-text);
     opacity: 0.6;
     text-transform: uppercase;
@@ -192,6 +193,7 @@
 
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
+
     .input,
     .suggestionItem {
         transition-duration: 0.01ms;

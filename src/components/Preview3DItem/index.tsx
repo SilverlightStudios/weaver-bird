@@ -206,7 +206,7 @@ export default function Preview3DItem({
               normalizedAssetId,
               winnerPack.is_zip,
             );
-          } catch (packError) {
+          } catch {
             console.warn(
               `[Preview3DItem] Pack texture not found for ${normalizedAssetId}, using vanilla`,
             );

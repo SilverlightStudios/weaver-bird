@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Command as CommandPrimitive } from "cmdk";
 import s from "./Combobox.module.scss";
@@ -153,49 +153,49 @@ export function Combobox({
 
   const dropdownContent = open
     ? createPortal(
-        <div ref={contentRef} className={s.content} data-side="bottom">
-          <CommandPrimitive
-            className={s.command}
-            filter={(value, search) => {
-              // When search is empty, show all items
-              if (!search || search.trim() === "") return 1;
-              // Otherwise do case-insensitive substring match
-              return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
-            }}
-          >
-            <div className={s.inputWrapper}>
-              <span className={s.searchIcon}>🔍</span>
-              <CommandPrimitive.Input
-                className={s.input}
-                placeholder={searchPlaceholder}
-                value={searchValue}
-                onValueChange={setSearchValue}
-              />
-            </div>
-            <CommandPrimitive.List className={s.list}>
-              <CommandPrimitive.Empty className={s.empty}>
-                {emptyMessage}
-              </CommandPrimitive.Empty>
-              {options.map((option) => (
-                <CommandPrimitive.Item
-                  key={option.value}
-                  value={option.label}
-                  keywords={[option.value]}
-                  onSelect={() => handleSelect(option.value)}
-                  disabled={option.disabled === true}
-                  className={s.item}
-                >
-                  <span className={s.itemCheck}>
-                    {value === option.value && "✓"}
-                  </span>
-                  <span className={s.itemLabel}>{option.label}</span>
-                </CommandPrimitive.Item>
-              ))}
-            </CommandPrimitive.List>
-          </CommandPrimitive>
-        </div>,
-        portalTarget,
-      )
+      <div ref={contentRef} className={s.content} data-side="bottom">
+        <CommandPrimitive
+          className={s.command}
+          filter={(value, search) => {
+            // When search is empty, show all items
+            if (!search || search.trim() === "") return 1;
+            // Otherwise do case-insensitive substring match
+            return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
+          <div className={s.inputWrapper}>
+            <span className={s.searchIcon}>🔍</span>
+            <CommandPrimitive.Input
+              className={s.input}
+              placeholder={searchPlaceholder}
+              value={searchValue}
+              onValueChange={setSearchValue}
+            />
+          </div>
+          <CommandPrimitive.List className={s.list}>
+            <CommandPrimitive.Empty className={s.empty}>
+              {emptyMessage}
+            </CommandPrimitive.Empty>
+            {options.map((option) => (
+              <CommandPrimitive.Item
+                key={option.value}
+                value={option.label}
+                keywords={[option.value]}
+                onSelect={() => handleSelect(option.value)}
+                disabled={option.disabled === true}
+                className={s.item}
+              >
+                <span className={s.itemCheck}>
+                  {value === option.value && "✓"}
+                </span>
+                <span className={s.itemLabel}>{option.label}</span>
+              </CommandPrimitive.Item>
+            ))}
+          </CommandPrimitive.List>
+        </CommandPrimitive>
+      </div>,
+      portalTarget,
+    )
     : null;
 
   return (

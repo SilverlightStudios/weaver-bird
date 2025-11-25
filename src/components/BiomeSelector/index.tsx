@@ -1,7 +1,6 @@
 import { Combobox } from "@/ui/components/Combobox/Combobox";
 import { BIOMES, getBiome } from "@components/BiomeColorPicker/biomeData";
 import { useStore } from "@state/store";
-import { getBiomeColors } from "@lib/colormapManager";
 import { hexToRgb } from "@/constants/biomeCoordinates";
 import s from "./styles.module.scss";
 

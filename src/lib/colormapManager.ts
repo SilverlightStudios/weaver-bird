@@ -197,8 +197,8 @@ export function getBiomeColors(biomeId: string): {
   grass: { coords: { x: number; y: number } | null; hex: string | null };
   foliage: { coords: { x: number; y: number } | null; hex: string | null };
 } {
-  const { BIOMES } = require("@components/BiomeColorPicker/biomeData");
-  const biome = BIOMES.find((b: any) => b.id === biomeId);
+  const biomesWithCoords = getBiomesWithCoords();
+  const biome = biomesWithCoords.find((b) => b.id === biomeId);
 
   if (!biome) {
     return {

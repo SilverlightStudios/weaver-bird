@@ -135,7 +135,7 @@ async function testAsset(assetId: string, verbose: boolean = false): Promise<Tes
 
   try {
     const state = useStore.getState();
-    const packsDir = state.packsDir;
+    const {packsDir} = state;
 
     if (!packsDir) {
       result.error = "No packs directory configured";
@@ -265,7 +265,7 @@ async function testEntityAsset(assetId: string, verbose: boolean = false): Promi
 
   try {
     const state = useStore.getState();
-    const packsDir = state.packsDir;
+    const {packsDir} = state;
 
     if (!packsDir) {
       result.error = "No packs directory configured";

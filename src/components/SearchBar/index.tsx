@@ -157,7 +157,7 @@ export default function SearchBar({
                     {category.displayName}
                   </span>
                   <span className={s.suggestionCount}>
-                    {category.count} assets
+                    {category.count}
                   </span>
                 </CommandPrimitive.Item>
               ))}

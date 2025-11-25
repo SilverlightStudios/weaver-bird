@@ -84,7 +84,7 @@ export async function tintTexture(
 
     // Get pixel data
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
+    const {data} = imageData;
 
     // Apply tinting to each pixel
     // Minecraft's tinting: multiply grayscale RGB by tint color, preserve alpha

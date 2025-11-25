@@ -8,12 +8,14 @@ export type CanvasRenderMode = "3D" | "2D" | "Item";
 interface CanvasTypeSelectorProps {
   disabled2D?: boolean;
   disabled3D?: boolean;
+  disabledItem?: boolean;
   targetRef: React.RefObject<HTMLElement>;
 }
 
 export const CanvasTypeSelector: React.FC<CanvasTypeSelectorProps> = ({
   disabled2D = false,
   disabled3D = false,
+  disabledItem = false,
   targetRef,
 }) => {
   const canvasRenderMode = useStore((state) => state.canvasRenderMode);
@@ -69,7 +71,9 @@ export const CanvasTypeSelector: React.FC<CanvasTypeSelectorProps> = ({
           <TabsTrigger value="2D" disabled={disabled2D}>
             2D
           </TabsTrigger>
-          <TabsTrigger value="Item">Item</TabsTrigger>
+          <TabsTrigger value="Item" disabled={disabledItem}>
+            Item
+          </TabsTrigger>
         </TabsList>
       </Tabs>
     </div>

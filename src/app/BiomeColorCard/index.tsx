@@ -358,7 +358,7 @@ export default function BiomeColorCard({
     setSelectedBiome(biome.id);
 
     // Update global store so dropdown reflects the selection
-    const setSelectedBiomeId = useStore.getState().setSelectedBiomeId;
+    const {setSelectedBiomeId} = useStore.getState();
     setSelectedBiomeId(biome.id);
 
     // Call the optional callback if provided (for temporary override in 3D preview)
