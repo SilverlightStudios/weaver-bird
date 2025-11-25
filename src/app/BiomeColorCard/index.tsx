@@ -357,6 +357,10 @@ export default function BiomeColorCard({
     }
     setSelectedBiome(biome.id);
 
+    // Update global store so dropdown reflects the selection
+    const setSelectedBiomeId = useStore.getState().setSelectedBiomeId;
+    setSelectedBiomeId(biome.id);
+
     // Call the optional callback if provided (for temporary override in 3D preview)
     if (onColorSelect) {
       const color = sampleColor(x, y);
@@ -381,6 +385,28 @@ export default function BiomeColorCard({
   }
 
   const biomesWithCoords = getBiomesWithCoords();
+
+  // Group biomes by coordinate to deduplicate hotspots
+  const hotspotsByCoord = useMemo(() => {
+    const map = new Map<string, Array<BiomeData & { x: number; y: number }>>();
+
+    biomesWithCoords.forEach((biome) => {
+      const key = `${biome.x},${biome.y}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.push(biome);
+      } else {
+        map.set(key, [biome]);
+      }
+    });
+
+    return Array.from(map.entries()).map(([coordKey, biomes]) => ({
+      coordKey,
+      x: biomes[0].x,
+      y: biomes[0].y,
+      biomes,
+    }));
+  }, [biomesWithCoords]);
 
   const isAutoSelected = !isPenciled || !selectedSource;
   const currentSourceLabel = isAutoSelected
@@ -453,21 +479,22 @@ export default function BiomeColorCard({
 
           {imageData && (
             <div className={s.hotspots}>
-              {biomesWithCoords.map((biome) => {
+              {hotspotsByCoord.map((hotspot) => {
                 // Use actual image dimensions instead of hardcoded 255
                 const maxX = imageData.width - 1;
                 const maxY = imageData.height - 1;
-                const leftPercent = (biome.x / maxX) * 100;
-                const topPercent = (biome.y / maxY) * 100;
+                const leftPercent = (hotspot.x / maxX) * 100;
+                const topPercent = (hotspot.y / maxY) * 100;
                 // Check both local selection and global selection
-                const isLocallySelected = selectedBiome === biome.id;
-                const isGloballySelected =
-                  resolvedType === "foliage" && selectedBiomeId === biome.id;
-                const isSelected = isLocallySelected || isGloballySelected;
-                const isHovered = hoveredBiome === biome.id;
+                const isSelected = hotspot.biomes.some(
+                  (b) => selectedBiome === b.id || selectedBiomeId === b.id,
+                );
+                const isHovered = hotspot.biomes.some(
+                  (b) => hoveredBiome === b.id,
+                );
 
                 return (
-                  <Tooltip key={biome.id} delayDuration={100}>
+                  <Tooltip key={hotspot.coordKey} delayDuration={100}>
                     <TooltipTrigger asChild>
                       <button
                         className={`${s.hotspot} ${isSelected ? s.selected : ""} ${isHovered ? s.hovered : ""}`}
@@ -476,9 +503,15 @@ export default function BiomeColorCard({
                           top: `${topPercent}%`,
                         }}
                         onClick={() =>
-                          handleBiomeSelect(biome, biome.x, biome.y)
+                          handleBiomeSelect(
+                            hotspot.biomes[0],
+                            hotspot.x,
+                            hotspot.y,
+                          )
                         }
-                        onMouseEnter={() => setHoveredBiome(biome.id)}
+                        onMouseEnter={() =>
+                          setHoveredBiome(hotspot.biomes[0].id)
+                        }
                         onMouseLeave={() => setHoveredBiome(null)}
                         disabled={readOnly}
                       >
@@ -486,7 +519,29 @@ export default function BiomeColorCard({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">
-                      {biome.name}
+                      {hotspot.biomes.length > 1 ? (
+                        <div>
+                          <ul
+                            style={{
+                              margin: 0,
+                              paddingLeft: "1.2em",
+                              textAlign: "left",
+                              listStyleType: "disc",
+                            }}
+                          >
+                            {hotspot.biomes.map((biome) => (
+                              <li
+                                key={biome.id}
+                                style={{ display: "list-item" }}
+                              >
+                                {biome.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        hotspot.biomes[0].name
+                      )}
                     </TooltipContent>
                   </Tooltip>
                 );

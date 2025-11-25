@@ -1,16 +1,14 @@
 .root {
     display: flex;
     flex-direction: column;
-    padding: var(--spacing-md);
     overflow-y: auto;
     flex: 1;
 }
 
 .results {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: var(--spacing-sm);
-    padding: var(--spacing-xs);
 }
 
 .card {

@@ -21,7 +21,6 @@ import {
   DRAWER_DEFAULT_SIZE,
   ZONE_SHRINK_RATIO,
   CANVAS_SHRINK_RATIO,
-  TAB_EXTEND_OFFSET,
   isHorizontalZone,
 } from "./constants";
 import { SortableTabZone } from "./components/SortableTabZone";
@@ -30,6 +29,8 @@ import { Tab } from "./components/Tab";
 export const BlockyTabs: React.FC<BlockyTabsProps> = ({
   initialTabs,
   showZones = false,
+  children,
+  fullscreen = false,
 }) => {
   const [items, setItems] = useState(initialTabs);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
@@ -38,6 +39,11 @@ export const BlockyTabs: React.FC<BlockyTabsProps> = ({
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
     null,
   );
+
+  // Sync items when initialTabs changes
+  React.useEffect(() => {
+    setItems(initialTabs);
+  }, [initialTabs]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -137,7 +143,18 @@ export const BlockyTabs: React.FC<BlockyTabsProps> = ({
 
   const getActiveDrawerSize = () => {
     if (!activeTabId) return DRAWER_DEFAULT_SIZE;
-    return drawerSizes[activeTabId] || DRAWER_DEFAULT_SIZE;
+
+    // If we have a stored size, use it
+    if (drawerSizes[activeTabId]) {
+      return drawerSizes[activeTabId];
+    }
+
+    // Otherwise, find the tab and use its defaultDrawerSize
+    const activeTab = Object.values(items)
+      .flat()
+      .find((tab) => tab.id === activeTabId);
+
+    return activeTab?.defaultDrawerSize || DRAWER_DEFAULT_SIZE;
   };
 
   const getZoneStyle = (zone: ZoneId): React.CSSProperties => {
@@ -201,7 +218,10 @@ export const BlockyTabs: React.FC<BlockyTabsProps> = ({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className={s.container} ref={setPortalContainer}>
+        <div
+          className={`${s.container} ${fullscreen ? s.fullscreen : ""}`}
+          ref={setPortalContainer}
+        >
           <div className={s.zonesWrapper}>
             {zones.map((zoneId) => (
               <SortableTabZone
@@ -222,7 +242,10 @@ export const BlockyTabs: React.FC<BlockyTabsProps> = ({
           </div>
 
           <div className={s.canvas} style={getCanvasStyle()}>
-            {!activeTabId && <div style={{ opacity: 0.5 }}>Select a tab</div>}
+            {children ||
+              (!activeTabId && (
+                <div style={{ opacity: 0.5 }}>Select a tab</div>
+              ))}
           </div>
         </div>
 

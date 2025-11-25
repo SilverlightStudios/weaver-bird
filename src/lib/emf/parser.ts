@@ -63,10 +63,11 @@ function parseModelPart(
   console.log(`[JEM Parser] Parsing part: ${name}`);
 
   // Parse transformations
+  // Parse transformations
+  const invertAxis = part.invertAxis || "";
   const translate = part.translate || [0, 0, 0];
   const rotate = part.rotate || [0, 0, 0];
   const scale = part.scale || 1.0;
-  const invertAxis = part.invertAxis || "";
   const mirrorTexture =
     part.mirrorTexture === "u" || part.mirrorTexture === "uv";
 
@@ -74,7 +75,7 @@ function parseModelPart(
   const boxes: ParsedBox[] = [];
   if (part.boxes) {
     for (const box of part.boxes) {
-      const parsed = parseBox(box, textureSize, mirrorTexture);
+      const parsed = parseBox(box, textureSize, mirrorTexture, invertAxis, part.part || "");
       if (parsed) {
         boxes.push(parsed);
       }
@@ -119,6 +120,8 @@ function parseBox(
   box: JEMBox,
   parentTextureSize: [number, number],
   mirror: boolean,
+  invertAxis: string = "",
+  part: string = "",
 ): ParsedBox | null {
   // Use per-box textureSize if provided, otherwise use parent textureSize
   const textureSize = box.textureSize || parentTextureSize;
@@ -170,6 +173,20 @@ function parseBox(
         "[JEM Parser] Box missing both coordinates and textureOffset - using default cube",
       );
     }
+  }
+
+  // Apply invertAxis to convert from inverted coordinate space to standard space
+  // Skip for legs since they are manually positioned at pivot points (centerX/Z=0)
+  const isLeg = part.startsWith('leg');
+
+  if (!isLeg && invertAxis.includes("x")) {
+    x = -x - width;
+  }
+  if (!isLeg && invertAxis.includes("y")) {
+    y = -y - height;
+  }
+  if (!isLeg && invertAxis.includes("z")) {
+    z = -z - depth;
   }
 
   const sizeAdd = box.sizeAdd || 0;
@@ -262,19 +279,19 @@ function inferBoxDimensionsFromUV(
  *
  *         depth   width   depth   width
  *       +-------+-------+-------+-------+
- *   v   | down  |  up   |       |       |  height
+ *   v   |  up   | down  |       |       |  depth
  *       +-------+-------+-------+-------+
- *       | north | east  | south | west  |  depth
+ *       | north | east  | south | west  |  height
  *       +-------+-------+-------+-------+
  *         width   depth   width   depth
  *
  * Starting from textureOffset:
- * - Down: (u + depth, v), size (width, depth)
- * - Up: (u + depth + width, v), size (width, depth)
+ * - Up: (u + depth, v), size (width, depth)
+ * - Down: (u + depth + width, v), size (width, depth)
  * - North: (u + depth, v + depth), size (width, height)
- * - East: (u + depth + width, v + depth), size (depth, height)
+ * - East: (u, v + depth), size (depth, height)
  * - South: (u + depth + width + depth, v + depth), size (width, height)
- * - West: (u, v + depth), size (depth, height)
+ * - West: (u + depth + width, v + depth), size (depth, height)
  */
 function calculateBoxUV(
   u: number,
@@ -292,9 +309,9 @@ function calculateBoxUV(
     north: [u + depth, v + depth, u + depth + width, v + depth + height],
     // East face (+X): right side
     east: [
-      u + depth + width,
+      u,
       v + depth,
-      u + depth + width + depth,
+      u + depth,
       v + depth + height,
     ],
     // South face (+Z): back of box
@@ -305,7 +322,7 @@ function calculateBoxUV(
       v + depth + height,
     ],
     // West face (-X): left side
-    west: [u, v + depth, u + depth, v + depth + height],
+    west: [u + depth + width, v + depth, u + depth + width + depth, v + depth + height],
   };
 }
 

@@ -1,32 +1,60 @@
 {
+  "textureSize": [
+    64,
+    32
+  ],
   "models": [
     {
-      "invertAxis": "xy",
       "part": "board",
-      "id": "board"
-    },
-    {
+      "id": "board",
       "invertAxis": "xy",
-      "part": "stick",
-      "id": "stick",
-      "scale": 1.0,
+      "translate": [
+        0,
+        -12,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            32
+          "coordinates": [
+            -12,
+            14,
+            -1,
+            24,
+            12,
+            2
+          ],
+          "textureOffset": [
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "part": "stick",
+      "id": "stick",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -12,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -1,
+            0,
+            -1,
+            2,
+            14,
+            2
           ],
           "textureOffset": [
             0,
             14
-          ],
-          "sizeAdd": 0.0
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    32
   ]
 }

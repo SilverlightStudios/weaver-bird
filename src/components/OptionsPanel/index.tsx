@@ -17,7 +17,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/ui/components/Tooltip/Tooltip";
-import BiomeColorCard from "@app/BiomeColorCard";
 import VariantChooser from "@components/VariantChooser";
 import BlockStatePanel from "@components/Preview3D/BlockStatePanel";
 import TextureVariantSelector from "@components/TextureVariantSelector";
@@ -25,27 +24,24 @@ import PaintingSelector from "@components/PaintingSelector";
 import PotteryShardSelector from "@components/PotteryShardSelector";
 import DecoratedPotConfigurator from "@components/DecoratedPotConfigurator";
 import Preview3D from "@components/Preview3D";
-import { groupAssetsByVariant, isNumberedVariant } from "@lib/assetUtils";
-import {
-  Combobox,
-  type ComboboxOption,
-} from "@/ui/components/Combobox/Combobox";
+import { isNumberedVariant } from "@lib/assetUtils";
 import { Separator } from "@/ui/components/Separator/Separator";
 import {
-  getColormapAssetId,
-  guessColormapTypeForAsset,
   getBlockStateIdFromAssetId,
   isBiomeColormapAsset,
   isPottedPlant,
   isMinecraftItem,
+  getVariantGroupKey,
+  groupAssetsByVariant,
 } from "@lib/assetUtils";
 import type { ItemDisplayMode } from "@lib/itemDisplayModes";
-import { getDisplayModeName, supportsRotation } from "@lib/itemDisplayModes";
+import { getDisplayModeName } from "@lib/itemDisplayModes";
 import {
   getBlockStateSchema,
   type BlockStateSchema,
 } from "@lib/tauri/blockModels";
 import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
+import { useStore } from "@state/store";
 import s from "./styles.module.scss";
 
 // Tab icon component with tooltip
@@ -79,69 +75,62 @@ interface ProviderOption {
 
 interface Props {
   assetId?: string;
-  biomeColor?: { r: number; g: number; b: number } | null;
-  onBiomeColorChange?: (color: { r: number; g: number; b: number }) => void;
   providers?: ProviderOption[];
   onSelectProvider?: (packId: string) => void;
-  showPot: boolean;
-  onShowPotChange: (show: boolean) => void;
-  hasTintindex: boolean;
-  tintType?: "grass" | "foliage";
-  foliagePreviewBlock: string;
-  onFoliagePreviewBlockChange: (blockId: string) => void;
   onBlockPropsChange?: (props: Record<string, string>) => void;
   onSeedChange?: (seed: number) => void;
-  // Props for texture variant selector
+  // Props for asset selection (paintings, pottery shards, etc.)
   allAssets?: Array<{ id: string; name: string }>;
   onSelectVariant?: (variantId: string) => void;
+  // Props for texture variant viewing (view-only, temporary)
+  onViewingVariantChange?: (variantId: string | undefined) => void;
   // Props for item display
   itemDisplayMode?: ItemDisplayMode;
   onItemDisplayModeChange?: (mode: ItemDisplayMode) => void;
-  itemRotate?: boolean;
-  onItemRotateChange?: (rotate: boolean) => void;
-  itemHover?: boolean;
-  onItemHoverChange?: (hover: boolean) => void;
 }
-
-const FOLIAGE_PREVIEW_OPTIONS: ComboboxOption[] = [
-  { value: "minecraft:block/oak_leaves", label: "Oak Leaves" },
-  { value: "minecraft:block/spruce_leaves", label: "Spruce Leaves" },
-  { value: "minecraft:block/birch_leaves", label: "Birch Leaves" },
-  { value: "minecraft:block/jungle_leaves", label: "Jungle Leaves" },
-  { value: "minecraft:block/acacia_leaves", label: "Acacia Leaves" },
-  { value: "minecraft:block/dark_oak_leaves", label: "Dark Oak Leaves" },
-];
 
 export default function OptionsPanel({
   assetId,
-  onBiomeColorChange,
   providers = [],
   onSelectProvider,
-  showPot,
-  onShowPotChange,
-  hasTintindex,
-  tintType,
-  foliagePreviewBlock,
-  onFoliagePreviewBlockChange,
   onBlockPropsChange,
   onSeedChange,
   allAssets = [],
   onSelectVariant,
+  onViewingVariantChange,
   itemDisplayMode = "ground",
-  itemRotate = true,
-  onItemRotateChange,
-  itemHover = true,
-  onItemHoverChange,
 }: Props) {
+  // Read showPot state from global store
+  const showPot = useStore((state) => state.showPot ?? true);
+  const setShowPot = useStore((state) => state.setShowPot);
+  const providersByAsset = useStore((state) => state.providersByAsset);
+
   const [blockProps, setBlockProps] = useState<Record<string, string>>({});
   const [seed, setSeed] = useState(0);
+
+  // Local state for temporary variant viewing (view-only, doesn't affect global state)
+  const [viewingVariantId, setViewingVariantId] = useState<string | undefined>(
+    undefined,
+  );
+
+  // Notify parent when viewing variant changes
+  useEffect(() => {
+    if (onViewingVariantChange) {
+      onViewingVariantChange(viewingVariantId);
+    }
+  }, [viewingVariantId, onViewingVariantChange]);
+
+  // Get the winning pack for this asset (respects pencil overrides)
+  const winnerPackIdForVariants = useSelectWinner(assetId ?? "");
 
   // Check if texture variants are available for the selected asset
   // Only numbered variants (e.g., acacia_planks1, acacia_planks2) count as texture variants
   // Block states (_on, _off) and faces (_top, _side) should NOT show the variant selector
+  // IMPORTANT: Must match the logic in TextureVariantSelector to avoid showing empty tabs
   const hasTextureVariants = useMemo(() => {
     if (!assetId || allAssets.length === 0) return false;
 
+    const winnerPackId = winnerPackIdForVariants;
     const allAssetIds = allAssets.map((a) => a.id);
     const groups = groupAssetsByVariant(allAssetIds);
 
@@ -153,8 +142,22 @@ export default function OptionsPanel({
     // Count only numbered texture variants
     const numberedVariants = group.variantIds.filter(isNumberedVariant);
 
-    return numberedVariants.length > 1;
-  }, [assetId, allAssets]);
+    // Filter out potted variants
+    const nonPottedVariants = numberedVariants.filter(
+      (id) => !isPottedPlant(id),
+    );
+
+    // Filter to only include variants from the winning pack (same logic as TextureVariantSelector)
+    const filteredVariants = winnerPackId
+      ? nonPottedVariants.filter((variantId) => {
+          const variantProviders = providersByAsset[variantId] ?? [];
+          return variantProviders.includes(winnerPackId);
+        })
+      : nonPottedVariants;
+
+    // Need more than 1 variant to show the selector
+    return filteredVariants.length > 1;
+  }, [assetId, allAssets, winnerPackIdForVariants, providersByAsset]);
 
   // Forward block props and seed changes to parent
   const handleBlockPropsChange = (props: Record<string, string>) => {
@@ -260,18 +263,56 @@ export default function OptionsPanel({
     if (assetId) {
       setBlockProps({});
       setSeed(0);
+      setViewingVariantId(undefined); // Reset variant view when switching assets
     }
   }, [assetId]);
 
   // Determine which tabs to show
-  const effectiveColormapType = tintType ?? guessColormapTypeForAsset(assetId);
-  const colormapAssetId = isColormapSelection
-    ? (assetId ?? getColormapAssetId(effectiveColormapType))
-    : getColormapAssetId(effectiveColormapType);
-  const hasBiomeColorTab = hasTintindex || isColormapSelection;
   // Variants tab shows texture variants from different resource packs
-  const hasVariantsTab = !isColormapSelection && providers.length > 1;
-  const shouldShowPotTab = !isColormapSelection && isPlantPotted;
+  // Check if the base asset (without variant number) has multiple providers
+  // This ensures the tab persists when switching between numbered variants
+  const hasVariantsTab = useMemo(() => {
+    if (isColormapSelection || !assetId) return false;
+
+    // Get base asset ID (remove variant number)
+    const baseAssetId = getVariantGroupKey(assetId);
+
+    // Check if the current asset has multiple providers
+    const currentProviders = providersByAsset[assetId] ?? [];
+    if (currentProviders.length > 1) return true;
+
+    // Also check if any variant of this asset has multiple providers
+    const allAssetIds = allAssets.map((a) => a.id);
+    const groups = groupAssetsByVariant(allAssetIds);
+    const group = groups.find((g) => g.baseId === baseAssetId);
+
+    if (!group) return providers.length > 1;
+
+    // Check if any variant in the group has multiple providers
+    return group.variantIds.some((id) => {
+      const variantProviders = providersByAsset[id] ?? [];
+      return variantProviders.length > 1;
+    });
+  }, [
+    isColormapSelection,
+    assetId,
+    providersByAsset,
+    allAssets,
+    providers.length,
+  ]);
+
+  // Pot tab shows for both potted plants AND pottable plants (plants that have potted variants)
+  const canBePotted = useMemo(() => {
+    if (!assetId || isPlantPotted || allAssets.length === 0) return false;
+    const groupKey = getVariantGroupKey(assetId);
+    const groups = groupAssetsByVariant(allAssets.map((a) => a.id));
+    const group = groups.find((g) => g.baseId === groupKey);
+    if (!group) return false;
+    return group.variantIds.some((id) => isPottedPlant(id));
+  }, [assetId, isPlantPotted, allAssets]);
+
+  const shouldShowPotTab =
+    !isColormapSelection && (isPlantPotted || canBePotted);
   // Block State tab shows blockstate properties (facing, half, etc.) and seed
   const shouldShowBlockStateTab =
     !isColormapSelection && !isItem && (schema?.properties.length ?? 0) > 0;
@@ -308,28 +349,19 @@ export default function OptionsPanel({
     );
   }
 
-  if (isColormapSelection && onBiomeColorChange && colormapAssetId) {
+  // Colormap assets (grass/foliage colormaps) are now handled in the global "Biome & Colormaps" tab
+  if (isColormapSelection) {
     return (
       <div className={s.root}>
-        {effectiveColormapType === "foliage" && (
-          <div className={s.leafSelector}>
-            <label htmlFor="foliage-preview-select">Preview Leaves</label>
-            <Combobox
-              options={FOLIAGE_PREVIEW_OPTIONS}
-              value={foliagePreviewBlock}
-              onValueChange={onFoliagePreviewBlockChange}
-              placeholder="Select leaf type..."
-              searchPlaceholder="Search leaves..."
-              emptyMessage="No matching leaves"
-            />
-          </div>
-        )}
-        <BiomeColorCard
-          assetId={colormapAssetId}
-          type={effectiveColormapType}
-          onColorSelect={onBiomeColorChange}
-          updateGlobalState={false}
-        />
+        <div className={s.emptyState}>
+          <p>
+            Colormap settings are now in the <strong>Biome & Colormaps</strong>{" "}
+            tab.
+          </p>
+          <p style={{ marginTop: "0.5rem", fontSize: "0.85rem", opacity: 0.7 }}>
+            Look for the leaf icon on the left sidebar.
+          </p>
+        </div>
       </div>
     );
   }
@@ -357,9 +389,6 @@ export default function OptionsPanel({
             <TabIcon icon="⚙" label="Block State" value="block-state" />
           )}
           {shouldShowPotTab && <TabIcon icon="🌱" label="Pot" value="pot" />}
-          {hasBiomeColorTab && (
-            <TabIcon icon="🎨" label="Biome Color" value="biome" />
-          )}
           {hasTextureVariants && onSelectVariant && (
             <TabIcon
               icon="🖼"
@@ -375,7 +404,7 @@ export default function OptionsPanel({
 
         {shouldShowPotteryShardTab && (
           <TabsContent value="pottery-shard">
-            <div style={{ padding: "1rem" }}>
+            <div>
               {onSelectVariant && allAssets.length > 0 && (
                 <>
                   <PotteryShardSelector
@@ -396,10 +425,8 @@ export default function OptionsPanel({
                     .replace("_pottery_shard", "_pottery_pattern") || assetId
                 }
                 showPot={false}
-                onShowPotChange={() => {}}
                 blockProps={{}}
                 seed={0}
-                foliagePreviewBlock="minecraft:block/oak_leaves"
                 allAssetIds={[]}
               />
             </div>
@@ -408,7 +435,7 @@ export default function OptionsPanel({
 
         {shouldShowEntityDecoratedPotTab && (
           <TabsContent value="entity-pot">
-            <div style={{ padding: "1rem" }}>
+            <div>
               {onSelectVariant && allAssets.length > 0 && (
                 <PotteryShardSelector
                   assetId={assetId}
@@ -424,7 +451,7 @@ export default function OptionsPanel({
 
         {shouldShowDecoratedPotTab && (
           <TabsContent value="decorated-pot">
-            <div style={{ padding: "1rem" }}>
+            <div>
               <DecoratedPotConfigurator
                 assetId={assetId}
                 allAssets={allAssets}
@@ -435,7 +462,7 @@ export default function OptionsPanel({
 
         {shouldShowPaintingTab && onSelectVariant && (
           <TabsContent value="painting">
-            <div style={{ padding: "1rem" }}>
+            <div>
               <PaintingSelector
                 assetId={assetId}
                 allAssets={allAssets}
@@ -447,75 +474,14 @@ export default function OptionsPanel({
 
         {shouldShowItemTab && (
           <TabsContent value="item">
-            <div style={{ padding: "1rem" }}>
+            <div>
               <h3>Item Display</h3>
               <Separator style={{ margin: "0.75rem 0" }} />
-
-              {/* Rotation toggle */}
-              {supportsRotation(itemDisplayMode) && (
-                <label
-                  style={{
-                    display: "flex",
-                    gap: "0.5rem",
-                    alignItems: "center",
-                    marginBottom: "1rem",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={itemRotate}
-                    onChange={(e) => onItemRotateChange?.(e.target.checked)}
-                    style={{
-                      cursor: "pointer",
-                      width: "18px",
-                      height: "18px",
-                    }}
-                  />
-                  <span
-                    style={{
-                      textTransform: "uppercase",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Rotate Item
-                  </span>
-                </label>
-              )}
-
-              {/* Hover toggle */}
-              <label
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                  alignItems: "center",
-                  marginBottom: "1rem",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={itemHover}
-                  onChange={(e) => onItemHoverChange?.(e.target.checked)}
-                  style={{
-                    cursor: "pointer",
-                    width: "18px",
-                    height: "18px",
-                  }}
-                />
-                <span
-                  style={{
-                    textTransform: "uppercase",
-                    fontWeight: "600",
-                  }}
-                >
-                  Hover Item
-                </span>
-              </label>
 
               {/* Display mode info */}
               <p
                 style={{
                   fontSize: "0.85rem",
-                  marginTop: "1rem",
                   color: "#666",
                 }}
               >
@@ -531,6 +497,18 @@ export default function OptionsPanel({
               >
                 Items are rendered as 3D dropped items with 1px thickness, just
                 like in Minecraft.
+              </p>
+
+              <Separator style={{ margin: "1rem 0" }} />
+
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#888",
+                }}
+              >
+                To configure item animations and display options, open the{" "}
+                <strong>Canvas Settings</strong> tab on the right side.
               </p>
 
               {/* Future: Display mode selector */}
@@ -567,7 +545,7 @@ export default function OptionsPanel({
 
         {shouldShowPotTab && (
           <TabsContent value="pot">
-            <div style={{ padding: "1rem" }}>
+            <div>
               <h3>Pot Display</h3>
               <Separator style={{ margin: "0.75rem 0" }} />
               <label
@@ -580,7 +558,7 @@ export default function OptionsPanel({
                 <input
                   type="checkbox"
                   checked={showPot}
-                  onChange={(e) => onShowPotChange(e.target.checked)}
+                  onChange={(e) => setShowPot(e.target.checked)}
                   style={{
                     cursor: "pointer",
                     width: "18px",
@@ -603,26 +581,14 @@ export default function OptionsPanel({
           </TabsContent>
         )}
 
-        {hasBiomeColorTab && colormapAssetId && (
-          <TabsContent value="biome">
-            {onBiomeColorChange && (
-              <BiomeColorCard
-                assetId={colormapAssetId}
-                type={effectiveColormapType}
-                onColorSelect={onBiomeColorChange}
-                updateGlobalState={false}
-              />
-            )}
-          </TabsContent>
-        )}
-
         {hasTextureVariants && onSelectVariant && (
           <TabsContent value="texture-variants">
-            <div style={{ padding: "1rem" }}>
+            <div>
               <TextureVariantSelector
                 assetId={assetId}
                 allAssets={allAssets}
-                onSelectVariant={onSelectVariant}
+                selectedVariantId={viewingVariantId}
+                onSelectVariant={setViewingVariantId}
               />
             </div>
           </TabsContent>
@@ -630,7 +596,7 @@ export default function OptionsPanel({
 
         {hasVariantsTab && onSelectProvider && (
           <TabsContent value="variants">
-            <div style={{ padding: "1rem" }}>
+            <div>
               <h3>Resource Pack Variants</h3>
               <Separator style={{ margin: "0.75rem 0" }} />
               <p style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
@@ -648,7 +614,7 @@ export default function OptionsPanel({
         )}
 
         <TabsContent value="advanced">
-          <div style={{ padding: "1rem" }}>
+          <div>
             <h3>Advanced Options</h3>
             <p>Additional configuration options for advanced users.</p>
             <div style={{ fontSize: "0.85rem" }}>

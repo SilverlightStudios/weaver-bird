@@ -1,80 +1,185 @@
 {
+  "textureSize": [
+    32,
+    32
+  ],
   "models": [
     {
-      "invertAxis": "xy",
-      "part": "wind_body",
-      "id": "wind_body",
-      "scale": 1.0,
-      "boxes": []
-    },
-    {
-      "invertAxis": "xy",
-      "part": "wind_top",
-      "id": "wind_top",
-      "scale": 1.0,
-      "boxes": []
-    },
-    {
-      "invertAxis": "xy",
-      "part": "body",
-      "id": "body",
-      "scale": 1.0,
-      "boxes": []
-    },
-    {
-      "invertAxis": "xy",
       "part": "head",
       "id": "head",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -20,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            4,
-            24
-          ],
-          "sizeAdd": 0.0
-        },
-        {
-          "textureSize": [
-            32,
-            32
+          "coordinates": [
+            -4,
+            20,
+            -4,
+            8,
+            8,
+            8
           ],
           "textureOffset": [
             0,
             0
+          ]
+        },
+        {
+          "coordinates": [
+            -5,
+            22,
+            -4.25,
+            10,
+            3,
+            4
           ],
-          "sizeAdd": 0.0
+          "textureOffset": [
+            4,
+            24
+          ]
         }
       ]
     },
     {
-      "invertAxis": "xy",
-      "part": "wind_middle",
-      "id": "wind_middle",
-      "scale": 1.0,
-      "boxes": []
-    },
-    {
-      "invertAxis": "xy",
-      "part": "wind_bottom",
-      "id": "wind_bottom",
-      "scale": 1.0,
-      "boxes": []
-    },
-    {
-      "invertAxis": "xy",
       "part": "rods",
       "id": "rods",
-      "scale": 1.0,
-      "boxes": []
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -16,
+        0
+      ],
+      "submodels": [
+        {
+          "id": "rod_1",
+          "invertAxis": "xy",
+          "translate": [
+            0,
+            5,
+            -3
+          ],
+          "rotate": [
+            -22.5,
+            0,
+            0
+          ],
+          "boxes": [
+            {
+              "coordinates": [
+                -1,
+                4.9343,
+                2.3576,
+                2,
+                8,
+                2
+              ],
+              "textureOffset": [
+                0,
+                17
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rotation_2",
+          "invertAxis": "xy",
+          "translate": [
+            0,
+            8,
+            0
+          ],
+          "rotate": [
+            180,
+            -60,
+            -180
+          ],
+          "submodels": [
+            {
+              "id": "rod_2",
+              "invertAxis": "xy",
+              "translate": [
+                0,
+                -3,
+                -3
+              ],
+              "rotate": [
+                -22.5,
+                0,
+                0
+              ],
+              "boxes": [
+                {
+                  "coordinates": [
+                    -1,
+                    4.9343,
+                    2.3576,
+                    2,
+                    8,
+                    2
+                  ],
+                  "textureOffset": [
+                    0,
+                    17
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rotation_3",
+          "invertAxis": "xy",
+          "translate": [
+            0,
+            8,
+            0
+          ],
+          "rotate": [
+            180,
+            60,
+            180
+          ],
+          "submodels": [
+            {
+              "id": "rod_3",
+              "invertAxis": "xy",
+              "translate": [
+                0,
+                -3,
+                -3
+              ],
+              "rotate": [
+                -22.5,
+                0,
+                0
+              ],
+              "boxes": [
+                {
+                  "coordinates": [
+                    -1,
+                    4.9343,
+                    2.3576,
+                    2,
+                    8,
+                    2
+                  ],
+                  "textureOffset": [
+                    0,
+                    17
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "part": "body"
     }
-  ],
-  "textureSize": [
-    32,
-    32
   ]
 }

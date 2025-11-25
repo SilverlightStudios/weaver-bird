@@ -44,7 +44,6 @@ import s from "./main.module.scss";
 
 import PackList from "@components/PackList";
 import SearchBar from "@components/SearchBar";
-import BiomeSelector from "@components/BiomeSelector";
 import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import Preview2D from "@components/Preview2D";
@@ -55,7 +54,8 @@ import SaveBar from "@components/SaveBar";
 import OutputSettings from "@components/OutputSettings";
 import Settings from "@components/Settings";
 import MinecraftLocations from "@components/Settings/MinecraftLocations";
-import ColormapSettings from "@components/Settings/ColormapSettings";
+import CanvasSettings from "@components/CanvasSettings";
+import BiomeSelector from "@components/BiomeSelector";
 import WindowControls from "@components/WindowControls";
 import ResizeHandle from "@components/ResizeHandle";
 import Button from "@/ui/components/buttons/Button";
@@ -68,12 +68,17 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/ui/components/Pagination/Pagination";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/ui/components/Resizable/Resizable";
-import type { ImperativePanelHandle } from "react-resizable-panels";
+import { BlockyTabs } from "@/ui/components/blocky-tabs/BlockyTabs";
+import type { TabItem, ZoneId } from "@/ui/components/blocky-tabs/types";
+import { CanvasTypeSelector } from "@components/CanvasTypeSelector";
+import BiomeColorCard from "@/app/BiomeColorCard";
+
+// Import tab icons
+import cobbleImg from "@/assets/textures/cobblestone.png";
+import dirtImg from "@/assets/textures/dirt.png";
+import pickaxeImg from "@/assets/textures/pickaxe.png";
+import logImg from "@/assets/textures/log.png";
+import swordImg from "@/assets/textures/sword.png";
 
 import {
   scanPacksFolder,
@@ -85,6 +90,7 @@ import {
 } from "@lib/tauri";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { LauncherInfo } from "@lib/tauri";
+import { getBlockTintType } from "@/constants/vanillaBlockColors";
 import {
   resolveColormapWinner,
   loadColormapUrl,
@@ -97,8 +103,8 @@ import {
 import {
   getColormapTypeFromAssetId,
   is2DOnlyTexture,
-  isMinecraftItem,
   isEntityTexture,
+  isMinecraftItem,
 } from "@lib/assetUtils";
 import type { ItemDisplayMode } from "@lib/itemDisplayModes";
 import {
@@ -137,10 +143,6 @@ const useSelectedFoliageColor = () =>
   useStore((state) => state.selectedFoliageColor);
 const useSelectedGrassColor = () =>
   useStore((state) => state.selectedGrassColor);
-const useSetSelectedFoliageColor = () =>
-  useStore((state) => state.setSelectedFoliageColor);
-const useSetSelectedGrassColor = () =>
-  useStore((state) => state.setSelectedGrassColor);
 import type { PackMeta, AssetRecord } from "@state";
 
 const MESSAGE_TIMEOUT_MS = 3000;
@@ -154,7 +156,7 @@ function renderPageNumbers(
   setCurrentPage: (page: number) => void,
 ) {
   const pageNumbers: JSX.Element[] = [];
-  const maxVisiblePages = 5; // Show at most 5 page numbers
+  const maxVisiblePages = 4; // Show at most 4 page numbers
 
   // Always show first page
   pageNumbers.push(
@@ -231,25 +233,25 @@ function renderPageNumbers(
 export default function MainRoute() {
   const [packsDir, setPacksDir] = useState<string>("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [showPot, setShowPot] = useState(true);
   const [tintInfo, setTintInfo] = useState<{
     hasTint: boolean;
     tintType?: "grass" | "foliage";
   }>({ hasTint: false });
-  const [foliagePreviewBlock, setFoliagePreviewBlock] = useState(
-    "minecraft:block/oak_leaves",
-  );
   const [blockProps, setBlockProps] = useState<Record<string, string>>({});
   const [seed, setSeed] = useState(0);
-  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(false);
-  const leftSidebarRef = useRef<ImperativePanelHandle>(null);
   const setPacksDirInStore = useSetPacksDir();
+
+  // Ref for canvas element to position CanvasTypeSelector
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Item display state
   const [itemDisplayMode, setItemDisplayMode] =
     useState<ItemDisplayMode>("ground");
-  const [itemRotate, setItemRotate] = useState(true);
-  const [itemHover, setItemHover] = useState(true);
+
+  // Viewing variant state (view-only, temporary, for Preview3D)
+  const [viewingVariantId, setViewingVariantId] = useState<string | undefined>(
+    undefined,
+  );
 
   // React 18 transition for non-blocking colormap updates
   const [_isPending, startTransition] = useTransition();
@@ -276,31 +278,32 @@ export default function MainRoute() {
   // Get both grass and foliage colors from global state
   const selectedGrassColor = useSelectedGrassColor();
   const selectedFoliageColor = useSelectedFoliageColor();
-  const setSelectedFoliageColor = useSetSelectedFoliageColor();
-  const setSelectedGrassColor = useSetSelectedGrassColor();
 
-  // Determine which color to use based on the selected asset's colormap type
-  const selectedAssetColormapType = uiState.selectedAssetId
-    ? getColormapTypeFromAssetId(uiState.selectedAssetId)
-    : null;
+  // Determine which color to use based on the block's tint type
+  // This handles both colormap assets and regular blocks (like leaves)
+  const biomeColor = useMemo(() => {
+    if (!uiState.selectedAssetId) return undefined;
 
-  // Use the appropriate color based on asset type (grass or foliage)
-  const biomeColor =
-    selectedAssetColormapType === "grass"
-      ? selectedGrassColor
-      : selectedFoliageColor;
+    // First check if it's a colormap asset itself
+    const colormapType = getColormapTypeFromAssetId(uiState.selectedAssetId);
+    if (colormapType === "grass") return selectedGrassColor;
+    if (colormapType === "foliage") return selectedFoliageColor;
 
-  // Create a callback that sets the correct color based on the asset's colormap type
-  const setBiomeColor = useCallback(
-    (color: { r: number; g: number; b: number }) => {
-      if (selectedAssetColormapType === "grass") {
-        setSelectedGrassColor(color);
-      } else {
-        setSelectedFoliageColor(color);
-      }
-    },
-    [selectedAssetColormapType, setSelectedGrassColor, setSelectedFoliageColor],
-  );
+    // If not a colormap asset, check if it's a tinted block
+    // Convert assetId to blockId: "minecraft:block/oak_leaves" -> "minecraft:oak_leaves"
+    let blockId = uiState.selectedAssetId;
+    if (blockId.includes("/block/")) {
+      blockId = blockId.replace("/block/", ":");
+    } else if (blockId.includes("/item/")) {
+      blockId = blockId.replace("/item/", ":");
+    }
+
+    const tintType = getBlockTintType(blockId);
+    if (tintType === "grass") return selectedGrassColor;
+    if (tintType === "foliage") return selectedFoliageColor;
+
+    return undefined;
+  }, [uiState.selectedAssetId, selectedGrassColor, selectedFoliageColor]);
   const packOrder = useSelectPackOrder();
   const overridesRecord = useSelectOverridesRecord();
   const selectedLauncher = useSelectSelectedLauncher();
@@ -324,6 +327,13 @@ export default function MainRoute() {
   const setAvailableLaunchers = useSelectSetAvailableLaunchers();
   const setCurrentPage = useSelectSetCurrentPage();
 
+  // Canvas render mode state
+  const canvasRenderMode = useStore((state) => state.canvasRenderMode);
+  const setCanvasRenderMode = useStore((state) => state.setCanvasRenderMode);
+
+  // Show pot state - managed in global store for access from OptionsPanel
+  const showPot = useStore((state) => state.showPot ?? true);
+
   // Get providers for selected asset
   const providers = useSelectProvidersWithWinner(uiState.selectedAssetId);
 
@@ -333,9 +343,21 @@ export default function MainRoute() {
     setSeed(0);
     // Reset item display mode when switching assets
     setItemDisplayMode("ground");
-    setItemRotate(true);
-    setItemHover(true);
-  }, [uiState.selectedAssetId]);
+    // Reset viewing variant when switching assets
+    setViewingVariantId(undefined);
+
+    // Auto-select appropriate canvas mode based on asset type
+    if (uiState.selectedAssetId) {
+      if (isMinecraftItem(uiState.selectedAssetId)) {
+        setCanvasRenderMode("Item");
+      } else if (is2DOnlyTexture(uiState.selectedAssetId)) {
+        setCanvasRenderMode("2D");
+      } else {
+        // Blocks and entities default to 3D
+        setCanvasRenderMode("3D");
+      }
+    }
+  }, [uiState.selectedAssetId, setCanvasRenderMode]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -472,12 +494,7 @@ export default function MainRoute() {
   // OPTIMIZATION: Deferred using requestIdleCallback for non-blocking updates
   const colormapCoordinates = useStore((state) => state.colormapCoordinates);
   const grassColormapUrl = useStore((state) => state.grassColormapUrl);
-  const grassColormapPackId = useStore((state) => state.grassColormapPackId);
   const foliageColormapUrl = useStore((state) => state.foliageColormapUrl);
-  const foliageColormapPackId = useStore(
-    (state) => state.foliageColormapPackId,
-  );
-  const selectedBiomeId = useStore((state) => state.selectedBiomeId);
 
   useEffect(() => {
     const resampleColors = async () => {
@@ -622,18 +639,6 @@ export default function MainRoute() {
     },
     [setOverride],
   );
-
-  const handleToggleLeftSidebar = useCallback(() => {
-    const panel = leftSidebarRef.current;
-    if (panel) {
-      if (isLeftSidebarCollapsed) {
-        panel.expand();
-      } else {
-        panel.collapse();
-      }
-      setIsLeftSidebarCollapsed(!isLeftSidebarCollapsed);
-    }
-  }, [isLeftSidebarCollapsed]);
 
   const handleDragWindow = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -800,6 +805,283 @@ export default function MainRoute() {
     initVanillaTextures();
   }, []);
 
+  // Configure tabs for BlockyTabs layout
+  const blockyTabsConfig: Record<ZoneId, TabItem[]> = useMemo(
+    () => ({
+      left: [
+        {
+          id: "resource-packs",
+          label: "Resource Packs",
+          icon: cobbleImg,
+          color: "#4A90E2",
+          defaultDrawerSize: 25,
+          content: (
+            <PackList
+              packs={packListItems}
+              disabledPacks={disabledPackListItems}
+              onReorder={handleReorderPacks}
+              onReorderDisabled={handleReorderDisabledPacks}
+              onDisable={handleDisablePack}
+              onEnable={handleEnablePack}
+              onBrowse={handleBrowsePacksFolder}
+              packsDir={packsDir}
+              selectedLauncher={selectedLauncher}
+              availableLaunchers={availableLaunchers}
+              onLauncherChange={handleLauncherChange}
+            />
+          ),
+        },
+        {
+          id: "resource-cards",
+          label: "Resource Cards",
+          icon: dirtImg,
+          color: "#50C878",
+          defaultDrawerSize: 35,
+          content: (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+              }}
+            >
+              <div style={{ padding: "var(--spacing-md)", paddingBottom: 0 }}>
+                <SearchBar
+                  value={uiState.searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Search blocks, mobs, textures..."
+                />
+              </div>
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                <AssetResults
+                  assets={assetListItems}
+                  selectedId={uiState.selectedAssetId}
+                  onSelect={setSelectedAsset}
+                  totalItems={paginatedData.totalItems}
+                  displayRange={displayRange}
+                />
+              </div>
+              {paginatedData.totalPages > 1 && (
+                <div style={{ padding: "var(--spacing-md)", paddingTop: 0 }}>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() =>
+                            setCurrentPage(paginatedData.currentPage - 1)
+                          }
+                          disabled={!paginatedData.hasPrevPage}
+                        />
+                      </PaginationItem>
+                      {renderPageNumbers(
+                        paginatedData.currentPage,
+                        paginatedData.totalPages,
+                        setCurrentPage,
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() =>
+                            setCurrentPage(paginatedData.currentPage + 1)
+                          }
+                          disabled={!paginatedData.hasNextPage}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </div>
+          ),
+        },
+        {
+          id: "biome-colormaps",
+          label: "Biome & Colormaps",
+          icon: logImg,
+          color: "#8BC34A",
+          defaultDrawerSize: 30,
+          content: (
+            <div
+              style={{
+                padding: "var(--spacing-md)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--spacing-lg)",
+              }}
+            >
+              {/* Global Biome Selector */}
+              <div>
+                <h3 style={{ marginTop: 0, marginBottom: "var(--spacing-md)" }}>
+                  Select Biome
+                </h3>
+                <BiomeSelector />
+                <p
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "#888",
+                    marginTop: "0.5rem",
+                  }}
+                >
+                  Choose a biome to automatically set grass and foliage colors,
+                  or click directly on the colormaps below.
+                </p>
+              </div>
+
+              <div>
+                <h3 style={{ marginTop: 0, marginBottom: "var(--spacing-md)" }}>
+                  Grass Colormap
+                </h3>
+                <BiomeColorCard
+                  assetId="minecraft:colormap/grass"
+                  type="grass"
+                  showSourceSelector={true}
+                  updateGlobalState={true}
+                />
+              </div>
+              <div>
+                <h3 style={{ marginTop: 0, marginBottom: "var(--spacing-md)" }}>
+                  Foliage Colormap
+                </h3>
+                <BiomeColorCard
+                  assetId="minecraft:colormap/foliage"
+                  type="foliage"
+                  showSourceSelector={true}
+                  updateGlobalState={true}
+                />
+              </div>
+            </div>
+          ),
+        },
+      ],
+      right: [
+        {
+          id: "block-properties",
+          label: "Block Properties",
+          icon: pickaxeImg,
+          color: "#FF9800",
+          defaultDrawerSize: 30,
+          content: (
+            <OptionsPanel
+              assetId={uiState.selectedAssetId}
+              providers={providers}
+              onSelectProvider={handleSelectProvider}
+              onBlockPropsChange={setBlockProps}
+              onSeedChange={setSeed}
+              allAssets={allAssets.map((a: AssetRecord) => ({
+                id: a.id,
+                name: a.id,
+              }))}
+              onSelectVariant={setSelectedAsset}
+              onViewingVariantChange={setViewingVariantId}
+              itemDisplayMode={itemDisplayMode}
+              onItemDisplayModeChange={setItemDisplayMode}
+            />
+          ),
+        },
+        {
+          id: "canvas-settings",
+          label: "Canvas Settings",
+          icon: swordImg,
+          color: "#9C27B0",
+          defaultDrawerSize: 25,
+          content: <CanvasSettings />,
+        },
+      ],
+      top: [],
+      bottom: [],
+    }),
+    [
+      packListItems,
+      disabledPackListItems,
+      handleReorderPacks,
+      handleReorderDisabledPacks,
+      handleDisablePack,
+      handleEnablePack,
+      handleBrowsePacksFolder,
+      packsDir,
+      selectedLauncher,
+      availableLaunchers,
+      handleLauncherChange,
+      uiState.searchQuery,
+      uiState.selectedAssetId,
+      setSearchQuery,
+      assetListItems,
+      setSelectedAsset,
+      paginatedData,
+      displayRange,
+      setCurrentPage,
+      providers,
+      handleSelectProvider,
+      tintInfo,
+      setBlockProps,
+      setSeed,
+      allAssets,
+      itemDisplayMode,
+      setItemDisplayMode,
+    ],
+  );
+
+  // Render the appropriate preview based on canvas render mode
+  const renderCanvas = () => {
+    // Auto-determine if certain modes should be disabled
+    const is2DOnly =
+      uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId);
+    const isEntity =
+      uiState.selectedAssetId && isEntityTexture(uiState.selectedAssetId);
+
+    // Override mode for special asset types
+    let effectiveMode = canvasRenderMode;
+    if (isEntity) {
+      // Entities always use their own preview
+      return (
+        <div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
+          <PreviewEntity assetId={uiState.selectedAssetId!} />
+        </div>
+      );
+    }
+    if (is2DOnly && canvasRenderMode === "3D") {
+      effectiveMode = "2D";
+    }
+    if (!uiState.selectedAssetId) {
+      effectiveMode = "3D"; // Default to 3D when nothing selected
+    }
+
+    let content;
+    switch (effectiveMode) {
+      case "2D":
+        content = uiState.selectedAssetId ? (
+          <Preview2D assetId={uiState.selectedAssetId} />
+        ) : null;
+        break;
+      case "Item":
+        content = uiState.selectedAssetId ? (
+          <PreviewItem
+            assetId={uiState.selectedAssetId}
+            displayMode={itemDisplayMode}
+          />
+        ) : null;
+        break;
+      case "3D":
+      default:
+        content = (
+          <Preview3D
+            assetId={viewingVariantId || uiState.selectedAssetId}
+            biomeColor={biomeColor}
+            onTintDetected={setTintInfo}
+            showPot={showPot}
+            blockProps={blockProps}
+            seed={seed}
+            allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
+          />
+        );
+    }
+
+    return (
+      <div ref={canvasRef} style={{ width: "100%", height: "100%" }}>
+        {content}
+      </div>
+    );
+  };
+
   return (
     <div className={s.container}>
       {/* Header */}
@@ -818,7 +1100,6 @@ export default function MainRoute() {
             </div>
           </div>
           <div className={s.headerRight}>
-            <BiomeSelector />
             <Button
               className={s.settingsButton}
               onClick={() => setSettingsOpen(true)}
@@ -832,181 +1113,33 @@ export default function MainRoute() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - BlockyTabs Layout */}
       <div className={s.mainContent}>
-        <ResizablePanelGroup direction="horizontal">
-          {/* Left: Pack List (Collapsible) */}
-          <ResizablePanel
-            ref={leftSidebarRef}
-            defaultSize={25}
-            minSize={15}
-            maxSize={35}
-            collapsible={true}
-            collapsedSize={4}
-            onCollapse={() => setIsLeftSidebarCollapsed(true)}
-            onExpand={() => setIsLeftSidebarCollapsed(false)}
-            className={s.sidebar}
-          >
-            <div className={s.sidebarContent}>
-              {/* Collapse Toggle Button */}
-              <button
-                className={s.collapseButton}
-                onClick={handleToggleLeftSidebar}
-                aria-label={
-                  isLeftSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
-                }
-                title={
-                  isLeftSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
-                }
-              >
-                {isLeftSidebarCollapsed ? "▶" : "◀"}
-              </button>
+        {/* Canvas Type Selector - Floating above everything */}
+        <CanvasTypeSelector
+          targetRef={canvasRef}
+          disabled2D={
+            uiState.selectedAssetId
+              ? !is2DOnlyTexture(uiState.selectedAssetId) &&
+                !isEntityTexture(uiState.selectedAssetId)
+              : false
+          }
+          disabled3D={
+            uiState.selectedAssetId
+              ? is2DOnlyTexture(uiState.selectedAssetId) ||
+                isEntityTexture(uiState.selectedAssetId)
+              : false
+          }
+        />
 
-              {/* Pack List Content */}
-              {!isLeftSidebarCollapsed && (
-                <PackList
-                  packs={packListItems}
-                  disabledPacks={disabledPackListItems}
-                  onReorder={handleReorderPacks}
-                  onReorderDisabled={handleReorderDisabledPacks}
-                  onDisable={handleDisablePack}
-                  onEnable={handleEnablePack}
-                  onBrowse={handleBrowsePacksFolder}
-                  packsDir={packsDir}
-                  selectedLauncher={selectedLauncher}
-                  availableLaunchers={availableLaunchers}
-                  onLauncherChange={handleLauncherChange}
-                />
-              )}
-            </div>
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Center: Search & Results */}
-          <ResizablePanel defaultSize={45} minSize={30} className={s.center}>
-            <div className={s.searchSection}>
-              <SearchBar
-                value={uiState.searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search blocks, mobs, textures..."
-              />
-            </div>
-
-            <div className={s.resultsSection}>
-              <AssetResults
-                assets={assetListItems}
-                selectedId={uiState.selectedAssetId}
-                onSelect={setSelectedAsset}
-                totalItems={paginatedData.totalItems}
-                displayRange={displayRange}
-              />
-
-              {/* Pagination Controls */}
-              {paginatedData.totalPages > 1 && (
-                <div style={{ padding: "var(--spacing-md)", paddingTop: "0" }}>
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() =>
-                            setCurrentPage(paginatedData.currentPage - 1)
-                          }
-                          disabled={!paginatedData.hasPrevPage}
-                        />
-                      </PaginationItem>
-
-                      {/* Page numbers */}
-                      {renderPageNumbers(
-                        paginatedData.currentPage,
-                        paginatedData.totalPages,
-                        setCurrentPage,
-                      )}
-
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() =>
-                            setCurrentPage(paginatedData.currentPage + 1)
-                          }
-                          disabled={!paginatedData.hasNextPage}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </div>
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Right: Preview & Options */}
-          <ResizablePanel
-            defaultSize={30}
-            minSize={25}
-            maxSize={50}
-            className={s.rightPanel}
-          >
-            <div className={s.previewSection}>
-              {uiState.selectedAssetId &&
-              isEntityTexture(uiState.selectedAssetId) ? (
-                <PreviewEntity assetId={uiState.selectedAssetId} />
-              ) : uiState.selectedAssetId &&
-                is2DOnlyTexture(uiState.selectedAssetId) ? (
-                <Preview2D assetId={uiState.selectedAssetId} />
-              ) : uiState.selectedAssetId &&
-                isMinecraftItem(uiState.selectedAssetId) ? (
-                <PreviewItem
-                  assetId={uiState.selectedAssetId}
-                  displayMode={itemDisplayMode}
-                  rotate={itemRotate}
-                  hover={itemHover}
-                />
-              ) : (
-                <Preview3D
-                  assetId={uiState.selectedAssetId}
-                  biomeColor={biomeColor}
-                  onTintDetected={setTintInfo}
-                  showPot={showPot}
-                  onShowPotChange={setShowPot}
-                  blockProps={blockProps}
-                  seed={seed}
-                  foliagePreviewBlock={foliagePreviewBlock}
-                  allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
-                />
-              )}
-            </div>
-
-            <div className={s.optionsSection}>
-              <OptionsPanel
-                assetId={uiState.selectedAssetId}
-                biomeColor={biomeColor}
-                onBiomeColorChange={setBiomeColor}
-                providers={providers}
-                onSelectProvider={handleSelectProvider}
-                showPot={showPot}
-                onShowPotChange={setShowPot}
-                hasTintindex={tintInfo.hasTint}
-                tintType={tintInfo.tintType}
-                foliagePreviewBlock={foliagePreviewBlock}
-                onFoliagePreviewBlockChange={setFoliagePreviewBlock}
-                onBlockPropsChange={setBlockProps}
-                onSeedChange={setSeed}
-                allAssets={allAssets.map((a: AssetRecord) => ({
-                  id: a.id,
-                  name: a.id,
-                }))}
-                onSelectVariant={setSelectedAsset}
-                itemDisplayMode={itemDisplayMode}
-                onItemDisplayModeChange={setItemDisplayMode}
-                itemRotate={itemRotate}
-                onItemRotateChange={setItemRotate}
-                itemHover={itemHover}
-                onItemHoverChange={setItemHover}
-              />
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        {/* BlockyTabs with Canvas as center */}
+        <BlockyTabs
+          initialTabs={blockyTabsConfig}
+          showZones={false}
+          fullscreen={true}
+        >
+          {renderCanvas()}
+        </BlockyTabs>
       </div>
 
       {/* Footer */}
@@ -1035,12 +1168,6 @@ export default function MainRoute() {
             setSuccessMessage("");
             setErrorMessage(error);
           }}
-          grassColormapUrl={grassColormapUrl}
-          grassColormapPackId={grassColormapPackId}
-          foliageColormapUrl={foliageColormapUrl}
-          foliageColormapPackId={foliageColormapPackId}
-          selectedBiomeId={selectedBiomeId}
-          packs={packs}
         />
       </div>
 
@@ -1057,7 +1184,6 @@ export default function MainRoute() {
             onPackFormatChange={setPackFormat}
           />
         }
-        colormapTab={<ColormapSettings />}
       />
 
       {/* Resize Handle */}

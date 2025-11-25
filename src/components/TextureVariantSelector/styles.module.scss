@@ -1,11 +1,9 @@
+@use "@/ui/tokens" as tokens;
+
 .root {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-md);
-    background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    gap: var(--spacing-md);
 }
 
 .viewTabs {
@@ -43,32 +41,124 @@
     }
 }
 
+.sectionTitle {
+    font-family: var(--font-family);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.thumbnailGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) 0;
+}
+
+.thumbnail {
+    @include tokens.border-standard;
+    @include tokens.radius-quirky-sm;
+    @include tokens.shadow-md;
+    @include tokens.rotate-slight;
+
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    padding: var(--spacing-sm);
+    background: var(--color-block);
+    cursor: pointer;
+    transition: all 180ms var(--spring-bezier);
+    overflow: hidden; // Ensure image stays within bounds
+
+    &:nth-child(2n) {
+        rotate: 1deg;
+    }
+
+    &:nth-child(3n) {
+        rotate: -0.5deg;
+    }
+
+    &:hover {
+        @include tokens.shadow-lg;
+        scale: 1.05;
+        rotate: 0deg;
+        z-index: 1;
+    }
+
+    &.selected {
+        @include tokens.shadow-xl;
+        border-color: var(--color-primary);
+        border-width: 4px;
+        rotate: 0deg;
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border: 2px solid var(--color-primary);
+            @include tokens.radius-quirky-sm;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+    }
+
+    &:focus-visible {
+        outline: 3px solid var(--color-primary);
+        outline-offset: 4px;
+    }
+
+    &:active {
+        @include tokens.shadow-sm;
+        scale: 0.98;
+    }
+}
+
+.thumbnailNumber {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    font-family: var(--font-family);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.1rem 0.3rem;
+    border-radius: 2px;
+    line-height: 1;
+    z-index: 1;
+    @include tokens.shadow-sm;
+}
+
+.thumbnailImage {
+    width: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    border-radius: 0.2rem;
+}
+
+.thumbnailPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(0 0 0 / 5%);
+    color: var(--color-ink);
+    font-size: 1rem;
+    border-radius: 0.2rem;
+    opacity: 0.5;
+}
+
 .label {
     font-size: var(--font-size-sm);
     font-weight: 600;
     color: var(--color-text);
     margin: 0;
-}
-
-.select {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-sm);
-    color: var(--color-text);
-    background-color: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    outline: none;
-
-    &:hover {
-        border-color: var(--color-primary);
-    }
-
-    &:focus {
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
-    }
 }
 
 .hint {
@@ -94,34 +184,9 @@
     text-align: center;
 }
 
-/* Dark mode support */
-[data-theme="dark"] {
-    .select {
-        background-color: #2a2a2a;
-        color: #e0e0e0;
-
-        option {
-            background-color: #2a2a2a;
-            color: #e0e0e0;
-        }
-    }
-
-    .viewTab {
-        background-color: #2a2a2a;
-        color: #a0a0a0;
-
-        &:hover:not(:disabled) {
-            color: #e0e0e0;
-        }
-
-        &.active {
-            background-color: var(--color-primary);
-            color: white;
-        }
-    }
-
-    .singleVariant {
-        background-color: #2a2a2a;
-        color: #e0e0e0;
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .thumbnail {
+        transition-duration: 0.01ms;
     }
 }

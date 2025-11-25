@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getPackTexturePath, getVanillaTexturePath } from "@lib/tauri";
 import { normalizeAssetId, getVariantNumber } from "@lib/assetUtils";
@@ -9,6 +8,11 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/ui/components/Tooltip/Tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from "@/ui/components/DropdownMenu/DropdownMenu";
 import s from "./TextureVariantDropdown.module.scss";
 
 interface TextureVariantDropdownProps {
@@ -114,78 +118,10 @@ export function TextureVariantDropdown({
   onSelectVariant,
   label,
 }: TextureVariantDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const selectedTexture = useVariantTexture(selectedVariantId);
-
-  // Calculate grid columns based on variant count
-  // Formula: min(floor(x/1.7), 3) where x = number of variants
-  const gridColumns = Math.min(Math.floor(variants.length / 1.7), 3);
-
-  // Close on click outside
-  useEffect(() => {
-    if (!open) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        contentRef.current &&
-        !contentRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open]);
-
-  // Position the dropdown relative to trigger
-  useEffect(() => {
-    if (!open || !contentRef.current || !triggerRef.current) return;
-
-    const trigger = triggerRef.current;
-    const content = contentRef.current;
-
-    const updatePosition = () => {
-      const triggerRect = trigger.getBoundingClientRect();
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      const scrollX = window.scrollX || document.documentElement.scrollLeft;
-
-      // Position below the trigger
-      content.style.top = `${triggerRect.bottom + scrollY + 8}px`;
-      content.style.left = `${triggerRect.left + scrollX}px`;
-    };
-
-    requestAnimationFrame(() => {
-      updatePosition();
-    });
-
-    window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("resize", updatePosition);
-
-    return () => {
-      window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("resize", updatePosition);
-    };
-  }, [open]);
 
   const handleSelect = (variantId: string) => {
     onSelectVariant(variantId);
-    setOpen(false);
   };
 
   const selectedVariantNumber = getVariantNumber(selectedVariantId);
@@ -194,57 +130,52 @@ export function TextureVariantDropdown({
       ? `Variant ${selectedVariantNumber}`
       : selectedVariantId;
 
-  const dropdownContent = open
-    ? createPortal(
-        <div ref={contentRef} className={s.content}>
-          <div
-            className={s.grid}
-            style={{
-              gridTemplateColumns: `repeat(${gridColumns}, 32px)`,
-            }}
-          >
-            {variants.map((variantId) => (
-              <TextureThumbnail
-                key={variantId}
-                variantId={variantId}
-                isSelected={variantId === selectedVariantId}
-                onClick={() => handleSelect(variantId)}
-              />
-            ))}
-          </div>
-        </div>,
-        document.body,
-      )
-    : null;
-
   return (
     <div className={s.root}>
       <label htmlFor="texture-variant-trigger" className={s.label}>
         {label}
       </label>
-      <button
-        id="texture-variant-trigger"
-        ref={triggerRef}
-        className={s.trigger}
-        onClick={() => setOpen(!open)}
-        type="button"
-        aria-expanded={open}
-      >
-        <div className={s.triggerContent}>
-          {selectedTexture ? (
-            <img
-              src={selectedTexture}
-              alt={selectedDisplayText}
-              className={s.triggerThumbnail}
-            />
-          ) : (
-            <div className={s.triggerPlaceholder}>?</div>
-          )}
-          <span className={s.triggerText}>{selectedDisplayText}</span>
-        </div>
-        <span className={s.triggerIcon}>{open ? "▲" : "▼"}</span>
-      </button>
-      {dropdownContent}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            id="texture-variant-trigger"
+            className={s.trigger}
+            type="button"
+          >
+            <div className={s.triggerContent}>
+              {selectedTexture ? (
+                <img
+                  src={selectedTexture}
+                  alt={selectedDisplayText}
+                  className={s.triggerThumbnail}
+                />
+              ) : (
+                <div className={s.triggerPlaceholder}>?</div>
+              )}
+              <span className={s.triggerText}>{selectedDisplayText}</span>
+            </div>
+            <span className={s.triggerIcon}>▼</span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          sideOffset={8}
+          className={s.dropdownContent}
+        >
+          <div className={s.variantList}>
+            {variants.map((variantId, index) => (
+              <div key={variantId} className={s.variantRow}>
+                <span className={s.variantNumber}>{index + 1}.</span>
+                <TextureThumbnail
+                  variantId={variantId}
+                  isSelected={variantId === selectedVariantId}
+                  onClick={() => handleSelect(variantId)}
+                />
+              </div>
+            ))}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

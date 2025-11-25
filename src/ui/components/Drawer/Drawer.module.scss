@@ -374,7 +374,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
-    padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
 
     // Center text for top/bottom sheets
     .bottom &,
@@ -431,12 +431,13 @@
     @include tokens.text-shadow-bold;
 
     font-family: var(--font-family);
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-lg);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     line-height: 1.2;
     color: var(--color-text);
+    margin: 0;
 }
 
 // Description - subtitle

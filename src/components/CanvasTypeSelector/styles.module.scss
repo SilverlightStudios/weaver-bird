@@ -1,0 +1,17 @@
+.canvasTypeSelector {
+    position: fixed;
+    transform: translate(-50%, 5%);
+    z-index: 100; // Above zones wrapper (15) and tabs (20-100 when dragging)
+    pointer-events: auto; // Ensure clicks work
+}
+
+.tabsList {
+    background-color: transparent !important;
+    border: none !important;
+    overflow: visible !important;
+    // Keep padding and gap from parent to maintain spacing and shadow visibility
+
+    &::after {
+        display: none !important;
+    }
+}

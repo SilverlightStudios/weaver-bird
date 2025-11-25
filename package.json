@@ -12,7 +12,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest",
-    "generate:blockcolors": "tsx scripts/scrapeBlockColors.ts"
+    "generate:colors": "tsx scripts/scrapeMinecraftColors.ts",
+    "generate:cem-mocks": "tsx scripts/extract-cem-templates.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -38,13 +38,13 @@
     gap: var(--spacing-xs);
 
     // Sizing
-    min-width: 2.5rem;
-    height: 2.5rem;
+    min-width: 2rem;
+    height: 2rem;
     padding: 0 var(--spacing-sm);
 
     // Typography
     font-family: var(--font-family);
-    font-size: 0.875rem;
+    font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -113,7 +113,7 @@
 
     // Icon size variant
     &.icon {
-        min-width: 2.5rem;
+        min-width: 2rem;
         padding: 0;
 
         svg {

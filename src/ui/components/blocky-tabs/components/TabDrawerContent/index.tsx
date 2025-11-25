@@ -3,7 +3,6 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerDescription,
   DrawerClose,
 } from "../../../Drawer/Drawer";
 import { ZoneId } from "../../types";
@@ -35,7 +34,6 @@ export const TabDrawerContent: React.FC<TabDrawerContentProps> = ({
       <DrawerClose className={s.closeButton}>×</DrawerClose>
       <DrawerHeader>
         <DrawerTitle>{label}</DrawerTitle>
-        <DrawerDescription>{`Tab located in ${zone} zone`}</DrawerDescription>
       </DrawerHeader>
       <div className={s.content}>{children}</div>
 

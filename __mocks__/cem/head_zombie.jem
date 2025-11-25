@@ -1,27 +1,34 @@
 {
+  "textureSize": [
+    64,
+    64
+  ],
   "models": [
     {
-      "invertAxis": "xy",
       "part": "head",
       "id": "head",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        0,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -4,
+            0,
+            -4,
+            8,
+            8,
+            8
           ],
           "textureOffset": [
             0,
             0
-          ],
-          "sizeAdd": 0.0
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    64
   ]
 }

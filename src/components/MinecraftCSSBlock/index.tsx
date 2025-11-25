@@ -534,7 +534,7 @@ export default function MinecraftCSSBlock({
   assetId,
   packId,
   alt = "Block",
-  size = 64,
+  size = 48,
   staggerIndex = 0,
   onError,
 }: MinecraftCSSBlockProps) {
@@ -919,14 +919,18 @@ export default function MinecraftCSSBlock({
   // Apply foliage tinting to leaf textures
   useEffect(() => {
     console.log(
-      "[MinecraftCSSBlock] Tinting effect triggered - foliageColor:",
+      "[MinecraftCSSBlock] Tinting effect triggered - grassColor:",
+      grassColor,
+      "foliageColor:",
       foliageColor,
       "renderedElements:",
       renderedElements.length,
     );
-    if (!foliageColor || renderedElements.length === 0) {
+    if ((!grassColor && !foliageColor) || renderedElements.length === 0) {
       console.log(
-        "[MinecraftCSSBlock] Skipping tinting - foliageColor:",
+        "[MinecraftCSSBlock] Skipping tinting - grassColor:",
+        grassColor,
+        "foliageColor:",
         foliageColor,
         "elements:",
         renderedElements.length,
@@ -946,6 +950,12 @@ export default function MinecraftCSSBlock({
 
       for (const element of renderedElements) {
         for (const face of element.faces) {
+          console.log(
+            "[MinecraftCSSBlock] Face tintType:",
+            face.tintType,
+            "textureUrl:",
+            face.textureUrl,
+          );
           if (face.tintType === "grass" && face.textureUrl) {
             grassTextures.add(face.textureUrl);
           } else if (face.tintType === "foliage" && face.textureUrl) {

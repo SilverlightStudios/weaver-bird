@@ -61,6 +61,19 @@ interface StoreActions {
     color: { r: number; g: number; b: number } | undefined,
   ) => void;
 
+  // Canvas rendering mode
+  setCanvasRenderMode: (mode: AppState["canvasRenderMode"]) => void;
+
+  // Canvas settings
+  setCanvas3DShowGrid: (show: boolean) => void;
+  setCanvas2DShowPixelGrid: (show: boolean) => void;
+  setCanvasItemShowGrid: (show: boolean) => void;
+  setCanvasItemRotate: (rotate: boolean) => void;
+  setCanvasItemHover: (hover: boolean) => void;
+
+  // 3D block display settings
+  setShowPot: (show: boolean) => void;
+
   // Reset
   reset: () => void;
 }
@@ -95,6 +108,19 @@ const initialState: AppState = {
   selectedGrassColor: undefined, // Will be sampled from colormap
   selectedFoliageColor: undefined, // Will be sampled from colormap
   selectedBiomeId: "plains", // Default to plains biome
+
+  // Canvas rendering mode
+  canvasRenderMode: "3D", // Default to 3D view
+
+  // Canvas settings
+  canvas3DShowGrid: true, // Show floor grid by default in 3D
+  canvas2DShowPixelGrid: false, // Hide pixel grid by default in 2D
+  canvasItemShowGrid: true, // Show grid by default in item canvas
+  canvasItemRotate: true, // Enable rotation by default
+  canvasItemHover: true, // Enable hover by default
+
+  // 3D block display settings
+  showPot: true, // Show pot by default for potted plants
 };
 
 export const useStore = create<WeaverbirdStore>()(
@@ -335,6 +361,50 @@ export const useStore = create<WeaverbirdStore>()(
     ) => {
       set((state) => {
         state.selectedGrassColor = color;
+      });
+    },
+
+    setCanvasRenderMode: (mode: AppState["canvasRenderMode"]) => {
+      set((state) => {
+        state.canvasRenderMode = mode;
+      });
+    },
+
+    // Canvas settings
+    setCanvas3DShowGrid: (show: boolean) => {
+      set((state) => {
+        state.canvas3DShowGrid = show;
+      });
+    },
+
+    setCanvas2DShowPixelGrid: (show: boolean) => {
+      set((state) => {
+        state.canvas2DShowPixelGrid = show;
+      });
+    },
+
+    setCanvasItemShowGrid: (show: boolean) => {
+      set((state) => {
+        state.canvasItemShowGrid = show;
+      });
+    },
+
+    setCanvasItemRotate: (rotate: boolean) => {
+      set((state) => {
+        state.canvasItemRotate = rotate;
+      });
+    },
+
+    setCanvasItemHover: (hover: boolean) => {
+      set((state) => {
+        state.canvasItemHover = hover;
+      });
+    },
+
+    // 3D block display settings
+    setShowPot: (show: boolean) => {
+      set((state) => {
+        state.showPot = show;
       });
     },
 

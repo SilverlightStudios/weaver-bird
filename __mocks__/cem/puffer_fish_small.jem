@@ -1,132 +1,164 @@
 {
+  "textureSize": [
+    32,
+    32
+  ],
   "models": [
     {
-      "invertAxis": "xy",
-      "part": "eye_left",
-      "id": "eye_left",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            28,
-            6
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "fin_right",
-      "id": "fin_right",
-      "translate": [
-        -1.5,
-        -2.0,
-        1.5
-      ],
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            25,
-            0
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "eye_right",
-      "id": "eye_right",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            24,
-            6
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "fin_left",
-      "id": "fin_left",
-      "translate": [
-        1.5,
-        -2.0,
-        1.5
-      ],
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            25,
-            0
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
       "part": "body",
       "id": "body",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        0,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            32,
-            32
+          "coordinates": [
+            -1.5,
+            0,
+            -1.5,
+            3,
+            2,
+            3
           ],
           "textureOffset": [
             0,
             27
-          ],
-          "sizeAdd": 0.0
+          ]
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tail",
       "id": "tail",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -1,
+        -1.5
+      ],
       "boxes": [
         {
-          "textureSize": [
-            32,
-            32
+          "coordinates": [
+            -1.5,
+            1,
+            1.5,
+            3,
+            0,
+            3
           ],
           "textureOffset": [
             -3,
             0
+          ]
+        }
+      ]
+    },
+    {
+      "part": "fin_right",
+      "id": "fin_right",
+      "invertAxis": "xy",
+      "translate": [
+        -1.5,
+        -1,
+        1.5
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            1.5,
+            1,
+            -1.49,
+            1,
+            0,
+            2
           ],
-          "sizeAdd": 0.0
+          "textureOffset": [
+            25,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "part": "fin_left",
+      "id": "fin_left",
+      "invertAxis": "xy",
+      "translate": [
+        1.5,
+        -1,
+        1.5
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -2.5,
+            1,
+            -1.49,
+            1,
+            0,
+            2
+          ],
+          "textureOffset": [
+            25,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "part": "eye_right",
+      "id": "eye_right",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -3,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -1.5,
+            2,
+            -1.5,
+            1,
+            1,
+            1
+          ],
+          "textureOffset": [
+            28,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "part": "eye_left",
+      "id": "eye_left",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -3,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            0.5,
+            2,
+            -1.5,
+            1,
+            1,
+            1
+          ],
+          "textureOffset": [
+            24,
+            6
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    32,
-    32
   ]
 }

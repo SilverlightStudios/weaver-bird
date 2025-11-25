@@ -1,15 +1,27 @@
 {
+  "textureSize": [
+    64,
+    64
+  ],
   "models": [
     {
-      "invertAxis": "xy",
       "part": "body",
       "id": "body",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -15,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -8,
+            7,
+            -8,
+            16,
+            16,
+            16
           ],
           "textureOffset": [
             0,
@@ -20,20 +32,24 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle1",
       "id": "tentacle1",
+      "invertAxis": "xy",
       "translate": [
         -3.75,
-        -1.0,
-        5.0
+        -8,
+        5
       ],
-      "scale": 1.0,
+      "attach": true,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            2.75,
+            3,
+            -6,
+            2,
+            5,
+            2
           ],
           "textureOffset": [
             0,
@@ -44,20 +60,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle2",
       "id": "tentacle2",
+      "invertAxis": "xy",
       "translate": [
         1.25,
-        -1.0,
-        5.0
+        -8,
+        5
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -2.25,
+            1,
+            -6,
+            2,
+            7,
+            2
           ],
           "textureOffset": [
             0,
@@ -68,20 +87,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle3",
       "id": "tentacle3",
+      "invertAxis": "xy",
       "translate": [
         6.25,
-        -1.0,
-        5.0
+        -8,
+        5
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -7.25,
+            4,
+            -6,
+            2,
+            4,
+            2
           ],
           "textureOffset": [
             0,
@@ -92,15 +114,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle4",
       "id": "tentacle4",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        -6.25,
+        -8,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            5.25,
+            3,
+            -1,
+            2,
+            5,
+            2
           ],
           "textureOffset": [
             0,
@@ -111,15 +141,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle5",
       "id": "tentacle5",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        -1.25,
+        -8,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            0.25,
+            3,
+            -1,
+            2,
+            5,
+            2
           ],
           "textureOffset": [
             0,
@@ -130,15 +168,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle6",
       "id": "tentacle6",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        3.75,
+        -8,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -4.75,
+            1,
+            -1,
+            2,
+            7,
+            2
           ],
           "textureOffset": [
             0,
@@ -149,20 +195,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle7",
       "id": "tentacle7",
+      "invertAxis": "xy",
       "translate": [
         -3.75,
-        -1.0,
-        -5.0
+        -8,
+        -5
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            2.75,
+            0,
+            4,
+            2,
+            8,
+            2
           ],
           "textureOffset": [
             0,
@@ -173,20 +222,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle8",
       "id": "tentacle8",
+      "invertAxis": "xy",
       "translate": [
         1.25,
-        -1.0,
-        -5.0
+        -8,
+        -5
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -2.25,
+            0,
+            4,
+            2,
+            8,
+            2
           ],
           "textureOffset": [
             0,
@@ -197,20 +249,23 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "tentacle9",
       "id": "tentacle9",
+      "invertAxis": "xy",
       "translate": [
         6.25,
-        -1.0,
-        -5.0
+        -8,
+        -5
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -7.25,
+            3,
+            4,
+            2,
+            5,
+            2
           ],
           "textureOffset": [
             0,
@@ -220,9 +275,5 @@
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    64
   ]
 }

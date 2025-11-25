@@ -1,4 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { getPackTexturePath, getVanillaTexturePath } from "@lib/tauri";
 import {
   beautifyAssetName,
   groupAssetsByVariant,
@@ -6,27 +8,129 @@ import {
   categorizeVariants,
   isInventoryVariant,
   isNumberedVariant,
+  normalizeAssetId,
+  getVariantNumber,
 } from "@lib/assetUtils";
-import { useSelectWinner } from "@state/selectors";
+import { useSelectWinner, useSelectPack } from "@state/selectors";
 import { useStore } from "@state/store";
-import { TextureVariantDropdown } from "./TextureVariantDropdown";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/ui/components/Tooltip/Tooltip";
 import s from "./styles.module.scss";
 
 interface Props {
   assetId?: string;
   allAssets: Array<{ id: string; name: string }>;
+  selectedVariantId?: string; // Currently viewing variant (view-only, local state)
   onSelectVariant: (variantId: string) => void;
 }
 
 type ViewMode = "world" | "inventory";
 
+// Hook to load texture URL for a variant
+function useVariantTexture(variantId: string) {
+  const [textureUrl, setTextureUrl] = useState<string | null>(null);
+  const winnerPackId = useSelectWinner(variantId);
+  const pack = useSelectPack(winnerPackId || "");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadTexture() {
+      if (!variantId) return;
+
+      try {
+        const normalizedId = normalizeAssetId(variantId);
+        let texturePath: string;
+
+        if (winnerPackId && winnerPackId !== "minecraft:vanilla" && pack) {
+          texturePath = await getPackTexturePath(
+            pack.path,
+            normalizedId,
+            pack.is_zip,
+          );
+        } else {
+          texturePath = await getVanillaTexturePath(normalizedId);
+        }
+
+        if (mounted) {
+          const url = convertFileSrc(texturePath);
+          setTextureUrl(url);
+        }
+      } catch (error) {
+        console.warn(`Failed to load texture for ${variantId}:`, error);
+        if (mounted) {
+          setTextureUrl(null);
+        }
+      }
+    }
+
+    loadTexture();
+
+    return () => {
+      mounted = false;
+    };
+  }, [variantId, winnerPackId, pack]);
+
+  return textureUrl;
+}
+
+// Individual texture thumbnail component
+function TextureThumbnail({
+  variantId,
+  index,
+  isSelected,
+  onClick,
+}: {
+  variantId: string;
+  index: number;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const textureUrl = useVariantTexture(variantId);
+  const variantNumber = getVariantNumber(variantId);
+  const displayText =
+    variantNumber !== null ? `Variant ${variantNumber}` : variantId;
+
+  return (
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger asChild>
+        <button
+          className={`${s.thumbnail} ${isSelected ? s.selected : ""}`}
+          onClick={onClick}
+          type="button"
+          aria-label={displayText}
+        >
+          <span className={s.thumbnailNumber}>{index + 1}</span>
+          {textureUrl ? (
+            <img
+              src={textureUrl}
+              alt={displayText}
+              className={s.thumbnailImage}
+            />
+          ) : (
+            <div className={s.thumbnailPlaceholder}>?</div>
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={4}>
+        {displayText}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export default function TextureVariantSelector({
   assetId,
   allAssets,
+  selectedVariantId,
   onSelectVariant,
 }: Props) {
   // Initialize view mode based on whether current asset is an inventory variant
-  const initialViewMode = assetId && isInventoryVariant(assetId) ? "inventory" : "world";
+  const initialViewMode =
+    assetId && isInventoryVariant(assetId) ? "inventory" : "world";
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
 
   // Update view mode when asset changes to match its type
@@ -77,7 +181,8 @@ export default function TextureVariantSelector({
   }, [assetId, allAssets, winnerPackId, providersByAsset]);
 
   // Determine which variants to show based on current view mode
-  const currentVariants = viewMode === "world" ? worldVariants : inventoryVariants;
+  const currentVariants =
+    viewMode === "world" ? worldVariants : inventoryVariants;
   const hasInventoryVariants = inventoryVariants.length > 0;
   const hasWorldVariants = worldVariants.length > 0;
 
@@ -91,7 +196,9 @@ export default function TextureVariantSelector({
     const name = beautifyAssetName(variantId);
     // For inventory variants, strip the "Inventory" suffix since we're already in inventory view
     if (viewMode === "inventory") {
-      return name.replace(/ Inventory$/, "") + (index === 0 ? " (Default)" : "");
+      return (
+        name.replace(/ Inventory$/, "") + (index === 0 ? " (Default)" : "")
+      );
     }
     return name + (index === 0 ? " (Default)" : "");
   };
@@ -106,7 +213,11 @@ export default function TextureVariantSelector({
             onClick={() => {
               setViewMode("world");
               // Select first world variant when switching to world view
-              if (worldVariants.length > 0 && assetId && !worldVariants.includes(assetId)) {
+              if (
+                worldVariants.length > 0 &&
+                assetId &&
+                !worldVariants.includes(assetId)
+              ) {
                 onSelectVariant(worldVariants[0]);
               }
             }}
@@ -119,7 +230,11 @@ export default function TextureVariantSelector({
             onClick={() => {
               setViewMode("inventory");
               // Select first inventory variant when switching to inventory view
-              if (inventoryVariants.length > 0 && assetId && !inventoryVariants.includes(assetId)) {
+              if (
+                inventoryVariants.length > 0 &&
+                assetId &&
+                !inventoryVariants.includes(assetId)
+              ) {
                 onSelectVariant(inventoryVariants[0]);
               }
             }}
@@ -129,17 +244,26 @@ export default function TextureVariantSelector({
         </div>
       )}
 
-      {/* Variant selector */}
+      {/* Variant thumbnails */}
       {currentVariants.length > 1 ? (
         <>
-          <TextureVariantDropdown
-            variants={currentVariants}
-            selectedVariantId={assetId!}
-            onSelectVariant={onSelectVariant}
-            label={viewMode === "world" ? "Texture Variant" : "Inventory Variant"}
-          />
+          <h3 className={s.sectionTitle}>
+            {viewMode === "world" ? "Texture Variants" : "Inventory Variants"}
+          </h3>
+          <div className={s.thumbnailGrid}>
+            {currentVariants.map((variantId, index) => (
+              <TextureThumbnail
+                key={variantId}
+                variantId={variantId}
+                index={index}
+                isSelected={variantId === (selectedVariantId || assetId)}
+                onClick={() => onSelectVariant(variantId)}
+              />
+            ))}
+          </div>
           <div className={s.hint}>
-            {currentVariants.length} variant{currentVariants.length !== 1 ? "s" : ""} available
+            {currentVariants.length} variant
+            {currentVariants.length !== 1 ? "s" : ""} available
           </div>
         </>
       ) : currentVariants.length === 1 ? (
@@ -148,7 +272,10 @@ export default function TextureVariantSelector({
             {viewMode === "world" ? "World Texture" : "Inventory Texture"}
           </label>
           <div className={s.singleVariant}>
-            {getVariantDisplayName(currentVariants[0], 0).replace(" (Default)", "")}
+            {getVariantDisplayName(currentVariants[0], 0).replace(
+              " (Default)",
+              "",
+            )}
           </div>
           {viewMode === "inventory" && (
             <div className={s.hint}>

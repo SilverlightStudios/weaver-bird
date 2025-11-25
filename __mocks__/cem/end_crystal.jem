@@ -1,84 +1,122 @@
 {
+  "textureSize": [
+    64,
+    32
+  ],
   "models": [
     {
-      "invertAxis": "xy",
       "part": "base",
       "id": "base",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        0,
+        0
+      ],
+      "rotate": [
+        -180,
+        0,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            32
+          "coordinates": [
+            -6,
+            -4,
+            -6,
+            12,
+            4,
+            12
           ],
           "textureOffset": [
             0,
             16
-          ],
-          "sizeAdd": 0.0
+          ]
         }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "inner_glass",
-      "id": "inner_glass",
-      "scale": 0.875,
-      "boxes": [
+      ],
+      "animations": [
         {
-          "textureSize": [
-            64,
-            32
-          ],
-          "textureOffset": [
-            0,
-            0
-          ],
-          "sizeAdd": 0.0
+          "this.rx": 0
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "cube",
       "id": "cube",
-      "scale": 0.765625,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -10,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            32
+          "coordinates": [
+            -4,
+            6,
+            -4,
+            8,
+            8,
+            8
           ],
           "textureOffset": [
             32,
             0
-          ],
-          "sizeAdd": 0.0
+          ]
         }
       ]
     },
     {
+      "part": "inner_glass",
+      "id": "inner_glass",
       "invertAxis": "xy",
-      "part": "outer_glass",
-      "id": "outer_glass",
-      "scale": 1.0,
+      "translate": [
+        0,
+        -10,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            32
+          "coordinates": [
+            -4,
+            6,
+            -4,
+            8,
+            8,
+            8
           ],
           "textureOffset": [
             0,
             0
+          ]
+        }
+      ]
+    },
+    {
+      "part": "outer_glass",
+      "id": "outer_glass",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -10,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -4,
+            6,
+            -4,
+            8,
+            8,
+            8
           ],
-          "sizeAdd": 0.0
+          "textureOffset": [
+            0,
+            0
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    32
   ]
 }

@@ -18,6 +18,7 @@ import {
   getPlantNameFromPotted,
   getBlockStateIdFromAssetId,
   extractBlockStateProperties,
+  applyNaturalBlockStateDefaults,
   getVariantGroupKey,
   isPottedPlant,
   getPottedAssetId,
@@ -201,8 +202,16 @@ function BlockModel({
         );
 
         // Merge user-provided props with inferred props (user props take precedence)
-        const mergedProps = { ...inferredProps, ...blockProps };
-        console.log("[BlockModel] Merged block props:", mergedProps);
+        let mergedProps = { ...inferredProps, ...blockProps };
+
+        // Apply natural defaults (axis=y, face=floor, facing=down) for better visual appearance
+        // This provides sensible defaults before Rust resolver applies its alphabetic defaults
+        mergedProps = applyNaturalBlockStateDefaults(mergedProps);
+
+        console.log(
+          "[BlockModel] Merged block props with natural defaults:",
+          mergedProps,
+        );
         console.log("[BlockModel] Seed:", seed);
 
         const blockStateAssetId = getBlockStateIdFromAssetId(modelAssetId);
@@ -229,9 +238,15 @@ function BlockModel({
           return;
         }
 
-        // Extract variant number for ETF-style variant texture loading
+        // Override model variant number if specified in assetId
+        // Allows viewing different texture variants (e.g., allium3) without changing global state
         const variantNumber = getVariantNumber(assetId);
-        console.log("[BlockModel] Variant number:", variantNumber);
+        if (variantNumber !== null) {
+          resolution.models = resolution.models.map((model) => ({
+            ...model,
+            modelId: model.modelId.replace(/\d+$/, variantNumber.toString()),
+          }));
+        }
 
         // Create texture loader for this pack
         console.log("[BlockModel] Creating texture loader...");
@@ -419,6 +434,7 @@ function BlockModel({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    assetId, // Include original assetId to detect variant changes
     normalizedAssetId,
     resolvedPackId,
     resolvedPack,

@@ -1,79 +1,183 @@
 {
+  "textureSize": [
+    64,
+    64
+  ],
   "models": [
     {
+      "part": "head",
+      "id": "head",
       "invertAxis": "xy",
-      "part": "tail",
-      "id": "tail",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
-            42,
-            36
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "back_left_leg",
-      "id": "back_left_leg",
       "translate": [
-        4.0,
-        -10.0,
-        -7.0
+        0,
+        -22,
+        9
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -3,
+            28,
+            -11,
+            6,
+            5,
+            7
           ],
           "textureOffset": [
-            48,
-            21
-          ],
-          "sizeAddX": 0.0,
-          "sizeAddY": 5.5,
-          "sizeAddZ": 0.0
+            0,
+            13
+          ]
         }
       ]
     },
     {
+      "part": "mouth",
+      "id": "mouth",
       "invertAxis": "xy",
+      "translate": [
+        0,
+        -22,
+        9
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -2,
+            28,
+            -16,
+            4,
+            5,
+            5
+          ],
+          "textureOffset": [
+            0,
+            25
+          ]
+        }
+      ]
+    },
+    {
+      "part": "left_ear",
+      "id": "left_ear",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -23,
+        9.01
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -2.55,
+            33,
+            -5.01,
+            2,
+            3,
+            1
+          ],
+          "textureOffset": [
+            19,
+            16
+          ]
+        }
+      ]
+    },
+    {
+      "part": "right_ear",
+      "id": "right_ear",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -23,
+        9.01
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            0.55,
+            33,
+            -5.01,
+            2,
+            3,
+            1
+          ],
+          "textureOffset": [
+            19,
+            16
+          ]
+        }
+      ]
+    },
+    {
+      "part": "neck",
+      "id": "neck",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -22,
+        9
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -1.95,
+            16,
+            -11,
+            4,
+            12,
+            7
+          ],
+          "textureOffset": [
+            0,
+            35
+          ]
+        }
+      ]
+    },
+    {
       "part": "mane",
       "id": "mane",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -22,
+        9.01
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -1,
+            17,
+            -4,
+            2,
+            16,
+            2
           ],
           "textureOffset": [
             56,
             36
-          ],
-          "sizeAdd": 0.0
+          ]
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "body",
       "id": "body",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -13,
+        -6
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -5,
+            11,
+            -11,
+            10,
+            10,
+            22
           ],
           "textureOffset": [
             0,
@@ -84,181 +188,136 @@
       ]
     },
     {
+      "part": "tail",
+      "id": "tail",
       "invertAxis": "xy",
-      "part": "right_ear",
-      "id": "right_ear",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
-            19,
-            16
-          ],
-          "sizeAdd": -0.001
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "back_right_leg",
-      "id": "back_right_leg",
       "translate": [
-        -4.0,
-        -10.0,
-        -7.0
+        0,
+        -21,
+        -11
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -1.5,
+            7,
+            11,
+            3,
+            14,
+            4
           ],
           "textureOffset": [
-            48,
-            21
-          ],
-          "sizeAddX": 0.0,
-          "sizeAddY": 5.5,
-          "sizeAddZ": 0.0
+            42,
+            36
+          ]
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "front_left_leg",
       "id": "front_left_leg",
+      "invertAxis": "xy",
+      "mirrorTexture": "u",
       "translate": [
-        4.0,
-        -10.0,
-        10.0
+        4,
+        -10,
+        9
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -5,
+            0,
+            -10.9,
+            4,
+            11,
+            4
           ],
           "textureOffset": [
             48,
             21
-          ],
-          "sizeAddX": 0.0,
-          "sizeAddY": 5.5,
-          "sizeAddZ": 0.0
+          ]
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "front_right_leg",
       "id": "front_right_leg",
+      "invertAxis": "xy",
       "translate": [
-        -4.0,
-        -10.0,
-        10.0
+        -4,
+        -10,
+        9
       ],
-      "scale": 1.0,
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            1,
+            0,
+            -10.9,
+            4,
+            11,
+            4
           ],
           "textureOffset": [
             48,
             21
-          ],
-          "sizeAddX": 0.0,
-          "sizeAddY": 5.5,
-          "sizeAddZ": 0.0
+          ]
         }
       ]
     },
     {
+      "part": "back_left_leg",
+      "id": "back_left_leg",
       "invertAxis": "xy",
-      "part": "neck",
-      "id": "neck",
-      "scale": 1.0,
+      "mirrorTexture": "u",
+      "translate": [
+        4,
+        -10,
+        -8
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
+          "coordinates": [
+            -5,
             0,
-            35
+            7,
+            4,
+            11,
+            4
           ],
-          "sizeAdd": 0.0
+          "textureOffset": [
+            48,
+            21
+          ]
         }
       ]
     },
     {
+      "part": "back_right_leg",
+      "id": "back_right_leg",
       "invertAxis": "xy",
-      "part": "left_ear",
-      "id": "left_ear",
-      "scale": 1.0,
+      "translate": [
+        -4,
+        -10,
+        -8
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
-            19,
-            16
-          ],
-          "sizeAdd": -0.001
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "mouth",
-      "id": "mouth",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
+          "coordinates": [
+            1,
             0,
-            25
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "head",
-      "id": "head",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            64,
-            64
+            7,
+            4,
+            11,
+            4
           ],
           "textureOffset": [
-            0,
-            13
-          ],
-          "sizeAdd": 0.0
+            48,
+            21
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    64
   ]
 }

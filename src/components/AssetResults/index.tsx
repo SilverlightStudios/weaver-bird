@@ -310,7 +310,7 @@ const AssetCard = memo(
               assetId={asset.id}
               packId={winnerPackId || undefined}
               alt={displayName}
-              size={120}
+              size={75}
               staggerIndex={staggerIndex}
               onError={() => setImageError(true)}
             />

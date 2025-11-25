@@ -1,0 +1,60 @@
+{
+  "textureSize": [
+    64,
+    32
+  ],
+  "models": [
+    {
+      "part": "cube",
+      "id": "cube",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -10,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -4,
+            6,
+            -4,
+            8,
+            8,
+            8
+          ],
+          "textureOffset": [
+            32,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "part": "glass",
+      "id": "glass",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -10,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -4,
+            6,
+            -4,
+            8,
+            8,
+            8
+          ],
+          "textureOffset": [
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}

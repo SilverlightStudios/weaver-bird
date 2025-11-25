@@ -1,101 +1,144 @@
 {
+  "textureSize": [
+    256,
+    256
+  ],
   "models": [
     {
-      "invertAxis": "xy",
-      "part": "jaw",
-      "id": "jaw",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            256,
-            256
-          ],
-          "textureOffset": [
-            176,
-            65
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
       "part": "head",
       "id": "head",
-      "scale": 0.75,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -8,
+        -2
+      ],
       "boxes": [
         {
-          "textureSize": [
-            256,
-            256
+          "coordinates": [
+            -6,
+            4,
+            -22,
+            12,
+            5,
+            16
           ],
           "textureOffset": [
             176,
             44
-          ],
-          "sizeAdd": 0.0
+          ]
         },
         {
-          "textureSize": [
-            256,
-            256
+          "coordinates": [
+            -8,
+            0,
+            -8,
+            16,
+            16,
+            16
           ],
           "textureOffset": [
             112,
             30
-          ],
-          "sizeAdd": 0.0
+          ]
         },
         {
-          "textureSize": [
-            256,
-            256
+          "coordinates": [
+            -5,
+            16,
+            -2,
+            2,
+            4,
+            6
           ],
           "textureOffset": [
             0,
             0
-          ],
-          "sizeAdd": 0.0
+          ]
         },
         {
-          "textureSize": [
-            256,
-            256
+          "coordinates": [
+            -5,
+            9,
+            -20,
+            2,
+            2,
+            4
           ],
           "textureOffset": [
             112,
             0
-          ],
-          "sizeAdd": 0.0
-        },
+          ]
+        }
+      ],
+      "submodels": [
         {
-          "textureSize": [
-            256,
-            256
-          ],
-          "textureOffset": [
+          "id": "mirrored",
+          "invertAxis": "xy",
+          "translate": [
             0,
-            0
+            2,
+            26
           ],
-          "sizeAdd": 0.0
-        },
+          "mirrorTexture": "u",
+          "boxes": [
+            {
+              "coordinates": [
+                3,
+                7,
+                -46,
+                2,
+                2,
+                4
+              ],
+              "textureOffset": [
+                112,
+                0
+              ]
+            },
+            {
+              "coordinates": [
+                3,
+                14,
+                -28,
+                2,
+                4,
+                6
+              ],
+              "textureOffset": [
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "part": "jaw",
+      "id": "jaw",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -4,
+        6
+      ],
+      "boxes": [
         {
-          "textureSize": [
-            256,
-            256
+          "coordinates": [
+            -6,
+            0,
+            -22,
+            12,
+            4,
+            16
           ],
           "textureOffset": [
-            112,
-            0
-          ],
-          "sizeAdd": 0.0
+            176,
+            65
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    256,
-    256
   ]
 }

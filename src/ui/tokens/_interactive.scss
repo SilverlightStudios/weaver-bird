@@ -136,11 +136,9 @@
         translate: 4px 0;
     }
 
-    &[data-disabled],
+    // For cmdk: hide filtered-out items (but keep matched items clickable)
     &[data-disabled="true"] {
-        opacity: 0.4;
-        cursor: not-allowed;
-        pointer-events: none;
+        display: none;
     }
 }
 

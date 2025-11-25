@@ -19,7 +19,6 @@ interface Props {
 
 export default function PreviewEntity({ assetId }: Props) {
   const [activeTab, setActiveTab] = useState<"3d" | "2d">("3d");
-  const [showPot, setShowPot] = useState(false);
 
   if (!assetId) {
     return (
@@ -31,7 +30,10 @@ export default function PreviewEntity({ assetId }: Props) {
 
   return (
     <div className={s.root}>
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "3d" | "2d")}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as "3d" | "2d")}
+      >
         <TabsList className={s.tabsList}>
           <TabsTrigger value="3d" className={s.tabTrigger}>
             3D
@@ -44,11 +46,9 @@ export default function PreviewEntity({ assetId }: Props) {
         <TabsContent value="3d" className={s.tabContent}>
           <Preview3D
             assetId={assetId}
-            showPot={showPot}
-            onShowPotChange={setShowPot}
+            showPot={false}
             blockProps={{}}
             seed={0}
-            foliagePreviewBlock="minecraft:block/oak_leaves"
             allAssetIds={[]}
           />
         </TabsContent>

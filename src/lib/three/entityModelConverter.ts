@@ -80,7 +80,7 @@ function convertPart(
   // Convert each box in this part
   for (let i = 0; i < part.boxes.length; i++) {
     const box = part.boxes[i];
-    const mesh = createBoxMesh(box, textureSize, texture);
+    const mesh = createBoxMesh(box, textureSize, texture, part.name);
     if (mesh) {
       partGroup.add(mesh);
     }
@@ -92,17 +92,21 @@ function convertPart(
     partGroup.add(childGroup);
   }
 
-  // Apply transformations
+  // Apply translation (convert from pixels to block units)
+  // Negate translate values to convert from JEM to Three.js space
   const [tx, ty, tz] = part.translate;
 
-  // Apply translation (convert from pixels to block units)
-  // IMPORTANT: JEM translate is ALWAYS negated (Blockbench always does V3_multiply(-1))
-  // The invertAxis property is just a marker/convention, not a conditional
   const finalX = -tx / MINECRAFT_UNIT;
   const finalY = -ty / MINECRAFT_UNIT;
   const finalZ = -tz / MINECRAFT_UNIT;
 
   partGroup.position.set(finalX, finalY, finalZ);
+
+  // DEBUG: Add a red sphere at the pivot point
+  const pivotGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+  const pivotMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const pivotMarker = new THREE.Mesh(pivotGeometry, pivotMaterial);
+  partGroup.add(pivotMarker);
 
   console.log(`[entityModelConverter] ${part.name} POSITION:`);
   console.log(`  - JEM translate: [${tx}, ${ty}, ${tz}]`);
@@ -111,7 +115,22 @@ function convertPart(
 
   // Apply rotation (degrees to radians)
   // Rotations in JEM are used as-is (Blockbench doesn't negate them)
-  const [rx, ry, rz] = part.rotate;
+  let [rx, ry, rz] = part.rotate;
+
+  // If invertAxis includes "xy", add 180 degrees to Y rotation to flip right-side-up
+  if (part.invertAxis && part.invertAxis.includes('x') && part.invertAxis.includes('y')) {
+    ry += 180;
+  }
+
+  // Add 90-degree X rotation for head to orient it correctly
+  if (part.name === 'head') {
+    rx += 180;
+  }
+
+  // Legs need 180° Z rotation to flip right-side-up
+  if (part.name.includes('leg')) {
+    rz += 180;
+  }
 
   partGroup.rotation.set(
     THREE.MathUtils.degToRad(rx),
@@ -119,7 +138,8 @@ function convertPart(
     THREE.MathUtils.degToRad(rz),
   );
 
-  // Apply scale (no axis flipping via scale - we handle it via coordinate transformation)
+  // Apply scale
+  // invertAxis is already handled in the parser by converting coordinates
   if (part.scale !== 1.0) {
     partGroup.scale.setScalar(part.scale);
   }
@@ -134,6 +154,7 @@ function createBoxMesh(
   box: ParsedBox,
   textureSize: [number, number],
   texture: THREE.Texture | null,
+  partName: string,
 ): THREE.Mesh | null {
   const [x, y, z] = box.position;
   const [width, height, depth] = box.size;
@@ -177,19 +198,26 @@ function createBoxMesh(
 
   // Position the mesh
   // Box coordinates in JEM are RELATIVE to the part's pivot point (translate)
-  // Since we already negated the part translate when positioning the parent group,
-  // the box coordinates should be used AS-IS (they're already relative to that negated pivot)
+  // For legs, negate X and Z to correct for the rotations applied
 
   // Calculate center of box from corner position (in pixels)
-  // NO negation here - these are relative offsets
-  const centerX = (x + width / 2) / MINECRAFT_UNIT;
-  const centerY = (y + height / 2) / MINECRAFT_UNIT;
-  const centerZ = (z + depth / 2) / MINECRAFT_UNIT;
+  let centerX = (x + width / 2) / MINECRAFT_UNIT;
+  let centerY = (y + height / 2) / MINECRAFT_UNIT;
+  let centerZ = (z + depth / 2) / MINECRAFT_UNIT;
+
+  // For legs, center the mesh at the pivot point (X/Z = 0)
+  // The pivot points are already positioned correctly via translate
+  // Y is preserved from box coordinates for proper leg height
+  const isLeg = partName.startsWith('leg');
+  if (isLeg) {
+    centerX = 0;
+    centerZ = 0;
+  }
 
   mesh.position.set(centerX, centerY, centerZ);
 
   console.log(`  - Box pos (relative to part): [${x}, ${y}, ${z}]`);
-  console.log(`  - Box center (Three.js): [${centerX.toFixed(3)}, ${centerY.toFixed(3)}, ${centerZ.toFixed(3)}]`);
+  console.log(`  - Mesh position: [${centerX.toFixed(3)}, ${centerY.toFixed(3)}, ${centerZ.toFixed(3)}]`);
 
   // Enable shadows
   mesh.castShadow = true;

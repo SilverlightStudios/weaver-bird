@@ -111,18 +111,24 @@ export const TooltipTrigger = forwardRef<
       };
     }, []);
 
-    const child = asChild && React.isValidElement(children) ? (children as React.ReactElement) : null;
+    const child =
+      asChild && React.isValidElement(children)
+        ? (children as React.ReactElement)
+        : null;
     const childRef = child ? (child as { ref?: React.Ref<unknown> }).ref : null;
 
-    const mergedRef = useCallback((node: HTMLButtonElement | null) => {
-      triggerRef.current = node;
-      if (typeof ref === "function") ref(node);
-      else if (ref) ref.current = node;
-      // Only call child ref if it's a function
-      if (typeof childRef === "function") {
-        childRef(node);
-      }
-    }, [triggerRef, ref, childRef]);
+    const mergedRef = useCallback(
+      (node: HTMLButtonElement | null) => {
+        triggerRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+        // Only call child ref if it's a function
+        if (typeof childRef === "function") {
+          childRef(node);
+        }
+      },
+      [triggerRef, ref, childRef],
+    );
 
     if (child) {
       // eslint-disable-next-line react-hooks/refs
@@ -244,8 +250,57 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
           }
         }
 
+        // Store the ideal position before collision detection
+        const idealLeft = left;
+        const idealTop = top;
+
+        // Collision detection - keep tooltip on screen
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const padding = 8; // Minimum distance from edge
+
+        // Check horizontal boundaries
+        if (left < scrollX + padding) {
+          left = scrollX + padding;
+        } else if (
+          left + contentRect.width >
+          scrollX + viewportWidth - padding
+        ) {
+          left = scrollX + viewportWidth - contentRect.width - padding;
+        }
+
+        // Check vertical boundaries
+        if (top < scrollY + padding) {
+          top = scrollY + padding;
+        } else if (
+          top + contentRect.height >
+          scrollY + viewportHeight - padding
+        ) {
+          top = scrollY + viewportHeight - contentRect.height - padding;
+        }
+
+        // Calculate caret offset to keep it pointing at the trigger
+        let caretOffsetX = 0;
+        let caretOffsetY = 0;
+
+        if (side === "top" || side === "bottom") {
+          // Calculate horizontal offset from center
+          const triggerCenterX =
+            triggerRect.left + scrollX + triggerRect.width / 2;
+          const tooltipCenterX = left + contentRect.width / 2;
+          caretOffsetX = triggerCenterX - tooltipCenterX;
+        } else {
+          // Calculate vertical offset from center
+          const triggerCenterY =
+            triggerRect.top + scrollY + triggerRect.height / 2;
+          const tooltipCenterY = top + contentRect.height / 2;
+          caretOffsetY = triggerCenterY - tooltipCenterY;
+        }
+
         content.style.top = `${top}px`;
         content.style.left = `${left}px`;
+        content.style.setProperty("--caret-offset-x", `${caretOffsetX}px`);
+        content.style.setProperty("--caret-offset-y", `${caretOffsetY}px`);
       };
 
       requestAnimationFrame(() => {

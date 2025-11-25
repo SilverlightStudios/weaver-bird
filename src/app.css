@@ -53,6 +53,7 @@
     --color-border: #0a0a0a;
     --color-block: #f5f5f5;
     --color-block-muted: #e0e0e0;
+    --color-canvas-bg: #f0f0f0; /* Canvas background for 3D/2D previews */
 
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -113,6 +114,7 @@
     --color-border: #f0f0f0;
     --color-block: #2a2a2a;
     --color-block-muted: #1a1a1a;
+    --color-canvas-bg: #1a1a2e; /* Darker canvas background for dark mode */
 }
 
 html,

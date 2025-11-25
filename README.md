@@ -38,6 +38,9 @@ cargo test  # Rust tests (in src-tauri/)
 
 # Component documentation
 npm run storybook
+
+# Generate Minecraft constants from wiki (single scrape)
+npm run generate:colors   # Generates block colors + biome coordinates
 ```
 
 ## Project Structure

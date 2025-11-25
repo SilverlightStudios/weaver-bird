@@ -1,51 +1,86 @@
 {
+  "textureSize": [
+    64,
+    64
+  ],
   "models": [
     {
-      "invertAxis": "xy",
-      "part": "slate",
-      "id": "slate"
-    },
-    {
-      "invertAxis": "xy",
-      "part": "stand",
-      "id": "stand",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
-            44,
-            0
-          ],
-          "sizeAdd": 0.0
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
       "part": "top",
       "id": "top",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        0,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -10,
+            42,
+            -1,
+            20,
+            2,
+            2
           ],
           "textureOffset": [
             0,
             42
+          ]
+        }
+      ]
+    },
+    {
+      "part": "slate",
+      "id": "slate",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -44,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -10,
+            4,
+            -2,
+            20,
+            40,
+            1
           ],
-          "sizeAdd": 0.0
+          "textureOffset": [
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "part": "stand",
+      "id": "stand",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        0,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -1,
+            0,
+            -1,
+            2,
+            42,
+            2
+          ],
+          "textureOffset": [
+            44,
+            0
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    64
   ]
 }

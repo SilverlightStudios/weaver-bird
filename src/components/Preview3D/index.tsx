@@ -6,11 +6,11 @@ import {
   ContactShadows,
 } from "@react-three/drei";
 import * as THREE from "three";
+import { useStore } from "@state/store";
 import BlockModel from "./BlockModel";
 import EntityModel, { isEntityAsset } from "./EntityModel";
 import GridFloor from "./GridFloor";
 import {
-  getColormapTypeFromAssetId,
   isBiomeColormapAsset,
   isPottedPlant,
   getVariantGroupKey,
@@ -27,10 +27,8 @@ interface Props {
     tintType?: "grass" | "foliage";
   }) => void;
   showPot: boolean;
-  onShowPotChange: (show: boolean) => void;
   blockProps?: Record<string, string>;
   seed?: number;
-  foliagePreviewBlock: string;
   allAssetIds?: string[];
 }
 
@@ -39,21 +37,19 @@ export default function Preview3D({
   biomeColor,
   onTintDetected,
   showPot,
-  onShowPotChange,
   blockProps = {},
   seed = 0,
-  foliagePreviewBlock,
   allAssetIds = [],
 }: Props) {
+  // Read grid visibility from global state
+  const showGrid = useStore((state) => state.canvas3DShowGrid);
+
   const [tintInfo, setTintInfo] = useState<{
     hasTint: boolean;
     tintType?: "grass" | "foliage";
   }>({ hasTint: false });
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
   const isColormapAsset = assetId ? isBiomeColormapAsset(assetId) : false;
-  const colormapType = assetId
-    ? (getColormapTypeFromAssetId(assetId) ?? "grass")
-    : "grass";
 
   // Check if this asset can be potted (a potted version exists in the same variant group)
   const canBePotted = useMemo(() => {
@@ -70,18 +66,12 @@ export default function Preview3D({
     return group.variantIds.some((id) => isPottedPlant(id));
   }, [assetId, isPlantPotted, allAssetIds]);
 
-  const previewAssetId = assetId
-    ? isColormapAsset
-      ? colormapType === "foliage"
-        ? foliagePreviewBlock
-        : "minecraft:block/grass_block"
-      : assetId
-    : undefined;
+  // Colormap assets are now handled in the dedicated "Biome & Colormaps" tab
+  // If someone tries to preview them here, just show nothing
+  const previewAssetId = assetId && !isColormapAsset ? assetId : undefined;
   const multiBlockParts: MultiBlockPart[] | null = previewAssetId
     ? getMultiBlockParts(previewAssetId, blockProps)
     : null;
-  // Show pot toggle for both already-potted plants AND pottable plants
-  const showPotToggle = (isPlantPotted || canBePotted) && !isColormapAsset;
 
   useEffect(() => {
     console.log("[Preview3D] Component mounted");
@@ -118,26 +108,7 @@ export default function Preview3D({
 
   return (
     <div className={s.root}>
-      <div className={s.header}>
-        <span>Preview</span>
-        {showPotToggle && (
-          <label className={s.pottedControl}>
-            <input
-              type="checkbox"
-              checked={showPot}
-              onChange={(e) => onShowPotChange(e.target.checked)}
-            />
-            Show Pot
-          </label>
-        )}
-      </div>
-
       <div className={s.canvas}>
-        {/* Always show placeholder when no asset selected */}
-        {!previewAssetId && (
-          <div className={s.placeholder}>Select an asset to preview</div>
-        )}
-
         {/* Always keep Canvas mounted to prevent context loss - NO Suspense wrapper here! */}
         <Canvas
           onCreated={({ gl, scene }) => {
@@ -149,7 +120,6 @@ export default function Preview3D({
           }}
           onError={(error) => console.error("[Preview3D] Canvas error:", error)}
           style={{
-            display: previewAssetId ? "block" : "none",
             position: "absolute",
             inset: 0,
             width: "100%",
@@ -212,17 +182,20 @@ export default function Preview3D({
             ))}
 
           {/* Grid floor with dashed lines - 1 Minecraft block spacing */}
-          <GridFloor
-            position={[0, 0, 0]}
-            size={20}
-            gridSize={1}
-            lineWidth={0.02}
-            dashLength={0.1}
-            gapLength={0.1}
-            lineColor="#666666"
-            fadeStart={2}
-            fadeEnd={8}
-          />
+          {/* Grid offset by 0.5 units so lines pass through block centers, not edges */}
+          {showGrid && (
+            <GridFloor
+              position={[0.5, 0, 0.5]}
+              size={20}
+              gridSize={1}
+              lineWidth={0.02}
+              dashLength={0.1}
+              gapLength={0.1}
+              lineColor="#666666"
+              fadeStart={2}
+              fadeEnd={8}
+            />
+          )}
 
           {/* Soft contact shadow - tight under the block */}
           <ContactShadows

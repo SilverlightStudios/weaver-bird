@@ -205,7 +205,6 @@ export default function PackList({
   onDisable,
   onEnable,
   onBrowse,
-  packsDir,
   selectedLauncher,
   availableLaunchers = [],
   onLauncherChange,
@@ -253,15 +252,12 @@ export default function PackList({
     }
   }, [actualStructure, activeItem]);
 
-  const applyPreviewMove = useCallback(
-    (event: MoveEvent) => {
-      const next = move(previewRef.current, event);
-      previewRef.current = next;
-      setPreviewItemsState(next);
-      return next;
-    },
-    [],
-  );
+  const applyPreviewMove = useCallback((event: MoveEvent) => {
+    const next = move(previewRef.current, event);
+    previewRef.current = next;
+    setPreviewItemsState(next);
+    return next;
+  }, []);
 
   const handleDragStart = useCallback(
     (event: DragStartEventType) => {
@@ -422,7 +418,7 @@ export default function PackList({
             </Button>
           )}
         </div>
-        {packsDir && <div className={s.packsDir}>{packsDir}</div>}
+        <Separator className={s.separator} />
         <div className={s.section}>
           <div className={s.sectionHeader}>
             <h3 className={s.sectionTitle}>Enabled Packs</h3>
@@ -441,27 +437,27 @@ export default function PackList({
                     resource packs directory.
                   </li>
                 ) : (
-                    renderEnabledIds.map((packId, index) => {
-                      const pack = packLookup.get(packId);
-                      if (!pack) return null;
-                      const isVanilla = pack.id === "minecraft:vanilla";
-                      return (
-                        <SortablePackItem
-                          key={pack.id}
-                          item={pack}
-                          containerId="enabled"
-                          index={index}
-                          isDraggable={!isVanilla}
-                          actionLabel={`Disable ${pack.name}`}
-                          actionIcon="X"
-                          onActionClick={
-                            !isVanilla && onDisable
-                              ? () => onDisable(pack.id)
-                              : undefined
-                          }
-                        />
-                      );
-                    })
+                  renderEnabledIds.map((packId, index) => {
+                    const pack = packLookup.get(packId);
+                    if (!pack) return null;
+                    const isVanilla = pack.id === "minecraft:vanilla";
+                    return (
+                      <SortablePackItem
+                        key={pack.id}
+                        item={pack}
+                        containerId="enabled"
+                        index={index}
+                        isDraggable={!isVanilla}
+                        actionLabel={`Disable ${pack.name}`}
+                        actionIcon="X"
+                        onActionClick={
+                          !isVanilla && onDisable
+                            ? () => onDisable(pack.id)
+                            : undefined
+                        }
+                      />
+                    );
+                  })
                 )}
               </ul>
             )}
@@ -487,21 +483,21 @@ export default function PackList({
                     Disabled packs will appear here.
                   </li>
                 ) : (
-                    renderDisabledIds.map((packId, index) => {
-                      const pack = packLookup.get(packId);
-                      if (!pack) return null;
-                      return (
-                        <SortablePackItem
-                          key={pack.id}
-                          item={pack}
-                          containerId="disabled"
-                          index={index}
-                          isDraggable={true}
-                          actionLabel={`Enable ${pack.name}`}
-                          actionIcon="+"
-                          onActionClick={
-                            onEnable ? () => onEnable(pack.id) : undefined
-                          }
+                  renderDisabledIds.map((packId, index) => {
+                    const pack = packLookup.get(packId);
+                    if (!pack) return null;
+                    return (
+                      <SortablePackItem
+                        key={pack.id}
+                        item={pack}
+                        containerId="disabled"
+                        index={index}
+                        isDraggable={true}
+                        actionLabel={`Enable ${pack.name}`}
+                        actionIcon="+"
+                        onActionClick={
+                          onEnable ? () => onEnable(pack.id) : undefined
+                        }
                       />
                     );
                   })
@@ -523,7 +519,12 @@ export default function PackList({
                 }
                 metadata={
                   activeItem.size
-                    ? [{ label: "Size", value: formatPackSize(activeItem.size) }]
+                    ? [
+                        {
+                          label: "Size",
+                          value: formatPackSize(activeItem.size),
+                        },
+                      ]
                     : []
                 }
                 description={

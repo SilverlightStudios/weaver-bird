@@ -1,8 +1,6 @@
 @use "@/ui/tokens" as tokens;
 
 .root {
-    padding: var(--spacing-sm);
-    background-color: var(--color-bg);
     position: relative;
     // Allow dropdown to overflow
     overflow: visible;

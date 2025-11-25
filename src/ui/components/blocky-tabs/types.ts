@@ -12,4 +12,6 @@ export interface TabItem {
 export interface BlockyTabsProps {
   initialTabs: Record<ZoneId, TabItem[]>;
   showZones?: boolean;
+  children?: React.ReactNode;
+  fullscreen?: boolean;
 }

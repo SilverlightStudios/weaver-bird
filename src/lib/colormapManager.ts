@@ -171,7 +171,7 @@ export function coordinatesToBiome(x: number, y: number): string | null {
 
 /**
  * Get coordinates for a specific biome
- * Returns {x, y} or null if biome not found
+ * Returns {x, y} or null if biome not found or uses noise
  */
 export function biomeToCoordinates(
   biomeId: string,
@@ -186,6 +186,31 @@ export function biomeToCoordinates(
   }
 
   return { x: biome.x, y: biome.y };
+}
+
+/**
+ * Get color data for a biome (handles both coordinate-based and noise biomes)
+ * For coordinate biomes: returns coords to sample from colormap
+ * For noise biomes: returns hex colors directly
+ */
+export function getBiomeColors(biomeId: string): {
+  grass: { coords: { x: number; y: number } | null; hex: string | null };
+  foliage: { coords: { x: number; y: number } | null; hex: string | null };
+} {
+  const { BIOMES } = require("@components/BiomeColorPicker/biomeData");
+  const biome = BIOMES.find((b: any) => b.id === biomeId);
+
+  if (!biome) {
+    return {
+      grass: { coords: null, hex: null },
+      foliage: { coords: null, hex: null },
+    };
+  }
+
+  return {
+    grass: { coords: biome.coords, hex: biome.grassHexColor },
+    foliage: { coords: biome.coords, hex: biome.foliageHexColor },
+  };
 }
 
 /**

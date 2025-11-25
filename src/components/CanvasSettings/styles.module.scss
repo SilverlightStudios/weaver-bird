@@ -1,0 +1,42 @@
+.root {
+    padding: var(--spacing-md);
+    height: 100%;
+    overflow-y: auto;
+    background-color: var(--color-canvas-bg);
+}
+
+.checkboxLabel {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        .labelText {
+            color: var(--color-text-primary);
+        }
+    }
+}
+
+.checkbox {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.labelText {
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.15s ease;
+}
+
+.description {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}

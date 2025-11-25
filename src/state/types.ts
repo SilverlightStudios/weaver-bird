@@ -74,6 +74,11 @@ export interface LauncherInfo {
 }
 
 /**
+ * Canvas rendering mode
+ */
+export type CanvasRenderMode = "3D" | "2D" | "Item";
+
+/**
  * UI/interaction state
  */
 export interface UIState {
@@ -102,6 +107,19 @@ export interface UIState {
   selectedGrassColor?: { r: number; g: number; b: number }; // Sampled grass color at coordinates
   selectedFoliageColor?: { r: number; g: number; b: number }; // Sampled foliage color at coordinates
   selectedBiomeId?: string; // Biome ID if coordinates match a biome, null otherwise
+
+  // Canvas rendering mode
+  canvasRenderMode: CanvasRenderMode; // Current canvas rendering mode (3D, 2D, or Item)
+
+  // Canvas-specific settings
+  canvas3DShowGrid: boolean; // Show floor grid in 3D canvas
+  canvas2DShowPixelGrid: boolean; // Show pixel grid in 2D canvas
+  canvasItemShowGrid: boolean; // Show grid in item canvas
+  canvasItemRotate: boolean; // Enable rotation animation in item canvas
+  canvasItemHover: boolean; // Enable hover animation in item canvas
+
+  // 3D block display settings
+  showPot?: boolean; // Show pot for potted plants (default: true)
 }
 
 /**

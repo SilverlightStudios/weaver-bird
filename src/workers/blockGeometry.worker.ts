@@ -212,6 +212,17 @@ function processSimpleCube(
       const tintType =
         shouldTint && textureId ? getColormapType(textureId) : undefined;
 
+      if (shouldTint) {
+        console.log(
+          "[blockGeometry.worker] Top face - textureId:",
+          textureId,
+          "tintindex:",
+          face.tintindex,
+          "detected tintType:",
+          tintType,
+        );
+      }
+
       faces.push({
         type: "top",
         textureUrl,
@@ -240,6 +251,17 @@ function processSimpleCube(
       const tintType =
         shouldTint && textureId ? getColormapType(textureId) : undefined;
 
+      if (shouldTint) {
+        console.log(
+          "[blockGeometry.worker] South face - textureId:",
+          textureId,
+          "tintindex:",
+          face.tintindex,
+          "detected tintType:",
+          tintType,
+        );
+      }
+
       faces.push({
         type: "left",
         textureUrl,
@@ -267,6 +289,17 @@ function processSimpleCube(
         face.tintindex !== undefined && face.tintindex !== null;
       const tintType =
         shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+      if (shouldTint) {
+        console.log(
+          "[blockGeometry.worker] East face - textureId:",
+          textureId,
+          "tintindex:",
+          face.tintindex,
+          "detected tintType:",
+          tintType,
+        );
+      }
 
       faces.push({
         type: "right",

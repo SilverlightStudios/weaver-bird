@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect, useMemo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Command as CommandPrimitive } from "cmdk";
 import s from "./Combobox.module.scss";
@@ -48,6 +48,13 @@ export function Combobox({
     setOpen(false);
     setSearchValue("");
   };
+
+  // Reset search when opening dropdown
+  useEffect(() => {
+    if (open) {
+      setSearchValue("");
+    }
+  }, [open]);
 
   // Close on click outside
   useEffect(() => {
@@ -147,7 +154,15 @@ export function Combobox({
   const dropdownContent = open
     ? createPortal(
         <div ref={contentRef} className={s.content} data-side="bottom">
-          <CommandPrimitive className={s.command}>
+          <CommandPrimitive
+            className={s.command}
+            filter={(value, search) => {
+              // When search is empty, show all items
+              if (!search || search.trim() === "") return 1;
+              // Otherwise do case-insensitive substring match
+              return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+            }}
+          >
             <div className={s.inputWrapper}>
               <span className={s.searchIcon}>🔍</span>
               <CommandPrimitive.Input
@@ -164,8 +179,9 @@ export function Combobox({
               {options.map((option) => (
                 <CommandPrimitive.Item
                   key={option.value}
-                  value={option.value}
-                  onSelect={handleSelect}
+                  value={option.label}
+                  keywords={[option.value]}
+                  onSelect={() => handleSelect(option.value)}
                   disabled={option.disabled === true}
                   className={s.item}
                 >

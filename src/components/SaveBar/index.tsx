@@ -1,13 +1,7 @@
 import { useCallback } from "react";
 import { buildWeaverNest, formatError } from "@lib/tauri";
-import type { OverrideWirePayload, PackMeta } from "@state";
+import type { OverrideWirePayload } from "@state";
 import Button from "@/ui/components/buttons/Button";
-import { BIOMES } from "@components/BiomeColorPicker/biomeData";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/ui/components/Tooltip/Tooltip";
 import s from "./styles.module.scss";
 
 interface Progress {
@@ -32,38 +26,6 @@ interface Props {
   statusMessage?: string;
   statusType?: StatusType;
   onClearStatus?: () => void;
-  grassColormapUrl?: string;
-  grassColormapPackId?: string;
-  foliageColormapUrl?: string;
-  foliageColormapPackId?: string;
-  selectedBiomeId?: string;
-  packs: PackMeta[];
-}
-
-/**
- * Get pack display name from pack ID
- */
-function getPackName(packId: string | undefined, packs: PackMeta[]): string {
-  if (!packId) return "None";
-
-  // Handle vanilla pack specially
-  if (packId === "minecraft:vanilla") {
-    return "Vanilla";
-  }
-
-  // Find pack in packs array
-  const pack = packs.find((p) => p.id === packId);
-  return pack ? pack.name : packId.replace(/_/g, " ");
-}
-
-/**
- * Get biome display name from biome ID
- */
-function getBiomeName(biomeId?: string): string {
-  if (!biomeId) return "None";
-
-  const biome = BIOMES.find((b) => b.id === biomeId);
-  return biome ? biome.name : biomeId;
 }
 
 const SaveIcon = () => (
@@ -96,12 +58,6 @@ export default function SaveBar({
   statusMessage,
   statusType = "idle",
   onClearStatus,
-  grassColormapUrl,
-  grassColormapPackId,
-  foliageColormapUrl,
-  foliageColormapPackId,
-  selectedBiomeId,
-  packs,
 }: Props) {
   const percent = progress
     ? Math.round((progress.completed / Math.max(progress.total, 1)) * 100)
@@ -169,63 +125,6 @@ export default function SaveBar({
             )}
           </div>
         ) : null}
-      </div>
-
-      <div className={s.info}>
-        <div className={s.infoItem}>
-          <span className={s.infoLabel}>Foliage:</span>
-          {foliageColormapUrl ? (
-            <Tooltip delayDuration={100}>
-              <TooltipTrigger asChild>
-                <span className={s.infoValue}>
-                  {getPackName(foliageColormapPackId, packs)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" align="center">
-                <div className={s.colormapPreview}>
-                  <img
-                    src={foliageColormapUrl}
-                    alt="Foliage colormap"
-                    className={s.colormapImage}
-                  />
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <span className={s.infoValue}>
-              {getPackName(foliageColormapPackId, packs)}
-            </span>
-          )}
-        </div>
-        <div className={s.infoItem}>
-          <span className={s.infoLabel}>Grass:</span>
-          {grassColormapUrl ? (
-            <Tooltip delayDuration={100}>
-              <TooltipTrigger asChild>
-                <span className={s.infoValue}>
-                  {getPackName(grassColormapPackId, packs)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" align="center">
-                <div className={s.colormapPreview}>
-                  <img
-                    src={grassColormapUrl}
-                    alt="Grass colormap"
-                    className={s.colormapImage}
-                  />
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <span className={s.infoValue}>
-              {getPackName(grassColormapPackId, packs)}
-            </span>
-          )}
-        </div>
-        <div className={s.infoItem}>
-          <span className={s.infoLabel}>Biome:</span>
-          <span className={s.infoValue}>{getBiomeName(selectedBiomeId)}</span>
-        </div>
       </div>
     </div>
   );

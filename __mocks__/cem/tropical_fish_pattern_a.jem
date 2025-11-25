@@ -1,103 +1,154 @@
 {
+  "textureSize": [
+    32,
+    32
+  ],
   "models": [
     {
-      "invertAxis": "xy",
-      "part": "fin_left",
-      "id": "fin_left",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            2,
-            12
-          ],
-          "sizeAdd": 0.008
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "tail",
-      "id": "tail",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            22,
-            -6
-          ],
-          "sizeAdd": 0.008
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "fin_right",
-      "id": "fin_right",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            2,
-            16
-          ],
-          "sizeAdd": 0.008
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "fin_top",
-      "id": "fin_top",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            32,
-            32
-          ],
-          "textureOffset": [
-            10,
-            -5
-          ],
-          "sizeAdd": 0.008
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
       "part": "body",
       "id": "body",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -1.5,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            32,
-            32
+          "coordinates": [
+            -1,
+            0,
+            -3,
+            2,
+            3,
+            6
           ],
           "textureOffset": [
             0,
             0
+          ]
+        }
+      ],
+      "submodels": [
+        {
+          "id": "right_fin",
+          "invertAxis": "xy",
+          "translate": [
+            1,
+            0,
+            0
           ],
-          "sizeAdd": 0.008
+          "rotate": [
+            0,
+            -45,
+            0
+          ],
+          "boxes": [
+            {
+              "coordinates": [
+                0,
+                0,
+                0,
+                2,
+                2,
+                0
+              ],
+              "textureOffset": [
+                2,
+                16
+              ]
+            }
+          ]
+        },
+        {
+          "id": "left_fin",
+          "invertAxis": "xy",
+          "translate": [
+            -1,
+            0,
+            0
+          ],
+          "rotate": [
+            0,
+            45,
+            0
+          ],
+          "boxes": [
+            {
+              "coordinates": [
+                -2,
+                0,
+                0,
+                2,
+                2,
+                0
+              ],
+              "textureOffset": [
+                2,
+                12
+              ]
+            }
+          ]
         }
       ]
+    },
+    {
+      "part": "fin_top",
+      "id": "fin_top",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -3,
+        3
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            0,
+            3,
+            -3,
+            0,
+            4,
+            6
+          ],
+          "textureOffset": [
+            10,
+            -6
+          ]
+        }
+      ]
+    },
+    {
+      "part": "tail",
+      "id": "tail",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -1.5,
+        -3
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            0,
+            0,
+            3,
+            0,
+            3,
+            4
+          ],
+          "textureOffset": [
+            24,
+            -4
+          ]
+        }
+      ]
+    },
+    {
+      "part": "fin_left"
+    },
+    {
+      "part": "fin_right"
     }
-  ],
-  "textureSize": [
-    32,
-    32
   ]
 }

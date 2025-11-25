@@ -1,15 +1,27 @@
 {
+  "textureSize": [
+    64,
+    64
+  ],
   "models": [
     {
-      "invertAxis": "xy",
       "part": "head",
       "id": "head",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -20,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -4,
+            20,
+            -4,
+            8,
+            8,
+            8
           ],
           "textureOffset": [
             0,
@@ -20,82 +32,136 @@
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "left_hand",
       "id": "left_hand",
+      "invertAxis": "xy",
       "translate": [
-        5.0,
-        -18.0,
-        -1.0
+        4.5,
+        -18.75,
+        0
       ],
-      "scale": 1.0,
-      "boxes": [
+      "submodels": [
         {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
-            32,
+          "id": "left_hand_rotation",
+          "invertAxis": "xy",
+          "translate": [
+            -4,
+            17.75,
             0
           ],
-          "sizeAdd": -0.5
+          "rotate": [
+            0,
+            0,
+            57
+          ],
+          "boxes": [
+            {
+              "coordinates": [
+                -11.5,
+                -1,
+                -1,
+                12,
+                2,
+                2
+              ],
+              "textureOffset": [
+                32,
+                0
+              ],
+              "sizeAdd": -0.5
+            }
+          ]
+        }
+      ],
+      "animations": [
+        {
+          "left_hand_rotation.rz": 0
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "right_hand",
       "id": "right_hand",
+      "invertAxis": "xy",
       "translate": [
-        -5.0,
-        -18.0,
-        1.0
+        -14.5,
+        -18.75,
+        0
       ],
-      "scale": 1.0,
-      "boxes": [
+      "submodels": [
         {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
-            32,
+          "id": "right_hand_flip",
+          "invertAxis": "xy",
+          "translate": [
+            9.5,
+            17.75,
             0
           ],
-          "sizeAdd": -0.5
-        }
-      ]
-    },
-    {
-      "invertAxis": "xy",
-      "part": "body_bottom",
-      "id": "body_bottom",
-      "scale": 1.0,
-      "boxes": [
-        {
-          "textureSize": [
-            64,
-            64
-          ],
-          "textureOffset": [
+          "rotate": [
             0,
-            36
+            -180,
+            0
           ],
-          "sizeAdd": -0.5
+          "submodels": [
+            {
+              "id": "right_hand_rotation",
+              "invertAxis": "xy",
+              "translate": [
+                5.5,
+                0,
+                0
+              ],
+              "rotate": [
+                0,
+                0,
+                57
+              ],
+              "boxes": [
+                {
+                  "coordinates": [
+                    -11.5,
+                    -1,
+                    -1,
+                    12,
+                    2,
+                    2
+                  ],
+                  "textureOffset": [
+                    32,
+                    0
+                  ],
+                  "sizeAdd": -0.5
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "animations": [
+        {
+          "right_hand_rotation.rz": 0,
+          "right_hand_flip.ry": 0
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "body",
       "id": "body",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -11,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -5,
+            11,
+            -5,
+            10,
+            10,
+            10
           ],
           "textureOffset": [
             0,
@@ -104,10 +170,33 @@
           "sizeAdd": -0.5
         }
       ]
+    },
+    {
+      "part": "body_bottom",
+      "id": "body_bottom",
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        0,
+        0
+      ],
+      "boxes": [
+        {
+          "coordinates": [
+            -6,
+            0,
+            -6,
+            12,
+            12,
+            12
+          ],
+          "textureOffset": [
+            0,
+            36
+          ],
+          "sizeAdd": -0.5
+        }
+      ]
     }
-  ],
-  "textureSize": [
-    64,
-    64
   ]
 }

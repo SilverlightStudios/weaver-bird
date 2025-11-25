@@ -1,46 +1,60 @@
 {
+  "textureSize": [
+    64,
+    64
+  ],
   "models": [
     {
-      "invertAxis": "xy",
       "part": "plate",
       "id": "plate",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -11,
+        1
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -6,
+            0,
+            -3,
+            12,
+            22,
+            1
           ],
           "textureOffset": [
             0,
             0
-          ],
-          "sizeAdd": 0.0
+          ]
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "handle",
       "id": "handle",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -11,
+        1
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            64
+          "coordinates": [
+            -1,
+            8,
+            -2,
+            2,
+            6,
+            6
           ],
           "textureOffset": [
             26,
             0
-          ],
-          "sizeAdd": 0.0
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    64
   ]
 }

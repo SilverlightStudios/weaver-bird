@@ -1,57 +1,84 @@
 {
+  "textureSize": [
+    64,
+    32
+  ],
   "models": [
     {
-      "invertAxis": "xy",
       "part": "charge",
       "id": "charge",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -2,
+        0
+      ],
+      "rotate": [
+        -180,
+        0,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            32
+          "coordinates": [
+            -2,
+            0,
+            -2,
+            4,
+            4,
+            4
           ],
           "textureOffset": [
             0,
             0
-          ],
-          "sizeAdd": 0.0
+          ]
+        }
+      ],
+      "animations": [
+        {
+          "this.rx": 0
         }
       ]
     },
     {
-      "invertAxis": "xy",
       "part": "wind",
       "id": "wind",
-      "scale": 1.0,
+      "invertAxis": "xy",
+      "translate": [
+        0,
+        -2,
+        0
+      ],
       "boxes": [
         {
-          "textureSize": [
-            64,
-            32
-          ],
-          "textureOffset": [
-            15,
-            20
-          ],
-          "sizeAdd": 0.0
-        },
-        {
-          "textureSize": [
-            64,
-            32
+          "coordinates": [
+            -3,
+            0,
+            -3,
+            6,
+            4,
+            6
           ],
           "textureOffset": [
             0,
             9
+          ]
+        },
+        {
+          "coordinates": [
+            -4,
+            1,
+            -4,
+            8,
+            2,
+            8
           ],
-          "sizeAdd": 0.0
+          "textureOffset": [
+            15,
+            20
+          ]
         }
       ]
     }
-  ],
-  "textureSize": [
-    64,
-    32
   ]
 }

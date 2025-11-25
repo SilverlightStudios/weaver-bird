@@ -39,8 +39,8 @@ export function beautifyAssetName(assetId: string): string {
 
   // For multi-level paths (gui/sprites/hud/jump_bar_background, mob_effect/jump_boost),
   // extract just the last part of the path for cleaner display names
-  if (name.includes('/')) {
-    const parts = name.split('/');
+  if (name.includes("/")) {
+    const parts = name.split("/");
     name = parts[parts.length - 1]; // Get the last part (e.g., "jump_bar_background")
   }
 
@@ -135,29 +135,29 @@ export function isBiomeColormapAsset(assetId: string): boolean {
  */
 export function is2DOnlyTexture(assetId: string): boolean {
   // Extract the path after the namespace (e.g., "minecraft:gui/container" -> "gui/container")
-  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
+  const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
 
   // Entity textures have their own universal preview component
-  if (path.startsWith('entity/')) {
+  if (path.startsWith("entity/")) {
     return false;
   }
 
   // List of texture categories that are 2D-only
   const twoDOnlyPaths = [
-    'gui/',           // GUI elements (containers, widgets, buttons)
-    'particle/',      // Particle effects
-    'painting/',      // Painting textures
-    'mob_effect/',    // Potion/status effect icons
-    'font/',          // Font textures
-    'misc/',          // Miscellaneous textures
-    'entity/',        // Entity textures (mob skins, etc.)
-    'map/',           // Map decorations
-    'models/',        // Model textures
-    'environment/',   // Environment textures (moon, sun, clouds)
-    'effect/',        // Effect textures
+    "gui/", // GUI elements (containers, widgets, buttons)
+    "particle/", // Particle effects
+    "painting/", // Painting textures
+    "mob_effect/", // Potion/status effect icons
+    "font/", // Font textures
+    "misc/", // Miscellaneous textures
+    "entity/", // Entity textures (mob skins, etc.)
+    "map/", // Map decorations
+    "models/", // Model textures
+    "environment/", // Environment textures (moon, sun, clouds)
+    "effect/", // Effect textures
   ];
 
-  return twoDOnlyPaths.some(prefix => path.startsWith(prefix));
+  return twoDOnlyPaths.some((prefix) => path.startsWith(prefix));
 }
 
 /**
@@ -167,8 +167,8 @@ export function is2DOnlyTexture(assetId: string): boolean {
  * Includes: chests, shulker boxes, mobs, decorated pots, beds, signs, etc.
  */
 export function isEntityTexture(assetId: string): boolean {
-  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
-  return path.startsWith('entity/');
+  const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+  return path.startsWith("entity/");
 }
 
 /**
@@ -176,8 +176,8 @@ export function isEntityTexture(assetId: string): boolean {
  * @deprecated Use isEntityTexture() instead - kept for backward compatibility
  */
 export function isEntityDecoratedPot(assetId: string): boolean {
-  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
-  return path.startsWith('entity/decorated_pot/');
+  const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+  return path.startsWith("entity/decorated_pot/");
 }
 
 /**
@@ -185,7 +185,7 @@ export function isEntityDecoratedPot(assetId: string): boolean {
  * Items are rendered as 3D dropped items (not flat 2D sprites)
  */
 export function isMinecraftItem(assetId: string): boolean {
-  return assetId.includes(':item/');
+  return assetId.includes(":item/");
 }
 
 /**
@@ -193,8 +193,8 @@ export function isMinecraftItem(assetId: string): boolean {
  * Returns the category path (e.g., "gui", "particle", "block", "item")
  */
 export function getTextureCategory(assetId: string): string | null {
-  const path = assetId.includes(':') ? assetId.split(':')[1] : assetId;
-  const firstSlash = path.indexOf('/');
+  const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+  const firstSlash = path.indexOf("/");
 
   if (firstSlash === -1) return null;
 
@@ -344,6 +344,7 @@ const BLOCK_STATE_SUFFIXES: BlockStateSuffix[] = [
  * Example: "activator_rail_on" -> { powered: "true" }
  * Example: "furnace_lit" -> { lit: "true" }
  * Example: "oak_door_open" -> { open: "true" }
+ * Example: "oak_log" -> { axis: "y" } (logs default to vertical)
  */
 export function extractBlockStateProperties(
   assetId: string,
@@ -351,6 +352,7 @@ export function extractBlockStateProperties(
   const name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
   const props: Record<string, string> = {};
 
+  // Check for suffix-based properties first
   for (const suffix of BLOCK_STATE_SUFFIXES) {
     if (suffix.pattern.test(name)) {
       props[suffix.property] = suffix.value;
@@ -364,6 +366,51 @@ export function extractBlockStateProperties(
   }
 
   return props;
+}
+
+/**
+ * Apply sensible defaults for common blockstate properties
+ * This is called AFTER the Rust resolver provides its defaults (which are alphabetically first)
+ * We override those defaults to match Minecraft's natural placement and appearance
+ *
+ * This is property-based, not block-name-based, so it works for all blocks with these properties
+ *
+ * @param props - Property map from blockstate resolver (may have Rust's alphabetic defaults)
+ * @returns Updated property map with more natural defaults
+ */
+export function applyNaturalBlockStateDefaults(
+  props: Record<string, string>,
+): Record<string, string> {
+  const result = { ...props };
+
+  // axis: Default to "y" (vertical/upright) for any block with this property
+  // Rust defaults to "x" (alphabetically first), but "y" is more natural for:
+  // - Logs, stems, wood blocks (trees grow upward)
+  // - Pillars (purpur_pillar, quartz_pillar, etc.)
+  // - Basalt, bone blocks, hay blocks (naturally placed vertically)
+  if (!result.axis) {
+    result.axis = "y";
+  }
+
+  // face: Default to "floor" for any block with this property
+  // Rust defaults to "ceiling" (alphabetically first), but "floor" is more natural for:
+  // - Buttons, levers (typically placed on walls or floors)
+  // - Grindstones (sit on the ground)
+  // This matches how these blocks appear when naturally placed
+  if (!result.face) {
+    result.face = "floor";
+  }
+
+  // facing: Default to "down" for any block with this property
+  // Rust may default to "up" or another value, but "down" is more natural for:
+  // - Amethyst clusters (grow downward from ceilings)
+  // - Pointed dripstone (hangs down)
+  // - Other directional blocks (natural downward facing)
+  if (!result.facing) {
+    result.facing = "down";
+  }
+
+  return result;
 }
 
 /**
@@ -548,11 +595,15 @@ export function getBaseName(assetId: string): string {
 
   // Handle furnace/smoker/blast_furnace _front_on patterns
   // These blocks use "lit" property, but textures use "_on" suffix
-  const furnaceMatch = name.match(/^(furnace|smoker|blast_furnace)_(front|top)_on$/);
+  const furnaceMatch = name.match(
+    /^(furnace|smoker|blast_furnace)_(front|top)_on$/,
+  );
   if (furnaceMatch) {
     return furnaceMatch[1];
   }
-  const furnaceMatch2 = name.match(/^(furnace|smoker|blast_furnace)_(front|top)$/);
+  const furnaceMatch2 = name.match(
+    /^(furnace|smoker|blast_furnace)_(front|top)$/,
+  );
   if (furnaceMatch2) {
     return furnaceMatch2[1];
   }
@@ -736,7 +787,9 @@ export function getBaseName(assetId: string): string {
   }
 
   // Handle copper_bulb variants -> copper_bulb (or exposed/oxidized/weathered variants)
-  const copperBulbMatch = name.match(/^((?:exposed_|oxidized_|weathered_)?copper_bulb)/);
+  const copperBulbMatch = name.match(
+    /^((?:exposed_|oxidized_|weathered_)?copper_bulb)/,
+  );
   if (copperBulbMatch) {
     return copperBulbMatch[1];
   }

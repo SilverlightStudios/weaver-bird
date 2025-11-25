@@ -21,6 +21,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { getVanillaTexturePath, getPackTexturePath } from "@lib/tauri";
 import { normalizeAssetId } from "@lib/assetUtils";
 import { useSelectWinner, useSelectPack } from "@state/selectors";
+import { useStore } from "@state/store";
 import type { ItemDisplayMode } from "@lib/itemDisplayModes";
 import { getItemGeometry } from "@lib/three/itemGeometryGenerator";
 import s from "./styles.module.scss";
@@ -110,7 +111,8 @@ function ItemMesh({ texturePath, rotate, hover, displayMode }: ItemMeshProps) {
         // Period of ~3 seconds matches Minecraft's gentle bobbing
         const bobSpeed = 2; // Radians per second (full cycle in ~3.14 seconds)
         const bobAmplitude = 0.05; // Small vertical movement
-        meshRef.current.position.y = Math.sin(state.clock.elapsedTime * bobSpeed) * bobAmplitude;
+        meshRef.current.position.y =
+          Math.sin(state.clock.elapsedTime * bobSpeed) * bobAmplitude;
       } else {
         // Reset position when hover is disabled
         meshRef.current.position.y = 0;
@@ -175,6 +177,9 @@ export default function Preview3DItem({
 }: Props) {
   const [texturePath, setTexturePath] = useState<string | null>(null);
   const [error, setError] = useState(false);
+
+  // Read grid visibility from global state
+  const showGrid = useStore((state) => state.canvasItemShowGrid);
 
   // Get the winning pack for this asset
   const winnerPackId = useSelectWinner(assetId || "");
@@ -309,8 +314,13 @@ export default function Preview3DItem({
           />
         ) : null}
 
-        {/* Grid floor for context */}
-        <gridHelper args={[4, 8, "#666666", "#333333"]} position={[0, -0.6, 0]} />
+        {/* Grid floor for context - offset by 0.5 to center on blocks */}
+        {showGrid && (
+          <gridHelper
+            args={[4, 8, "#666666", "#333333"]}
+            position={[0.5, -0.6, 0.5]}
+          />
+        )}
       </Canvas>
 
       <div className={s.info}>
@@ -318,10 +328,10 @@ export default function Preview3DItem({
           {rotate && hover && displayMode === "ground"
             ? "Rotating • Hovering • Drag to orbit • Scroll to zoom"
             : rotate && displayMode === "ground"
-            ? "Rotating • Drag to orbit • Scroll to zoom"
-            : hover && displayMode === "ground"
-            ? "Hovering • Drag to orbit • Scroll to zoom"
-            : "Drag to orbit • Scroll to zoom"}
+              ? "Rotating • Drag to orbit • Scroll to zoom"
+              : hover && displayMode === "ground"
+                ? "Hovering • Drag to orbit • Scroll to zoom"
+                : "Drag to orbit • Scroll to zoom"}
         </span>
       </div>
     </div>
