@@ -571,13 +571,14 @@ function applyUVs(
     const baseIndex = config.index * 4;
 
     // Three.js BoxGeometry vertex layout per face:
-    // 2---3  (uvV1 - top)
+    // 2---3  (uvV2 - top in Three.js after flip)
     // |   |
-    // 0---1  (uvV2 - bottom)
-    uvAttr.setXY(baseIndex + 0, uvU1, uvV2); // Bottom-left
-    uvAttr.setXY(baseIndex + 1, uvU2, uvV2); // Bottom-right
-    uvAttr.setXY(baseIndex + 2, uvU1, uvV1); // Top-left
-    uvAttr.setXY(baseIndex + 3, uvU2, uvV1); // Top-right
+    // 0---1  (uvV1 - bottom in Three.js after flip)
+    // Note: v1 is top in texture coords, but after (1-v) flip becomes bottom in Three.js
+    uvAttr.setXY(baseIndex + 0, uvU1, uvV1); // Bottom-left (was uvV2)
+    uvAttr.setXY(baseIndex + 1, uvU2, uvV1); // Bottom-right (was uvV2)
+    uvAttr.setXY(baseIndex + 2, uvU1, uvV2); // Top-left (was uvV1)
+    uvAttr.setXY(baseIndex + 3, uvU2, uvV2); // Top-right (was uvV1)
   }
 
   uvAttr.needsUpdate = true;
