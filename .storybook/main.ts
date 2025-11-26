@@ -22,7 +22,7 @@ const config: StorybookConfig = {
       ...(cfg.resolve.alias || {}),
       "@": path.resolve(__dirname, "../src"),
       "@components": path.resolve(__dirname, "../src/components"),
-      "@/components": path.resolve(__dirname, "../src/ui/components"),
+      "@components": path.resolve(__dirname, "../src/ui/components"),
       "@lib": path.resolve(__dirname, "../src/lib"),
       "@state": path.resolve(__dirname, "../src/state"),
       "@routes": path.resolve(__dirname, "../src/routes"),

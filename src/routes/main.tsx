@@ -70,7 +70,7 @@ import {
 import { BlockyTabs } from "@/ui/components/blocky-tabs/BlockyTabs";
 import type { TabItem, ZoneId } from "@/ui/components/blocky-tabs/types";
 import { CanvasTypeSelector } from "@components/CanvasTypeSelector";
-import BiomeColorCard from "@/app/BiomeColorCard";
+import BiomeColorCard from "@components/BiomeColorCard";
 
 // Import tab icons
 import cobbleImg from "@/assets/textures/cobblestone.png";
@@ -487,18 +487,18 @@ export default function MainRoute() {
             // Step 2: Load colormap URLs (deferred as low-priority)
             const grassUrl = grassWinner
               ? await loadColormapUrl(
-                  GRASS_COLORMAP_ASSET_ID,
-                  grassWinner,
-                  packsMap,
-                )
+                GRASS_COLORMAP_ASSET_ID,
+                grassWinner,
+                packsMap,
+              )
               : null;
 
             const foliageUrl = foliageWinner
               ? await loadColormapUrl(
-                  FOLIAGE_COLORMAP_ASSET_ID,
-                  foliageWinner,
-                  packsMap,
-                )
+                FOLIAGE_COLORMAP_ASSET_ID,
+                foliageWinner,
+                packsMap,
+              )
               : null;
 
             // Update URLs and pack IDs in state
@@ -1180,7 +1180,7 @@ export default function MainRoute() {
           disabled2D={
             uiState.selectedAssetId
               ? !is2DOnlyTexture(uiState.selectedAssetId) &&
-                !isEntityTexture(uiState.selectedAssetId)
+              !isEntityTexture(uiState.selectedAssetId)
               : false
           }
           disabled3D={

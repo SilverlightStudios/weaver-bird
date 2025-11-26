@@ -19,7 +19,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import type { LauncherInfo } from "@/state/types";
 import ResourcePackCard, {
   type ResourcePackCardMetadata,
-} from "@app/ResourcePackCard";
+} from "@components/ResourcePackCard";
 import Button from "@/ui/components/buttons/Button";
 import {
   Combobox,
@@ -520,11 +520,11 @@ export default function PackList({
                 metadata={
                   activeItem.size
                     ? [
-                        {
-                          label: "Size",
-                          value: formatPackSize(activeItem.size),
-                        },
-                      ]
+                      {
+                        label: "Size",
+                        value: formatPackSize(activeItem.size),
+                      },
+                    ]
                     : []
                 }
                 description={

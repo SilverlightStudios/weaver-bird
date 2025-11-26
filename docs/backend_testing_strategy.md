@@ -1,8 +1,31 @@
-# Weaverbird Backend: Key Code Sections Requiring Tests
+# Backend Testing Strategy
 
-## 1. Core Command Handlers (commands/packs.rs - 869 lines)
+This document provides a comprehensive testing strategy for Weaverbird's Rust backend, including priority matrices, key code sections, and detailed test scenarios.
 
-### Most Critical: `scan_packs_folder_impl()` - Lines 50-82
+## Test Coverage Priority Matrix
+
+| Module | Lines | Complexity | Priority | Key Test Areas | Current Tests |
+|--------|-------|-----------|----------|-----------------|---------------|
+| **blockstates.rs** | 1,625 | ████████░ | CRITICAL | resolve_blockstate(), build_block_state_schema(), multipart handling, weighted selection | 0 |
+| **launcher_detection.rs** | 682 | ████████░ | CRITICAL | detect_all_launchers(), identify_launcher_from_path(), platform paths | 0 |
+| **commands/packs.rs** | 869 | ███████░░ | CRITICAL | scan_packs_folder_impl(), build_weaver_nest_impl(), validation, error handling | 0 |
+| **pack_scanner.rs** | 201 | ████░░░░░ | HIGH | scan_packs(), ZIP detection, metadata extraction | 0 |
+| **vanilla_textures.rs** | 341 | ████░░░░░ | HIGH | JAR extraction, cache management, colormap handling | 0 |
+| **asset_indexer.rs** | 228 | ███░░░░░░ | HIGH | index_assets(), provider mapping, deduplication | 0 |
+| **block_models.rs** | 395 | ███░░░░░░ | HIGH | resolve_block_model(), parent inheritance, vanilla fallback | 0 |
+| **validation.rs** | 96 | ██░░░░░░░ | MEDIUM | validate_directory(), validate_pack_order(), validate_overrides() | 0 |
+| **error.rs** | 97 | ██░░░░░░░ | MEDIUM | Error construction, serialization, From traits | 0 |
+| **texture_index.rs** | 178 | ██░░░░░░░ | MEDIUM | TextureIndex::build(), get_primary_block() | 0 |
+| **mc_paths.rs** | 67 | █░░░░░░░░ | LOW | Platform-specific path resolution | 0 |
+| **weaver_nest.rs** | 139 | █░░░░░░░░ | LOW | build_weaver_nest(), pack combining | 0 |
+| **zip.rs** | 74 | █░░░░░░░░ | LOW | extract_zip_entry() | 0 |
+
+## Key Code Sections Requiring Tests
+
+### 1. Core Command Handlers (commands/packs.rs - 869 lines)
+
+#### `scan_packs_folder_impl()` - Lines 50-82
+
 ```rust
 pub fn scan_packs_folder_impl(packs_dir: String) -> Result<ScanResult, AppError> {
     validation::validate_directory(&packs_dir, "Packs directory")?;
@@ -16,7 +39,9 @@ pub fn scan_packs_folder_impl(packs_dir: String) -> Result<ScanResult, AppError>
     Ok(ScanResult { packs, assets, providers })
 }
 ```
+
 **Tests needed:**
+
 - Valid directory with multiple packs
 - Empty directory
 - Non-existent directory (validation error)
@@ -24,19 +49,10 @@ pub fn scan_packs_folder_impl(packs_dir: String) -> Result<ScanResult, AppError>
 - Vanilla pack inclusion
 - Asset indexing
 
----
+#### `resolve_block_state_impl()` - Lines 728-858
 
-### `resolve_block_state_impl()` - Lines 728-858
-```rust
-pub fn resolve_block_state_impl(
-    pack_id: String,
-    block_id: String,
-    packs_dir: String,
-    state_props: Option<std::collections::HashMap<String, String>>,
-    seed: Option<u64>,
-) -> Result<crate::util::blockstates::ResolutionResult, AppError>
-```
 **Tests needed:**
+
 - Simple blockstate resolution
 - With custom state properties
 - With weighted random selection
@@ -45,11 +61,10 @@ pub fn resolve_block_state_impl(
 - Error on malformed blockstate
 - Error on missing block
 
----
+### 2. Blockstate Resolution (util/blockstates.rs - 1,625 lines)
 
-## 2. Blockstate Resolution (util/blockstates.rs - 1,625 lines)
+#### `resolve_blockstate()` - Core Resolution Logic
 
-### Most Complex: `resolve_blockstate()` - Core Resolution Logic
 ```rust
 pub fn resolve_blockstate(
     blockstate: &Blockstate,
@@ -60,6 +75,7 @@ pub fn resolve_blockstate(
 ```
 
 **Key Features to Test:**
+
 - Variant-based blockstates (simple models or weighted array)
 - Multipart blockstates (conditional model application)
 - Default state property extraction
@@ -69,6 +85,7 @@ pub fn resolve_blockstate(
 - When seed provided → deterministic selection
 
 **Test Scenarios:**
+
 ```
 1. Simple blockstate (single model):
    Input: "dirt" block, no properties
@@ -91,9 +108,8 @@ pub fn resolve_blockstate(
    Expected: Uses default state
 ```
 
----
+#### `build_block_state_schema()` - Lines ~600-700
 
-### `build_block_state_schema()` - Lines ~600-700
 ```rust
 pub fn build_block_state_schema(
     blockstate: &Blockstate,
@@ -102,6 +118,7 @@ pub fn build_block_state_schema(
 ```
 
 **Returns:**
+
 ```rust
 BlockStateSchema {
     block_id: "oak_stairs",
@@ -115,21 +132,22 @@ BlockStateSchema {
 ```
 
 **Tests needed:**
+
 - Extract all unique property values from variants
 - Generate correct default state
 - Handle multipart conditions
 - Error on empty blockstate
 
----
+### 3. Launcher Detection (util/launcher_detection.rs - 682 lines)
 
-## 3. Launcher Detection (util/launcher_detection.rs - 682 lines)
+#### Platform-Specific Detection: `detect_all_launchers()`
 
-### Platform-Specific Detection: `detect_all_launchers()`
 ```rust
 pub fn detect_all_launchers() -> Vec<LauncherInfo>
 ```
 
 **Tests needed (must mock filesystem):**
+
 ```rust
 #[test]
 fn test_detect_all_launchers_official() {
@@ -162,14 +180,14 @@ fn test_macos_launcher_paths() {
 }
 ```
 
----
+#### Launcher Type Identification: `identify_launcher_from_path()`
 
-### Launcher Type Identification: `identify_launcher_from_path()`
 ```rust
 pub fn identify_launcher_from_path(path: &Path) -> Result<LauncherType>
 ```
 
 **Tests needed:**
+
 - Valid official launcher directory
 - Valid MultiMC instances folder
 - Valid Prism launcher setup
@@ -177,223 +195,117 @@ pub fn identify_launcher_from_path(path: &Path) -> Result<LauncherType>
 - Directory with required marker files missing
 - Ambiguous directory (could be multiple types)
 
----
+## Test Execution Pyramid
 
-## 4. Pack Scanning (util/pack_scanner.rs - 201 lines)
+```
+                    ╱╲ Integration Tests (5-10 tests)
+                  ╱    ╲ - Full workflows
+                ╱        ╲ - Multi-module scenarios
+              ╱────────────╲
 
-### `scan_packs()`
-```rust
-pub fn scan_packs(packs_dir: &str) -> Result<Vec<PackMeta>>
+            ╱╲ Unit Tests (40-60 tests)
+          ╱    ╲ - Individual functions
+        ╱        ╲ - Error cases
+      ╱────────────╲
+
+  ╱╲ Documentation & Examples
+╱    ╲ - Code comments
+╱      ╲ - Doctest examples
+╱──────────╲
 ```
 
-**Tests needed:**
-```rust
-#[test]
-fn test_scan_packs_empty_directory() {
-    // Create empty temp dir
-    // Expected: Empty vec
-}
+## Test File Structure
 
-#[test]
-fn test_scan_packs_detects_zip() {
-    // Create test.zip with pack.mcmeta
-    // Expected: PackMeta with is_zip=true
-}
-
-#[test]
-fn test_scan_packs_detects_folder() {
-    // Create test_pack/pack.mcmeta
-    // Expected: PackMeta with is_zip=false
-}
-
-#[test]
-fn test_scan_packs_extracts_metadata() {
-    // pack.mcmeta: {"description": "My Pack"}
-    // Expected: description field populated
-}
-
-#[test]
-fn test_scan_packs_extracts_icon() {
-    // pack.png exists with image data
-    // Expected: icon_data base64-encoded
-}
-
-#[test]
-fn test_scan_packs_ignores_hidden() {
-    // Create .hidden_pack/pack.mcmeta
-    // Expected: Not in results
-}
-
-#[test]
-fn test_scan_packs_sorted_by_name() {
-    // Create packs: zeta, alpha, beta
-    // Expected: [alpha, beta, zeta]
-}
+```
+src-tauri/src/
+├── commands/
+│   └── packs.test.rs
+│       ├── test_scan_packs_folder_impl_success
+│       ├── test_scan_packs_folder_impl_invalid_dir
+│       ├── test_scan_packs_folder_impl_with_zips
+│       ├── test_build_weaver_nest_impl_success
+│       ├── test_build_weaver_nest_impl_no_packs
+│       ├── test_get_default_packs_dir_impl
+│       └── ... (17 functions total)
+│
+├── util/
+│   ├── blockstates.test.rs
+│   │   ├── test_resolve_blockstate_simple
+│   │   ├── test_resolve_blockstate_multipart
+│   │   ├── test_resolve_blockstate_weighted_random
+│   │   ├── test_build_block_state_schema
+│   │   ├── test_malformed_blockstate
+│   │   └── ... (15-20 tests)
+│   │
+│   ├── launcher_detection.test.rs (platform-specific tests)
+│   ├── pack_scanner.test.rs (10-15 tests)
+│   ├── validation.test.rs (8-10 tests)
+│   ├── error.test.rs (5-8 tests)
+│   └── ... (other modules)
+│
+└── integration_tests/
+    ├── full_pack_processing.test.rs
+    ├── launcher_integration.test.rs
+    └── blockstate_resolution_pipeline.test.rs
 ```
 
----
+## Mock Data Strategy
 
-## 5. Validation (validation.rs - 96 lines)
+### Test Fixtures Location
 
-### `validate_directory()`
-```rust
-pub fn validate_directory(path: &str, label: &str) -> AppResult<()>
+```
+src-tauri/tests/fixtures/
+├── packs/
+│   ├── simple_pack/
+│   │   ├── pack.mcmeta
+│   │   ├── pack.png
+│   │   └── assets/minecraft/textures/block/dirt.png
+│   │
+│   ├── modded_pack/
+│   │   └── assets/minecraft/blockstates/custom_block.json
+│   │
+│   └── malformed_pack/
+│       ├── pack.mcmeta (invalid JSON)
+│       └── missing.mcmeta
+│
+├── blockstates/
+│   ├── simple.json
+│   ├── multipart.json
+│   ├── weighted.json
+│   └── invalid.json
+│
+├── models/
+│   ├── simple_model.json
+│   ├── parent_model.json
+│   └── inheritance_chain.json
+│
+└── launcher_paths/
+    ├── windows_official.txt
+    ├── macos_prism.txt
+    └── linux_multimc.txt
 ```
 
-**Tests needed:**
-```rust
-#[test]
-fn test_validate_directory_empty_string() {
-    let err = validate_directory("", "Test Dir");
-    assert_eq!(err.unwrap_err().code, "VALIDATION_ERROR");
-}
+## Test Execution Commands
 
-#[test]
-fn test_validate_directory_nonexistent() {
-    let err = validate_directory("/nonexistent/path", "Test Dir");
-    assert_eq!(err.unwrap_err().code, "IO_ERROR");
-}
+```bash
+# Run all Rust tests
+cargo test
 
-#[test]
-fn test_validate_directory_is_file_not_dir() {
-    // Point to a file instead of directory
-    let err = validate_directory(file_path, "Test Dir");
-    assert_eq!(err.unwrap_err().code, "VALIDATION_ERROR");
-}
+# Run with output
+cargo test -- --nocapture
 
-#[test]
-fn test_validate_directory_valid() {
-    let temp_dir = create_temp_dir();
-    assert!(validate_directory(temp_dir.path().to_str().unwrap(), "Test").is_ok());
-}
+# Run specific test file
+cargo test --test blockstates_test
+
+# Run specific test
+cargo test test_resolve_blockstate_simple
+
+# Run tests with coverage
+cargo tarpaulin --out Html
+
+# Run with concurrency control
+cargo test -- --test-threads=1
 ```
-
----
-
-### `validate_overrides()`
-```rust
-pub fn validate_overrides(
-    overrides: &HashMap<String, OverrideSelection>,
-    pack_order: &[String],
-) -> AppResult<()>
-```
-
-**Tests needed:**
-- Empty overrides (valid)
-- Invalid pack ID in override
-- Valid pack ID in override
-- Empty asset ID
-- Empty pack ID in override
-- Empty variant path
-
----
-
-## 6. Error Handling (error.rs - 97 lines)
-
-### `AppError` Type Tests
-```rust
-#[test]
-fn test_error_validation() {
-    let err = AppError::validation("Invalid input");
-    assert_eq!(err.code, "VALIDATION_ERROR");
-    assert_eq!(err.message, "Invalid input");
-}
-
-#[test]
-fn test_error_serialization() {
-    let err = AppError::io("File not found");
-    let json = serde_json::to_string(&err).unwrap();
-    assert!(json.contains("IO_ERROR"));
-    assert!(json.contains("File not found"));
-}
-
-#[test]
-fn test_error_from_io() {
-    let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "test");
-    let app_err = AppError::from(io_err);
-    assert_eq!(app_err.code, "IO_ERROR");
-}
-
-#[test]
-fn test_error_with_details() {
-    let err = AppError::io("Failed").with_details("Stack trace here");
-    assert_eq!(err.details, Some("Stack trace here".to_string()));
-}
-```
-
----
-
-## 7. Block Models (util/block_models.rs - 395 lines)
-
-### `resolve_block_model()` - Parent Inheritance
-```rust
-pub fn resolve_block_model(
-    pack: &PackMeta,
-    model_id: &str,
-    vanilla_pack: &PackMeta,
-) -> Result<BlockModel>
-```
-
-**Tests needed:**
-```rust
-#[test]
-fn test_resolve_block_model_no_parent() {
-    // model.json has no parent field
-    // Expected: Direct model returned
-}
-
-#[test]
-fn test_resolve_block_model_single_parent() {
-    // model.json has parent "minecraft:block/cube"
-    // Expected: Parent fields merged
-}
-
-#[test]
-fn test_resolve_block_model_parent_chain() {
-    // model.json -> parent -> grandparent -> great-grandparent
-    // Expected: Full chain resolved
-}
-
-#[test]
-fn test_resolve_block_model_circular_parent() {
-    // A -> B -> A (circular reference)
-    // Expected: Error detected
-}
-
-#[test]
-fn test_resolve_block_model_missing_parent_vanilla_fallback() {
-    // Parent not in pack, but in vanilla
-    // Expected: Vanilla parent used
-}
-
-#[test]
-fn test_resolve_block_model_missing_parent_error() {
-    // Parent not in pack or vanilla
-    // Expected: Error returned
-}
-```
-
----
-
-## 8. Asset Indexing (util/asset_indexer.rs - 228 lines)
-
-### `index_assets()`
-```rust
-pub fn index_assets(
-    packs: &[PackMeta],
-) -> Result<(Vec<AssetRecord>, HashMap<String, Vec<String>>)>
-```
-
-**Tests needed:**
-- Single pack indexing
-- Multiple pack indexing
-- Asset deduplication across packs
-- Provider mapping (which pack provides what)
-- ZIP vs folder pack indexing
-- Empty pack handling
-- Texture path parsing
-
----
 
 ## Integration Test Example
 
@@ -436,11 +348,10 @@ fn test_full_block_rendering_pipeline() {
 }
 ```
 
----
-
 ## Test Data Fixtures
 
 ### Minimal pack.mcmeta
+
 ```json
 {
   "pack": {
@@ -451,6 +362,7 @@ fn test_full_block_rendering_pipeline() {
 ```
 
 ### Minimal blockstate (variant)
+
 ```json
 {
   "variants": {
@@ -460,6 +372,7 @@ fn test_full_block_rendering_pipeline() {
 ```
 
 ### Minimal model.json
+
 ```json
 {
   "parent": "minecraft:block/cube_all",
@@ -470,6 +383,7 @@ fn test_full_block_rendering_pipeline() {
 ```
 
 ### Blockstate with multiple variants
+
 ```json
 {
   "variants": {
@@ -480,8 +394,6 @@ fn test_full_block_rendering_pipeline() {
   }
 }
 ```
-
----
 
 ## Testing Utilities Needed
 
@@ -506,3 +418,19 @@ fn setup_test_minecraft_dir() -> TempDir { ... }
 mod mock_fs { ... }
 ```
 
+## Integration Points to Test
+
+1. **Pack Scanning Pipeline**
+   - Directory scan → ZIP detection → Metadata extraction → Asset indexing
+
+2. **Blockstate Resolution**
+   - Read blockstate → Resolve variant → Get model → Resolve model inheritance
+
+3. **Launcher Detection**
+   - Platform check → Directory scan → Type identification → Path extraction
+
+4. **Vanilla Fallback**
+   - Custom pack lookup → Vanilla fallback → Error handling
+
+5. **Build Weaver Nest**
+   - Validate inputs → Scan packs → Index assets → Apply overrides → Build output

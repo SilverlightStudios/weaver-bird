@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
     "module": "ESNext",
     "skipLibCheck": true,
@@ -29,18 +33,43 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
-    "types": ["vite/client", "vitest/globals"],
+    "types": [
+      "vite/client",
+      "vitest/globals"
+    ],
     "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/ui/components/*"],
-      "@components/*": ["src/components/*"],
-      "@app/*": ["src/app/*"],
-      "@lib/*": ["src/lib/*"],
-      "@state": ["src/state"],
-      "@state/*": ["src/state/*"],
-      "@routes/*": ["src/routes/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@components/*": [
+        "src/ui/components/*"
+      ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@app/*": [
+        "src/app/*"
+      ],
+      "@lib/*": [
+        "src/lib/*"
+      ],
+      "@state": [
+        "src/state"
+      ],
+      "@state/*": [
+        "src/state/*"
+      ],
+      "@routes/*": [
+        "src/routes/*"
+      ]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

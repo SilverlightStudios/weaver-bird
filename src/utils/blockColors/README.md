@@ -143,7 +143,7 @@ The system automatically caches fetched data in `localStorage` with a 7-day expi
 
 To add support for a new Minecraft version:
 
-1. Find the Yarn tag at https://github.com/FabricMC/yarn/tags
+1. Find the Yarn tag at <https://github.com/FabricMC/yarn/tags>
 2. Add to `yarnVersions.ts`:
 
 ```typescript
@@ -161,7 +161,7 @@ export const yarnVersionMap: Record<string, string> = {
 Use the `DebugBlockColorList` component to visualize block colors:
 
 ```typescript
-import DebugBlockColorList from "@/components/DebugBlockColorList";
+import DebugBlockColorList from "@components/DebugBlockColorList";
 
 function App() {
   return <DebugBlockColorList />;
@@ -169,6 +169,7 @@ function App() {
 ```
 
 Features:
+
 - Version selector dropdown
 - Grouped by tint type
 - Shows all blocks per entry
@@ -216,16 +217,19 @@ try {
 ### Common Issues
 
 **"Unsupported Minecraft version"**
+
 - The version isn't in `yarnVersionMap`
 - Add the version mapping or use a supported version
 
 **"Failed to fetch BlockColors"**
+
 - Network is offline
 - GitHub is unavailable
 - Yarn tag doesn't exist
 - Check if cached data is available as fallback
 
 **"Parsing failed"**
+
 - Yarn source format has changed
 - Update regex patterns in `parseBlockColorsSource()`
 
@@ -263,12 +267,14 @@ blockColors.register((state, world, pos, tintIndex) ->
 ```
 
 Extracted:
+
 - **Blocks**: `GRASS_BLOCK` → `minecraft:grass_block`
 - **Tint**: `BiomeColors.getGrassColor` → `grass`
 
 ### Alternative Paths
 
 The system tries multiple URL patterns:
+
 1. `.mapping` file (newer Yarn versions)
 2. `.java` file (older Yarn versions)
 
@@ -286,6 +292,6 @@ When modifying this system:
 
 ## References
 
-- Fabric Yarn: https://github.com/FabricMC/yarn
-- Minecraft Wiki - Colors: https://minecraft.wiki/w/Color
-- Minecraft Wiki - Block Colors: https://minecraft.wiki/w/Block_colors
+- Fabric Yarn: <https://github.com/FabricMC/yarn>
+- Minecraft Wiki - Colors: <https://minecraft.wiki/w/Color>
+- Minecraft Wiki - Block Colors: <https://minecraft.wiki/w/Block_colors>
