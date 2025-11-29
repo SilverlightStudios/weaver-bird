@@ -107,7 +107,6 @@ function BlockModel({
     resolvedPackId,
     resolvedPack,
     packsDir,
-    biomeColor,
     biomeColorKey,
   ]);
 
@@ -116,21 +115,6 @@ function BlockModel({
     console.log(
       `[BlockModel.useEffect.loadModel] asset=${normalizedAssetId} pack=${resolvedPackId}`,
     );
-
-    // Clean up previous model first
-    if (blockGroup) {
-      blockGroup.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
-          obj.geometry?.dispose();
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach((mat) => mat.dispose());
-          } else {
-            obj.material?.dispose();
-          }
-        }
-      });
-      setBlockGroup(null);
-    }
 
     // Need all dependencies to load
     if (!resolvedPackId || !resolvedPack || !packsDir) {
@@ -228,7 +212,9 @@ function BlockModel({
         const tintIndices = new Set<number>();
 
         // Load and convert each resolved model
-        for (const resolvedModel of resolution.models) {
+        for (let i = 0; i < resolution.models.length; i++) {
+          const resolvedModel = resolution.models[i];
+
           // Load the actual model JSON directly by model ID
           const model = await loadModelJson(
             packId,
@@ -268,6 +254,25 @@ function BlockModel({
             biomeColor,
             resolvedModel, // Pass resolved model for rotations and uvlock
           );
+
+          // Apply polygon offset to prevent Z-fighting in multipart models
+          // Each subsequent model gets a slightly higher offset
+          if (resolution.models.length > 1) {
+            modelGroup.traverse((obj) => {
+              if (obj instanceof THREE.Mesh && obj.material) {
+                const materials = Array.isArray(obj.material)
+                  ? obj.material
+                  : [obj.material];
+                materials.forEach((mat) => {
+                  if (mat instanceof THREE.MeshStandardMaterial) {
+                    mat.polygonOffset = true;
+                    mat.polygonOffsetFactor = -i * 0.1;
+                    mat.polygonOffsetUnits = -i * 0.1;
+                  }
+                });
+              }
+            });
+          }
 
           parentGroup.add(modelGroup);
         }
@@ -375,6 +380,20 @@ function BlockModel({
 
     return () => {
       cancelled = true;
+
+      // Clean up on unmount or dependency change
+      if (blockGroup) {
+        blockGroup.traverse((obj) => {
+          if (obj instanceof THREE.Mesh) {
+            obj.geometry?.dispose();
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach((mat) => mat.dispose());
+            } else {
+              obj.material?.dispose();
+            }
+          }
+        });
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

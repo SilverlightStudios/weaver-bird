@@ -67,8 +67,9 @@
     // Enable 3D transforms for proper face positioning
     transform-style: preserve-3d;
     // Isometric view: rotate the whole scene
-    // rotateX(-30deg) tilts down to see top, rotateY(-45deg) rotates to see two sides
-    transform: translateY(10%) rotateX(-30deg) rotateY(-45deg);
+    // rotateX(-30deg) tilts down to see top, rotateY(135deg) rotates to show front face
+    // Changed from -45deg to 135deg to show front of directional blocks (shelves, furnaces, etc.)
+    transform: translateY(10%) rotateX(-30deg) rotateY(135deg);
 
     // Safari/WebKit optimizations for smoother 3D rendering
     // Force hardware acceleration with translateZ(0)
@@ -94,7 +95,7 @@
     padding: 0.5px;
 
     // Safari/WebKit optimizations
-    backface-visibility: hidden;
+    backface-visibility: visible; // Allow seeing faces from both sides
     // Force hardware acceleration (already using translate3d in transforms)
 
     img {

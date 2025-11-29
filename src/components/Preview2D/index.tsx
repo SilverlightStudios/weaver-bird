@@ -271,9 +271,9 @@ function TextureSprite({ texturePath, onTextureLoaded }: TextureSpriteProps) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
     texture.magFilter = THREE.NearestFilter; // Pixelated look (Minecraft style)
-
+    // eslint-disable-next-line react-hooks/immutability
     texture.minFilter = THREE.NearestFilter;
-
+    // eslint-disable-next-line react-hooks/immutability
     texture.colorSpace = THREE.SRGBColorSpace;
   }, [texture]);
 

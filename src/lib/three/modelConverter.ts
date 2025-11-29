@@ -174,7 +174,9 @@ export async function blockModelToThreeJs(
   }
 
   const totalTime = performance.now() - startTime;
-  console.log(`[modelConverter] Total conversion time: ${totalTime.toFixed(2)}ms`);
+  console.log(
+    `[modelConverter] Total conversion time: ${totalTime.toFixed(2)}ms`,
+  );
   console.log("=====================================================");
   return group;
 }
@@ -510,7 +512,7 @@ async function createFaceMaterials(
         // Use MeshStandardMaterial to support shadows while keeping flat look
         materials[faceIndex] = new THREE.MeshStandardMaterial({
           map: texture,
-          color: materialColor, // Tint color (white/undefined = no tint)
+          color: materialColor ?? 0xffffff, // Tint color (default to white if no tint)
           transparent: true,
           alphaTest: 0.1, // Discard transparent pixels (including magenta if it has alpha)
           roughness: 0.8,
@@ -589,9 +591,25 @@ function applyRotation(
   mesh.rotateOnAxis(axis, angleRad);
 
   // Apply rescaling if specified (for 45° rotations)
+  // Rescale only scales in the plane perpendicular to the rotation axis
+  // For Y-axis rotation: scale X and Z, but not Y
+  // For X-axis rotation: scale Y and Z, but not X
+  // For Z-axis rotation: scale X and Y, but not Z
   if (rotation.rescale && Math.abs(rotation.angle % 45) < 0.01) {
     const scale = Math.sqrt(2);
-    console.log(`[modelConverter] Applying rescale: ${scale}`);
-    mesh.scale.multiplyScalar(scale);
+    console.log(
+      `[modelConverter] Applying rescale: ${scale} perpendicular to ${rotation.axis} axis`,
+    );
+
+    if (rotation.axis === "x") {
+      mesh.scale.y *= scale;
+      mesh.scale.z *= scale;
+    } else if (rotation.axis === "y") {
+      mesh.scale.x *= scale;
+      mesh.scale.z *= scale;
+    } else if (rotation.axis === "z") {
+      mesh.scale.x *= scale;
+      mesh.scale.y *= scale;
+    }
   }
 }

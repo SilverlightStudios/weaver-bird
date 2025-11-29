@@ -197,8 +197,11 @@ function processSimpleCube(
 
   // Hardcoded offsets for a standard 16x16x16 cube
   const topOffset = { x: 0, y: -8 * scale, z: 0 };
-  const leftOffset = { x: 0, y: 0, z: 8 * scale };
-  const rightOffset = { x: 8 * scale, y: 0, z: 0 };
+  const bottomOffset = { x: 0, y: 8 * scale, z: 0 };
+  const southOffset = { x: 0, y: 0, z: 8 * scale };
+  const northOffset = { x: 0, y: 0, z: -8 * scale };
+  const eastOffset = { x: 8 * scale, y: 0, z: 0 };
+  const westOffset = { x: -8 * scale, y: 0, z: 0 };
 
   // Top face (up)
   if (element.faces.up) {
@@ -211,17 +214,6 @@ function processSimpleCube(
         face.tintindex !== undefined && face.tintindex !== null;
       const tintType =
         shouldTint && textureId ? getColormapType(textureId) : undefined;
-
-      if (shouldTint) {
-        console.log(
-          "[blockGeometry.worker] Top face - textureId:",
-          textureId,
-          "tintindex:",
-          face.tintindex,
-          "detected tintType:",
-          tintType,
-        );
-      }
 
       faces.push({
         type: "top",
@@ -239,7 +231,35 @@ function processSimpleCube(
     }
   }
 
-  // South face (left)
+  // Bottom face (down)
+  if (element.faces.down) {
+    const face = element.faces.down;
+    const textureId = resolveTextureRef(face.texture, textures);
+    const textureUrl = textureId ? textureUrls.get(textureId) : null;
+
+    if (textureUrl) {
+      const shouldTint =
+        face.tintindex !== undefined && face.tintindex !== null;
+      const tintType =
+        shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+      faces.push({
+        type: "top",
+        textureUrl,
+        x: bottomOffset.x,
+        y: -bottomOffset.y, // Negate for CSS coordinate system
+        z: bottomOffset.z,
+        width: UNIT * scale,
+        height: UNIT * scale,
+        uv: normalizeUV(face.uv),
+        zIndex: -20, // Bottom
+        brightness: 0.5,
+        tintType,
+      });
+    }
+  }
+
+  // South face
   if (element.faces.south) {
     const face = element.faces.south;
     const textureId = resolveTextureRef(face.texture, textures);
@@ -251,23 +271,12 @@ function processSimpleCube(
       const tintType =
         shouldTint && textureId ? getColormapType(textureId) : undefined;
 
-      if (shouldTint) {
-        console.log(
-          "[blockGeometry.worker] South face - textureId:",
-          textureId,
-          "tintindex:",
-          face.tintindex,
-          "detected tintType:",
-          tintType,
-        );
-      }
-
       faces.push({
         type: "left",
         textureUrl,
-        x: leftOffset.x,
-        y: leftOffset.y,
-        z: leftOffset.z,
+        x: southOffset.x,
+        y: southOffset.y,
+        z: southOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
         uv: normalizeUV(face.uv),
@@ -278,7 +287,35 @@ function processSimpleCube(
     }
   }
 
-  // East face (right)
+  // North face
+  if (element.faces.north) {
+    const face = element.faces.north;
+    const textureId = resolveTextureRef(face.texture, textures);
+    const textureUrl = textureId ? textureUrls.get(textureId) : null;
+
+    if (textureUrl) {
+      const shouldTint =
+        face.tintindex !== undefined && face.tintindex !== null;
+      const tintType =
+        shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+      faces.push({
+        type: "left",
+        textureUrl,
+        x: northOffset.x,
+        y: northOffset.y,
+        z: northOffset.z,
+        width: UNIT * scale,
+        height: UNIT * scale,
+        uv: normalizeUV(face.uv),
+        zIndex: 70,
+        brightness: 0.8,
+        tintType,
+      });
+    }
+  }
+
+  // East face
   if (element.faces.east) {
     const face = element.faces.east;
     const textureId = resolveTextureRef(face.texture, textures);
@@ -290,27 +327,44 @@ function processSimpleCube(
       const tintType =
         shouldTint && textureId ? getColormapType(textureId) : undefined;
 
-      if (shouldTint) {
-        console.log(
-          "[blockGeometry.worker] East face - textureId:",
-          textureId,
-          "tintindex:",
-          face.tintindex,
-          "detected tintType:",
-          tintType,
-        );
-      }
-
       faces.push({
         type: "right",
         textureUrl,
-        x: rightOffset.x,
-        y: rightOffset.y,
-        z: rightOffset.z,
+        x: eastOffset.x,
+        y: eastOffset.y,
+        z: eastOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
         uv: normalizeUV(face.uv),
         zIndex: 81, // Center Y (8) * 10 + 1
+        brightness: 0.6,
+        tintType,
+      });
+    }
+  }
+
+  // West face
+  if (element.faces.west) {
+    const face = element.faces.west;
+    const textureId = resolveTextureRef(face.texture, textures);
+    const textureUrl = textureId ? textureUrls.get(textureId) : null;
+
+    if (textureUrl) {
+      const shouldTint =
+        face.tintindex !== undefined && face.tintindex !== null;
+      const tintType =
+        shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+      faces.push({
+        type: "right",
+        textureUrl,
+        x: westOffset.x,
+        y: westOffset.y,
+        z: westOffset.z,
+        width: UNIT * scale,
+        height: UNIT * scale,
+        uv: normalizeUV(face.uv),
+        zIndex: 71,
         brightness: 0.6,
         tintType,
       });
@@ -375,7 +429,7 @@ function processElements(
       };
     }
 
-    const centerY = (y1 + y2) / 2;
+    const centerY = (y1 + y2) / 2 - blockCenter.y;
 
     // Top face
     if (element.faces.up) {
@@ -433,6 +487,37 @@ function processElements(
       }
     }
 
+    // North face
+    if (element.faces.north) {
+      const face = element.faces.north;
+      const textureId = resolveTextureRef(face.texture, textures);
+      const textureUrl = textureId ? textureUrls.get(textureId) : null;
+
+      if (textureUrl) {
+        const shouldTint =
+          face.tintindex !== undefined && face.tintindex !== null;
+        const tintType =
+          shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+        const centerX = (x1 + x2) / 2 - blockCenter.x;
+        const centerZ = (z1 + z2) / 2 - blockCenter.z;
+
+        faces.push({
+          type: "left",
+          textureUrl,
+          x: centerX * scale,
+          y: offsets.left.y,
+          z: (centerZ - depth / 2) * scale,
+          width: width * scale,
+          height: height * scale,
+          uv: normalizeUV(face.uv),
+          zIndex: Math.round(centerY * 10 + 40),
+          brightness: 0.8,
+          tintType,
+        });
+      }
+    }
+
     // East face
     if (element.faces.east) {
       const face = element.faces.east;
@@ -456,6 +541,80 @@ function processElements(
           uv: normalizeUV(face.uv),
           zIndex: Math.round(centerY * 10),
           brightness: 0.6,
+          tintType,
+        });
+      }
+    }
+
+    // West face
+    if (element.faces.west) {
+      const face = element.faces.west;
+      const textureId = resolveTextureRef(face.texture, textures);
+      const textureUrl = textureId ? textureUrls.get(textureId) : null;
+
+      if (textureUrl) {
+        const shouldTint =
+          face.tintindex !== undefined && face.tintindex !== null;
+        const tintType =
+          shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+        const centerX = (x1 + x2) / 2 - blockCenter.x;
+        const centerZ = (z1 + z2) / 2 - blockCenter.z;
+
+        faces.push({
+          type: "right",
+          textureUrl,
+          x: (centerX - width / 2) * scale,
+          y: offsets.right.y,
+          z: centerZ * scale,
+          width: depth * scale,
+          height: height * scale,
+          uv: normalizeUV(face.uv),
+          zIndex: Math.round(centerY * 10 - 10),
+          brightness: 0.6,
+          tintType,
+        });
+      }
+    }
+
+    // Down face
+    if (element.faces.down) {
+      const face = element.faces.down;
+      const textureId = resolveTextureRef(face.texture, textures);
+      const textureUrl = textureId ? textureUrls.get(textureId) : null;
+
+      if (textureUrl) {
+        const shouldTint =
+          face.tintindex !== undefined && face.tintindex !== null;
+        const tintType =
+          shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+        const centerX = (x1 + x2) / 2 - blockCenter.x;
+        const centerZ = (z1 + z2) / 2 - blockCenter.z;
+        const bottomY = (centerY - height / 2) * scale;
+
+        console.log(
+          "[Worker] Down face - centerY:",
+          centerY,
+          "height:",
+          height,
+          "bottomY:",
+          bottomY,
+          "negated:",
+          -bottomY,
+        );
+
+        faces.push({
+          type: "top",
+          textureUrl,
+          x: centerX * scale,
+          y: -bottomY, // Negate for CSS coordinate system (same as top face)
+          z: centerZ * scale,
+          width: width * scale,
+          height: depth * scale,
+          uv: normalizeUV(face.uv),
+          zIndex: Math.round((centerY - height / 2) * 10 - 100),
+          brightness: 0.5,
           tintType,
         });
       }

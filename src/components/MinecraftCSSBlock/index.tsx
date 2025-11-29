@@ -41,6 +41,7 @@ import {
 import { getBlockTintType } from "@/constants/vanillaBlockColors";
 import { transitionQueue } from "@lib/transitionQueue";
 import { blockGeometryWorker } from "@lib/blockGeometryWorker";
+import { resolveTextureRef } from "@lib/utils/blockGeometry";
 import s from "./styles.module.scss";
 
 interface MinecraftCSSBlockProps {
@@ -94,312 +95,10 @@ interface RenderedElement {
 }
 
 /**
- * Resolves a texture variable reference to an actual texture ID
+ * NOTE: Block geometry processing has been moved to a Web Worker.
+ * See src/workers/blockGeometry.worker.ts for the implementation.
+ * This improves performance by offloading CPU-intensive calculations.
  */
-function resolveTextureRef(
-  ref: string,
-  textures: Record<string, string>,
-): string | null {
-  if (!ref) return null;
-
-  let resolved = ref;
-  let iterations = 0;
-  while (resolved.startsWith("#") && iterations < 10) {
-    const varName = resolved.substring(1);
-    resolved = textures[varName] || resolved;
-    iterations++;
-  }
-
-  if (resolved.startsWith("#")) return null;
-  return resolved;
-}
-
-/**
- * Converts Minecraft UV coordinates (0-16) to normalized (0-1)
- */
-function normalizeUV(
-  uv: [number, number, number, number] | undefined,
-): NormalizedUV {
-  if (!uv) {
-    return { u: 0, v: 0, width: 1, height: 1, flipX: 1, flipY: 1 };
-  }
-
-  const rawU1 = uv[0] / 16;
-  const rawV1 = uv[1] / 16;
-  const rawU2 = uv[2] / 16;
-  const rawV2 = uv[3] / 16;
-
-  const widthDelta = rawU2 - rawU1;
-  const heightDelta = rawV2 - rawV1;
-
-  const width = Math.abs(widthDelta);
-  const height = Math.abs(heightDelta);
-
-  // If UV coordinates are [0,0,0,0] or result in 0 dimensions, use full texture
-  // This fixes trapdoors and other blocks with missing/invalid UV data
-  if (width === 0 || height === 0) {
-    return { u: 0, v: 0, width: 1, height: 1, flipX: 1, flipY: 1 };
-  }
-
-  // Determine if we need to flip the texture
-  // When UV coordinates are reversed (u2 < u1 or v2 < v1), use CSS flip transform
-  const flipX = widthDelta >= 0 ? 1 : -1;
-  const flipY = heightDelta >= 0 ? 1 : -1;
-
-  // Always use minimum UV values as start position
-  // The flip is handled by CSS scaleX(-1)/scaleY(-1) transform in styles.module.scss
-  // This correctly flips the texture content around the image's top-left corner
-  return {
-    u: widthDelta >= 0 ? rawU1 : rawU2,
-    v: heightDelta >= 0 ? rawV1 : rawV2,
-    width,
-    height,
-    flipX,
-    flipY,
-  };
-}
-
-/**
- * Calculates face positions for true 3D isometric rendering
- * Returns pixel offsets from center for each face type
- *
- * With rotateX(-30deg) rotateY(-45deg) on the scene:
- * - Faces are positioned in 3D space and CSS handles the projection
- * - All positions are relative to element center
- */
-function calculateFaceOffsets(
-  element: { from: number[]; to: number[] },
-  scale: number,
-  blockCenter: { x: number; y: number; z: number },
-): {
-  top: { x: number; y: number; z: number };
-  left: { x: number; y: number; z: number };
-  right: { x: number; y: number; z: number };
-} {
-  const [x1, y1, z1] = element.from;
-  const [x2, y2, z2] = element.to;
-
-  // Element dimensions
-  const width = x2 - x1;
-  const height = y2 - y1;
-  const depth = z2 - z1;
-
-  // Element center relative to block center (8,8,8)
-  const centerX = (x1 + x2) / 2 - blockCenter.x;
-  const centerY = (y1 + y2) / 2 - blockCenter.y;
-  const centerZ = (z1 + z2) / 2 - blockCenter.z;
-
-  // For true 3D positioning, faces need to be offset by half their size
-  // to position them at the edges of the block, not the center
-
-  // Top face: at the top of the element (Y+ direction)
-  const topX = centerX * scale;
-  const topY = (centerY + height / 2) * scale;
-  const topZ = centerZ * scale;
-
-  // Left face (south): aligned to its local center, only needs Z push for depth
-  const leftX = centerX * scale;
-  const leftY = -centerY * scale;
-  const leftZ = (centerZ + depth / 2) * scale;
-
-  // Right face (east): offset right by half the width (positioned at east edge)
-  const rightX = (centerX + width / 2) * scale;
-  const rightY = -centerY * scale;
-  const rightZ = centerZ * scale;
-
-  return {
-    top: { x: topX, y: -topY, z: topZ },
-    left: { x: leftX, y: leftY, z: leftZ },
-    right: { x: rightX, y: rightY, z: rightZ },
-  };
-}
-
-/**
- * Determines which colormap type to use for a texture.
- *
- * This checks against Minecraft's vanilla BlockColors registry to determine
- * if a texture/block should be tinted and which colormap to use.
- *
- * Note: In Minecraft, tintindex only indicates IF a face should be tinted,
- * but WHICH colormap to use is hardcoded in the game's BlockColors registry.
- *
- * @param textureId - Texture ID (e.g., "minecraft:block/oak_leaves")
- * @returns Colormap type or undefined
- */
-function getColormapType(textureId: string): "grass" | "foliage" | undefined {
-  // Extract block name from texture ID
-  // e.g., "minecraft:block/oak_leaves" -> "minecraft:oak_leaves"
-  let blockId = textureId;
-
-  // Handle texture paths that include "/block/" or "/item/"
-  if (blockId.includes("/block/")) {
-    blockId = blockId.replace("/block/", ":");
-  } else if (blockId.includes("/item/")) {
-    blockId = blockId.replace("/item/", ":");
-  }
-
-  // Ensure namespace
-  if (!blockId.includes(":")) {
-    blockId = `minecraft:${blockId}`;
-  }
-
-  // Check against vanilla block colors registry
-  const tintType = getBlockTintType(blockId);
-
-  // Only return grass/foliage (we don't handle water/special in CSS renderer yet)
-  if (tintType === "grass" || tintType === "foliage") {
-    return tintType;
-  }
-
-  return undefined;
-}
-
-/**
- * Processes block model elements into renderable face data
- *
- * NOTE: This function is no longer used - processing is now done in a Web Worker
- * for better performance. See src/workers/blockGeometry.worker.ts
- * Keeping this code for reference/fallback purposes.
- */
-// @ts-expect-error - Kept for reference/fallback purposes
-function _processElements(
-  elements: ModelElement[],
-  textures: Record<string, string>,
-  textureUrls: Map<string, string>,
-  scale: number,
-): RenderedElement[] {
-  const renderedElements: RenderedElement[] = [];
-
-  // Block center in Minecraft coordinates (0-16 space)
-  const blockCenter = { x: 8, y: 8, z: 8 };
-
-  for (const element of elements) {
-    const faces: RenderedFace[] = [];
-    const [x1, y1, z1] = element.from;
-    const [x2, y2, z2] = element.to;
-
-    // Check if this is a rotated element (like bushy leaves cross-planes)
-    const hasRotation = element.rotation && element.rotation.angle !== 0;
-
-    // Element dimensions in Minecraft units
-    const width = x2 - x1;
-    const height = y2 - y1;
-    const depth = z2 - z1;
-
-    // Calculate face positions
-    let offsets = calculateFaceOffsets(element, scale, blockCenter);
-
-    // For rotated elements (like bushy leaves cross-planes), center them at origin
-    // These are typically diagonal planes that extend beyond block bounds
-    if (hasRotation) {
-      offsets = {
-        top: { x: 0, y: offsets.top.y, z: 0 },
-        left: { x: 0, y: offsets.left.y, z: 0 },
-        right: { x: 0, y: offsets.right.y, z: 0 },
-      };
-    }
-
-    // Z-index base for this element (higher Y = rendered on top)
-    const centerY = (y1 + y2) / 2;
-
-    // Process each visible face
-    // Top face (up) - always visible from above
-    if (element.faces.up) {
-      const face = element.faces.up;
-      const textureId = resolveTextureRef(face.texture, textures);
-      const textureUrl = textureId ? textureUrls.get(textureId) : null;
-
-      if (textureUrl) {
-        // Data-driven tinting: Check tintindex from model JSON to determine IF we should tint
-        // Then use texture/block name to determine WHICH colormap (this matches Minecraft's behavior)
-        const shouldTint =
-          face.tintindex !== undefined && face.tintindex !== null;
-        const tintType =
-          shouldTint && textureId ? getColormapType(textureId) : undefined;
-
-        faces.push({
-          type: "top",
-          textureUrl,
-          x: offsets.top.x,
-          y: offsets.top.y,
-          z: offsets.top.z,
-          width: width * scale,
-          height: depth * scale,
-          uv: normalizeUV(face.uv),
-          zIndex: Math.round(centerY * 10 + 100),
-          brightness: 1.0,
-          tintType,
-        });
-      }
-    }
-
-    // South face (front-left in isometric view)
-    if (element.faces.south) {
-      const face = element.faces.south;
-      const textureId = resolveTextureRef(face.texture, textures);
-      const textureUrl = textureId ? textureUrls.get(textureId) : null;
-
-      if (textureUrl) {
-        // Data-driven tinting: Check tintindex from model JSON to determine IF we should tint
-        // Then use texture/block name to determine WHICH colormap (this matches Minecraft's behavior)
-        const shouldTint =
-          face.tintindex !== undefined && face.tintindex !== null;
-        const tintType =
-          shouldTint && textureId ? getColormapType(textureId) : undefined;
-
-        faces.push({
-          type: "left",
-          textureUrl,
-          x: offsets.left.x,
-          y: offsets.left.y,
-          z: offsets.left.z,
-          width: width * scale,
-          height: height * scale,
-          uv: normalizeUV(face.uv),
-          zIndex: Math.round(centerY * 10 + 50),
-          brightness: 0.8,
-          tintType,
-        });
-      }
-    }
-
-    // East face (front-right in isometric view)
-    if (element.faces.east) {
-      const face = element.faces.east;
-      const textureId = resolveTextureRef(face.texture, textures);
-      const textureUrl = textureId ? textureUrls.get(textureId) : null;
-
-      if (textureUrl) {
-        // Data-driven tinting: Check tintindex from model JSON to determine IF we should tint
-        // Then use texture/block name to determine WHICH colormap (this matches Minecraft's behavior)
-        const shouldTint =
-          face.tintindex !== undefined && face.tintindex !== null;
-        const tintType =
-          shouldTint && textureId ? getColormapType(textureId) : undefined;
-
-        faces.push({
-          type: "right",
-          textureUrl,
-          x: offsets.right.x,
-          y: offsets.right.y,
-          z: offsets.right.z,
-          width: depth * scale,
-          height: height * scale,
-          uv: normalizeUV(face.uv),
-          zIndex: Math.round(centerY * 10),
-          brightness: 0.6,
-          tintType,
-        });
-      }
-    }
-
-    if (faces.length > 0) {
-      renderedElements.push({ faces });
-    }
-  }
-
-  return renderedElements;
-}
 
 /**
  * Checks if a block should use its 2D item icon instead of 3D block model
@@ -607,10 +306,6 @@ export default function MinecraftCSSBlock({
 
   // Compute grass tint color
   const grassColor: TintColor | null = useMemo(() => {
-    console.log(
-      "[MinecraftCSSBlock] Computing grass color - selectedGrassColor:",
-      selectedGrassColor,
-    );
     if (selectedGrassColor) {
       return selectedGrassColor;
     }
@@ -620,10 +315,6 @@ export default function MinecraftCSSBlock({
 
   // Compute foliage tint color
   const foliageColor: TintColor | null = useMemo(() => {
-    console.log(
-      "[MinecraftCSSBlock] Computing foliage color - selectedFoliageColor:",
-      selectedFoliageColor,
-    );
     if (selectedFoliageColor) {
       return selectedFoliageColor;
     }
@@ -826,11 +517,30 @@ export default function MinecraftCSSBlock({
             );
 
             if (resolution.models.length > 0) {
-              const { modelId } = resolution.models[0];
-              const model = await loadModelJson(packId, modelId, packsDir);
+              // Load and merge ALL models from multipart (e.g., shelf base + unpowered overlay)
+              const allElements: ModelElement[] = [];
+              textures = {};
 
-              textures = model.textures || {};
-              elements = model.elements || createDefaultElement(textures);
+              for (const resolvedModel of resolution.models) {
+                const model = await loadModelJson(
+                  packId,
+                  resolvedModel.modelId,
+                  packsDir,
+                );
+
+                // Merge textures from all models
+                textures = { ...textures, ...(model.textures || {}) };
+
+                // Collect elements from all models
+                if (model.elements && model.elements.length > 0) {
+                  allElements.push(...model.elements);
+                }
+              }
+
+              elements =
+                allElements.length > 0
+                  ? allElements
+                  : createDefaultElement(textures);
 
               // Collect all unique texture IDs
               const textureIds = new Set<string>();
@@ -918,23 +628,7 @@ export default function MinecraftCSSBlock({
 
   // Apply foliage tinting to leaf textures
   useEffect(() => {
-    console.log(
-      "[MinecraftCSSBlock] Tinting effect triggered - grassColor:",
-      grassColor,
-      "foliageColor:",
-      foliageColor,
-      "renderedElements:",
-      renderedElements.length,
-    );
     if ((!grassColor && !foliageColor) || renderedElements.length === 0) {
-      console.log(
-        "[MinecraftCSSBlock] Skipping tinting - grassColor:",
-        grassColor,
-        "foliageColor:",
-        foliageColor,
-        "elements:",
-        renderedElements.length,
-      );
       setTintedTextures(new Map());
       return;
     }
@@ -950,12 +644,6 @@ export default function MinecraftCSSBlock({
 
       for (const element of renderedElements) {
         for (const face of element.faces) {
-          console.log(
-            "[MinecraftCSSBlock] Face tintType:",
-            face.tintType,
-            "textureUrl:",
-            face.textureUrl,
-          );
           if (face.tintType === "grass" && face.textureUrl) {
             grassTextures.add(face.textureUrl);
           } else if (face.tintType === "foliage" && face.textureUrl) {

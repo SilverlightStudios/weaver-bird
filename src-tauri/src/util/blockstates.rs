@@ -431,15 +431,15 @@ pub fn build_block_state_schema(blockstate: &Blockstate, block_id: &str) -> Bloc
     }
 }
 
-/// Helper to extract properties from a when clause (recursively handles OR)
+/// Helper to extract properties from a when clause (recursively handles OR and AND)
 fn extract_properties_from_when(
     when_value: &serde_json::Value,
     property_values: &mut HashMap<String, HashSet<String>>,
 ) {
     if let Some(obj) = when_value.as_object() {
         for (key, value) in obj {
-            if key == "OR" {
-                // Handle OR array
+            if key == "OR" || key == "AND" {
+                // Handle OR/AND arrays recursively
                 if let Some(arr) = value.as_array() {
                     for item in arr {
                         extract_properties_from_when(item, property_values);
@@ -658,9 +658,22 @@ fn matches_when_clause(
             }
         }
 
-        // Simple AND matching (all properties must match)
+        // Check for AND clause
+        if let Some(and_value) = obj.get("AND") {
+            if let Some(and_array) = and_value.as_array() {
+                // AND: all children must match
+                for child in and_array {
+                    if !matches_when_clause(props, child)? {
+                        return Ok(false);
+                    }
+                }
+                return Ok(true);
+            }
+        }
+
+        // Simple property matching (all properties must match)
         for (key, value) in obj {
-            if key == "OR" {
+            if key == "OR" || key == "AND" {
                 continue; // Already handled
             }
 

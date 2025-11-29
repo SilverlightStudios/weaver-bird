@@ -24,7 +24,6 @@ export type {
 // Import types for internal use in this file
 import type { JEMFile, ParsedEntityModel } from "./jemLoader";
 import { parseJEM as parseJEMImpl } from "./jemLoader";
-import { packFormatToVersionRange } from "@lib/packFormatCompatibility";
 
 /**
  * Helper to check if an asset ID is an entity texture
@@ -165,6 +164,14 @@ export async function loadEntityModel(
       console.log(`[EMF] ✓ Loaded ${source} JEM`);
 
       const parsed = parseJEMImpl(jemData);
+
+      // Validate the model - must have at least one part with at least one valid box
+      const hasValidBoxes = parsed.parts.some((part) => part.boxes.length > 0);
+      if (!hasValidBoxes) {
+        console.log(`[EMF] ✗ ${source} JEM has no valid boxes:`, jemName);
+        return null;
+      }
+
       return {
         ...parsed,
         texturePath: parsed.texturePath || `entity/${entityType}`,
@@ -193,6 +200,14 @@ export async function loadEntityModel(
       console.log("[EMF] ✓ Vanilla JEM loaded:", jemName);
 
       const parsed = parseJEMImpl(jemData);
+
+      // Validate the model - must have at least one part with at least one valid box
+      const hasValidBoxes = parsed.parts.some((part) => part.boxes.length > 0);
+      if (!hasValidBoxes) {
+        console.log("[EMF] ✗ Vanilla JEM has no valid boxes:", jemName);
+        return null;
+      }
+
       return {
         ...parsed,
         texturePath: parsed.texturePath || `entity/${entityType}`,
@@ -217,20 +232,27 @@ export async function loadEntityModel(
     }
 
     // STEP 3: Try version-specific JEM based on pack format (e.g., cow_21.4.jem)
+    // Many entities changed in 1.21.5 (pack format 55), so we need legacy JEM for older packs
     if (packFormat) {
-      const versionRange = packFormatToVersionRange(packFormat);
-      if (versionRange) {
-        // Extract version number (e.g., "1.21.4" -> "21.4")
-        const versionMatch = versionRange.match(/1\.(\d+\.\d+)/);
-        if (versionMatch) {
-          const shortVersion = versionMatch[1];
-          const versionedName = `${parentEntity || entityType}_${shortVersion}`;
+      // Map pack formats to legacy JEM versions
+      // Pack formats < 55 (1.21.5) should use 21.4 JEM files
+      let legacyVersion: string | null = null;
 
-          result = await tryLoadJem(versionedName, "legacy versioned");
-          if (result) {
-            result.usedLegacyJem = true;
-            return result;
-          }
+      if (packFormat < 55) {
+        // Pre-1.21.5 = use 21.4 JEM files
+        legacyVersion = "21.4";
+      } else if (packFormat < 46) {
+        // Pre-1.21.4 might need 21.1 or other versions
+        legacyVersion = "21.1";
+      }
+
+      if (legacyVersion) {
+        const versionedName = `${parentEntity || entityType}_${legacyVersion}`;
+
+        result = await tryLoadJem(versionedName, "legacy versioned");
+        if (result) {
+          result.usedLegacyJem = true;
+          return result;
         }
       }
     }

@@ -474,10 +474,10 @@ function createBoxMesh(
   const height = (to[1] - from[1]) / PIXELS_PER_UNIT;
   const depth = (to[2] - from[2]) / PIXELS_PER_UNIT;
 
-  // Skip degenerate boxes
-  if (width <= 0 || height <= 0 || depth <= 0) {
+  // Skip completely degenerate boxes, but allow zero-width/depth planes (used for flat elements like tails)
+  if (width < 0 || height < 0 || depth < 0) {
     console.warn(
-      "[JEM] Skipping degenerate box with size:",
+      "[JEM] Skipping invalid box with negative dimensions:",
       width,
       height,
       depth,
@@ -485,24 +485,51 @@ function createBoxMesh(
     return null;
   }
 
-  // Create geometry
-  const geometry = new THREE.BoxGeometry(width, height, depth);
+  // Skip boxes with no volume at all
+  if (width === 0 && height === 0 && depth === 0) {
+    console.warn("[JEM] Skipping zero-volume box");
+    return null;
+  }
+
+  // Create geometry - use PlaneGeometry for flat elements (width=0 or depth=0)
+  let geometry: THREE.BufferGeometry;
+  let planeAxis: "x" | "z" | null = null;
+
+  if (width === 0) {
+    // YZ plane (should face X axis)
+    // PlaneGeometry defaults to XY plane facing +Z, so we need depth x height
+    geometry = new THREE.PlaneGeometry(depth, height);
+    geometry.rotateY(Math.PI / 2); // Rotate 90° to face X axis
+    planeAxis = "x";
+  } else if (depth === 0) {
+    // XY plane (should face Z axis)
+    geometry = new THREE.PlaneGeometry(width, height);
+    // No rotation needed - already facing Z
+    planeAxis = "z";
+  } else {
+    // Normal 3D box
+    geometry = new THREE.BoxGeometry(width, height, depth);
+  }
 
   // Apply UV coordinates with rotation compensation
-  applyUVs(geometry, box.uv, textureSize, box.mirror, rotation);
+  if (planeAxis) {
+    applyPlaneUVs(geometry, box.uv, textureSize, planeAxis);
+  } else {
+    applyUVs(geometry, box.uv, textureSize, box.mirror, rotation);
+  }
 
   // Create material
   const material = texture
     ? new THREE.MeshStandardMaterial({
-      map: texture,
-      transparent: true,
-      alphaTest: 0.1,
-      side: THREE.DoubleSide,
-    })
+        map: texture,
+        transparent: true,
+        alphaTest: 0.1,
+        side: THREE.DoubleSide,
+      })
     : new THREE.MeshStandardMaterial({
-      color: 0x8b4513,
-      side: THREE.DoubleSide,
-    });
+        color: 0x8b4513,
+        side: THREE.DoubleSide,
+      });
 
   const mesh = new THREE.Mesh(geometry, material);
 
@@ -532,10 +559,10 @@ function createBoxMesh(
  * Which maps to: East, West, Up, Down, South, North
  *
  * CRITICAL: Different faces need different UV orientations!
- * Based on Blockbench's box UV implementation:
- * - Side faces (east, west, north, south): Normal orientation
- * - Up face: Flip both U and V
- * - Down face: Flip U only
+ * Based on Blockbench's box UV implementation and Minecraft's coordinate system:
+ * - Side faces (east, west, north, south): Standard orientation
+ * - Up face (+Y): Needs Z-flip (swap v1/v2) for correct orientation
+ * - Down face (-Y): Standard orientation
  *
  * Three.js UV coordinate system: (0,0) at bottom-left, (1,1) at top-right
  * Texture UV system: (0,0) at top-left
@@ -563,23 +590,17 @@ function applyUVs(
   const rotX = rotation[0];
   const hasXRotation = Math.abs(rotX) > 89 && Math.abs(rotX) < 91; // Check for ±90°
 
-  console.log("[UV Debug] Rotation:", rotation, "hasXRotation:", hasXRotation);
-
-  let faceConfigs: { name: keyof typeof uv; index: number; flipY?: boolean }[];
+  let faceConfigs: { name: keyof typeof uv; index: number; flipZ?: boolean }[];
 
   if (hasXRotation) {
-    console.log("[UV Debug] Applying rotation remapping for", rotX, "degrees");
     // Remap faces for 90° X rotation
     if (rotX < 0) {
-      // Based on user observation:
-      // - Chicken works with standard mapping (Up->2, Down->3, South->4, North->5)
-      // - BUT Front face (-Z) is flipped vertically.
-      // - Hypothesis: Local Top (idx 2) rotates to Global Front (-Z).
-      // - So we need to flip index 2 ('up').
+      // -90° X rotation: The up face becomes the north face after rotation
+      // Since up face needs Z-flip, the rotated north also needs it
       faceConfigs = [
         { name: "east", index: 0 }, // right face (+X) - unchanged
         { name: "west", index: 1 }, // left face (-X) - unchanged
-        { name: "up", index: 2, flipY: true }, // top face (+Y) gets up UV, flipped Y
+        { name: "up", index: 2, flipZ: true }, // top face (+Y) gets up UV with Z-flip
         { name: "down", index: 3 }, // bottom face (-Y) gets down UV
         { name: "south", index: 4 }, // front face (+Z) gets south UV
         { name: "north", index: 5 }, // back face (-Z) gets north UV
@@ -592,7 +613,7 @@ function applyUVs(
         { name: "north", index: 2 }, // top face (+Y) gets north UV
         { name: "south", index: 3 }, // bottom face (-Y) gets south UV
         { name: "down", index: 4 }, // front face (+Z) gets down UV
-        { name: "up", index: 5 }, // back face (-Z) gets up UV
+        { name: "up", index: 5, flipZ: true }, // back face (-Z) gets up UV with Z-flip
       ];
     }
   } else {
@@ -600,7 +621,7 @@ function applyUVs(
     faceConfigs = [
       { name: "east", index: 0 }, // right face (+X)
       { name: "west", index: 1 }, // left face (-X)
-      { name: "up", index: 2 }, // top face (+Y)
+      { name: "up", index: 2, flipZ: true }, // top face (+Y) needs Z-flip
       { name: "down", index: 3 }, // bottom face (-Y)
       { name: "south", index: 4 }, // front face (+Z)
       { name: "north", index: 5 }, // back face (-Z)
@@ -616,32 +637,84 @@ function applyUVs(
     // Convert pixel coordinates to 0-1 UV space
     // Entity textures have (0,0) at top-left, Three.js at bottom-left
     let uvU1 = u1 / texWidth;
-    const uvV1 = 1 - v1 / texHeight; // Top of face
+    let uvV1 = 1 - v1 / texHeight; // Top of face in texture space
     let uvU2 = u2 / texWidth;
-    const uvV2 = 1 - v2 / texHeight; // Bottom of face
+    let uvV2 = 1 - v2 / texHeight; // Bottom of face in texture space
 
     // Handle mirroring
     if (mirror) {
       [uvU1, uvU2] = [uvU2, uvU1];
     }
 
+    // Handle Z-flip for up face (swap V coordinates to flip along Z/depth axis)
+    if (config.flipZ) {
+      [uvV1, uvV2] = [uvV2, uvV1];
+    }
+
     // Set UV coordinates for the 4 vertices of this face
     const baseIndex = config.index * 4;
 
-    // Handle optional Y-flip for rotation correction
-    const v1Final = config.flipY ? uvV2 : uvV1;
-    const v2Final = config.flipY ? uvV1 : uvV2;
-
     // Three.js BoxGeometry vertex layout per face:
-    // 2---3  (uvV2 - top in Three.js after flip)
+    // 2---3
     // |   |
-    // 0---1  (uvV1 - bottom in Three.js after flip)
-    // Note: v1 is top in texture coords, but after (1-v) flip becomes bottom in Three.js
-    uvAttr.setXY(baseIndex + 0, uvU1, v1Final); // Bottom-left
-    uvAttr.setXY(baseIndex + 1, uvU2, v1Final); // Bottom-right
-    uvAttr.setXY(baseIndex + 2, uvU1, v2Final); // Top-left
-    uvAttr.setXY(baseIndex + 3, uvU2, v2Final); // Top-right
+    // 0---1
+    uvAttr.setXY(baseIndex + 0, uvU1, uvV1); // Bottom-left
+    uvAttr.setXY(baseIndex + 1, uvU2, uvV1); // Bottom-right
+    uvAttr.setXY(baseIndex + 2, uvU1, uvV2); // Top-left
+    uvAttr.setXY(baseIndex + 3, uvU2, uvV2); // Top-right
   }
+
+  uvAttr.needsUpdate = true;
+}
+
+/**
+ * Apply UV coordinates to a plane geometry (for zero-width/depth boxes)
+ *
+ * PlaneGeometry has only 1 face with 4 vertices, so we apply the appropriate
+ * face UV based on which axis the plane is perpendicular to.
+ */
+function applyPlaneUVs(
+  geometry: THREE.BufferGeometry,
+  uv: ParsedBox["uv"],
+  textureSize: [number, number],
+  normalAxis: "x" | "z",
+): void {
+  const [texWidth, texHeight] = textureSize;
+  const uvAttr = geometry.attributes.uv;
+  if (!uvAttr) return;
+
+  // Choose which face UV to use based on the plane orientation
+  let faceUV: [number, number, number, number];
+
+  if (normalAxis === "x") {
+    // YZ plane - use east or west face UV (east for positive side)
+    faceUV = uv.east;
+  } else {
+    // XY plane - use north or south face UV (north for positive side)
+    faceUV = uv.north;
+  }
+
+  if (!faceUV || faceUV.every((v) => v === 0)) {
+    // Try fallback UVs if primary is empty
+    faceUV = normalAxis === "x" ? uv.west : uv.south;
+  }
+
+  const [u1, v1, u2, v2] = faceUV;
+
+  // Convert pixel coordinates to 0-1 UV space
+  const uvU1 = u1 / texWidth;
+  const uvV1 = 1 - v1 / texHeight; // Top
+  const uvU2 = u2 / texWidth;
+  const uvV2 = 1 - v2 / texHeight; // Bottom
+
+  // PlaneGeometry has 4 vertices in this layout:
+  // 2---3
+  // |   |
+  // 0---1
+  uvAttr.setXY(0, uvU1, uvV1); // Bottom-left
+  uvAttr.setXY(1, uvU2, uvV1); // Bottom-right
+  uvAttr.setXY(2, uvU1, uvV2); // Top-left
+  uvAttr.setXY(3, uvU2, uvV2); // Top-right
 
   uvAttr.needsUpdate = true;
 }
@@ -695,8 +768,8 @@ export function logHierarchy(group: THREE.Object3D, indent = 0): void {
 
   console.log(
     `${prefix}${group.name || "(unnamed)"} ` +
-    `pos:[${pos.x.toFixed(3)}, ${pos.y.toFixed(3)}, ${pos.z.toFixed(3)}] ` +
-    `rot:[${THREE.MathUtils.radToDeg(rot.x).toFixed(1)}°, ${THREE.MathUtils.radToDeg(rot.y).toFixed(1)}°, ${THREE.MathUtils.radToDeg(rot.z).toFixed(1)}°]`,
+      `pos:[${pos.x.toFixed(3)}, ${pos.y.toFixed(3)}, ${pos.z.toFixed(3)}] ` +
+      `rot:[${THREE.MathUtils.radToDeg(rot.x).toFixed(1)}°, ${THREE.MathUtils.radToDeg(rot.y).toFixed(1)}°, ${THREE.MathUtils.radToDeg(rot.z).toFixed(1)}°]`,
   );
 
   for (const child of group.children) {

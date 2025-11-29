@@ -416,61 +416,67 @@ export function applyNaturalBlockStateDefaults(
 
   // facing: Context-aware defaults
   if (!result.facing) {
+    // Shelves: Default to south so front face shows at 135° rotation
+    if (name.includes("shelf") && !name.includes("bookshelf")) {
+      result.facing = "south";
+    }
     // Case 1: Blocks that typically face UP by default
-    const defaultsUp = [
-      "amethyst_cluster",
-      "pointed_dripstone",
-      "end_rod",
-      "lightning_rod",
-      "candle",
-      "torch", // wall torch has facing, normal doesn't, but safe to check name
-      "lantern",
-      "campfire",
-    ];
+    else {
+      const defaultsUp = [
+        "amethyst_cluster",
+        "pointed_dripstone",
+        "end_rod",
+        "lightning_rod",
+        "candle",
+        "torch", // wall torch has facing, normal doesn't, but safe to check name
+        "lantern",
+        "campfire",
+      ];
 
-    // Case 2: Blocks that typically face DOWN by default
-    const defaultsDown = ["hopper"];
+      // Case 2: Blocks that typically face DOWN by default
+      const defaultsDown = ["hopper"];
 
-    // Case 3: Blocks that MUST be horizontal (north/south/east/west)
-    // Only apply to blocks known to have horizontal facing
-    const isHorizontalOnly =
-      name.includes("trapdoor") ||
-      name.includes("stairs") ||
-      name.includes("furnace") ||
-      name.includes("chest") ||
-      name.includes("loom") ||
-      name.includes("stonecutter") ||
-      name.includes("gate") || // fence gates
-      name.includes("repeater") ||
-      name.includes("comparator") ||
-      name.includes("bed") ||
-      name.includes("door") ||
-      name.includes("glazed_terracotta") ||
-      name.includes("anvil") ||
-      name.includes("piston") ||
-      name.includes("observer") ||
-      name.includes("dropper") ||
-      name.includes("dispenser") ||
-      name.includes("beehive") ||
-      name.includes("bee_nest") ||
-      name.includes("lectern") ||
-      (name.includes("button") && result.face !== "wall") ||
-      (name.includes("lever") && result.face !== "wall") ||
-      (name.includes("grindstone") && result.face !== "wall");
+      // Case 3: Blocks that MUST be horizontal (north/south/east/west)
+      // Only apply to blocks known to have horizontal facing
+      const isHorizontalOnly =
+        name.includes("trapdoor") ||
+        name.includes("stairs") ||
+        name.includes("furnace") ||
+        name.includes("chest") ||
+        name.includes("loom") ||
+        name.includes("stonecutter") ||
+        name.includes("gate") || // fence gates
+        name.includes("repeater") ||
+        name.includes("comparator") ||
+        name.includes("bed") ||
+        name.includes("door") ||
+        name.includes("glazed_terracotta") ||
+        name.includes("anvil") ||
+        name.includes("piston") ||
+        name.includes("observer") ||
+        name.includes("dropper") ||
+        name.includes("dispenser") ||
+        name.includes("beehive") ||
+        name.includes("bee_nest") ||
+        name.includes("lectern") ||
+        (name.includes("button") && result.face !== "wall") ||
+        (name.includes("lever") && result.face !== "wall") ||
+        (name.includes("grindstone") && result.face !== "wall");
 
-    if (defaultsUp.some((v) => name.includes(v))) {
-      // Only set facing=up if the block actually supports it
-      // (Some of these might be directional but not have 'facing' property in all cases,
-      // but usually safe for these specific ones if they are missing the prop)
-      // Actually, we should be careful. 'torch' doesn't have facing, 'wall_torch' does.
-      // If name is 'torch', we shouldn't add facing.
-      if (name !== "torch" && name !== "lantern" && name !== "campfire") {
-        result.facing = "up";
+      if (defaultsUp.some((v) => name.includes(v))) {
+        // Only set facing=up if the block actually supports it
+        // (Some of these might be directional but not have 'facing' property in all cases,
+        // but usually safe for these specific ones if they are missing the prop)
+        // Actually, we should be careful. 'torch' doesn't have facing, 'wall_torch' does.
+        // If name is 'torch', we shouldn't add facing.
+        if (name !== "torch" && name !== "lantern" && name !== "campfire") {
+          result.facing = "up";
+        }
+      } else if (defaultsDown.some((v) => name.includes(v))) {
+        result.facing = "down";
+      } else if (isHorizontalOnly) {
+        result.facing = "north";
       }
-    } else if (defaultsDown.some((v) => name.includes(v))) {
-      result.facing = "down";
-    } else if (isHorizontalOnly) {
-      result.facing = "north";
     }
   }
 
