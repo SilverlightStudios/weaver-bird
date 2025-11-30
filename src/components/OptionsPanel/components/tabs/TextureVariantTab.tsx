@@ -1,5 +1,5 @@
 import { TabsContent } from "@/ui/components/tabs";
-import TextureVariantSelector from "@components/TextureVariantSelector";
+import { TextureVariantSelector } from "@components/TextureVariantSelector";
 
 interface TextureVariantTabProps {
     assetId: string;

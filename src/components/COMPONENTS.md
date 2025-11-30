@@ -260,3 +260,25 @@
 - `MinecraftLocations`: Minecraft launcher detection and path configuration
 - `VanillaTextureVersion`: Minecraft version selector for vanilla textures
 - `TargetVersion`: Target Minecraft version for pack compatibility
+
+---
+
+## TextureVariantSelector
+
+**Purpose**: World/Inventory texture variant selector with thumbnail grid
+
+**useEffects**: 1 effect (view mode sync with asset type)
+
+**Hooks** (from `hooks/useVariantTexture.ts`):
+
+- `useVariantTexture`: Loads texture URL for variant from winning pack or vanilla
+
+**Utilities** (from `utilities.ts`):
+
+- `getVariantDisplayName()`: Formats friendly variant names with Default indicator
+
+**Usage Count**: 1 usage (OptionsPanel/TextureVariantTab)
+
+**Child Components**:
+
+- `TextureThumbnail`: Individual variant thumbnail with tooltip
