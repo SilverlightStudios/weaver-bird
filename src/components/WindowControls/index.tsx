@@ -1,7 +1,7 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import s from "./WindowControls.module.scss";
 
-export default function WindowControls() {
+export const WindowControls = () => {
   const handleMinimize = () => {
     const appWindow = getCurrentWindow();
     appWindow.minimize();
@@ -39,4 +39,4 @@ export default function WindowControls() {
       />
     </div>
   );
-}
+};

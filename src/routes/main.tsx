@@ -58,7 +58,7 @@ import { TargetVersion } from "@components/Settings/components/TargetVersion";
 import { VanillaTextureProgress } from "@components/VanillaTextureProgress";
 import { CanvasSettings } from "@components/CanvasSettings";
 import { BiomeSelector } from "@components/BiomeSelector";
-import WindowControls from "@components/WindowControls";
+import { WindowControls } from "@components/WindowControls";
 import { ResizeHandle } from "@components/ResizeHandle";
 import Button from "@/ui/components/buttons/Button";
 import {
