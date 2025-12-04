@@ -111,10 +111,14 @@ export function resetAllBones(
  * Apply animation transforms to a bone.
  *
  * CEM animations use:
- * - tx, ty, tz: Translation offset in pixels (added to base position)
- * - rx, ry, rz: Rotation in radians (replaces base rotation)
- * - sx, sy, sz: Scale factors (replaces base scale)
+ * - tx, ty, tz: Translation offset in pixels (ADDED to base position)
+ * - rx, ry, rz: Rotation in radians (ADDED to base rotation)
+ * - sx, sy, sz: Scale factors (MULTIPLIED with base scale)
  * - visible: Visibility flag
+ *
+ * All transforms are RELATIVE to the bone's rest pose (base transforms).
+ * This matches OptiFine CEM behavior where animations modify the model,
+ * not replace it entirely.
  *
  * @param bone The Three.js object to transform
  * @param transforms The transforms to apply
@@ -128,18 +132,17 @@ export function applyBoneTransform(
   const base = baseTransform;
 
   // Apply translations (in pixels, converted to Three.js units)
-  // Animation translations are OFFSETS added to base position
+  // CEM animations provide OFFSETS from the bone's rest position
+  // Example: If model has translate:[0,-6,0] and animation has ty:-4,
+  // the final position is base + offset = 0.375 + (-0.25) = 0.125
   if (transforms.tx !== undefined) {
-    bone.position.x =
-      (base?.position.x ?? 0) + transforms.tx / PIXELS_PER_UNIT;
+    bone.position.x = (base?.position.x ?? 0) + transforms.tx / PIXELS_PER_UNIT;
   }
   if (transforms.ty !== undefined) {
-    bone.position.y =
-      (base?.position.y ?? 0) + transforms.ty / PIXELS_PER_UNIT;
+    bone.position.y = (base?.position.y ?? 0) + transforms.ty / PIXELS_PER_UNIT;
   }
   if (transforms.tz !== undefined) {
-    bone.position.z =
-      (base?.position.z ?? 0) + transforms.tz / PIXELS_PER_UNIT;
+    bone.position.z = (base?.position.z ?? 0) + transforms.tz / PIXELS_PER_UNIT;
   }
 
   // Apply rotations (in radians, ADDED to base rotation)
