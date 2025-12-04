@@ -142,27 +142,27 @@ export function applyBoneTransform(
       (base?.position.z ?? 0) + transforms.tz / PIXELS_PER_UNIT;
   }
 
-  // Apply rotations (in radians, REPLACE base rotation)
-  // CEM animations provide absolute rotation values
+  // Apply rotations (in radians, ADDED to base rotation)
+  // CEM animations are offsets from the model's rest pose
   if (transforms.rx !== undefined) {
-    bone.rotation.x = transforms.rx;
+    bone.rotation.x = (base?.rotation.x ?? 0) + transforms.rx;
   }
   if (transforms.ry !== undefined) {
-    bone.rotation.y = transforms.ry;
+    bone.rotation.y = (base?.rotation.y ?? 0) + transforms.ry;
   }
   if (transforms.rz !== undefined) {
-    bone.rotation.z = transforms.rz;
+    bone.rotation.z = (base?.rotation.z ?? 0) + transforms.rz;
   }
 
-  // Apply scale (REPLACE base scale)
+  // Apply scale (multiplied with base scale, default 1.0)
   if (transforms.sx !== undefined) {
-    bone.scale.x = transforms.sx;
+    bone.scale.x = (base?.scale.x ?? 1) * transforms.sx;
   }
   if (transforms.sy !== undefined) {
-    bone.scale.y = transforms.sy;
+    bone.scale.y = (base?.scale.y ?? 1) * transforms.sy;
   }
   if (transforms.sz !== undefined) {
-    bone.scale.z = transforms.sz;
+    bone.scale.z = (base?.scale.z ?? 1) * transforms.sz;
   }
 
   // Apply visibility

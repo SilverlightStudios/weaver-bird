@@ -396,7 +396,80 @@ export class AnimationEngine {
       return true;
     }
 
+    // Fallback: Apply vanilla-style animations if no CEM animations
+    if (this.isPlaying && this.activePreset) {
+      this.applyVanillaFallback();
+      return true;
+    }
+
     return this.isPlaying;
+  }
+
+  /**
+   * Apply vanilla-style fallback animations when no CEM animations are present.
+   * Uses standard bone naming conventions (head, body, left_arm, right_arm, etc.)
+   */
+  private applyVanillaFallback(): void {
+    const state = this.context.entityState;
+
+    // Head rotation based on head_yaw and head_pitch
+    const head = this.bones.get("head");
+    if (head) {
+      const base = this.baseTransforms.get("head");
+      // Convert degrees to radians
+      const yawRad = (state.head_yaw * Math.PI) / 180;
+      const pitchRad = (state.head_pitch * Math.PI) / 180;
+      head.rotation.y = (base?.rotation.y ?? 0) + yawRad;
+      head.rotation.x = (base?.rotation.x ?? 0) + pitchRad;
+    }
+
+    // Arm/leg swing based on limb_swing and limb_speed
+    const swingAmount = Math.sin(state.limb_swing * 0.6662) * 1.4 * state.limb_speed;
+
+    const rightArm = this.bones.get("right_arm");
+    if (rightArm) {
+      const base = this.baseTransforms.get("right_arm");
+      rightArm.rotation.x = (base?.rotation.x ?? 0) + swingAmount;
+    }
+
+    const leftArm = this.bones.get("left_arm");
+    if (leftArm) {
+      const base = this.baseTransforms.get("left_arm");
+      leftArm.rotation.x = (base?.rotation.x ?? 0) - swingAmount;
+    }
+
+    const rightLeg = this.bones.get("right_leg");
+    if (rightLeg) {
+      const base = this.baseTransforms.get("right_leg");
+      rightLeg.rotation.x = (base?.rotation.x ?? 0) - swingAmount;
+    }
+
+    const leftLeg = this.bones.get("left_leg");
+    if (leftLeg) {
+      const base = this.baseTransforms.get("left_leg");
+      leftLeg.rotation.x = (base?.rotation.x ?? 0) + swingAmount;
+    }
+
+    // Hurt animation - red tint would need material support, just wobble instead
+    if (state.hurt_time > 0) {
+      const hurtWobble = Math.sin(state.hurt_time * 0.5) * 0.3;
+      const body = this.bones.get("body");
+      if (body) {
+        const base = this.baseTransforms.get("body");
+        body.rotation.z = (base?.rotation.z ?? 0) + hurtWobble;
+      }
+    }
+
+    // Death animation - fall over
+    if (state.death_time > 0) {
+      const deathProgress = Math.min(state.death_time / 20, 1);
+      const deathAngle = (deathProgress * Math.PI) / 2; // Rotate up to 90 degrees
+      const body = this.bones.get("body");
+      if (body) {
+        const base = this.baseTransforms.get("body");
+        body.rotation.x = (base?.rotation.x ?? 0) + deathAngle;
+      }
+    }
   }
 
   /**
