@@ -135,6 +135,16 @@ export interface JPMFile {
 }
 
 /**
+ * Animation layer - a collection of property expressions evaluated together.
+ * Multiple layers are evaluated in order, allowing later layers to reference
+ * values computed by earlier layers.
+ */
+export interface AnimationLayer {
+  /** Property path to expression mapping (e.g., "head.rx": "sin(age)") */
+  [property: string]: string | number;
+}
+
+/**
  * Parsed and normalized entity model ready for rendering
  */
 export interface ParsedEntityModel {
@@ -148,6 +158,8 @@ export interface ParsedEntityModel {
   shadowSize: number;
   /** Parsed model parts in hierarchical structure */
   parts: ParsedModelPart[];
+  /** Animation layers from JEM file (if present) */
+  animations?: AnimationLayer[];
 }
 
 /**

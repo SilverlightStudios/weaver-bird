@@ -74,7 +74,7 @@ export interface AnimationPreset {
   update: (state: EntityState, deltaTime: number) => Partial<EntityState>;
 
   /** Optional setup function called when preset is selected */
-  setup?: (state: EntityState) => Partial<EntityState>;
+  setup?: () => Partial<EntityState>;
 }
 
 /**
@@ -459,7 +459,7 @@ export class AnimationStateController {
     this.elapsedTime = 0;
 
     if (preset?.setup) {
-      const setupUpdates = preset.setup(this.context.entityState);
+      const setupUpdates = preset.setup();
       this.context.entityState = {
         ...this.context.entityState,
         ...setupUpdates,

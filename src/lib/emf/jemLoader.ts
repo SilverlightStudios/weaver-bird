@@ -60,12 +60,17 @@ export interface JEMBox {
   uvEast?: [number, number, number, number];
 }
 
+/** Animation layer type */
+export type AnimationLayer = Record<string, string | number>;
+
 /** Parsed and normalized entity model */
 export interface ParsedEntityModel {
   texturePath: string;
   textureSize: [number, number];
   shadowSize: number;
   parts: ParsedPart[];
+  /** Animation layers from all model parts (if present) */
+  animations?: AnimationLayer[];
 }
 
 /** Parsed model part with resolved values */
@@ -120,6 +125,7 @@ export function parseJEM(jemData: JEMFile): ParsedEntityModel {
   const shadowSize = jemData.shadowSize ?? 1.0;
 
   const parts: ParsedPart[] = [];
+  const animations: AnimationLayer[] = [];
 
   if (jemData.models) {
     for (const modelPart of jemData.models) {
@@ -127,15 +133,30 @@ export function parseJEM(jemData: JEMFile): ParsedEntityModel {
       if (parsed) {
         parts.push(parsed);
       }
+
+      // Extract animations from this model part
+      // Animations are defined at the part level and contain multiple layers
+      if (modelPart.animations && modelPart.animations.length > 0) {
+        for (const animLayer of modelPart.animations) {
+          animations.push(animLayer);
+        }
+      }
     }
   }
 
-  return {
+  const result: ParsedEntityModel = {
     texturePath,
     textureSize,
     shadowSize,
     parts,
   };
+
+  // Only include animations if present
+  if (animations.length > 0) {
+    result.animations = animations;
+  }
+
+  return result;
 }
 
 /**

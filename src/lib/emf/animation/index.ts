@@ -62,3 +62,21 @@ export {
   getDefaultPreset,
   AnimationStateController,
 } from "./entityState";
+
+// Bone controller exports
+export type { BoneMap, BaseTransforms, BaseTransformMap } from "./boneController";
+export {
+  buildBoneMap,
+  storeBaseTransforms,
+  resetBone,
+  resetAllBones,
+  applyBoneTransform,
+  parseBoneProperty,
+  isBoneTransformProperty,
+  createBoneTransform,
+  mergeBoneTransforms,
+  BoneTransformAccumulator,
+} from "./boneController";
+
+// Animation engine exports
+export { AnimationEngine, createAnimationEngine } from "./AnimationEngine";
