@@ -304,41 +304,33 @@ function parseModelPart(
   // Using id first ensures each gets a unique name in the bone map.
   const name = part.id || part.part || "unnamed";
 
-  // Parse invertAxis - determines which axes need to be negated
-  // When Blockbench exports to JEM with invertAxis: 'xy', it means
-  // the X and Y coordinates were inverted during export and need
-  // to be inverted back during import.
-  const invertAxis = part.invertAxis || "";
-  const invertX = invertAxis.includes("x");
-  const invertY = invertAxis.includes("y");
-  const invertZ = invertAxis.includes("z");
-
   // Get the translate (pivot point)
-  // For submodels at depth >= 1, add parent's origin to make absolute
-  let translate: [number, number, number] = part.translate
+  const rawTranslate: [number, number, number] = part.translate
     ? [...part.translate]
     : [0, 0, 0];
 
-  // Apply invertAxis to translate
-  if (invertX) translate[0] = -translate[0];
-  if (invertY) translate[1] = -translate[1];
-  if (invertZ) translate[2] = -translate[2];
-
-  // Submodels have relative translates - convert to absolute
-  if (parentOrigin) {
-    translate[0] += parentOrigin[0];
-    translate[1] += parentOrigin[1];
-    translate[2] += parentOrigin[2];
-  }
-
-  // CRITICAL: Origin equals the transformed translate (the pivot point position)
-  // We do NOT negate globally - invertAxis handles axis-specific inversion.
-  // The translate value IS the position where the group should be placed.
+  // CRITICAL: Blockbench negates translate to get origin
+  // See: group.origin.V3_multiply(-1) in optifine_jem.js
+  // This is done REGARDLESS of invertAxis (invertAxis is export metadata only)
   const origin: [number, number, number] = [
-    translate[0],
-    translate[1],
-    translate[2],
+    -rawTranslate[0],
+    -rawTranslate[1],
+    -rawTranslate[2],
   ];
+
+  // For submodels, their translate is relative to parent
+  // We need to compute absolute origin for proper positioning
+  if (parentOrigin) {
+    // Parent's origin is already negated, and child's translate is relative
+    // Absolute origin = parent_origin + (-child_translate)
+    // But since child_translate is relative to parent's translate (not origin),
+    // we need: child_absolute_translate = parent_translate + child_translate
+    // Then: child_origin = -child_absolute_translate
+    // Which equals: -parent_translate + (-child_translate) = parent_origin + child_origin_local
+    origin[0] += parentOrigin[0];
+    origin[1] += parentOrigin[1];
+    origin[2] += parentOrigin[2];
+  }
 
   const rotation: [number, number, number] = part.rotate
     ? [...part.rotate]
@@ -347,11 +339,11 @@ function parseModelPart(
   const scale = part.scale ?? 1.0;
   const mirrorUV = part.mirrorTexture?.includes("u") ?? false;
 
-  // Parse boxes with invertAxis info
+  // Parse boxes (invertAxis is NOT applied - it's export metadata only)
   const boxes: ParsedBox[] = [];
   if (part.boxes) {
     for (const box of part.boxes) {
-      const parsed = parseBox(box, textureSize, mirrorUV, invertX, invertY, invertZ);
+      const parsed = parseBox(box, textureSize, mirrorUV);
       if (parsed) {
         boxes.push(parsed);
       }
@@ -362,13 +354,13 @@ function parseModelPart(
   const children: ParsedPart[] = [];
 
   if (part.submodel) {
-    const child = parseModelPart(part.submodel, textureSize, translate);
+    const child = parseModelPart(part.submodel, textureSize, origin);
     children.push(child);
   }
 
   if (part.submodels) {
     for (const submodel of part.submodels) {
-      const child = parseModelPart(submodel, textureSize, translate);
+      const child = parseModelPart(submodel, textureSize, origin);
       children.push(child);
     }
   }
@@ -389,15 +381,11 @@ function parseModelPart(
  *
  * Box coordinates in JEM are relative to the part's pivot point.
  * [x, y, z, width, height, depth] where (x,y,z) is the minimum corner.
- * invertAxis flags indicate which axes need to be negated.
  */
 function parseBox(
   box: JEMBox,
   _textureSize: [number, number],
   partMirrorUV: boolean,
-  invertX: boolean = false,
-  invertY: boolean = false,
-  invertZ: boolean = false,
 ): ParsedBox | null {
   // Default coordinates if not specified
   let x = 0,
@@ -413,18 +401,6 @@ function parseBox(
     // No coordinates - can't create box
     console.warn("[JEM Parser] Box missing coordinates, skipping");
     return null;
-  }
-
-  // Apply invertAxis to box coordinates
-  // When an axis is inverted, we negate the position and flip the direction
-  if (invertX) {
-    x = -x - width;
-  }
-  if (invertY) {
-    y = -y - height;
-  }
-  if (invertZ) {
-    z = -z - depth;
   }
 
   const inflate = box.sizeAdd || 0;
@@ -649,12 +625,13 @@ function convertPart(
 /**
  * Create a Three.js mesh for a box
  *
- * Box coordinates are absolute, but we need to position relative to the part's origin.
- * This matches Blockbench's updateGeometry() which subtracts the origin from from/to.
+ * Box coordinates are ABSOLUTE in pixel space.
+ * The group is positioned at origin (which is -translate).
+ * To place the mesh correctly, we compute its local position relative to the group.
  */
 function createBoxMesh(
   box: ParsedBox,
-  _partOrigin: [number, number, number],
+  partOrigin: [number, number, number],
   textureSize: [number, number],
   texture: THREE.Texture | null,
 ): THREE.Mesh | null {
@@ -729,22 +706,21 @@ function createBoxMesh(
 
   const mesh = new THREE.Mesh(geometry, material);
 
-  // Calculate box center in LOCAL coordinates (relative to part's translate)
+  // Calculate box center in ABSOLUTE pixel coordinates
   const centerX = (from[0] + to[0]) / 2;
   const centerY = (from[1] + to[1]) / 2;
   const centerZ = (from[2] + to[2]) / 2;
 
   // Position mesh relative to group.
-  // Box coords are LOCAL to the part (relative to part's translate/origin).
-  // Group is at origin/16 where origin = translate (no negation).
-  // Box world position = translate + center (in pixels)
-  // In Three.js: box world = (translate + center) / 16
-  // Group position = translate / 16
-  // Mesh position = box world - group position = center / 16
+  // Box coords are ABSOLUTE (in pixel world space).
+  // Group is at origin/16 where origin = -translate (Blockbench convention).
+  // Box world position = center / 16 (absolute position in Three.js units)
+  // Group position = origin / 16
+  // Mesh local position = box_world - group_position = (center - origin) / 16
   mesh.position.set(
-    centerX / PIXELS_PER_UNIT,
-    centerY / PIXELS_PER_UNIT,
-    centerZ / PIXELS_PER_UNIT,
+    (centerX - partOrigin[0]) / PIXELS_PER_UNIT,
+    (centerY - partOrigin[1]) / PIXELS_PER_UNIT,
+    (centerZ - partOrigin[2]) / PIXELS_PER_UNIT,
   );
 
   mesh.castShadow = true;
