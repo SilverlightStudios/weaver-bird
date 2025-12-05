@@ -136,11 +136,15 @@ export function resetAllBones(
 /**
  * Apply animation transforms to a bone.
  *
- * CEM animations use different semantics for translations:
- * - For submodels (children): tx/ty/tz are ABSOLUTE world coordinates
- *   We subtract the parent's animation value to get relative position
- * - For top-level parts with small values: tx/ty/tz are ADDITIVE offsets
- * - For top-level parts with large values: tx/ty/tz are ABSOLUTE translates
+ * CEM animation tx/ty/tz values are OFFSETS (in pixels) to add to the part's
+ * base translate value. Since Three.js position = -translate/16, we need to
+ * SUBTRACT the animation offset from the base position:
+ *
+ *   final_translate = base_translate + animation_offset
+ *   final_position = -final_translate / 16
+ *                  = -(base_translate + animation_offset) / 16
+ *                  = -base_translate/16 - animation_offset/16
+ *                  = base_position - animation_offset/16
  *
  * Rotations are always ADDED to base rotation.
  * Scales are always MULTIPLIED with base scale.
@@ -148,17 +152,16 @@ export function resetAllBones(
  * @param bone The Three.js object to transform
  * @param transforms The transforms to apply
  * @param baseTransform Optional base transform for relative positioning
- * @param parentTransforms Optional parent's animation transforms for relative calculation
+ * @param _parentTransforms Unused - kept for API compatibility
  */
 export function applyBoneTransform(
   bone: THREE.Object3D,
   transforms: BoneTransform,
   baseTransform?: BaseTransforms,
-  parentTransforms?: BoneTransform
+  _parentTransforms?: BoneTransform
 ): void {
   const base = baseTransform;
   const boneName = bone.name;
-  const hasParentAnimation = parentTransforms !== undefined;
 
   // Log detailed transform info (only first few frames per bone to avoid spam)
   const shouldLog = DEBUG_ANIMATIONS && !loggedBones.has(boneName);
@@ -168,63 +171,34 @@ export function applyBoneTransform(
       console.log(`[BoneController] Applying transform to "${boneName}":`);
       console.log(`  Animation values: tx=${transforms.tx?.toFixed(3)}, ty=${transforms.ty?.toFixed(3)}, tz=${transforms.tz?.toFixed(3)}`);
       console.log(`  Base position: [${base?.position.x.toFixed(3)}, ${base?.position.y.toFixed(3)}, ${base?.position.z.toFixed(3)}]`);
-      console.log(`  Has parent animation: ${hasParentAnimation}`);
-      if (hasParentAnimation) {
-        console.log(`  Parent animation: tx=${parentTransforms?.tx?.toFixed(3)}, ty=${parentTransforms?.ty?.toFixed(3)}, tz=${parentTransforms?.tz?.toFixed(3)}`);
-      }
     }
     if (frameCount === 5) {
       loggedBones.add(boneName);
     }
   }
 
-  // Apply translations based on context
-  // For children with parent animations: use RELATIVE (subtract parent's animation)
-  // For top-level parts: use ADDITIVE (add offset to base position)
+  // Apply translations: position = base_position - animation_offset / 16
+  // The SUBTRACTION is because position = -translate/16 in jemLoader
   if (transforms.tx !== undefined) {
-    let newX: number;
-    if (hasParentAnimation && parentTransforms?.tx !== undefined) {
-      // Relative to parent: position = -(ty - parent_ty) / 16
-      const relativeTx = transforms.tx - parentTransforms.tx;
-      newX = -relativeTx / PIXELS_PER_UNIT;
-    } else {
-      // Additive: position = base + ty / 16
-      newX = (base?.position.x ?? 0) + transforms.tx / PIXELS_PER_UNIT;
-    }
+    const newX = (base?.position.x ?? 0) - transforms.tx / PIXELS_PER_UNIT;
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.x = ${newX.toFixed(3)}`);
+      console.log(`  Setting position.x = ${newX.toFixed(3)} (base ${base?.position.x?.toFixed(3)} - ${transforms.tx.toFixed(3)}/16)`);
     }
     bone.position.x = newX;
   }
 
   if (transforms.ty !== undefined) {
-    let newY: number;
-    if (hasParentAnimation && parentTransforms?.ty !== undefined) {
-      // Relative to parent: position = -(ty - parent_ty) / 16
-      const relativeTy = transforms.ty - parentTransforms.ty;
-      newY = -relativeTy / PIXELS_PER_UNIT;
-    } else {
-      // Additive: position = base + ty / 16
-      newY = (base?.position.y ?? 0) + transforms.ty / PIXELS_PER_UNIT;
-    }
+    const newY = (base?.position.y ?? 0) - transforms.ty / PIXELS_PER_UNIT;
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.y = ${newY.toFixed(3)}`);
+      console.log(`  Setting position.y = ${newY.toFixed(3)} (base ${base?.position.y?.toFixed(3)} - ${transforms.ty.toFixed(3)}/16)`);
     }
     bone.position.y = newY;
   }
 
   if (transforms.tz !== undefined) {
-    let newZ: number;
-    if (hasParentAnimation && parentTransforms?.tz !== undefined) {
-      // Relative to parent: position = -(tz - parent_tz) / 16
-      const relativeTz = transforms.tz - parentTransforms.tz;
-      newZ = -relativeTz / PIXELS_PER_UNIT;
-    } else {
-      // Additive: position = base + tz / 16
-      newZ = (base?.position.z ?? 0) + transforms.tz / PIXELS_PER_UNIT;
-    }
+    const newZ = (base?.position.z ?? 0) - transforms.tz / PIXELS_PER_UNIT;
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.z = ${newZ.toFixed(3)}`);
+      console.log(`  Setting position.z = ${newZ.toFixed(3)} (base ${base?.position.z?.toFixed(3)} - ${transforms.tz.toFixed(3)}/16)`);
     }
     bone.position.z = newZ;
   }

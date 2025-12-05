@@ -581,18 +581,21 @@ function convertPart(
   for (const child of part.children) {
     const childGroup = convertPart(child, textureSize, texture);
 
-    // CRITICAL FIX: Child origins are already absolute (made so during parsing
-    // at lines 161-166 by adding parent translate). Since the parent group is
-    // positioned at its origin, the child should be at the origin [0,0,0]
-    // relative to the parent, NOT at (child.origin - parent.origin).
+    // Child origins are ABSOLUTE (computed during parsing by adding parent translate).
+    // Parent group is positioned at parent.origin in world space.
+    // To place child at its correct absolute position, compute LOCAL offset:
+    //   childLocalPos = childAbsoluteOrigin - parentAbsoluteOrigin
     //
-    // The old calculation double-subtracted the parent's position:
-    //   WRONG: (child.origin - parent.origin) / 16
-    //   This resulted in children positioned at negative offsets
-    //
-    // The child's origin IS the absolute world position, so relative to
-    // a parent that's also absolutely positioned, it's just at origin.
-    childGroup.position.set(0, 0, 0);
+    // Example for allay:
+    //   body.origin = [0, 6, 0] → body at world [0, 0.375, 0]
+    //   head2.origin = [0, 0, 0] (absolute) → should be at world [0, 0, 0]
+    //   head2 local pos = [0, 0, 0] - [0, 6, 0] = [0, -6, 0] → [0, -0.375, 0] in Three.js
+    //   head2 world = body world + head2 local = [0, 0.375, 0] + [0, -0.375, 0] = [0, 0, 0] ✓
+    childGroup.position.set(
+      (child.origin[0] - part.origin[0]) / PIXELS_PER_UNIT,
+      (child.origin[1] - part.origin[1]) / PIXELS_PER_UNIT,
+      (child.origin[2] - part.origin[2]) / PIXELS_PER_UNIT,
+    );
 
     group.add(childGroup);
   }
