@@ -318,18 +318,14 @@ function parseModelPart(
     -rawTranslate[2],
   ];
 
-  // For submodels, their translate is relative to parent
-  // We need to compute absolute origin for proper positioning
+  // For submodels (depth >= 1), Blockbench adds parent.origin to translate BEFORE negating:
+  //   subsub.translate += p_group.origin;
+  //   group.origin = -subsub.translate;
+  // This means: child.origin = -(child.translate + parent.origin) = -child.translate - parent.origin
   if (parentOrigin) {
-    // Parent's origin is already negated, and child's translate is relative
-    // Absolute origin = parent_origin + (-child_translate)
-    // But since child_translate is relative to parent's translate (not origin),
-    // we need: child_absolute_translate = parent_translate + child_translate
-    // Then: child_origin = -child_absolute_translate
-    // Which equals: -parent_translate + (-child_translate) = parent_origin + child_origin_local
-    origin[0] += parentOrigin[0];
-    origin[1] += parentOrigin[1];
-    origin[2] += parentOrigin[2];
+    origin[0] -= parentOrigin[0];
+    origin[1] -= parentOrigin[1];
+    origin[2] -= parentOrigin[2];
   }
 
   const rotation: [number, number, number] = part.rotate
