@@ -137,14 +137,14 @@ export function resetAllBones(
  * Apply animation transforms to a bone.
  *
  * CEM animation tx/ty/tz values are OFFSETS (in pixels) to add to the part's
- * base translate value. Since Three.js position = -translate/16, we need to
- * SUBTRACT the animation offset from the base position:
+ * base translate value. Since Three.js position = translate/16 (no negation),
+ * we ADD the animation offset to the base position:
  *
  *   final_translate = base_translate + animation_offset
- *   final_position = -final_translate / 16
- *                  = -(base_translate + animation_offset) / 16
- *                  = -base_translate/16 - animation_offset/16
- *                  = base_position - animation_offset/16
+ *   final_position = final_translate / 16
+ *                  = (base_translate + animation_offset) / 16
+ *                  = base_translate/16 + animation_offset/16
+ *                  = base_position + animation_offset/16
  *
  * Rotations are always ADDED to base rotation.
  * Scales are always MULTIPLIED with base scale.
@@ -177,28 +177,28 @@ export function applyBoneTransform(
     }
   }
 
-  // Apply translations: position = base_position - animation_offset / 16
-  // The SUBTRACTION is because position = -translate/16 in jemLoader
+  // Apply translations: position = base_position + animation_offset / 16
+  // The ADDITION is because position = translate/16 in jemLoader (no negation)
   if (transforms.tx !== undefined) {
-    const newX = (base?.position.x ?? 0) - transforms.tx / PIXELS_PER_UNIT;
+    const newX = (base?.position.x ?? 0) + transforms.tx / PIXELS_PER_UNIT;
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.x = ${newX.toFixed(3)} (base ${base?.position.x?.toFixed(3)} - ${transforms.tx.toFixed(3)}/16)`);
+      console.log(`  Setting position.x = ${newX.toFixed(3)} (base ${base?.position.x?.toFixed(3)} + ${transforms.tx.toFixed(3)}/16)`);
     }
     bone.position.x = newX;
   }
 
   if (transforms.ty !== undefined) {
-    const newY = (base?.position.y ?? 0) - transforms.ty / PIXELS_PER_UNIT;
+    const newY = (base?.position.y ?? 0) + transforms.ty / PIXELS_PER_UNIT;
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.y = ${newY.toFixed(3)} (base ${base?.position.y?.toFixed(3)} - ${transforms.ty.toFixed(3)}/16)`);
+      console.log(`  Setting position.y = ${newY.toFixed(3)} (base ${base?.position.y?.toFixed(3)} + ${transforms.ty.toFixed(3)}/16)`);
     }
     bone.position.y = newY;
   }
 
   if (transforms.tz !== undefined) {
-    const newZ = (base?.position.z ?? 0) - transforms.tz / PIXELS_PER_UNIT;
+    const newZ = (base?.position.z ?? 0) + transforms.tz / PIXELS_PER_UNIT;
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.z = ${newZ.toFixed(3)} (base ${base?.position.z?.toFixed(3)} - ${transforms.tz.toFixed(3)}/16)`);
+      console.log(`  Setting position.z = ${newZ.toFixed(3)} (base ${base?.position.z?.toFixed(3)} + ${transforms.tz.toFixed(3)}/16)`);
     }
     bone.position.z = newZ;
   }

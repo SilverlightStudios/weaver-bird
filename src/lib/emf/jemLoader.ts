@@ -303,12 +303,13 @@ function parseModelPart(
     translate[2] += parentOrigin[2];
   }
 
-  // CRITICAL: Negate translate to get origin (Blockbench line 276)
-  // This is the key transformation that makes everything work
+  // CRITICAL: Origin equals translate (the pivot point position)
+  // We do NOT negate - that would invert the Y axis and make models upside-down.
+  // The translate value IS the position where the group should be placed.
   const origin: [number, number, number] = [
-    -translate[0],
-    -translate[1],
-    -translate[2],
+    translate[0],
+    translate[1],
+    translate[2],
   ];
 
   const rotation: [number, number, number] = part.rotate
@@ -692,16 +693,16 @@ function createBoxMesh(
   const centerZ = (from[2] + to[2]) / 2;
 
   // Position mesh relative to group.
-  // Box coords are LOCAL to the part (relative to part's translate).
-  // Group is at origin/16 where origin = -translate.
-  // World position = translate + center, in Three.js = -(translate + center)/16
-  // Group position = origin/16 = -translate/16
-  // Mesh position = worldPos - groupPos = -(translate + center)/16 - (-translate/16)
-  //               = -translate/16 - center/16 + translate/16 = -center/16
+  // Box coords are LOCAL to the part (relative to part's translate/origin).
+  // Group is at origin/16 where origin = translate (no negation).
+  // Box world position = translate + center (in pixels)
+  // In Three.js: box world = (translate + center) / 16
+  // Group position = translate / 16
+  // Mesh position = box world - group position = center / 16
   mesh.position.set(
-    -centerX / PIXELS_PER_UNIT,
-    -centerY / PIXELS_PER_UNIT,
-    -centerZ / PIXELS_PER_UNIT,
+    centerX / PIXELS_PER_UNIT,
+    centerY / PIXELS_PER_UNIT,
+    centerZ / PIXELS_PER_UNIT,
   );
 
   mesh.castShadow = true;
