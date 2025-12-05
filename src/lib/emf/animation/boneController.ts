@@ -136,68 +136,95 @@ export function resetAllBones(
 /**
  * Apply animation transforms to a bone.
  *
- * CEM animations use:
- * - tx, ty, tz: Translation as ABSOLUTE translate values (negated to get position)
- * - rx, ry, rz: Rotation in radians (ADDED to base rotation)
- * - sx, sy, sz: Scale factors (MULTIPLIED with base scale)
- * - visible: Visibility flag
+ * CEM animations use different semantics for translations:
+ * - For submodels (children): tx/ty/tz are ABSOLUTE world coordinates
+ *   We subtract the parent's animation value to get relative position
+ * - For top-level parts with small values: tx/ty/tz are ADDITIVE offsets
+ * - For top-level parts with large values: tx/ty/tz are ABSOLUTE translates
  *
- * IMPORTANT: Translation values in CEM animations represent the new "translate"
- * value for the bone, NOT an offset. Since jemLoader negates translate to get
- * the origin/position, we must also negate animation translations.
- *
- * Example: If animation has ty=-4, this means "set translate to -4", which
- * becomes position y = -(-4)/16 = 0.25 in Three.js units.
+ * Rotations are always ADDED to base rotation.
+ * Scales are always MULTIPLIED with base scale.
  *
  * @param bone The Three.js object to transform
  * @param transforms The transforms to apply
- * @param baseTransform Optional base transform for relative rotations/scales
+ * @param baseTransform Optional base transform for relative positioning
+ * @param parentTransforms Optional parent's animation transforms for relative calculation
  */
 export function applyBoneTransform(
   bone: THREE.Object3D,
   transforms: BoneTransform,
-  baseTransform?: BaseTransforms
+  baseTransform?: BaseTransforms,
+  parentTransforms?: BoneTransform
 ): void {
   const base = baseTransform;
   const boneName = bone.name;
+  const hasParentAnimation = parentTransforms !== undefined;
 
   // Log detailed transform info (only first few frames per bone to avoid spam)
   const shouldLog = DEBUG_ANIMATIONS && !loggedBones.has(boneName);
   if (shouldLog && (transforms.tx !== undefined || transforms.ty !== undefined || transforms.tz !== undefined)) {
     frameCount++;
-    if (frameCount <= 50) { // Only log first 50 transforms
+    if (frameCount <= 50) {
       console.log(`[BoneController] Applying transform to "${boneName}":`);
       console.log(`  Animation values: tx=${transforms.tx?.toFixed(3)}, ty=${transforms.ty?.toFixed(3)}, tz=${transforms.tz?.toFixed(3)}`);
       console.log(`  Base position: [${base?.position.x.toFixed(3)}, ${base?.position.y.toFixed(3)}, ${base?.position.z.toFixed(3)}]`);
-      console.log(`  Current position: [${bone.position.x.toFixed(3)}, ${bone.position.y.toFixed(3)}, ${bone.position.z.toFixed(3)}]`);
+      console.log(`  Has parent animation: ${hasParentAnimation}`);
+      if (hasParentAnimation) {
+        console.log(`  Parent animation: tx=${parentTransforms?.tx?.toFixed(3)}, ty=${parentTransforms?.ty?.toFixed(3)}, tz=${parentTransforms?.tz?.toFixed(3)}`);
+      }
     }
     if (frameCount === 5) {
-      loggedBones.add(boneName); // Stop logging this bone after 5 frames
+      loggedBones.add(boneName);
     }
   }
 
-  // Apply translations (ABSOLUTE translate values, negated to get position)
-  // CEM animations provide the new "translate" value for the bone.
-  // Since translate is negated to get position (as in jemLoader), we negate here too.
-  // Example: ty=-4 means translate y=-4, so position y = -(-4)/16 = 0.25
+  // Apply translations based on context
+  // For children with parent animations: use RELATIVE (subtract parent's animation)
+  // For top-level parts: use ADDITIVE (add offset to base position)
   if (transforms.tx !== undefined) {
-    const newX = -transforms.tx / PIXELS_PER_UNIT;
+    let newX: number;
+    if (hasParentAnimation && parentTransforms?.tx !== undefined) {
+      // Relative to parent: position = -(ty - parent_ty) / 16
+      const relativeTx = transforms.tx - parentTransforms.tx;
+      newX = -relativeTx / PIXELS_PER_UNIT;
+    } else {
+      // Additive: position = base + ty / 16
+      newX = (base?.position.x ?? 0) + transforms.tx / PIXELS_PER_UNIT;
+    }
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.x: -${transforms.tx.toFixed(3)}/16 = ${newX.toFixed(3)}`);
+      console.log(`  Setting position.x = ${newX.toFixed(3)}`);
     }
     bone.position.x = newX;
   }
+
   if (transforms.ty !== undefined) {
-    const newY = -transforms.ty / PIXELS_PER_UNIT;
+    let newY: number;
+    if (hasParentAnimation && parentTransforms?.ty !== undefined) {
+      // Relative to parent: position = -(ty - parent_ty) / 16
+      const relativeTy = transforms.ty - parentTransforms.ty;
+      newY = -relativeTy / PIXELS_PER_UNIT;
+    } else {
+      // Additive: position = base + ty / 16
+      newY = (base?.position.y ?? 0) + transforms.ty / PIXELS_PER_UNIT;
+    }
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.y: -${transforms.ty.toFixed(3)}/16 = ${newY.toFixed(3)}`);
+      console.log(`  Setting position.y = ${newY.toFixed(3)}`);
     }
     bone.position.y = newY;
   }
+
   if (transforms.tz !== undefined) {
-    const newZ = -transforms.tz / PIXELS_PER_UNIT;
+    let newZ: number;
+    if (hasParentAnimation && parentTransforms?.tz !== undefined) {
+      // Relative to parent: position = -(tz - parent_tz) / 16
+      const relativeTz = transforms.tz - parentTransforms.tz;
+      newZ = -relativeTz / PIXELS_PER_UNIT;
+    } else {
+      // Additive: position = base + tz / 16
+      newZ = (base?.position.z ?? 0) + transforms.tz / PIXELS_PER_UNIT;
+    }
     if (shouldLog && frameCount <= 50) {
-      console.log(`  Setting position.z: -${transforms.tz.toFixed(3)}/16 = ${newZ.toFixed(3)}`);
+      console.log(`  Setting position.z = ${newZ.toFixed(3)}`);
     }
     bone.position.z = newZ;
   }
@@ -207,7 +234,6 @@ export function applyBoneTransform(
   }
 
   // Apply rotations (in radians, ADDED to base rotation)
-  // CEM rotations are offsets from the model's rest pose
   if (transforms.rx !== undefined) {
     bone.rotation.x = (base?.rotation.x ?? 0) + transforms.rx;
   }

@@ -688,7 +688,18 @@ export class AnimationEngine {
       const bone = this.bones.get(boneName);
       if (bone) {
         const base = this.baseTransforms.get(boneName);
-        applyBoneTransform(bone, transform, base);
+
+        // Get parent's animation transforms if the parent is also animated
+        let parentTransform: BoneTransform | undefined;
+        const parentName = bone.parent?.name;
+        if (parentName && boneTransforms.has(parentName)) {
+          parentTransform = boneTransforms.get(parentName);
+          if (shouldLogThisFrame) {
+            console.log(`[AnimationEngine] ${boneName} has animated parent: ${parentName}`);
+          }
+        }
+
+        applyBoneTransform(bone, transform, base, parentTransform);
       } else if (!this.warnedMissingBones.has(boneName)) {
         // Warn once per missing bone to avoid log spam
         console.warn(
