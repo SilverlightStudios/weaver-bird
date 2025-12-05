@@ -283,7 +283,12 @@ function parseModelPart(
   textureSize: [number, number],
   parentOrigin: [number, number, number] | null,
 ): ParsedPart {
-  const name = part.part || part.id || "unnamed";
+  // IMPORTANT: Prefer id over part to avoid name collisions.
+  // JEM files can have multiple entries with the same "part" but different "id"s:
+  // - {"part":"body", "id":"body", "translate":[0,-6,0], ...} - the actual body
+  // - {"part":"body", "id":"body_part", "model":"...", ...} - external model ref
+  // Using id first ensures each gets a unique name in the bone map.
+  const name = part.id || part.part || "unnamed";
 
   // Get the translate (pivot point)
   // For submodels at depth >= 1, add parent's origin to make absolute
