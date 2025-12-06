@@ -551,28 +551,28 @@ export function jemToThreeJS(
 /**
  * Convert a parsed part to Three.js geometry
  *
- * Key insight: JEM box coordinates have different interpretations:
- * - Root parts (body, arms, legs): boxes are in ABSOLUTE model space
- * - Submodels (head2, ears): boxes are in LOCAL space (relative to translate)
+ * Key insight: JEM uses ORIGIN (= -translate) as the pivot point position.
+ * Box coordinates are in the same space, so we offset them by -origin to make
+ * them relative to the group.
  *
  * The algorithm:
- * 1. Position the group at TRANSLATE (= -origin) in its parent's space
- * 2. For root parts: mesh.position = (boxCenter + origin) / 16 to convert from absolute
- * 3. For submodels: mesh.position = boxCenter / 16 (already relative)
+ * 1. Position the group at ORIGIN (the pivot point)
+ * 2. Mesh position = (boxCenter - origin) / 16 to make it relative to group
  *
  * Example for body (root part):
  *   translate = [0, -24, 0], origin = [0, 24, 0]
- *   group.position = translate/16 = [0, -1.5, 0]
- *   box center (absolute) = [0, 18, 0]
- *   mesh.local = (18 + 24)/16 = 2.625 = [0, 2.625, 0]
- *   mesh.world = group + mesh.local = [0, -1.5, 0] + [0, 2.625, 0] = [0, 1.125, 0] = y=18 pixels ✓
+ *   group.position = origin/16 = [0, 1.5, 0]
+ *   box center = [0, 18, 0]
+ *   mesh.local = (18 - 24)/16 = -0.375
+ *   mesh.world = 1.5 + (-0.375) = 1.125 = y=18 pixels ✓
  *
- * Example for head2 (submodel):
- *   head2 world position = [0, 0, 0] (after hierarchy)
- *   box center (relative) = [0, 4, 0]
- *   mesh.local = [0, 0.25, 0]
- *   mesh.world = [0, 0, 0] + [0, 0.25, 0] = [0, 0.25, 0] = y=4 pixels
- *   Actual world = headwear.y + head2.y = -24 + 24 + 4 = 4 pixels ??? (need to verify)
+ * Example for head2 (submodel of headwear):
+ *   headwear.origin = [0, 24, -0.25], group at [0, 1.5, -0.016]
+ *   head2.origin = [0, -24, 0], local at [0, -1.5, 0]
+ *   head2.world = [0, 1.5, -0.016] + [0, -1.5, 0] = [0, 0, -0.016]
+ *   box center = [0, 4, 0]
+ *   mesh.local = (4 - (-24))/16 = 28/16 = 1.75
+ *   mesh.world = 0 + 1.75 = 1.75 = y=28 pixels ✓ (head at top!)
  */
 function convertPart(
   part: ParsedPart,
@@ -582,18 +582,15 @@ function convertPart(
   const group = new THREE.Group();
   group.name = part.name;
 
-  // Position at TRANSLATE (= -origin) in Three.js units
-  // Since origin = -translate, we use -origin to get translate
+  // Position group at ORIGIN (the pivot point for rotations)
   group.position.set(
-    -part.origin[0] / PIXELS_PER_UNIT,
-    -part.origin[1] / PIXELS_PER_UNIT,
-    -part.origin[2] / PIXELS_PER_UNIT,
+    part.origin[0] / PIXELS_PER_UNIT,
+    part.origin[1] / PIXELS_PER_UNIT,
+    part.origin[2] / PIXELS_PER_UNIT,
   );
 
   // Apply rotation (degrees to radians)
-  // JEM rotations are applied as-is
   // IMPORTANT: Set Euler order to 'ZYX' to match JEM specification
-  // Default 'XYZ' order does not match JEM's expected rotation behavior
   group.rotation.order = 'ZYX';
   group.rotation.set(
     THREE.MathUtils.degToRad(part.rotation[0]),
@@ -607,6 +604,7 @@ function convertPart(
   }
 
   // Create meshes for each box
+  // Mesh position = (center - origin) / 16 to offset from group position
   for (const box of part.boxes) {
     const mesh = createBoxMesh(
       box,
@@ -614,17 +612,10 @@ function convertPart(
       texture,
     );
     if (mesh) {
-      // Adjust mesh position based on whether this is a root part or submodel:
-      // - Root parts: boxes are in ABSOLUTE model space
-      //   → Need to offset by origin so mesh ends up at correct world position
-      //   → mesh.position = (box_center + origin) / 16
-      // - Submodels: boxes are in LOCAL space (relative to translate)
-      //   → mesh.position = box_center / 16 (already set by createBoxMesh)
-      if (part.isRootPart) {
-        mesh.position.x += part.origin[0] / PIXELS_PER_UNIT;
-        mesh.position.y += part.origin[1] / PIXELS_PER_UNIT;
-        mesh.position.z += part.origin[2] / PIXELS_PER_UNIT;
-      }
+      // Offset mesh by -origin to make position relative to group
+      mesh.position.x -= part.origin[0] / PIXELS_PER_UNIT;
+      mesh.position.y -= part.origin[1] / PIXELS_PER_UNIT;
+      mesh.position.z -= part.origin[2] / PIXELS_PER_UNIT;
       group.add(mesh);
     }
   }
@@ -633,20 +624,9 @@ function convertPart(
   for (const child of part.children) {
     const childGroup = convertPart(child, textureSize, texture);
 
-    // Child local position is child's TRANSLATE (= -child.origin).
-    // Three.js hierarchy: child.world = parent.world + child.local
-    //
-    // Example for piglin headwear -> head2:
-    //   headwear.translate = [0, -24, 0.25] → headwear.position = [0, -1.5, 0.016]
-    //   head2.translate = [0, 24, 0] → head2.local = [0, 1.5, 0]
-    //   head2.world = [0, -1.5, 0.016] + [0, 1.5, 0] = [0, 0, 0.016]
-    //   head2 absolute translate = headwear + head2 = [0, 0, 0.25] → [0, 0, 0.016] ✓
-    childGroup.position.set(
-      -child.origin[0] / PIXELS_PER_UNIT,
-      -child.origin[1] / PIXELS_PER_UNIT,
-      -child.origin[2] / PIXELS_PER_UNIT,
-    );
-
+    // Child position is at child's ORIGIN (pivot point)
+    // Since convertPart already set childGroup.position to child.origin,
+    // we just add it to the parent group (Three.js handles the hierarchy)
     group.add(childGroup);
   }
 
@@ -656,17 +636,9 @@ function convertPart(
 /**
  * Create a Three.js mesh for a box
  *
- * Box coordinates are RELATIVE to the part's translate (pivot point).
- * The group is positioned at translate (= -origin).
- * So mesh local position = box center (in pixel coords relative to translate).
- *
- * Example for body:
- *   body.translate = [0, -24, 0]
- *   body group at [0, -1.5, 0] (translate/16)
- *   box center (relative to translate) = [0, 18, 0]
- *   mesh.local = [0, 1.125, 0]
- *   mesh.world = [0, -1.5, 0] + [0, 1.125, 0] = [0, -0.375, 0] = y=-6 pixels
- *   This is: translate.y + boxCenter.y = -24 + 18 = -6 ✓
+ * Creates a mesh positioned at the box center (in pixel coordinates / 16).
+ * The caller (convertPart) will offset this by -origin to make it relative
+ * to the group's position.
  */
 function createBoxMesh(
   box: ParsedBox,
