@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { BoneTransform } from "./types";
 
 const PIXELS_PER_UNIT = 16;
+const CEM_Y_ORIGIN = 24;
 
 export const DEBUG_ANIMATIONS = false;
 
@@ -224,10 +225,15 @@ export function applyBoneTransform(
     typeof userData.invertAxis === "string"
       ? (userData.invertAxis as string)
       : "";
-  // Absolute translations don't use invertAxis (they're in world space already)
+
+  const parentOriginPx = Array.isArray((bone.parent as any)?.userData?.originPx)
+    ? ((bone.parent as any).userData.originPx as [number, number, number])
+    : ([0, 0, 0] as [number, number, number]);
+
+  // Absolute translations are authored as rotationPoint values in CEM space.
+  // We still need to convert them into our Three.js coordinate system.
   const absSignX =
     absoluteAxes.includes("x") && invertAxis.includes("x") ? -1 : 1;
-  const absSignY = 1; // Y absolute translations are not inverted
   const absSignZ =
     absoluteAxes.includes("z") && invertAxis.includes("z") ? -1 : 1;
 
@@ -240,7 +246,7 @@ export function applyBoneTransform(
     const baseX = base?.position.x ?? 0;
     const value = transforms.tx / PIXELS_PER_UNIT;
     if (absoluteAxes.includes("x")) {
-      bone.position.x = absSignX * value;
+      bone.position.x = absSignX * value - parentOriginPx[0] / PIXELS_PER_UNIT;
     } else {
       bone.position.x = baseX + addSignX * value;
     }
@@ -250,7 +256,16 @@ export function applyBoneTransform(
     const baseY = base?.position.y ?? 0;
     const value = transforms.ty / PIXELS_PER_UNIT;
     if (absoluteAxes.includes("y")) {
-      bone.position.y = absSignY * value;
+      const cemYOriginPx =
+        typeof userData.cemYOriginPx === "number"
+          ? (userData.cemYOriginPx as number)
+          : CEM_Y_ORIGIN;
+      // CEM `ty` is rotationPointY (Y-down). Our scene uses Y-up with the feet at 0.
+      // For inverted-Y parts (common in JEM: invertAxis="xy"), convert via (24 - ty).
+      const originY = invertAxis.includes("y")
+        ? cemYOriginPx / PIXELS_PER_UNIT - value
+        : value - cemYOriginPx / PIXELS_PER_UNIT;
+      bone.position.y = originY - parentOriginPx[1] / PIXELS_PER_UNIT;
     } else {
       bone.position.y = baseY + addSignY * value;
     }
@@ -260,7 +275,7 @@ export function applyBoneTransform(
     const baseZ = base?.position.z ?? 0;
     const value = transforms.tz / PIXELS_PER_UNIT;
     if (absoluteAxes.includes("z")) {
-      bone.position.z = absSignZ * value;
+      bone.position.z = absSignZ * value - parentOriginPx[2] / PIXELS_PER_UNIT;
     } else {
       bone.position.z = baseZ + addSignZ * value;
     }

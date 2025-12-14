@@ -635,10 +635,14 @@ export function jemToThreeJS(
     const limb = rootGroups[limbName];
     if (limb) limb.userData.absoluteTranslationAxes = "xyz";
   }
-  // Arms: only X is authored as absolute (includes ±5 base pivot); Y/Z are offsets.
+  // Arms: humanoid rigs author tx/ty as absolute rotationPoint values (e.g. ty≈2.5),
+  // while small/flying rigs tend to use additive offsets for ty. Use a pivot-height
+  // heuristic to distinguish them.
   for (const limbName of ["left_arm", "right_arm"]) {
     const limb = rootGroups[limbName];
-    if (limb) limb.userData.absoluteTranslationAxes = "x";
+    if (!limb) continue;
+    const pivotYPx = limb.position.y * PIXELS_PER_UNIT;
+    limb.userData.absoluteTranslationAxes = pivotYPx >= 16 ? "xy" : "x";
   }
 
   // Collect bones that are explicitly animated so we don't re-parent them.
@@ -664,7 +668,50 @@ export function jemToThreeJS(
   root.traverse((obj) => {
     if (!(obj instanceof THREE.Group)) return;
     if (obj.name === "eyes") {
-      obj.userData.absoluteTranslationAxes = "z";
+      const existing =
+        typeof obj.userData.absoluteTranslationAxes === "string"
+          ? (obj.userData.absoluteTranslationAxes as string)
+          : "";
+      obj.userData.absoluteTranslationAxes = existing.includes("z")
+        ? existing
+        : existing + "z";
+    }
+    // Fresh Animations uses left_eye/right_eye translations as absolute positions
+    // (the expressions include the bone's base translate), so treat them as absolute.
+    if (
+      (obj.name === "left_eye" || obj.name === "right_eye") &&
+      obj.parent?.name === "head2"
+    ) {
+      const existing =
+        typeof obj.userData.absoluteTranslationAxes === "string"
+          ? (obj.userData.absoluteTranslationAxes as string)
+          : "";
+      const want = "xyz";
+      obj.userData.absoluteTranslationAxes = want
+        .split("")
+        .reduce(
+          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+          existing,
+        );
+
+      const parentOriginPx = Array.isArray((obj.parent as any)?.userData?.originPx)
+        ? ((obj.parent as any).userData.originPx as [number, number, number])
+        : null;
+      // Use the parent's origin as the Y origin so absolute-Y becomes a direct
+      // CEM->Three conversion (avoids the 24px biped origin logic).
+      if (parentOriginPx) obj.userData.cemYOriginPx = parentOriginPx[1];
+    }
+    // Fresh Animations allay (and similar) uses head2.ty as an absolute origin
+    // coordinate (in CEM space), not a local offset.
+    if (obj.name === "head2" && obj.parent?.name === "body") {
+      const existing =
+        typeof obj.userData.absoluteTranslationAxes === "string"
+          ? (obj.userData.absoluteTranslationAxes as string)
+          : "";
+      obj.userData.absoluteTranslationAxes = existing.includes("y")
+        ? existing
+        : existing + "y";
+      obj.userData.cemYOriginPx = 0;
     }
   });
 
@@ -683,29 +730,48 @@ function applyVanillaHierarchy(
   animatedBones: Set<string>,
 ): void {
   const hasBody = !!rootGroups.body;
-  const hasHumanoidLimbs =
-    !!rootGroups.left_arm &&
-    !!rootGroups.right_arm &&
-    !!rootGroups.left_leg &&
-    !!rootGroups.right_leg;
+  if (!hasBody) return;
 
-  if (!hasBody || !hasHumanoidLimbs) return;
+  const hasArms = !!rootGroups.left_arm && !!rootGroups.right_arm;
+  const hasLegs = !!rootGroups.left_leg && !!rootGroups.right_leg;
 
-  const parentMap: Record<string, string> = {
-    head: "body",
-    headwear: "head",
-    left_arm: "body",
-    right_arm: "body",
-    left_leg: "body",
-    right_leg: "body",
-    jacket: "body",
-    left_ear: "head",
-    right_ear: "head",
-    left_sleeve: "left_arm",
-    right_sleeve: "right_arm",
-    left_pants: "left_leg",
-    right_pants: "right_leg",
-  };
+  // Vanilla biped-style skeletons (body + arms + legs)
+  const hasHumanoidLimbs = hasArms && hasLegs;
+
+  // Flying/humanoid-lite skeletons (body + arms, but no legs)
+  const hasArmsOnly = hasArms && !hasLegs;
+
+  let parentMap: Record<string, string>;
+  let shouldSkipAnimated: (boneName: string) => boolean;
+
+  if (hasHumanoidLimbs) {
+    parentMap = {
+      head: "body",
+      headwear: "head",
+      left_arm: "body",
+      right_arm: "body",
+      left_leg: "body",
+      right_leg: "body",
+      jacket: "body",
+      left_ear: "head",
+      right_ear: "head",
+      left_sleeve: "left_arm",
+      right_sleeve: "right_arm",
+      left_pants: "left_leg",
+      right_pants: "right_leg",
+    };
+    shouldSkipAnimated = (boneName) => animatedBones.has(boneName);
+  } else if (hasArmsOnly) {
+    // Allay/Vex-style rigs: animations expect arms to inherit body motion via hierarchy.
+    parentMap = {
+      left_arm: "body",
+      right_arm: "body",
+    };
+    // For arms-only rigs, re-parent the arms even if they are animated.
+    shouldSkipAnimated = () => false;
+  } else {
+    return;
+  }
 
   root.updateMatrixWorld(true);
 
@@ -729,7 +795,7 @@ function applyVanillaHierarchy(
     const parent = rootGroups[parentName];
     if (!child || !parent) continue;
     if (child.parent === parent) continue;
-    if (animatedBones.has(childName)) continue;
+    if (shouldSkipAnimated(childName)) continue;
 
     // Mark these as vanilla skeleton parts for animation semantics.
     child.userData.vanillaPart = true;
@@ -765,6 +831,7 @@ function convertPart(
   if (part.invertAxis) {
     group.userData.invertAxis = part.invertAxis;
   }
+  group.userData.originPx = [...part.origin];
 
   // Calculate local position
   // ROOT: position = origin
@@ -861,36 +928,66 @@ function createBoxMesh(
   boxIdx: number,
 ): THREE.Mesh | null {
   const { from, to } = box;
-
-  const width = (to[0] - from[0]) / PIXELS_PER_UNIT;
-  const height = (to[1] - from[1]) / PIXELS_PER_UNIT;
-  const depth = (to[2] - from[2]) / PIXELS_PER_UNIT;
-
-  if (width < 0 || height < 0 || depth < 0) return null;
-  if (width === 0 && height === 0 && depth === 0) return null;
-
-  // Create geometry
-  let geometry: THREE.BufferGeometry;
-  let planeAxis: "x" | "z" | null = null;
-
-  if (width === 0) {
-    geometry = new THREE.PlaneGeometry(depth, height);
-    geometry.rotateY(Math.PI / 2);
-    planeAxis = "x";
-  } else if (depth === 0) {
-    geometry = new THREE.PlaneGeometry(width, height);
-    planeAxis = "z";
-  } else {
-    geometry = new THREE.BoxGeometry(width, height, depth);
-  }
-
   const textureSize = box.textureSize;
 
+  // Blockbench expands 0-sized dimensions slightly (cube.js updateGeometry):
+  //   if (from[i] === to[i]) to[i] += 0.001
+  // This prevents degenerate geometry and allows distinct UVs per face
+  // (e.g. planes with different east/west UVs like allay wings).
+  const rawWidthPx = to[0] - from[0];
+  const rawHeightPx = to[1] - from[1];
+  const rawDepthPx = to[2] - from[2];
+  if (rawWidthPx < 0 || rawHeightPx < 0 || rawDepthPx < 0) return null;
+  if (rawWidthPx === 0 && rawHeightPx === 0 && rawDepthPx === 0) return null;
+
+  const fromPx: [number, number, number] = [...from];
+  const toPx: [number, number, number] = [...to];
+
+  const EPSILON_PX = 0.001;
+  if (rawWidthPx === 0) toPx[0] += EPSILON_PX;
+  if (rawHeightPx === 0) toPx[1] += EPSILON_PX;
+  if (rawDepthPx === 0) toPx[2] += EPSILON_PX;
+
+  const width = (toPx[0] - fromPx[0]) / PIXELS_PER_UNIT;
+  const height = (toPx[1] - fromPx[1]) / PIXELS_PER_UNIT;
+  const depth = (toPx[2] - fromPx[2]) / PIXELS_PER_UNIT;
+
+  // Create geometry
+  const geometry = new THREE.BoxGeometry(width, height, depth);
+
   // Apply UVs
-  if (planeAxis) {
-    applyPlaneUVs(geometry, box.uv, textureSize, planeAxis);
-  } else {
-    applyUVs(geometry as THREE.BoxGeometry, box.uv, textureSize);
+  applyUVs(geometry, box.uv, textureSize);
+
+  // Hide faces that aren't defined in JEM (Blockbench does this via updateFaces).
+  // In our parsed format, missing faces are represented as [0,0,0,0] UVs.
+  const faces: { name: keyof ParsedBox["uv"]; index: number }[] = [
+    { name: "east", index: 0 },
+    { name: "west", index: 1 },
+    { name: "up", index: 2 },
+    { name: "down", index: 3 },
+    { name: "south", index: 4 },
+    { name: "north", index: 5 },
+  ];
+  const hasDisabledFaces = faces.some((face) =>
+    box.uv[face.name].every((v) => v === 0),
+  );
+  if (hasDisabledFaces) {
+    const indices: number[] = [];
+    for (const face of faces) {
+      const faceUV = box.uv[face.name];
+      if (!faceUV || faceUV.every((v) => v === 0)) continue;
+      const base = face.index * 4;
+      indices.push(
+        base + 0,
+        base + 2,
+        base + 1,
+        base + 2,
+        base + 3,
+        base + 1,
+      );
+    }
+    if (indices.length === 0) return null;
+    geometry.setIndex(indices);
   }
 
   // Material
@@ -915,9 +1012,9 @@ function createBoxMesh(
 
   // Position mesh in group's local space
   // Blockbench subtracts origin from box coords: mesh = boxCenter - origin
-  const centerX = (from[0] + to[0]) / 2;
-  const centerY = (from[1] + to[1]) / 2;
-  const centerZ = (from[2] + to[2]) / 2;
+  const centerX = (fromPx[0] + toPx[0]) / 2;
+  const centerY = (fromPx[1] + toPx[1]) / 2;
+  const centerZ = (fromPx[2] + toPx[2]) / 2;
 
   const meshX = (centerX - groupOrigin[0]) / PIXELS_PER_UNIT;
   const meshY = (centerY - groupOrigin[1]) / PIXELS_PER_UNIT;
@@ -976,34 +1073,6 @@ function applyUVs(
     uvAttr.setXY(base + 3, uvU2, uvV2);
   }
 
-  uvAttr.needsUpdate = true;
-}
-
-function applyPlaneUVs(
-  geometry: THREE.BufferGeometry,
-  uv: ParsedBox["uv"],
-  textureSize: [number, number],
-  axis: "x" | "z",
-): void {
-  const [texWidth, texHeight] = textureSize;
-  const uvAttr = geometry.attributes.uv;
-  if (!uvAttr) return;
-
-  let faceUV = axis === "x" ? uv.east : uv.north;
-  if (!faceUV || faceUV.every((v) => v === 0)) {
-    faceUV = axis === "x" ? uv.west : uv.south;
-  }
-
-  const [u1, v1, u2, v2] = faceUV;
-  const uvU1 = u1 / texWidth,
-    uvV1 = 1 - v1 / texHeight;
-  const uvU2 = u2 / texWidth,
-    uvV2 = 1 - v2 / texHeight;
-
-  uvAttr.setXY(0, uvU1, uvV1);
-  uvAttr.setXY(1, uvU2, uvV1);
-  uvAttr.setXY(2, uvU1, uvV2);
-  uvAttr.setXY(3, uvU2, uvV2);
   uvAttr.needsUpdate = true;
 }
 
