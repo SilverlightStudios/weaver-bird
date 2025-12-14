@@ -645,6 +645,31 @@ export function jemToThreeJS(
     limb.userData.absoluteTranslationAxes = pivotYPx >= 16 ? "xy" : "x";
   }
 
+  // Quadruped-style skeletons (cow, sheep, pig, mooshroom, creeper): leg1-leg4.
+  // Fresh Animations authors translations as full rotationPoint values.
+  const hasQuadrupedLegs =
+    !!rootGroups.leg1 &&
+    !!rootGroups.leg2 &&
+    !!rootGroups.leg3 &&
+    !!rootGroups.leg4;
+  const hasDirectionalLegs =
+    !!rootGroups.front_left_leg &&
+    !!rootGroups.front_right_leg &&
+    !!rootGroups.back_left_leg &&
+    !!rootGroups.back_right_leg;
+  if (hasQuadrupedLegs || hasDirectionalLegs) {
+    const legNames = hasQuadrupedLegs
+      ? ["leg1", "leg2", "leg3", "leg4"]
+      : ["front_left_leg", "front_right_leg", "back_left_leg", "back_right_leg"];
+    for (const legName of legNames) {
+      const leg = rootGroups[legName];
+      if (leg) leg.userData.absoluteTranslationAxes = "xyz";
+    }
+
+    const body = rootGroups.body;
+    if (body) body.userData.absoluteTranslationAxes = "xyz";
+  }
+
   // Collect bones that are explicitly animated so we don't re-parent them.
   const animatedBones = new Set<string>();
   if (model.animations) {
@@ -675,6 +700,7 @@ export function jemToThreeJS(
       obj.userData.absoluteTranslationAxes = existing.includes("z")
         ? existing
         : existing + "z";
+      obj.userData.absoluteTranslationSpace = "local";
     }
     // Fresh Animations uses left_eye/right_eye translations as absolute positions
     // (the expressions include the bone's base translate), so treat them as absolute.
@@ -693,6 +719,7 @@ export function jemToThreeJS(
           (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
           existing,
         );
+      obj.userData.absoluteTranslationSpace = "local";
 
       const parentOriginPx = Array.isArray((obj.parent as any)?.userData?.originPx)
         ? ((obj.parent as any).userData.originPx as [number, number, number])
@@ -701,6 +728,26 @@ export function jemToThreeJS(
       // CEM->Three conversion (avoids the 24px biped origin logic).
       if (parentOriginPx) obj.userData.cemYOriginPx = parentOriginPx[1];
     }
+
+    // Pupils in Fresh Animations are driven by expressions that already include
+    // their base translate, so treat them as local absolute translations.
+    if (
+      obj.name.endsWith("_pupil") &&
+      (obj.parent?.name === "right_eye" || obj.parent?.name === "left_eye")
+    ) {
+      const existing =
+        typeof obj.userData.absoluteTranslationAxes === "string"
+          ? (obj.userData.absoluteTranslationAxes as string)
+          : "";
+      const want = "xyz";
+      obj.userData.absoluteTranslationAxes = want
+        .split("")
+        .reduce(
+          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+          existing,
+        );
+      obj.userData.absoluteTranslationSpace = "local";
+    }
     // Fresh Animations allay (and similar) uses head2.ty as an absolute origin
     // coordinate (in CEM space), not a local offset.
     if (obj.name === "head2" && obj.parent?.name === "body") {
@@ -708,9 +755,13 @@ export function jemToThreeJS(
         typeof obj.userData.absoluteTranslationAxes === "string"
           ? (obj.userData.absoluteTranslationAxes as string)
           : "";
-      obj.userData.absoluteTranslationAxes = existing.includes("y")
-        ? existing
-        : existing + "y";
+      const want = "xyz";
+      obj.userData.absoluteTranslationAxes = want
+        .split("")
+        .reduce(
+          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+          existing,
+        );
       obj.userData.cemYOriginPx = 0;
     }
   });

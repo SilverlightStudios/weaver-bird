@@ -226,6 +226,12 @@ export function applyBoneTransform(
       ? (userData.invertAxis as string)
       : "";
 
+  const absoluteSpace =
+    typeof userData.absoluteTranslationSpace === "string"
+      ? (userData.absoluteTranslationSpace as string)
+      : "entity";
+  const isLocalAbsolute = absoluteSpace === "local";
+
   const parentOriginPx = Array.isArray((bone.parent as any)?.userData?.originPx)
     ? ((bone.parent as any).userData.originPx as [number, number, number])
     : ([0, 0, 0] as [number, number, number]);
@@ -246,7 +252,9 @@ export function applyBoneTransform(
     const baseX = base?.position.x ?? 0;
     const value = transforms.tx / PIXELS_PER_UNIT;
     if (absoluteAxes.includes("x")) {
-      bone.position.x = absSignX * value - parentOriginPx[0] / PIXELS_PER_UNIT;
+      bone.position.x = isLocalAbsolute
+        ? absSignX * value
+        : absSignX * value - parentOriginPx[0] / PIXELS_PER_UNIT;
     } else {
       bone.position.x = baseX + addSignX * value;
     }
@@ -256,16 +264,20 @@ export function applyBoneTransform(
     const baseY = base?.position.y ?? 0;
     const value = transforms.ty / PIXELS_PER_UNIT;
     if (absoluteAxes.includes("y")) {
-      const cemYOriginPx =
-        typeof userData.cemYOriginPx === "number"
-          ? (userData.cemYOriginPx as number)
-          : CEM_Y_ORIGIN;
-      // CEM `ty` is rotationPointY (Y-down). Our scene uses Y-up with the feet at 0.
-      // For inverted-Y parts (common in JEM: invertAxis="xy"), convert via (24 - ty).
-      const originY = invertAxis.includes("y")
-        ? cemYOriginPx / PIXELS_PER_UNIT - value
-        : value - cemYOriginPx / PIXELS_PER_UNIT;
-      bone.position.y = originY - parentOriginPx[1] / PIXELS_PER_UNIT;
+      if (isLocalAbsolute) {
+        bone.position.y = addSignY * value;
+      } else {
+        const cemYOriginPx =
+          typeof userData.cemYOriginPx === "number"
+            ? (userData.cemYOriginPx as number)
+            : CEM_Y_ORIGIN;
+        // CEM `ty` is rotationPointY (Y-down). Our scene uses Y-up with the feet at 0.
+        // For inverted-Y parts (common in JEM: invertAxis="xy"), convert via (24 - ty).
+        const originY = invertAxis.includes("y")
+          ? cemYOriginPx / PIXELS_PER_UNIT - value
+          : value - cemYOriginPx / PIXELS_PER_UNIT;
+        bone.position.y = originY - parentOriginPx[1] / PIXELS_PER_UNIT;
+      }
     } else {
       bone.position.y = baseY + addSignY * value;
     }
@@ -275,7 +287,9 @@ export function applyBoneTransform(
     const baseZ = base?.position.z ?? 0;
     const value = transforms.tz / PIXELS_PER_UNIT;
     if (absoluteAxes.includes("z")) {
-      bone.position.z = absSignZ * value - parentOriginPx[2] / PIXELS_PER_UNIT;
+      bone.position.z = isLocalAbsolute
+        ? absSignZ * value
+        : absSignZ * value - parentOriginPx[2] / PIXELS_PER_UNIT;
     } else {
       bone.position.z = baseZ + addSignZ * value;
     }
