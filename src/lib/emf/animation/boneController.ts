@@ -226,6 +226,13 @@ export function applyBoneTransform(
       ? (userData.invertAxis as string)
       : "";
 
+  const absoluteRotationAxes: string =
+    typeof userData.absoluteRotationAxes === "string"
+      ? (userData.absoluteRotationAxes as string)
+      : userData.absoluteRotation === true
+        ? "xyz"
+        : "";
+
   const absoluteSpace =
     typeof userData.absoluteTranslationSpace === "string"
       ? (userData.absoluteTranslationSpace as string)
@@ -316,13 +323,19 @@ export function applyBoneTransform(
   const rotSignZ = invertAxis.includes("z") ? -1 : 1;
 
   if (transforms.rx !== undefined) {
-    bone.rotation.x = (base?.rotation.x ?? 0) + rotSignX * transforms.rx;
+    bone.rotation.x = absoluteRotationAxes.includes("x")
+      ? rotSignX * transforms.rx
+      : (base?.rotation.x ?? 0) + rotSignX * transforms.rx;
   }
   if (transforms.ry !== undefined) {
-    bone.rotation.y = (base?.rotation.y ?? 0) + rotSignY * transforms.ry;
+    bone.rotation.y = absoluteRotationAxes.includes("y")
+      ? rotSignY * transforms.ry
+      : (base?.rotation.y ?? 0) + rotSignY * transforms.ry;
   }
   if (transforms.rz !== undefined) {
-    bone.rotation.z = (base?.rotation.z ?? 0) + rotSignZ * transforms.rz;
+    bone.rotation.z = absoluteRotationAxes.includes("z")
+      ? rotSignZ * transforms.rz
+      : (base?.rotation.z ?? 0) + rotSignZ * transforms.rz;
   }
 
   if (transforms.sx !== undefined) {

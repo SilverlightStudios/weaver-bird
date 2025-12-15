@@ -657,7 +657,8 @@ export function jemToThreeJS(
     !!rootGroups.front_right_leg &&
     !!rootGroups.back_left_leg &&
     !!rootGroups.back_right_leg;
-  if (hasQuadrupedLegs || hasDirectionalLegs) {
+  const isQuadruped = hasQuadrupedLegs || hasDirectionalLegs;
+  if (isQuadruped) {
     const legNames = hasQuadrupedLegs
       ? ["leg1", "leg2", "leg3", "leg4"]
       : ["front_left_leg", "front_right_leg", "back_left_leg", "back_right_leg"];
@@ -702,11 +703,27 @@ export function jemToThreeJS(
         : existing + "z";
       obj.userData.absoluteTranslationSpace = "local";
     }
+    // "rotation" sub-bones are used as pre-rotated geometry containers (e.g. quadruped bodies).
+    // Some packs (Fresh Animations cat/ocelot) animate `rotation.rx` as an absolute angle
+    // (e.g. `pi/2`), so treat X rotation as absolute to avoid double-applying the base rotate.
+    if (obj.name === "rotation") {
+      const existing =
+        typeof obj.userData.absoluteRotationAxes === "string"
+          ? (obj.userData.absoluteRotationAxes as string)
+          : "";
+      const want = "x";
+      obj.userData.absoluteRotationAxes = want
+        .split("")
+        .reduce(
+          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+          existing,
+        );
+    }
     // Fresh Animations uses left_eye/right_eye translations as absolute positions
     // (the expressions include the bone's base translate), so treat them as absolute.
     if (
       (obj.name === "left_eye" || obj.name === "right_eye") &&
-      obj.parent?.name === "head2"
+      (obj.parent?.name === "head2" || obj.parent?.name === "eyes")
     ) {
       const existing =
         typeof obj.userData.absoluteTranslationAxes === "string"
@@ -727,6 +744,40 @@ export function jemToThreeJS(
       // Use the parent's origin as the Y origin so absolute-Y becomes a direct
       // CEM->Three conversion (avoids the 24px biped origin logic).
       if (parentOriginPx) obj.userData.cemYOriginPx = parentOriginPx[1];
+    }
+
+    // Goat/sheep-style snouts animate the mouth translations as absolute
+    // positions (they already include the bone's base translate).
+    if (obj.name === "mouth" && obj.parent?.name === "snout") {
+      const existing =
+        typeof obj.userData.absoluteTranslationAxes === "string"
+          ? (obj.userData.absoluteTranslationAxes as string)
+          : "";
+      const want = "xyz";
+      obj.userData.absoluteTranslationAxes = want
+        .split("")
+        .reduce(
+          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+          existing,
+        );
+      obj.userData.absoluteTranslationSpace = "local";
+    }
+
+    // Fresh Animations goat "coat" uses ty as an absolute origin value (in CEM
+    // space), not a local offset; use a 0px Y origin for quadrupeds.
+    if (isQuadruped && obj.name === "coat" && obj.parent?.name === "body") {
+      const existing =
+        typeof obj.userData.absoluteTranslationAxes === "string"
+          ? (obj.userData.absoluteTranslationAxes as string)
+          : "";
+      const want = "y";
+      obj.userData.absoluteTranslationAxes = want
+        .split("")
+        .reduce(
+          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+          existing,
+        );
+      obj.userData.cemYOriginPx = 0;
     }
 
     // Pupils in Fresh Animations are driven by expressions that already include
@@ -767,6 +818,22 @@ export function jemToThreeJS(
           existing,
         );
       obj.userData.absoluteTranslationSpace = "local";
+    }
+    // Cat/Ocelot tails animate `tail3.ty/tail3.tz` as absolute origin values
+    // (e.g. ty=-9, tz=9), so treat Y/Z as absolute and use a 0px Y origin.
+    if (obj.name === "tail3" && obj.parent?.name === "body") {
+      const existing =
+        typeof obj.userData.absoluteTranslationAxes === "string"
+          ? (obj.userData.absoluteTranslationAxes as string)
+          : "";
+      const want = "yz";
+      obj.userData.absoluteTranslationAxes = want
+        .split("")
+        .reduce(
+          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+          existing,
+        );
+      obj.userData.cemYOriginPx = 0;
     }
     // Fresh Animations allay (and similar) uses head2.ty as an absolute origin
     // coordinate (in CEM space), not a local offset.
