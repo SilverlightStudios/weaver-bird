@@ -658,6 +658,7 @@ export function jemToThreeJS(
     !!rootGroups.back_left_leg &&
     !!rootGroups.back_right_leg;
   const isQuadruped = hasQuadrupedLegs || hasDirectionalLegs;
+  const hasHorseFamilyRig = isQuadruped && !!root.getObjectByName("neck2");
   if (isQuadruped) {
     const legNames = hasQuadrupedLegs
       ? ["leg1", "leg2", "leg3", "leg4"]
@@ -690,40 +691,6 @@ export function jemToThreeJS(
   applyVanillaHierarchy(root, rootGroups, animatedBones);
 
   // Fix translation semantics for specific animated submodels.
-  // Eyes in Fresh Animations use absolute tz to pin to head.
-  const getLastAnimationValue = (property: string): unknown => {
-    let found: unknown = undefined;
-    if (!model.animations) return found;
-    for (const layer of model.animations) {
-      if (layer && Object.prototype.hasOwnProperty.call(layer, property)) {
-        found = (layer as any)[property];
-      }
-    }
-    return found;
-  };
-
-  const extractEdgeConstant = (expr: unknown): number | null => {
-    if (typeof expr === "number") return Number.isFinite(expr) ? expr : null;
-    if (typeof expr !== "string") return null;
-    const s = expr.trim();
-    if (s.length === 0) return null;
-
-    // Prefer a leading constant (`-9.5 + ...`, `3.7 + ...`)
-    const leading = s.match(/^([+-]?\d+(?:\.\d+)?)(?=\s|$|[+\-*/,)])/);
-    if (leading) {
-      const n = Number(leading[1]);
-      return Number.isFinite(n) ? n : null;
-    }
-
-    // Fallback to a trailing constant (`... ) -19`)
-    const trailing = s.match(/([+-]?\d+(?:\.\d+)?)\s*$/);
-    if (trailing) {
-      const n = Number(trailing[1]);
-      return Number.isFinite(n) ? n : null;
-    }
-    return null;
-  };
-
   root.traverse((obj) => {
     if (!(obj instanceof THREE.Group)) return;
     if (obj.name === "eyes") {
@@ -736,44 +703,6 @@ export function jemToThreeJS(
         : existing + "z";
       obj.userData.absoluteTranslationSpace = "local";
     }
-    // "rotation" sub-bones are used as pre-rotated geometry containers (e.g. quadruped bodies).
-    // Some packs (Fresh Animations cat/ocelot) animate `rotation.rx` as an absolute angle
-    // (e.g. `pi/2`), so treat X rotation as absolute to avoid double-applying the base rotate.
-    if (obj.name === "rotation") {
-      const existing =
-        typeof obj.userData.absoluteRotationAxes === "string"
-          ? (obj.userData.absoluteRotationAxes as string)
-          : "";
-      const want = "x";
-      obj.userData.absoluteRotationAxes = want
-        .split("")
-        .reduce(
-          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
-          existing,
-        );
-    }
-    // Quadrupeds that include a `body_rotation` helper bone have already baked the
-    // vanilla +90° body rotation into their geometry. Fresh Animations still sets
-    // `body.rx ≈ pi/2` to match vanilla's baseline, so we subtract that baseline
-    // when applying animation to the `body` bone to avoid double-rotating.
-    if (
-      obj.name === "body" &&
-      Array.isArray(obj.children) &&
-      obj.children.some((c) => c.name === "body_rotation")
-    ) {
-      obj.userData.rotationOffsetX = Math.PI / 2;
-    }
-    // For these rigs, head2 and tail2 animations include a baked `-pi/2` term
-    // (matching vanilla's baseline body rotation). Since we remove the baseline
-    // from the body transform above, remove it from these parts as well.
-    if (
-      (obj.name === "head2" || obj.name === "tail2") &&
-      obj.parent?.name === "body" &&
-      Array.isArray(obj.parent?.children) &&
-      obj.parent.children.some((c) => c.name === "body_rotation")
-    ) {
-      obj.userData.rotationOffsetX = -Math.PI / 2;
-    }
     // Wolves also author `body_rotation.tz` (and friends) as rotationPoint values
     // (expressions include a base `+2`), so treat Z translation as absolute to avoid
     // double-applying the part's pivot.
@@ -783,12 +712,6 @@ export function jemToThreeJS(
       // (We currently only mark Z as absolute, but keeping this here avoids surprises
       // if we expand the absolute axes later.)
       obj.userData.cemYOriginPx = 0;
-
-      // Fresh Animations often bakes a baseline into `body_rotation.ty`
-      // (e.g. wolf: `-9.5 + ...`). Subtract it so the rest pose evaluates to 0.
-      const tyExpr = getLastAnimationValue("body_rotation.ty");
-      const baselineTy = extractEdgeConstant(tyExpr);
-      if (baselineTy !== null) obj.userData.translationOffsetYPx = baselineTy;
     }
     // Fresh Animations uses left_eye/right_eye translations as absolute positions
     // (the expressions include the bone's base translate), so treat them as absolute.
@@ -854,7 +777,7 @@ export function jemToThreeJS(
     // Horse-family rigs (horse/donkey/mule/skeleton horse/zombie horse) animate
     // neck2 and tail2 translations as absolute origin values (e.g. ty≈-18.7),
     // not local offsets. Use a 0px CEM Y origin and subtract the body/saddle pivot.
-    if (isQuadruped && obj.parent?.name === "body") {
+    if (hasHorseFamilyRig && obj.parent?.name === "body") {
       if (obj.name === "neck2") {
         const existing =
           typeof obj.userData.absoluteTranslationAxes === "string"
@@ -949,46 +872,8 @@ export function jemToThreeJS(
       Array.isArray(obj.parent?.children) &&
       obj.parent.children.some((c) => c.name === "body_rotation")
     ) {
-      const parentOriginPx = Array.isArray((obj.parent as any)?.userData?.originPx)
-        ? ((obj.parent as any).userData.originPx as [number, number, number])
-        : null;
-
-      // Absolute Y with a custom CEM Y origin so the baseline becomes 0 at rest.
-      const existing =
-        typeof obj.userData.absoluteTranslationAxes === "string"
-          ? (obj.userData.absoluteTranslationAxes as string)
-          : "";
-      const want = "y";
-      obj.userData.absoluteTranslationAxes = want
-        .split("")
-        .reduce(
-          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
-          existing,
-        );
-
-      if (parentOriginPx) {
-        const baseTy = obj.name === "head2" ? -16 : -3;
-        obj.userData.cemYOriginPx = parentOriginPx[1] + baseTy;
-      }
-
-      // Subtract the baked Z baseline so tz behaves like a delta.
-      obj.userData.translationOffsetZPx = obj.name === "head2" ? 3.5 : 3.7;
-    }
-    // Wolves also author `mane2.tx/ty/tz` as local absolute positions
-    // (expressions include the rest pose translate).
-    if (obj.name === "mane2" && obj.parent?.name === "body_rotation") {
-      const existing =
-        typeof obj.userData.absoluteTranslationAxes === "string"
-          ? (obj.userData.absoluteTranslationAxes as string)
-          : "";
-      const want = "xyz";
-      obj.userData.absoluteTranslationAxes = want
-        .split("")
-        .reduce(
-          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
-          existing,
-        );
-      obj.userData.absoluteTranslationSpace = "local";
+      // No-op: tick(0) baseline normalization in the AnimationEngine handles
+      // baked constants on additive channels without relying on part names.
     }
     // Piglin-style snouts (nose/tusks) animate `ty` as an absolute (already
     // includes the bone's base translate, typically `-2` with invertAxis="xy").
@@ -1026,27 +911,28 @@ export function jemToThreeJS(
         );
       obj.userData.cemYOriginPx = 0;
     }
-    // Fresh Animations allay (and similar) uses head2.ty as an absolute origin
-    // coordinate (in CEM space), not a local offset.
-    if (obj.name === "head2" && obj.parent?.name === "body") {
+    // Quadruped heads in Fresh Animations are commonly authored in "rotationPoint"
+    // space (values include large baseline constants like `-20`), so treat head2
+    // translations as absolute origin coordinates. Body-rotation rigs are handled
+    // separately above.
+    if (isQuadruped && obj.name === "head2" && obj.parent?.name === "body") {
       const isBodyRotationRig =
         Array.isArray(obj.parent?.children) &&
         obj.parent.children.some((c) => c.name === "body_rotation");
-      // Body-rotation rigs have special handling above.
-      if (isBodyRotationRig) return;
-
-      const existing =
-        typeof obj.userData.absoluteTranslationAxes === "string"
-          ? (obj.userData.absoluteTranslationAxes as string)
-          : "";
-      const want = "xyz";
-      obj.userData.absoluteTranslationAxes = want
-        .split("")
-        .reduce(
-          (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
-          existing,
-        );
-      obj.userData.cemYOriginPx = 0;
+      if (!isBodyRotationRig) {
+        const existing =
+          typeof obj.userData.absoluteTranslationAxes === "string"
+            ? (obj.userData.absoluteTranslationAxes as string)
+            : "";
+        const want = "xyz";
+        obj.userData.absoluteTranslationAxes = want
+          .split("")
+          .reduce(
+            (acc, axis) => (acc.includes(axis) ? acc : acc + axis),
+            existing,
+          );
+        obj.userData.cemYOriginPx = 0;
+      }
     }
   });
 

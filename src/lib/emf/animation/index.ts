@@ -69,6 +69,18 @@ export {
   getAvailableAnimationPresetIdsForAnimationLayers,
 } from "./presetDiscovery";
 
+// Trigger discovery exports
+export {
+  getAvailableAnimationTriggerIdsForAnimationLayers,
+  type AnimationTriggerId,
+} from "./triggerDiscovery";
+
+export {
+  ANIMATION_TRIGGERS,
+  getTriggerDefinition,
+  type AnimationTriggerDefinition,
+} from "./triggers";
+
 // Bone controller exports
 export type { BoneMap, BaseTransforms, BaseTransformMap } from "./boneController";
 export {

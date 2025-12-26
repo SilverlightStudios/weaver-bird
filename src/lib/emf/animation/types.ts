@@ -275,7 +275,10 @@ export const DEFAULT_ENTITY_STATE: EntityState = {
   head_pitch: 0,
 
   // Timing
-  age: 0,
+  // Start above OptiFine/Fresh Animations "boot" thresholds (many packs use
+  // `age<9` / `age<=10` for initialization branches; starting at 0 causes
+  // visible pose drift during the first half-second in previews).
+  age: 100,
   time: 0,
   day_time: 6000, // Noon
   day_count: 0,

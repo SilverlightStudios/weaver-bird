@@ -13,6 +13,7 @@ import { Separator } from "@/ui/components/Separator/Separator";
 import { useEffect } from "react";
 import { useStore } from "@state/store";
 import { ANIMATION_PRESETS } from "@lib/emf/animation/entityState";
+import { ANIMATION_TRIGGERS } from "@lib/emf/animation";
 
 export const AnimationsTab = () => {
   const animationPreset = useStore((state) => state.animationPreset);
@@ -23,12 +24,16 @@ export const AnimationsTab = () => {
   const availableAnimationPresets = useStore(
     (state) => state.availableAnimationPresets,
   );
+  const availableAnimationTriggers = useStore(
+    (state) => state.availableAnimationTriggers,
+  );
 
   const setAnimationPreset = useStore((state) => state.setAnimationPreset);
   const setAnimationPlaying = useStore((state) => state.setAnimationPlaying);
   const setAnimationSpeed = useStore((state) => state.setAnimationSpeed);
   const setEntityHeadYaw = useStore((state) => state.setEntityHeadYaw);
   const setEntityHeadPitch = useStore((state) => state.setEntityHeadPitch);
+  const triggerAnimation = useStore((state) => state.triggerAnimation);
 
   const handlePresetClick = (presetId: string) => {
     if (animationPreset === presetId) {
@@ -65,6 +70,18 @@ export const AnimationsTab = () => {
       ? ANIMATION_PRESETS
       : ANIMATION_PRESETS.filter((p) => availableAnimationPresets.includes(p.id));
 
+  const visibleTriggers =
+    availableAnimationTriggers === null
+      ? []
+      : ANIMATION_TRIGGERS.filter((t) => availableAnimationTriggers.includes(t.id));
+
+  const hiddenPresetIds = new Set<string>();
+  if (availableAnimationTriggers?.includes("trigger.hurt")) hiddenPresetIds.add("hurt");
+  if (availableAnimationTriggers?.includes("trigger.death")) hiddenPresetIds.add("dying");
+  if (availableAnimationTriggers?.includes("trigger.attack")) hiddenPresetIds.add("attacking");
+
+  const filteredPresets = visiblePresets.filter((p) => !hiddenPresetIds.has(p.id));
+
   useEffect(() => {
     if (
       animationPreset &&
@@ -87,7 +104,7 @@ export const AnimationsTab = () => {
             Animation Presets
           </label>
           <div className="grid grid-cols-3 gap-2">
-            {visiblePresets.map((preset) => (
+            {filteredPresets.map((preset) => (
               <button
                 key={preset.id}
                 onClick={() => handlePresetClick(preset.id)}
@@ -108,7 +125,7 @@ export const AnimationsTab = () => {
               </button>
             ))}
           </div>
-          {visiblePresets.length === 0 && (
+          {filteredPresets.length === 0 && (
             <p className="text-xs text-muted-foreground mt-2">
               No animation presets detected for this model.
             </p>
@@ -166,6 +183,34 @@ export const AnimationsTab = () => {
             </div>
           </>
         )}
+
+        {/* Trigger overlays */}
+        <Separator className="mb-4" />
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">
+            Temporary Overlays
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {visibleTriggers.map((trigger) => (
+              <button
+                key={trigger.id}
+                onClick={() => triggerAnimation(trigger.id)}
+                className="p-2 rounded-md border text-left transition-colors bg-background border-border hover:bg-accent"
+                title={trigger.description}
+              >
+                <span className="text-sm truncate">{trigger.name}</span>
+              </button>
+            ))}
+          </div>
+          {visibleTriggers.length === 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              No overlay triggers detected for this model.
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground mt-2">
+            Overlays play on top of the selected preset (or the rest pose).
+          </p>
+        </div>
 
         {/* Head Control */}
         <Separator className="mb-4" />

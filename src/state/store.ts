@@ -95,6 +95,8 @@ interface StoreActions {
   setEntityHeadYaw: (yaw: number) => void;
   setEntityHeadPitch: (pitch: number) => void;
   setAvailableAnimationPresets: (presets: string[] | null) => void;
+  setAvailableAnimationTriggers: (triggers: string[] | null) => void;
+  triggerAnimation: (triggerId: string) => void;
 
   // Debug mode
   setJemDebugMode: (enabled: boolean) => void;
@@ -167,6 +169,9 @@ const initialState: AppState = {
   entityHeadYaw: 0, // Looking forward
   entityHeadPitch: 0, // Looking forward
   availableAnimationPresets: null, // Show all presets by default
+  availableAnimationTriggers: null, // No triggers by default
+  animationTriggerRequestId: null,
+  animationTriggerRequestNonce: 0,
 
   // Debug mode
   jemDebugMode: false, // Debug mode disabled by default
@@ -541,6 +546,19 @@ export const useStore = create<WeaverbirdStore>()(
     setAvailableAnimationPresets: (presets: string[] | null) => {
       set((state) => {
         state.availableAnimationPresets = presets;
+      });
+    },
+
+    setAvailableAnimationTriggers: (triggers: string[] | null) => {
+      set((state) => {
+        state.availableAnimationTriggers = triggers;
+      });
+    },
+
+    triggerAnimation: (triggerId: string) => {
+      set((state) => {
+        state.animationTriggerRequestId = triggerId;
+        state.animationTriggerRequestNonce += 1;
       });
     },
 

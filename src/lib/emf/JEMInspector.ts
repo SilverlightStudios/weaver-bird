@@ -27,6 +27,7 @@ export class JEMInspector {
   private selectedPart: THREE.Object3D | null = null;
   private currentHighlight: THREE.BoxHelper | null = null;
   private selectedFolder: GUI | null = null;
+  private folderLabels: Map<GUI, string> = new Map();
   private transformControls: {
     state: any;
     posXCtrl: any;
@@ -116,19 +117,18 @@ export class JEMInspector {
 
       // Create a folder for this part
       const partFolder = folder.addFolder(label);
+      this.folderLabels.set(partFolder, label);
 
       // Add click listener to folder title for selection (Babylon inspector style)
       const titleElement = partFolder.domElement.querySelector(".title");
       if (titleElement) {
-        titleElement.addEventListener("click", (e) => {
+        titleElement.addEventListener("click", () => {
           console.log(`[JEMInspector] Folder title clicked: ${label}`);
 
           // Deselect previous folder
           if (this.selectedFolder && this.selectedFolder !== partFolder) {
-            const prevTitle = this.selectedFolder.title();
-            if (prevTitle.endsWith(" - selected")) {
-              this.selectedFolder.title(prevTitle.replace(" - selected", ""));
-            }
+            const prevLabel = this.folderLabels.get(this.selectedFolder);
+            if (prevLabel) this.selectedFolder.title(prevLabel);
           }
 
           // Select this part
@@ -436,16 +436,7 @@ export class JEMInspector {
     };
 
     // Update transform panel
-    const {
-      state,
-      posXCtrl,
-      posYCtrl,
-      posZCtrl,
-      rotXCtrl,
-      rotYCtrl,
-      rotZCtrl,
-      changesState,
-    } = this.transformControls;
+    const { state, changesState } = this.transformControls;
     state.partName = part.name || "Unnamed";
     state.posX = part.position.x;
     state.posY = part.position.y;

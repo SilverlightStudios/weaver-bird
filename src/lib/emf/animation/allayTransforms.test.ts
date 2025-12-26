@@ -98,9 +98,9 @@ describe("Fresh Animations (allay) transform sanity", () => {
     rightArm!.getWorldPosition(rightArmWorldAfter);
     leftArm!.getWorldPosition(leftArmWorldAfter);
 
-    // The body rises ~0.25 units at tick(0); arms should rise with it (not stay ~0.31).
-    expect(rightArmWorldAfter.y - rightArmWorldBefore.y).toBeGreaterThan(0.15);
-    expect(leftArmWorldAfter.y - leftArmWorldBefore.y).toBeGreaterThan(0.15);
-    expect(bodyWorldAfter.y - bodyWorldBefore.y).toBeGreaterThan(0.15);
+    // Baseline normalization keeps tick(0) at the JEM rest pose.
+    expect(rightArmWorldAfter.y - rightArmWorldBefore.y).toBeCloseTo(0, 3);
+    expect(leftArmWorldAfter.y - leftArmWorldBefore.y).toBeCloseTo(0, 3);
+    expect(bodyWorldAfter.y - bodyWorldBefore.y).toBeCloseTo(0, 3);
   });
 });

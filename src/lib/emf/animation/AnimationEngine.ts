@@ -18,7 +18,7 @@ import {
   DEFAULT_ENTITY_STATE,
   clampAnimationSpeed,
 } from "./types";
-import { compileExpression } from "./expressionParser";
+import { compileExpression, isConstantExpression } from "./expressionParser";
 import { safeEvaluate } from "./expressionEvaluator";
 import {
   BoneMap,
@@ -34,6 +34,7 @@ import {
 } from "./boneController";
 import type { AnimationPreset } from "./entityState";
 import { getPresetById } from "./entityState";
+import { getTriggerDefinition } from "./triggers";
 
 /**
  * Compiled animation expression with metadata.
@@ -57,6 +58,46 @@ interface CompiledAnimation {
 export class AnimationEngine {
   /** Compiled animations organized by layer */
   private animationLayers: CompiledAnimation[][] = [];
+
+  /**
+   * Baseline (tick 0) values for bone properties, used to normalize transforms
+   * without relying on bone-name special cases.
+   */
+  private baselineBoneValues: Map<string, number> = new Map();
+
+  /** Tracks which bones animate translation axes (tx/ty/tz). */
+  private translationAxesByBone: Map<string, Set<"x" | "y" | "z">> = new Map();
+
+  /** Tracks which bones animate rotation axes (rx/ry/rz). */
+  private rotationAxesByBone: Map<string, Set<"x" | "y" | "z">> = new Map();
+
+  /**
+   * Rest-pose bone values in CEM space, used to seed `context.boneValues` so
+   * expressions that read other bones (e.g. `var.Nty = neck.ty`) see meaningful
+   * defaults even when those bones are never assigned in JPM.
+   */
+  private restBoneValues: Record<string, Record<string, number>> = {};
+
+  private activeTriggers: Array<{
+    id: string;
+    elapsedSec: number;
+    durationSec: number;
+  }> = [];
+
+  private boneInputOverrides: Record<string, Record<string, number>> = {};
+
+  private inferredEatRuleIndex: number | null = null;
+
+  private baseRootPosition: THREE.Vector3;
+  private baseRootRotation: THREE.Euler;
+  private rootOverlay: {
+    x: number;
+    y: number;
+    z: number;
+    rx: number;
+    ry: number;
+    rz: number;
+  } = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
 
   /** Reference to the model group for matrix updates */
   private modelGroup: THREE.Group;
@@ -97,6 +138,8 @@ export class AnimationEngine {
   constructor(modelGroup: THREE.Group, animationLayers?: AnimationLayer[]) {
     // Store reference to model group
     this.modelGroup = modelGroup;
+    this.baseRootPosition = modelGroup.position.clone();
+    this.baseRootRotation = modelGroup.rotation.clone();
 
     // Build bone map from model
     this.bones = buildBoneMap(modelGroup);
@@ -106,13 +149,150 @@ export class AnimationEngine {
 
     // Initialize context
     this.context = createAnimationContext();
+    this.restBoneValues = this.buildRestBoneValues();
+    this.context.boneValues = this.cloneRestBoneValues();
 
     // Compile animations if provided
     if (animationLayers && animationLayers.length > 0) {
       this.compileAnimations(animationLayers);
+      this.applyNeutralInputDefaultsFromAnimations();
+      this.inferredEatRuleIndex = this.inferEatRuleIndexFromAnimations();
+      this.initializeTransformNormalization();
     }
 
     this.initialized = true;
+  }
+
+  playTrigger(triggerId: string): void {
+    const def = getTriggerDefinition(triggerId);
+    if (!def) {
+      console.warn(`[AnimationEngine] Unknown trigger: ${triggerId}`);
+      return;
+    }
+
+    switch (def.id) {
+      case "trigger.hurt":
+        // Hurt time counts down in ticks (0-10).
+        this.context.entityState.hurt_time = Math.max(
+          this.context.entityState.hurt_time,
+          10,
+        );
+        this.context.entityState.is_hurt = true;
+        break;
+      case "trigger.death":
+        // Death time counts down in ticks (0-20).
+        this.context.entityState.death_time = Math.max(
+          this.context.entityState.death_time,
+          20,
+        );
+        this.context.entityState.health = 0;
+        break;
+      default:
+        break;
+    }
+
+    this.activeTriggers.push({
+      id: def.id,
+      elapsedSec: 0,
+      durationSec: def.durationSec,
+    });
+  }
+
+  private applyNeutralInputDefaultsFromAnimations(): void {
+    // Some JPMs (notably Fresh Animations horse-family) read `neck.ty` as an
+    // external vanilla-driven input but never assign it in the JPM. Defaulting
+    // that value to 0 triggers rearing; defaulting it to the JEM pivot triggers
+    // eating. Neutral is `4` (as used in FA expressions), so seed that when we
+    // detect a read-without-write reference.
+    const writesNeckTy = this.animationLayers.some((layer) =>
+      layer.some(
+        (a) =>
+          a.targetType === "bone" &&
+          a.targetName === "neck" &&
+          a.propertyName === "ty",
+      ),
+    );
+    if (writesNeckTy) return;
+
+    const readsNeckTy = this.animationLayers.some((layer) =>
+      layer.some((a) => {
+        const expr: any = a.expression as any;
+        const src =
+          typeof expr?.source === "string" ? (expr.source as string) : "";
+        return src.includes("neck.ty");
+      }),
+    );
+    if (!readsNeckTy) return;
+
+    this.restBoneValues.neck ??= {};
+    this.restBoneValues.neck.ty = 4;
+  }
+
+  private expressionMentions(needle: string): boolean {
+    for (const layer of this.animationLayers) {
+      for (const a of layer) {
+        const expr: any = a.expression as any;
+        const src = typeof expr?.source === "string" ? (expr.source as string) : "";
+        if (src.includes(needle)) return true;
+      }
+    }
+    return false;
+  }
+
+  private buildRestBoneValues(): Record<string, Record<string, number>> {
+    const rest: Record<string, Record<string, number>> = {};
+
+    for (const [name, bone] of this.bones) {
+      const base = this.baseTransforms.get(name);
+      const originPx = Array.isArray((bone as any)?.userData?.originPx)
+        ? ((bone as any).userData.originPx as [number, number, number])
+        : null;
+
+      rest[name] = {
+        tx: 0,
+        ty: 0,
+        tz: 0,
+        rx: base?.rotation.x ?? 0,
+        ry: base?.rotation.y ?? 0,
+        rz: base?.rotation.z ?? 0,
+        sx: base?.scale.x ?? 1,
+        sy: base?.scale.y ?? 1,
+        sz: base?.scale.z ?? 1,
+        visible: bone.visible ? 1 : 0,
+      };
+
+      // For "placeholder" bones (no mesh geometry anywhere under them), seed
+      // translation values in the same units JPM expects when reading other
+      // bones (e.g., `neck.ty`, `head.rx` used as vanilla input drivers).
+      let hasMeshDescendant = false;
+      bone.traverse((obj) => {
+        if (obj !== bone && (obj as any).isMesh === true) hasMeshDescendant = true;
+      });
+      if (!hasMeshDescendant && originPx) {
+        // Seed with origin-based values (CEM-space pivot coordinates).
+        rest[name].tx = originPx[0];
+        rest[name].ty = originPx[1];
+        rest[name].tz = originPx[2];
+      }
+    }
+
+    return rest;
+  }
+
+  private cloneRestBoneValues(): Record<string, Record<string, number>> {
+    const clone: Record<string, Record<string, number>> = {};
+    for (const [boneName, values] of Object.entries(this.restBoneValues)) {
+      clone[boneName] = { ...values };
+    }
+    return clone;
+  }
+
+  /**
+   * Get the baseline (tick 0) value for a bone property, if available.
+   * Baselines are evaluated in the default context before the first tick.
+   */
+  getBaselineBoneValue(boneName: string, property: string): number {
+    return this.baselineBoneValues.get(`${boneName}.${property}`) ?? 0;
   }
 
   /**
@@ -120,6 +300,8 @@ export class AnimationEngine {
    */
   private compileAnimations(layers: AnimationLayer[]): void {
     this.animationLayers = [];
+    this.translationAxesByBone.clear();
+    this.rotationAxesByBone.clear();
 
     for (const layer of layers) {
       const compiledLayer: CompiledAnimation[] = [];
@@ -129,6 +311,34 @@ export class AnimationEngine {
           const compiled = this.compileProperty(property, expression);
           if (compiled) {
             compiledLayer.push(compiled);
+
+            if (
+              compiled.targetType === "bone" &&
+              (compiled.propertyName === "tx" ||
+                compiled.propertyName === "ty" ||
+                compiled.propertyName === "tz")
+            ) {
+              const axis = compiled.propertyName[1] as "x" | "y" | "z";
+              const set =
+                this.translationAxesByBone.get(compiled.targetName) ??
+                new Set<"x" | "y" | "z">();
+              set.add(axis);
+              this.translationAxesByBone.set(compiled.targetName, set);
+            }
+
+            if (
+              compiled.targetType === "bone" &&
+              (compiled.propertyName === "rx" ||
+                compiled.propertyName === "ry" ||
+                compiled.propertyName === "rz")
+            ) {
+              const axis = compiled.propertyName[1] as "x" | "y" | "z";
+              const set =
+                this.rotationAxesByBone.get(compiled.targetName) ??
+                new Set<"x" | "y" | "z">();
+              set.add(axis);
+              this.rotationAxesByBone.set(compiled.targetName, set);
+            }
           }
         } catch (error) {
           console.warn(
@@ -146,6 +356,220 @@ export class AnimationEngine {
     console.log(
       `[AnimationEngine] Compiled ${this.animationLayers.length} animation layers with ${this.animationLayers.reduce((sum, l) => sum + l.length, 0)} expressions`,
     );
+  }
+
+  private evaluateLayersToTransforms(
+    context: AnimationContext,
+  ): Map<string, BoneTransform> {
+    const boneTransforms: Map<string, BoneTransform> = new Map();
+
+    for (const layer of this.animationLayers) {
+      for (const animation of layer) {
+        const value = safeEvaluate(animation.expression, context, 0);
+
+        switch (animation.targetType) {
+          case "var":
+            context.variables[animation.propertyName] = value;
+            break;
+          case "render":
+            break;
+          case "bone":
+            // OptiFine supports boolean variables via `varb.*`. Treat these like
+            // variables rather than bone transforms.
+            if (animation.targetName === "varb") {
+              context.boneValues.varb ??= {};
+              context.boneValues.varb[animation.propertyName] = value;
+              break;
+            }
+            if (isBoneTransformProperty(animation.propertyName)) {
+              let transform = boneTransforms.get(animation.targetName);
+              if (!transform) {
+                transform = {};
+                boneTransforms.set(animation.targetName, transform);
+              }
+              Object.assign(
+                transform,
+                createBoneTransform(animation.propertyName, value),
+              );
+
+              if (!context.boneValues[animation.targetName]) {
+                context.boneValues[animation.targetName] = {};
+              }
+              context.boneValues[animation.targetName][
+                animation.propertyName
+              ] = value;
+            }
+            break;
+        }
+      }
+    }
+
+    return boneTransforms;
+  }
+
+  /**
+   * Infer translation/rotation normalization for CEM animations.
+   *
+   * Strategy:
+   * - Evaluate animations once in the default context ("tick 0") to capture
+   *   baseline values (as authored in JPM).
+   * - For any bone axis that is animated in translation, treat it as an
+   *   absolute rotationPoint-like channel and calibrate offsets so the baseline
+   *   evaluates to the model's rest pose (no name-based heuristics).
+   * - For any bone axis that is animated in rotation, store baseline offsets so
+   *   the baseline evaluates to the model's rest pose.
+   */
+  private initializeTransformNormalization(): void {
+    this.baselineBoneValues.clear();
+
+    const baselineContext = createAnimationContext();
+    baselineContext.boneValues = this.cloneRestBoneValues();
+    // Baselines should reflect the first evaluation performed by tick(0), which
+    // increments the frame counter before evaluating expressions.
+    baselineContext.entityState.frame_counter = 1;
+    baselineContext.entityState.frame_time = 0;
+
+    const baselineTransforms = this.evaluateLayersToTransforms(baselineContext);
+
+    for (const [boneName, transform] of baselineTransforms) {
+      if (transform.tx !== undefined)
+        this.baselineBoneValues.set(`${boneName}.tx`, transform.tx);
+      if (transform.ty !== undefined)
+        this.baselineBoneValues.set(`${boneName}.ty`, transform.ty);
+      if (transform.tz !== undefined)
+        this.baselineBoneValues.set(`${boneName}.tz`, transform.tz);
+      if (transform.rx !== undefined)
+        this.baselineBoneValues.set(`${boneName}.rx`, transform.rx);
+      if (transform.ry !== undefined)
+        this.baselineBoneValues.set(`${boneName}.ry`, transform.ry);
+      if (transform.rz !== undefined)
+        this.baselineBoneValues.set(`${boneName}.rz`, transform.rz);
+    }
+
+    // Determine which channels are constant-only (these are often intended as
+    // authored offsets and should not be normalized away).
+    const isConstantByChannel = new Map<string, boolean>();
+    for (const layer of this.animationLayers) {
+      for (const anim of layer) {
+        if (anim.targetType !== "bone") continue;
+        if (!isBoneTransformProperty(anim.propertyName)) continue;
+        isConstantByChannel.set(
+          `${anim.targetName}.${anim.propertyName}`,
+          isConstantExpression(anim.expression),
+        );
+      }
+    }
+
+    // Normalize additive translations by subtracting tick(0) baselines.
+    for (const [boneName, axesSet] of this.translationAxesByBone) {
+      const bone = this.bones.get(boneName);
+      if (!bone) continue;
+
+      const userData = (bone as any).userData ?? {};
+      const absoluteAxes: string =
+        typeof userData.absoluteTranslationAxes === "string"
+          ? (userData.absoluteTranslationAxes as string)
+          : userData.absoluteTranslation === true
+            ? "xyz"
+            : "";
+
+      if (axesSet.has("x")) {
+        const channel = `${boneName}.tx`;
+        if (absoluteAxes.includes("x")) {
+          // Absolute channels should remain absolute; do not normalize.
+        } else if (
+          typeof userData.translationOffsetXPx !== "number" &&
+          typeof userData.translationOffsetX !== "number" &&
+          isConstantByChannel.get(channel) !== true
+        ) {
+          const tx0 = this.getBaselineBoneValue(boneName, "tx");
+          if (Math.abs(tx0) > 1e-6) userData.translationOffsetXPx = tx0;
+        }
+      }
+
+      if (axesSet.has("y")) {
+        const channel = `${boneName}.ty`;
+        if (absoluteAxes.includes("y")) {
+          // Absolute channels should remain absolute; do not normalize.
+        } else if (
+          typeof userData.translationOffsetYPx !== "number" &&
+          typeof userData.translationOffsetY !== "number" &&
+          isConstantByChannel.get(channel) !== true
+        ) {
+          const ty0 = this.getBaselineBoneValue(boneName, "ty");
+          if (Math.abs(ty0) > 1e-6) userData.translationOffsetYPx = ty0;
+        }
+      }
+
+      if (axesSet.has("z")) {
+        const channel = `${boneName}.tz`;
+        if (absoluteAxes.includes("z")) {
+          // Absolute channels should remain absolute; do not normalize.
+        } else if (
+          typeof userData.translationOffsetZPx !== "number" &&
+          typeof userData.translationOffsetZ !== "number" &&
+          isConstantByChannel.get(channel) !== true
+        ) {
+          const tz0 = this.getBaselineBoneValue(boneName, "tz");
+          if (Math.abs(tz0) > 1e-6) userData.translationOffsetZPx = tz0;
+        }
+      }
+
+      (bone as any).userData = userData;
+    }
+
+    // Normalize additive rotations by subtracting tick(0) baselines.
+    for (const [boneName, axesSet] of this.rotationAxesByBone) {
+      const bone = this.bones.get(boneName);
+      if (!bone) continue;
+
+      const userData = (bone as any).userData ?? {};
+      const absoluteRotationAxes: string =
+        typeof userData.absoluteRotationAxes === "string"
+          ? (userData.absoluteRotationAxes as string)
+          : userData.absoluteRotation === true
+            ? "xyz"
+            : "";
+
+      if (axesSet.has("x")) {
+        const channel = `${boneName}.rx`;
+        if (absoluteRotationAxes.includes("x")) {
+          // Absolute channels should remain absolute; do not normalize.
+        } else if (
+          typeof userData.rotationOffsetX !== "number" &&
+          isConstantByChannel.get(channel) !== true
+        ) {
+          const rx0 = this.getBaselineBoneValue(boneName, "rx");
+          if (Math.abs(rx0) > 1e-6) userData.rotationOffsetX = rx0;
+        }
+      }
+      if (axesSet.has("y")) {
+        const channel = `${boneName}.ry`;
+        if (absoluteRotationAxes.includes("y")) {
+          // Absolute channels should remain absolute; do not normalize.
+        } else if (
+          typeof userData.rotationOffsetY !== "number" &&
+          isConstantByChannel.get(channel) !== true
+        ) {
+          const ry0 = this.getBaselineBoneValue(boneName, "ry");
+          if (Math.abs(ry0) > 1e-6) userData.rotationOffsetY = ry0;
+        }
+      }
+      if (axesSet.has("z")) {
+        const channel = `${boneName}.rz`;
+        if (absoluteRotationAxes.includes("z")) {
+          // Absolute channels should remain absolute; do not normalize.
+        } else if (
+          typeof userData.rotationOffsetZ !== "number" &&
+          isConstantByChannel.get(channel) !== true
+        ) {
+          const rz0 = this.getBaselineBoneValue(boneName, "rz");
+          if (Math.abs(rz0) > 1e-6) userData.rotationOffsetZ = rz0;
+        }
+      }
+
+      (bone as any).userData = userData;
+    }
   }
 
   /**
@@ -232,10 +656,14 @@ export class AnimationEngine {
       return;
     }
 
-    const preset = presetId === null ? null : getPresetById(presetId);
-    if (presetId !== null && !preset) {
-      console.warn(`[AnimationEngine] Unknown preset: ${presetId}`);
-      return;
+    let preset: AnimationPreset | null = null;
+    if (presetId !== null) {
+      const found = getPresetById(presetId);
+      if (!found) {
+        console.warn(`[AnimationEngine] Unknown preset: ${presetId}`);
+        return;
+      }
+      preset = found;
     }
 
     // Preserve identity + manual controls across preset changes.
@@ -251,7 +679,7 @@ export class AnimationEngine {
       head_pitch: preservedHeadPitch,
     };
     this.context.variables = {};
-    this.context.boneValues = {};
+    this.context.boneValues = this.cloneRestBoneValues();
     this.context.randomCache.clear();
 
     // Reset timing counters for the new preset.
@@ -269,7 +697,7 @@ export class AnimationEngine {
     this.activePreset = preset;
 
     // Apply preset setup
-    if (preset.setup) {
+    if (preset?.setup) {
       const setupState = preset.setup();
       Object.assign(this.context.entityState, setupState);
     }
@@ -421,6 +849,8 @@ export class AnimationEngine {
     this.context.entityState.frame_time = scaledDelta;
     this.context.entityState.frame_counter++;
 
+    this.updateTriggerOverlays(scaledDelta);
+
     // Evaluate animations and apply to bones
     if (this.animationLayers.length > 0) {
       try {
@@ -441,6 +871,8 @@ export class AnimationEngine {
       return true;
     }
 
+    // Apply root overlay even if no CEM animations are present.
+    this.applyRootOverlay();
     return this.isPlaying;
   }
 
@@ -646,6 +1078,18 @@ export class AnimationEngine {
    * Evaluate all animation expressions and apply to bones.
    */
   private evaluateAndApply(): void {
+    // OptiFine evaluates CEM expressions against the model's rest pose each
+    // frame. Resetting here prevents transforms from "sticking" when switching
+    // presets or when an animation does not author every channel every frame.
+    resetAllBones(this.bones, this.baseTransforms);
+    this.context.boneValues = this.cloneRestBoneValues();
+    for (const [boneName, props] of Object.entries(this.boneInputOverrides)) {
+      this.context.boneValues[boneName] = {
+        ...(this.context.boneValues[boneName] ?? {}),
+        ...props,
+      };
+    }
+
     // Accumulated transforms per bone
     const boneTransforms: Map<string, BoneTransform> = new Map();
 
@@ -693,6 +1137,13 @@ export class AnimationEngine {
             break;
 
           case "bone":
+            // OptiFine supports boolean variables via `varb.*`. Treat these like
+            // variables rather than bone transforms.
+            if (animation.targetName === "varb") {
+              this.context.boneValues.varb ??= {};
+              this.context.boneValues.varb[animation.propertyName] = value;
+              break;
+            }
             // Bone transform - accumulate
             if (isBoneTransformProperty(animation.propertyName)) {
               let transform = boneTransforms.get(animation.targetName);
@@ -817,6 +1268,7 @@ export class AnimationEngine {
     }
 
     this.modelGroup.updateMatrixWorld(true);
+    this.applyRootOverlay();
 
     if (shouldLogThisFrame) {
       console.log(`[AnimationEngine] World positions AFTER animation:`);
@@ -844,7 +1296,13 @@ export class AnimationEngine {
   reset(): void {
     resetAllBones(this.bones, this.baseTransforms);
     this.context = createAnimationContext();
+    this.context.boneValues = this.cloneRestBoneValues();
     this.elapsedTime = 0;
+    this.activeTriggers = [];
+    this.boneInputOverrides = {};
+    this.rootOverlay = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
+    this.modelGroup.position.copy(this.baseRootPosition);
+    this.modelGroup.rotation.copy(this.baseRootRotation);
   }
 
   /**
@@ -853,8 +1311,139 @@ export class AnimationEngine {
   resetState(): void {
     this.context.entityState = { ...DEFAULT_ENTITY_STATE };
     this.context.variables = {};
-    this.context.boneValues = {};
+    this.context.boneValues = this.cloneRestBoneValues();
+    this.activeTriggers = [];
+    this.boneInputOverrides = {};
     this.context.randomCache.clear();
+  }
+
+  private updateTriggerOverlays(deltaSec: number): void {
+    // Decay time-based vanilla state counters (measured in ticks).
+    const dtTicks = deltaSec * 20;
+    if (this.context.entityState.hurt_time > 0) {
+      this.context.entityState.hurt_time = Math.max(
+        0,
+        this.context.entityState.hurt_time - dtTicks,
+      );
+      this.context.entityState.is_hurt = this.context.entityState.hurt_time > 0;
+    }
+    if (this.context.entityState.death_time > 0) {
+      this.context.entityState.death_time = Math.max(
+        0,
+        this.context.entityState.death_time - dtTicks,
+      );
+    }
+
+    // Build per-frame bone input overrides from active triggers.
+    this.boneInputOverrides = {};
+    this.rootOverlay = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
+    const baseRuleIndex = this.context.entityState.rule_index;
+    let forceRuleIndex: number | null = null;
+
+    const next: typeof this.activeTriggers = [];
+    for (const trig of this.activeTriggers) {
+      const elapsedSec = trig.elapsedSec + deltaSec;
+      const t =
+        trig.durationSec > 0 ? Math.min(1, elapsedSec / trig.durationSec) : 1;
+
+      if (trig.id === "trigger.attack") {
+        // One-shot swing: 0 -> 1 -> 0.
+        const swing = Math.sin(Math.PI * t);
+        this.context.entityState.swing_progress = swing;
+      }
+
+      if (trig.id === "trigger.hurt") {
+        const envelope = Math.sin(Math.PI * t);
+        // Small pop-up like vanilla hurt knockback.
+        this.rootOverlay.y += 0.06 * envelope;
+      }
+
+      if (trig.id === "trigger.death") {
+        const envelope = Math.sin((Math.PI / 2) * t); // ease-out
+        // Fall/roll to the side with a small lateral kick.
+        this.rootOverlay.x += 0.12 * envelope;
+        this.rootOverlay.y += 0.02 * envelope;
+        this.rootOverlay.rz += 1.1 * envelope;
+      }
+
+      if (trig.id === "trigger.horse_rearing") {
+        // Drive vanilla input `neck.ty` towards a value < 4 to trigger var.rearing.
+        // Neutral is 4; target is -4 (full rear).
+        const envelope = Math.sin(Math.PI * t);
+        const neutral = 4;
+        const target = -4;
+        const value = neutral + (target - neutral) * envelope;
+        this.boneInputOverrides.neck ??= {};
+        this.boneInputOverrides.neck.ty = value;
+      }
+
+      if (trig.id === "trigger.eat") {
+        const envelope = Math.sin(Math.PI * t);
+
+        if (this.inferredEatRuleIndex !== null) {
+          forceRuleIndex = this.inferredEatRuleIndex;
+        }
+
+        // Horse-family: driven by `neck.ty` input and `var.eating`.
+        if (this.expressionMentions("neck.ty")) {
+          const neutral = 4;
+          const target = 11;
+          const value = neutral + (target - neutral) * envelope;
+          this.boneInputOverrides.neck ??= {};
+          this.boneInputOverrides.neck.ty = value;
+        }
+
+        // Sheep/cow-family: driven by placeholder `head.rx` (and often compared to head_pitch).
+        if (this.expressionMentions("head.rx")) {
+          const headPitchRad = (this.context.entityState.head_pitch * Math.PI) / 180;
+          // Push away from `torad(head_pitch)` to satisfy `head.rx - torad(head_pitch) != 0`.
+          const value = headPitchRad + 1.2 * envelope;
+          this.boneInputOverrides.head ??= {};
+          this.boneInputOverrides.head.rx = value;
+        }
+      }
+
+      if (elapsedSec < trig.durationSec) {
+        next.push({ ...trig, elapsedSec });
+      }
+    }
+
+    this.activeTriggers = next;
+
+    if (forceRuleIndex !== null) {
+      this.context.entityState.rule_index = forceRuleIndex;
+    } else {
+      this.context.entityState.rule_index = baseRuleIndex;
+    }
+  }
+
+  private inferEatRuleIndexFromAnimations(): number | null {
+    for (const layer of this.animationLayers) {
+      for (const a of layer) {
+        if (a.targetType !== "bone") continue;
+        if (a.targetName !== "varb") continue;
+        if (a.propertyName !== "index_eat") continue;
+        const expr: any = a.expression as any;
+        const src = typeof expr?.source === "string" ? (expr.source as string) : "";
+        const match = src.match(/rule_index\\s*==\\s*(\\d+)/);
+        if (match) return Number(match[1]);
+      }
+    }
+    return null;
+  }
+
+  private applyRootOverlay(): void {
+    this.modelGroup.position.set(
+      this.baseRootPosition.x + this.rootOverlay.x,
+      this.baseRootPosition.y + this.rootOverlay.y,
+      this.baseRootPosition.z + this.rootOverlay.z,
+    );
+    this.modelGroup.rotation.set(
+      this.baseRootRotation.x + this.rootOverlay.rx,
+      this.baseRootRotation.y + this.rootOverlay.ry,
+      this.baseRootRotation.z + this.rootOverlay.rz,
+      this.baseRootRotation.order,
+    );
   }
 
   // ==========================================================================

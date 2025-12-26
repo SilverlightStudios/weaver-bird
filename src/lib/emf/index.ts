@@ -29,6 +29,50 @@ import {
   mergeVariantTextures,
 } from "./jemLoader";
 
+function indexPartsByName(parts: ParsedPart[]): Map<string, ParsedPart> {
+  const map = new Map<string, ParsedPart>();
+  const visit = (part: ParsedPart) => {
+    map.set(part.name, part);
+    for (const child of part.children) visit(child);
+  };
+  for (const part of parts) visit(part);
+  return map;
+}
+
+function mergeVanillaPivotsIntoAttachPlaceholders(
+  parsed: ParsedEntityModel,
+  vanilla: ParsedEntityModel,
+): void {
+  const vanillaMap = indexPartsByName(vanilla.parts);
+
+  const apply = (part: ParsedPart) => {
+    const subtreeHasBoxes = (p: ParsedPart): boolean => {
+      if (p.boxes.length > 0) return true;
+      for (const c of p.children) {
+        if (subtreeHasBoxes(c)) return true;
+      }
+      return false;
+    };
+
+    // For `attach:true` models, packs often include "vanilla skeleton" placeholder
+    // parts (e.g. `neck`, `tail`, `mane`) with no geometry. Their pivots are
+    // defined by vanilla; using `[0,0,0]` here breaks JPM expressions that read
+    // these bones (e.g. `var.Nty = neck.ty` in Fresh Animations horse).
+    if (!subtreeHasBoxes(part)) {
+      const vanillaPart = vanillaMap.get(part.name);
+      if (vanillaPart) {
+        part.origin = [...vanillaPart.origin];
+        part.rotation = [...vanillaPart.rotation];
+        part.scale = vanillaPart.scale;
+      }
+    }
+
+    for (const child of part.children) apply(child);
+  };
+
+  for (const part of parsed.parts) apply(part);
+}
+
 /**
  * JPM (JSON Part Model) file format.
  * Used by OptiFine/EMF for external model references.
@@ -241,6 +285,10 @@ export async function loadEntityModel(
       console.log(`[EMF] ✓ Loaded ${source} JEM`);
 
       const parsed = parseJEMImpl(jemData);
+      const hasAttachModel = !!jemData.models?.some(
+        (modelPart) =>
+          modelPart.attach === true || modelPart.attach === "true",
+      );
 
       // Load external JPM files for animations and optional geometry.
       if (packPath && jemData.models) {
@@ -387,6 +435,15 @@ export async function loadEntityModel(
           }
 
           reindex();
+        }
+      }
+
+      // If this pack uses `attach:true`, merge vanilla pivots into any empty
+      // placeholder parts so JPM expressions can read correct bone values.
+      if (hasAttachModel) {
+        const vanilla = await tryLoadVanillaJem(jemName);
+        if (vanilla) {
+          mergeVanillaPivotsIntoAttachPlaceholders(parsed, vanilla);
         }
       }
 

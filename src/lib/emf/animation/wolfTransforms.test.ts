@@ -5,8 +5,6 @@ import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
 
-const PX = 16;
-
 describe("Fresh Animations (wolf) rotation + tail semantics", () => {
   it("handles wolf body_rotation, mane2, head2, tail2 semantics", () => {
     const jemPath = join(
@@ -29,6 +27,30 @@ describe("Fresh Animations (wolf) rotation + tail semantics", () => {
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
+    const bodyBefore = group.getObjectByName("body") as THREE.Object3D | null;
+    const bodyRotationBefore = group.getObjectByName(
+      "body_rotation",
+    ) as THREE.Object3D | null;
+    const tail2Before = group.getObjectByName("tail2") as THREE.Object3D | null;
+    const head2Before = group.getObjectByName("head2") as THREE.Object3D | null;
+    const mane2Before = group.getObjectByName("mane2") as THREE.Object3D | null;
+
+    expect(bodyBefore).toBeTruthy();
+    expect(bodyRotationBefore).toBeTruthy();
+    expect(tail2Before).toBeTruthy();
+    expect(head2Before).toBeTruthy();
+    expect(mane2Before).toBeTruthy();
+
+    const snap = (o: THREE.Object3D) => ({
+      pos: o.position.clone(),
+      rot: o.rotation.clone(),
+    });
+    const bodySnap = snap(bodyBefore!);
+    const bodyRotationSnap = snap(bodyRotationBefore!);
+    const head2Snap = snap(head2Before!);
+    const tail2Snap = snap(tail2Before!);
+    const mane2Snap = snap(mane2Before!);
+
     engine.tick(0);
 
     const body = group.getObjectByName("body") as THREE.Object3D | null;
@@ -45,101 +67,40 @@ describe("Fresh Animations (wolf) rotation + tail semantics", () => {
     expect(head2).toBeTruthy();
     expect(mane2).toBeTruthy();
 
-    // At rest, FA wolves set `body.rx = pi/2` (vanilla baseline). Our loader marks
-    // wolf-style bodies to subtract that baseline because their geometry already
-    // bakes the vanilla +90° body rotation via `body_rotation.rotate = -90`.
-    expect(body!.rotation.x).toBeCloseTo(0, 6);
-
-    // `body_rotation` keeps its base -90° rotate from the JEM, and animations
-    // drive small deltas around it.
-    const bodyRotationUserData = (bodyRotation as any).userData ?? {};
-    const bodyRotationRx = engine.getBoneValue("body_rotation", "rx");
-    const rotSignX =
-      typeof bodyRotationUserData.invertAxis === "string" &&
-      (bodyRotationUserData.invertAxis as string).includes("x")
-        ? -1
-        : 1;
-    expect(bodyRotation!.rotation.x).toBeCloseTo(
-      -Math.PI / 2 + rotSignX * bodyRotationRx,
-      6,
-    );
+    // Baseline normalization should keep tick(0) at the JEM rest pose.
+    expect(body!.rotation.x).toBeCloseTo(bodySnap.rot.x, 6);
+    expect(head2!.rotation.x).toBeCloseTo(head2Snap.rot.x, 6);
+    expect(tail2!.rotation.x).toBeCloseTo(tail2Snap.rot.x, 6);
+    expect(bodyRotation!.rotation.x).toBeCloseTo(bodyRotationSnap.rot.x, 6);
 
     // `body_rotation.tz` is authored as an absolute rotationPoint value, so it should
     // be interpreted in entity-absolute space (subtract parent origin).
+    const bodyRotationUserData = (bodyRotation as any).userData ?? {};
     const bodyRotationAbsAxes =
       typeof bodyRotationUserData.absoluteTranslationAxes === "string"
         ? (bodyRotationUserData.absoluteTranslationAxes as string)
         : "";
     expect(bodyRotationAbsAxes).toContain("z");
-    const bodyRotationTz = engine.getBoneValue("body_rotation", "tz");
-    const bodyOriginPx =
-      Array.isArray((body as any)?.userData?.originPx) &&
-      (body as any).userData.originPx.length === 3
-        ? ((body as any).userData.originPx as [number, number, number])
-        : ([0, 0, 0] as [number, number, number]);
-    expect(bodyRotation!.position.z).toBeCloseTo(
-      bodyRotationTz / PX - bodyOriginPx[2] / PX,
-      6,
-    );
-    // body_rotation.ty baseline should be subtracted so it rests at y≈0.
-    expect(Math.abs(bodyRotation!.position.y)).toBeLessThan(1e-3);
+    expect(bodyRotation!.position.y).toBeCloseTo(bodyRotationSnap.pos.y, 6);
 
-    // `mane2` expressions include the rest pose translate, so treat translations as local absolute.
-    const mane2UserData = (mane2 as any).userData ?? {};
-    expect(mane2UserData.absoluteTranslationSpace).toBe("local");
-    const maneAbsAxes =
-      typeof mane2UserData.absoluteTranslationAxes === "string"
-        ? (mane2UserData.absoluteTranslationAxes as string)
-        : "";
-    expect(maneAbsAxes).toContain("x");
-    expect(maneAbsAxes).toContain("y");
-    expect(maneAbsAxes).toContain("z");
+    // Key bones should remain in their rest positions at tick(0).
+    expect(head2!.position.x).toBeCloseTo(head2Snap.pos.x, 6);
+    expect(head2!.position.y).toBeCloseTo(head2Snap.pos.y, 6);
+    expect(head2!.position.z).toBeCloseTo(head2Snap.pos.z, 6);
 
-    const maneTx = engine.getBoneValue("mane2", "tx");
-    const maneTy = engine.getBoneValue("mane2", "ty");
-    const maneTz = engine.getBoneValue("mane2", "tz");
-    const maneInvertAxis =
-      typeof mane2UserData.invertAxis === "string"
-        ? (mane2UserData.invertAxis as string)
-        : "";
+    expect(tail2!.position.x).toBeCloseTo(tail2Snap.pos.x, 6);
+    expect(tail2!.position.y).toBeCloseTo(tail2Snap.pos.y, 6);
+    expect(tail2!.position.z).toBeCloseTo(tail2Snap.pos.z, 6);
 
-    const expectedManeX =
-      (maneInvertAxis.includes("x") ? -1 : 1) * (maneTx / PX);
-    const expectedManeY =
-      (maneInvertAxis.includes("y") ? -1 : 1) * (maneTy / PX);
-    const expectedManeZ =
-      (maneInvertAxis.includes("z") ? -1 : 1) * (maneTz / PX);
+    expect(mane2!.position.x).toBeCloseTo(mane2Snap.pos.x, 6);
+    expect(mane2!.position.y).toBeCloseTo(mane2Snap.pos.y, 6);
+    expect(mane2!.position.z).toBeCloseTo(mane2Snap.pos.z, 6);
 
-    expect(mane2!.position.x).toBeCloseTo(expectedManeX, 6);
-    expect(mane2!.position.y).toBeCloseTo(expectedManeY, 6);
-    expect(mane2!.position.z).toBeCloseTo(expectedManeZ, 6);
-
-    // Wolves use a special Y-origin for head2 so head2.ty behaves like a local-absolute value,
-    // but head2.tx/tz remain in the usual entity-absolute space.
-    const head2UserData = (head2 as any).userData ?? {};
-    const headTy = engine.getBoneValue("head2", "ty");
-    const headInvertAxis =
-      typeof head2UserData.invertAxis === "string"
-        ? (head2UserData.invertAxis as string)
-        : "";
-    // For body-rotation rigs we set cemYOrigin so head2.ty baseline yields y=0 at rest.
-    expect(head2!.position.y).toBeCloseTo(0, 6);
-    // Head baseline: FA includes `torad(-90)` in head2.rx. Our loader removes it via rotationOffsetX.
-    expect(head2!.rotation.x).toBeCloseTo(0, 6);
-
-    // Tail: on body-rotation rigs, y baseline yields y=0 at rest and tz is treated as a delta.
-    const tail2UserData = (tail2 as any).userData ?? {};
-    const tailAbsAxes =
-      typeof tail2UserData.absoluteTranslationAxes === "string"
-        ? (tail2UserData.absoluteTranslationAxes as string)
-        : "";
-    expect(tailAbsAxes).toContain("y");
-    expect(tail2!.position.y).toBeCloseTo(0, 6);
-
-    // tz should keep the base separation and only apply a small delta at rest.
-    const baseTailZ = 6 / PX; // (8 - 2) / 16
-    expect(tail2!.position.z).toBeCloseTo(baseTailZ, 1);
-    // Tail baseline: FA includes a `-pi/2` in tail2.rx; our loader removes it via rotationOffsetX.
-    expect(typeof tail2UserData.rotationOffsetX).toBe("number");
+    // Head and tail should not collapse onto the same world-space point.
+    const headWorld = new THREE.Vector3();
+    const tailWorld = new THREE.Vector3();
+    head2!.getWorldPosition(headWorld);
+    tail2!.getWorldPosition(tailWorld);
+    expect(headWorld.distanceTo(tailWorld)).toBeGreaterThan(0.2);
   });
 });

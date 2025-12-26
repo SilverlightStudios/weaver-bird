@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import {
   useSelectWinner,
   useSelectPack,
+  useSelectPacksInOrder,
   useSelectPacksDir,
 } from "@state/selectors";
 import {
@@ -19,7 +20,10 @@ import {
   createAnimationEngine,
   type AnimationEngine as AnimationEngineType,
 } from "@lib/emf/animation/AnimationEngine";
-import { getAvailableAnimationPresetIdsForAnimationLayers } from "@lib/emf/animation";
+import {
+  getAvailableAnimationPresetIdsForAnimationLayers,
+  getAvailableAnimationTriggerIdsForAnimationLayers,
+} from "@lib/emf/animation";
 import type { AnimationLayer } from "@lib/emf/jemLoader";
 import { JEMInspectorV2 } from "@lib/emf/JEMInspectorV2";
 
@@ -55,6 +59,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
   const storeWinnerPack = useSelectPack(storeWinnerPackId || "");
   const vanillaPack = useSelectPack("minecraft:vanilla");
   const packsDir = useSelectPacksDir();
+  const packsInOrder = useSelectPacksInOrder();
 
   // Get target version from store
   const targetMinecraftVersion = useStore(
@@ -72,6 +77,16 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
   const entityHeadPitch = useStore((state) => state.entityHeadPitch);
   const setAvailableAnimationPresets = useStore(
     (state) => state.setAvailableAnimationPresets,
+  );
+  const setAvailableAnimationTriggers = useStore(
+    (state) => state.setAvailableAnimationTriggers,
+  );
+
+  const animationTriggerRequestId = useStore(
+    (state) => state.animationTriggerRequestId,
+  );
+  const animationTriggerRequestNonce = useStore(
+    (state) => state.animationTriggerRequestNonce,
   );
 
   // Get debug mode state
@@ -127,6 +142,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
       console.warn("[EntityModel] Unknown entity type for:", assetId);
       setError("Unknown entity type");
       setAvailableAnimationPresets(null);
+      setAvailableAnimationTriggers(null);
       createPlaceholder();
       return;
     }
@@ -139,34 +155,78 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
       setLoading(true);
       setError(null);
       setAvailableAnimationPresets(null);
+      setAvailableAnimationTriggers(null);
 
       try {
         console.log("=== [EntityModel] Starting Entity Model Load ===");
         console.log("[EntityModel] Entity variant:", entityType);
         console.log("[EntityModel] Parent entity:", parentEntity);
 
-        // Load the entity model definition (from pack or vanilla)
-        const parsedModel = await loadEntityModel(
-          entityType!,
-          resolvedPack?.path,
-          resolvedPack?.is_zip,
-          targetMinecraftVersion,
-          entityVersionVariants,
-          parentEntity,
-          resolvedPack?.pack_format,
-          selectedEntityVariant,
+        // Load the entity model definition. Model packs are not necessarily the
+        // same as the "winner" texture pack (Fresh Animations often ships only
+        // CEM files), so search packs in priority order for a matching JEM/JPM.
+        let parsedModel:
+          | (Awaited<ReturnType<typeof loadEntityModel>> & {
+              jemSource?: string;
+              usedLegacyJem?: boolean;
+            })
+          | null = null;
+        let modelPack:
+          | { id: string; path: string; is_zip: boolean; pack_format?: number }
+          | null = null;
+
+        const modelCandidates = packsInOrder.filter(
+          (p) => p && p.id !== "minecraft:vanilla",
         );
+
+        for (const pack of modelCandidates) {
+          const attempt = await loadEntityModel(
+            entityType!,
+            pack.path,
+            pack.is_zip,
+            targetMinecraftVersion,
+            entityVersionVariants,
+            parentEntity,
+            pack.pack_format,
+            selectedEntityVariant,
+          );
+          if (attempt) {
+            parsedModel = attempt;
+            modelPack = {
+              id: pack.id,
+              path: pack.path,
+              is_zip: pack.is_zip,
+              pack_format: pack.pack_format,
+            };
+            break;
+          }
+        }
+
+        if (!parsedModel) {
+          parsedModel = await loadEntityModel(
+            entityType!,
+            undefined,
+            undefined,
+            targetMinecraftVersion,
+            entityVersionVariants,
+            parentEntity,
+            undefined,
+            selectedEntityVariant,
+          );
+          modelPack = null;
+        }
 
         if (!parsedModel) {
           // No custom entity model found - this is normal for packs without OptiFine CEM
           console.log(
-            `[EntityModel] No custom JEM model found for ${entityType} in ${resolvedPackId}`,
+            `[EntityModel] No custom JEM model found for ${entityType}`,
           );
           console.log(
             "[EntityModel] Entity models require OptiFine CEM files (assets/minecraft/optifine/cem/*.jem)",
           );
           setError(`No custom entity model available for ${entityType}`);
           setAvailableAnimationPresets(null);
+          setAvailableAnimationTriggers(null);
           createPlaceholder();
           return;
         }
@@ -193,6 +253,16 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
             resolvedPack.path,
             `minecraft:${texturePath}`,
             resolvedPack.is_zip,
+          );
+        }
+
+        // Try the model pack as a secondary texture source (model packs may
+        // include auxiliary textures referenced by the JEM).
+        if (!texture && modelPack && packsDir) {
+          texture = await loadPackTexture(
+            modelPack.path,
+            `minecraft:${texturePath}`,
+            modelPack.is_zip,
           );
         }
 
@@ -243,7 +313,14 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
           const texId = normalizeJemTextureId(jemTexPath);
           let extraTex: THREE.Texture | null = null;
 
-          if (resolvedPack && packsDir) {
+          if (modelPack && packsDir) {
+            extraTex = await loadPackTexture(
+              modelPack.path,
+              texId,
+              modelPack.is_zip,
+            );
+          }
+          if (!extraTex && resolvedPack && packsDir) {
             extraTex = await loadPackTexture(
               resolvedPack.path,
               texId,
@@ -279,9 +356,15 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
           setAvailableAnimationPresets(
             getAvailableAnimationPresetIdsForAnimationLayers(parsedModel.animations),
           );
+          setAvailableAnimationTriggers(
+            getAvailableAnimationTriggerIdsForAnimationLayers(parsedModel.animations),
+          );
         } else {
           setAnimationLayers(undefined);
           setAvailableAnimationPresets(null);
+          setAvailableAnimationTriggers(
+            getAvailableAnimationTriggerIdsForAnimationLayers(undefined),
+          );
         }
 
         // Store parsed JEM data for inspector
@@ -300,6 +383,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
           setError(errorMessage);
           setLoading(false);
           setAvailableAnimationPresets(null);
+          setAvailableAnimationTriggers(null);
           createPlaceholder();
         }
       }
@@ -313,6 +397,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
       try {
         setAvailableAnimationPresets(null);
+        setAvailableAnimationTriggers(null);
         // Create a simple cube placeholder to indicate entity position
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshStandardMaterial({
@@ -363,6 +448,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
     resolvedPackId,
     resolvedPack,
     packsDir,
+    packsInOrder,
     targetMinecraftVersion,
     entityVersionVariants,
     selectedEntityVariant,
@@ -402,6 +488,15 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
     engine.setPreset(animationPreset, animationPlaying);
   }, [animationPreset, animationPlaying]);
+
+  // Sync trigger requests (one-shot overlays)
+  useEffect(() => {
+    const engine = animationEngineRef.current;
+    if (!engine) return;
+    if (!animationTriggerRequestId) return;
+    engine.playTrigger(animationTriggerRequestId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animationTriggerRequestNonce]);
 
   // Sync animation speed changes to engine
   useEffect(() => {

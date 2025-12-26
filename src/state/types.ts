@@ -143,6 +143,11 @@ export interface UIState {
   entityHeadPitch: number; // Entity head pitch for manual control (degrees)
   availableAnimationPresets: string[] | null; // Presets relevant to current model (null = show all)
 
+  // Entity animation triggers (one-shot overlays)
+  availableAnimationTriggers: string[] | null; // Triggers relevant to current model (null = show none)
+  animationTriggerRequestId: string | null; // Trigger to play (engine consumes)
+  animationTriggerRequestNonce: number; // Monotonic counter to re-trigger same ID
+
   // Debug mode
   jemDebugMode: boolean; // Enable JEM model inspector for debugging entity models
 }
