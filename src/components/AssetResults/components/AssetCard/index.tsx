@@ -33,28 +33,28 @@ import {
 import type { AssetCardProps } from "./types";
 import s from "./styles.module.scss";
 
-import { EntityPreview } from "../EntityPreview";
-import { Canvas } from "@react-three/fiber";
+import { View } from "@react-three/drei";
+import { EntityThumbnail } from "../EntityThumbnail";
 
-// ViewContainer component with dedicated Canvas for entity rendering
-function ViewContainer({
+function EntityThumbnailView({
   jemModel,
   textureUrl,
+  extraTextureUrls,
 }: {
   jemModel: any;
   textureUrl: string | null;
+  extraTextureUrls?: Record<string, string | null> | null;
 }) {
-  // Use dedicated Canvas per entity instead of shared View portal
   if (!jemModel) return null;
 
   return (
-    <Canvas
-      style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
-      gl={{ alpha: true, antialias: true }}
-      camera={{ position: [0, 5, 10], fov: 50 }}
-    >
-      <EntityPreview jemModel={jemModel} textureUrl={textureUrl} />
-    </Canvas>
+    <View className={s.entityViewTrack} style={{ position: "absolute", inset: 0 }}>
+      <EntityThumbnail
+        jemModel={jemModel}
+        textureUrl={textureUrl}
+        extraTextureUrls={extraTextureUrls}
+      />
+    </View>
   );
 }
 
@@ -81,6 +81,9 @@ export const AssetCard = memo(
     const [entityTextureUrl, setEntityTextureUrl] = useState<string | null>(
       null,
     );
+    const [entityExtraTextureUrls, setEntityExtraTextureUrls] = useState<
+      Record<string, string | null> | null
+    >(null);
 
     // Get the winning pack for this asset
     const winnerPackId = useSelectWinner(asset.id);
@@ -265,11 +268,19 @@ export const AssetCard = memo(
       if (!isVisible || !isEntity) return;
 
       let mounted = true;
+      setEntityExtraTextureUrls(null);
 
       const loadEntity = async () => {
         try {
           const normalizedAssetId = normalizeAssetId(asset.id);
           const entityInfo = getEntityInfoFromAssetId(normalizedAssetId);
+          const path = normalizedAssetId.includes(":")
+            ? normalizedAssetId.split(":")[1]!
+            : normalizedAssetId;
+          const isDecoratedPot = path.startsWith("entity/decorated_pot/");
+          const ns = normalizedAssetId.includes(":")
+            ? normalizedAssetId.split(":")[0]!
+            : "minecraft";
 
           if (!entityInfo) {
             console.warn(
@@ -296,32 +307,75 @@ export const AssetCard = memo(
             return;
           }
 
+          const cloneModel = (m: any): any => {
+            const clonePart = (p: any): any => ({
+              ...p,
+              boxes: Array.isArray(p.boxes) ? p.boxes.map((b: any) => ({ ...b })) : [],
+              children: Array.isArray(p.children) ? p.children.map(clonePart) : [],
+            });
+            return { ...m, parts: Array.isArray(m.parts) ? m.parts.map(clonePart) : [] };
+          };
+
           // Load entity texture
           let texturePath: string;
-          if (winnerPackId && winnerPack) {
+          const resolveTexturePath = async (assetId: string): Promise<string> => {
+            if (winnerPackId && winnerPack) {
+              try {
+                return await getPackTexturePath(
+                  winnerPack.path,
+                  assetId,
+                  winnerPack.is_zip,
+                );
+              } catch {
+                return await getVanillaTexturePath(assetId);
+              }
+            }
+            return await getVanillaTexturePath(assetId);
+          };
+
+          const basePotAssetId = `${ns}:entity/decorated_pot/decorated_pot_base`;
+          const sidePotAssetId = `${ns}:entity/decorated_pot/decorated_pot_side`;
+
+          // Decorated pot needs multiple textures: base + side/pattern masks.
+          // For the resource card preview, default to the base pot with side texture.
+          const previewModel = isDecoratedPot ? cloneModel(model) : model;
+          const extra: Record<string, string | null> | null = isDecoratedPot
+            ? {}
+            : null;
+
+          if (isDecoratedPot) {
+            const applySide = (part: any) => {
+              if (["front", "back", "left", "right"].includes(part.name)) {
+                part.texturePath = sidePotAssetId;
+              }
+              if (part.children) part.children.forEach(applySide);
+            };
+            previewModel.parts?.forEach(applySide);
+
+            // Main texture should be the base pot texture (not whichever pattern leaf).
+            texturePath = await resolveTexturePath(basePotAssetId);
             try {
-              texturePath = await getPackTexturePath(
-                winnerPack.path,
-                normalizedAssetId,
-                winnerPack.is_zip,
-              );
+              const sidePath = await resolveTexturePath(sidePotAssetId);
+              extra![sidePotAssetId] = convertFileSrc(sidePath);
             } catch {
-              texturePath = await getVanillaTexturePath(normalizedAssetId);
+              extra![sidePotAssetId] = null;
             }
           } else {
-            texturePath = await getVanillaTexturePath(normalizedAssetId);
+            texturePath = await resolveTexturePath(normalizedAssetId);
           }
 
           if (mounted) {
             const textureUrl = convertFileSrc(texturePath);
-            setJemModel(model);
+            setJemModel(previewModel);
             setEntityTextureUrl(textureUrl);
+            setEntityExtraTextureUrls(extra);
           }
         } catch (error) {
           console.error(
             `[AssetCard] Failed to load entity ${asset.id}:`,
             error,
           );
+          if (mounted) setEntityExtraTextureUrls(null);
         }
       };
 
@@ -335,6 +389,7 @@ export const AssetCard = memo(
       isEntity,
       asset.id,
       winnerPackId,
+      winnerPack,
       targetMinecraftVersion,
       entityVersionVariants,
       packFormat,
@@ -387,10 +442,11 @@ export const AssetCard = memo(
           // Blocks and entities display as 3D CSS cubes (or Three.js View for entities)
           isVisible ? (
             isEntity ? (
-              <ViewContainer
+              <EntityThumbnailView
                 key={`entity-${asset.id}`}
                 jemModel={jemModel}
                 textureUrl={entityTextureUrl}
+                extraTextureUrls={entityExtraTextureUrls}
               />
             ) : (
               <MinecraftCSSBlock

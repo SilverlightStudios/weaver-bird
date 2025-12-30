@@ -80,6 +80,8 @@ export interface LauncherInfo {
  */
 export type CanvasRenderMode = "3D" | "2D" | "Item";
 
+export type EntityAnimationVariant = "pack" | "vanilla";
+
 /**
  * UI/interaction state
  */
@@ -134,6 +136,38 @@ export interface UIState {
   useLegacyCEM: boolean; // Use legacy CEM files for entities with compatibility issues (default: true)
   targetMinecraftVersion: string | null; // Target Minecraft version for compatibility (null = use current vanilla version)
   entityVersionVariants: Record<string, string[]>; // Map of entity ID -> available version folders
+
+  // Entity animation settings
+  animationPreset: string | null; // Active animation preset ID (null = no animation)
+  animationPlaying: boolean; // Whether animation is currently playing
+  animationSpeed: number; // Animation playback speed multiplier (0.1 - 3.0)
+  entityHeadYaw: number; // Entity head yaw for manual control (degrees)
+  entityHeadPitch: number; // Entity head pitch for manual control (degrees)
+  availableAnimationPresets: string[] | null; // Presets relevant to current model (null = show all)
+
+  // Entity animation triggers (one-shot overlays)
+  availableAnimationTriggers: string[] | null; // Triggers relevant to current model (null = show none)
+  animationTriggerRequestId: string | null; // Trigger to play (engine consumes)
+  animationTriggerRequestNonce: number; // Monotonic counter to re-trigger same ID
+
+  // Entity pose toggles (persistent overlays)
+  availablePoseToggles: string[] | null; // Pose toggles relevant to current model (null = show none)
+  activePoseToggles: Record<string, boolean>; // Active pose toggle IDs
+
+  // Entity feature layers (multi-part entities / overlays)
+  entityFeatureStateByAssetId: Record<
+    AssetId,
+    {
+      toggles: Record<string, boolean>;
+      selects: Record<string, string>;
+    }
+  >;
+
+  // Entity animation source selection (per entity texture asset)
+  entityAnimationVariantByAssetId: Record<AssetId, EntityAnimationVariant>;
+
+  // Debug mode
+  jemDebugMode: boolean; // Enable JEM model inspector for debugging entity models
 }
 
 /**

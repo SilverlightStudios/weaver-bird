@@ -182,6 +182,7 @@ export async function loadPackTexture(
   packPath: string,
   textureId: string,
   isZip: boolean,
+  versionFolders?: string[] | null,
 ): Promise<THREE.Texture | null> {
   console.log(`=== [textureLoader] Loading Pack Texture ===`);
   console.log(`[textureLoader] Texture ID: ${textureId}`);
@@ -202,6 +203,7 @@ export async function loadPackTexture(
       packPath,
       assetId: textureId,
       isZip,
+      versionFolders: versionFolders ?? undefined,
     });
 
     console.log(`[textureLoader] ✓ Backend returned path: ${texturePath}`);

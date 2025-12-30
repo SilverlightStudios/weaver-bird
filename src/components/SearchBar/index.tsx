@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import { useSelectAllAssets } from "@state/selectors";
 import { beautifyAssetName } from "@lib/assetUtils";
+import { isEntityFeatureLayerTextureAssetId } from "@lib/entityComposite";
 import {
   buildSearchSuggestions,
   normalizeQuery,
@@ -46,7 +47,9 @@ export const SearchBar = ({
     }
 
     return buildSearchSuggestions(
-      allAssets.map((a) => ({ id: a.id, labels: a.labels })),
+      allAssets
+        .filter((a) => !isEntityFeatureLayerTextureAssetId(a.id))
+        .map((a) => ({ id: a.id, labels: a.labels })),
       inputValue,
       20, // max assets
       5, // max categories

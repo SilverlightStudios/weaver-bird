@@ -1,0 +1,11 @@
+.inspectorContainer {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.treeViewWrapper {
+  pointer-events: auto;
+}

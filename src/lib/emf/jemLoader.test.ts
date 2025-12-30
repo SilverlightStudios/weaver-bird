@@ -15,6 +15,18 @@ const cowJEM = JSON.parse(readFileSync(cowJEMPath, "utf-8")) as JEMFile;
 const chickenJEMPath = join(__dirname, "../../../__mocks__/cem/chicken.jem");
 const chickenJEM = JSON.parse(readFileSync(chickenJEMPath, "utf-8")) as JEMFile;
 
+const piglinJEMPath = join(
+  __dirname,
+  "../../../__mocks__/resourcepacks/FreshAnimations_v1.10.2/assets/minecraft/optifine/cem/piglin.jem",
+);
+const piglinJEM = JSON.parse(readFileSync(piglinJEMPath, "utf-8")) as JEMFile;
+
+const skeletonJEMPath = join(
+  __dirname,
+  "../../../__mocks__/resourcepacks/FreshAnimations_v1.10.2/assets/minecraft/optifine/cem/skeleton.jem",
+);
+const skeletonJEM = JSON.parse(readFileSync(skeletonJEMPath, "utf-8")) as JEMFile;
+
 describe("JEM Loader", () => {
   describe("parseJEM", () => {
     it("should parse cow.jem correctly", () => {
@@ -78,6 +90,51 @@ describe("JEM Loader", () => {
       expect(mainBox?.uv.west).toBeDefined();
       expect(mainBox?.uv.up).toBeDefined();
       expect(mainBox?.uv.down).toBeDefined();
+    });
+
+    it("should not accumulate depth=1 submodel translate", () => {
+      const parsed = parseJEM(piglinJEM as JEMFile);
+      const headwear = parsed.parts.find((p) => p.name === "headwear");
+      const head2 = headwear?.children.find((c) => c.name === "head2");
+      expect(head2?.origin).toEqual([0, 24, 0]);
+    });
+
+    it("should apply mirrorTexture to box_uv UVs", () => {
+      const parsed = parseJEM(skeletonJEM as JEMFile);
+      const leftArm = parsed.parts.find((p) => p.name === "left_arm");
+      const box = leftArm?.boxes[0];
+      // Expected mirrored face layout per Blockbench updateUV
+      expect(box?.uv.east).toEqual([46, 18, 44, 30]);
+      expect(box?.uv.west).toEqual([42, 18, 40, 30]);
+    });
+
+    it("should inherit and override textures per part/box", () => {
+      const synthetic: JEMFile = {
+        texture: "textures/entity/foo.png",
+        textureSize: [64, 64],
+        models: [
+          {
+            part: "body",
+            id: "body",
+            texture: "minecraft:textures/entity/bar.png",
+            textureSize: [32, 32],
+            boxes: [
+              {
+                coordinates: [0, 0, 0, 2, 2, 2],
+                textureOffset: [0, 0],
+                textureSize: [16, 16],
+              },
+            ],
+          },
+        ],
+      };
+
+      const parsed = parseJEM(synthetic);
+      const body = parsed.parts[0];
+      expect(body.texturePath).toBe("minecraft:textures/entity/bar.png");
+      expect(body.textureSize).toEqual([32, 32]);
+      expect(body.boxes[0].texturePath).toBe("minecraft:textures/entity/bar.png");
+      expect(body.boxes[0].textureSize).toEqual([16, 16]);
     });
   });
 

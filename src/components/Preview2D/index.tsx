@@ -682,8 +682,8 @@ export default function Preview2D({ assetId }: Props) {
           enableRotate={false} // Disable rotation for 2D view
           enablePan={true}
           enableZoom={true}
-          minDistance={1}
-          maxDistance={20}
+          minDistance={0.5}
+          maxDistance={40}
           mouseButtons={{
             LEFT: THREE.MOUSE.PAN,
             MIDDLE: THREE.MOUSE.DOLLY,

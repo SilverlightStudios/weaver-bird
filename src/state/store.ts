@@ -5,7 +5,16 @@
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { AppState, PackId, AssetId, PackMeta, AssetRecord } from "./types";
+import {
+  AppState,
+  PackId,
+  AssetId,
+  PackMeta,
+  AssetRecord,
+  EntityAnimationVariant,
+} from "./types";
+import { clampAnimationSpeed } from "@lib/emf/animation/types";
+import { POSE_TOGGLES } from "@lib/emf/animation";
 
 interface StoreActions {
   // Pack management
@@ -87,11 +96,48 @@ interface StoreActions {
   setTargetMinecraftVersion: (version: string | null) => void;
   setEntityVersionVariants: (variants: Record<string, string[]>) => void;
 
+  // Entity animation
+  setAnimationPreset: (preset: string | null) => void;
+  setAnimationPlaying: (playing: boolean) => void;
+  setAnimationSpeed: (speed: number) => void;
+  setEntityHeadYaw: (yaw: number) => void;
+  setEntityHeadPitch: (pitch: number) => void;
+  setAvailableAnimationPresets: (presets: string[] | null) => void;
+  setAvailableAnimationTriggers: (triggers: string[] | null) => void;
+  setAvailablePoseToggles: (toggles: string[] | null) => void;
+  setPoseToggleEnabled: (toggleId: string, enabled: boolean) => void;
+  triggerAnimation: (triggerId: string) => void;
+
+  // Entity feature layers
+  setEntityFeatureToggle: (
+    baseAssetId: AssetId,
+    toggleId: string,
+    enabled: boolean,
+  ) => void;
+  setEntityFeatureSelect: (
+    baseAssetId: AssetId,
+    selectId: string,
+    value: string,
+  ) => void;
+
+  // Entity animation variant (pack vs vanilla)
+  setEntityAnimationVariant: (
+    assetId: AssetId,
+    variant: EntityAnimationVariant,
+  ) => void;
+
+  // Debug mode
+  setJemDebugMode: (enabled: boolean) => void;
+
   // Reset
   reset: () => void;
 }
 
 type WeaverbirdStore = AppState & StoreActions;
+
+const POSE_GROUP_BY_ID: Record<string, string | undefined> = Object.fromEntries(
+  POSE_TOGGLES.map((p) => [p.id, p.exclusiveGroup] as const),
+);
 
 const initialState: AppState = {
   // Entities
@@ -147,6 +193,28 @@ const initialState: AppState = {
   useLegacyCEM: true, // Use legacy CEM by default for older packs
   targetMinecraftVersion: null, // Default to current vanilla version
   entityVersionVariants: {}, // Will be loaded when packs are scanned
+
+  // Entity animation settings
+  animationPreset: null, // No animation by default
+  animationPlaying: false, // Not playing by default
+  animationSpeed: 1.0, // Normal speed
+  entityHeadYaw: 0, // Looking forward
+  entityHeadPitch: 0, // Looking forward
+  availableAnimationPresets: null, // Show all presets by default
+  availableAnimationTriggers: null, // No triggers by default
+  animationTriggerRequestId: null,
+  animationTriggerRequestNonce: 0,
+  availablePoseToggles: null, // No pose toggles by default
+  activePoseToggles: {},
+
+  // Entity feature layers
+  entityFeatureStateByAssetId: {},
+
+  // Entity animation variant selection
+  entityAnimationVariantByAssetId: {},
+
+  // Debug mode
+  jemDebugMode: false, // Debug mode disabled by default
 };
 
 export const useStore = create<WeaverbirdStore>()(
@@ -477,6 +545,134 @@ export const useStore = create<WeaverbirdStore>()(
     setEntityVersionVariants: (variants: Record<string, string[]>) => {
       set((state) => {
         state.entityVersionVariants = variants;
+      });
+    },
+
+    // Entity animation
+    setAnimationPreset: (preset: string | null) => {
+      set((state) => {
+        state.animationPreset = preset;
+        // Auto-play when preset is selected
+        state.animationPlaying = preset !== null;
+      });
+    },
+
+    setAnimationPlaying: (playing: boolean) => {
+      set((state) => {
+        state.animationPlaying = playing;
+      });
+    },
+
+    setAnimationSpeed: (speed: number) => {
+      set((state) => {
+        state.animationSpeed = clampAnimationSpeed(speed);
+      });
+    },
+
+    setEntityHeadYaw: (yaw: number) => {
+      set((state) => {
+        // Normalize to -180 to 180 range
+        state.entityHeadYaw = ((yaw + 180) % 360) - 180;
+      });
+    },
+
+    setEntityHeadPitch: (pitch: number) => {
+      set((state) => {
+        // Clamp pitch to -90 to 90 (can't look further than straight up/down)
+        state.entityHeadPitch = Math.max(-90, Math.min(90, pitch));
+      });
+    },
+
+    setAvailableAnimationPresets: (presets: string[] | null) => {
+      set((state) => {
+        state.availableAnimationPresets = presets;
+      });
+    },
+
+    setAvailableAnimationTriggers: (triggers: string[] | null) => {
+      set((state) => {
+        state.availableAnimationTriggers = triggers;
+      });
+    },
+
+    setAvailablePoseToggles: (toggles: string[] | null) => {
+      set((state) => {
+        state.availablePoseToggles = toggles;
+
+        const allow = toggles ? new Set(toggles) : null;
+        for (const key of Object.keys(state.activePoseToggles)) {
+          if (allow && allow.has(key)) continue;
+          delete state.activePoseToggles[key];
+        }
+      });
+    },
+
+    setPoseToggleEnabled: (toggleId: string, enabled: boolean) => {
+      set((state) => {
+        const available = state.availablePoseToggles;
+        if (!available || !available.includes(toggleId)) return;
+        const group = POSE_GROUP_BY_ID[toggleId];
+        if (enabled && group) {
+          for (const [id] of Object.entries(state.activePoseToggles)) {
+            if (id !== toggleId && POSE_GROUP_BY_ID[id] === group) {
+              delete state.activePoseToggles[id];
+            }
+          }
+        }
+        if (enabled) state.activePoseToggles[toggleId] = true;
+        else delete state.activePoseToggles[toggleId];
+      });
+    },
+
+    triggerAnimation: (triggerId: string) => {
+      set((state) => {
+        state.animationTriggerRequestId = triggerId;
+        state.animationTriggerRequestNonce += 1;
+      });
+    },
+
+    setEntityFeatureToggle: (baseAssetId, toggleId, enabled) => {
+      set((state) => {
+        state.entityFeatureStateByAssetId[baseAssetId] ??= {
+          toggles: {},
+          selects: {},
+        };
+        // Mutual exclusivity for equipment underlay toggles (player vs armor stand).
+        // Keep this centralized so the UI doesn't need special casing.
+        if (enabled && toggleId === "equipment.add_player") {
+          state.entityFeatureStateByAssetId[baseAssetId].toggles[
+            "equipment.add_armor_stand"
+          ] = false;
+        }
+        if (enabled && toggleId === "equipment.add_armor_stand") {
+          state.entityFeatureStateByAssetId[baseAssetId].toggles[
+            "equipment.add_player"
+          ] = false;
+        }
+        state.entityFeatureStateByAssetId[baseAssetId].toggles[toggleId] =
+          enabled;
+      });
+    },
+
+    setEntityFeatureSelect: (baseAssetId, selectId, value) => {
+      set((state) => {
+        state.entityFeatureStateByAssetId[baseAssetId] ??= {
+          toggles: {},
+          selects: {},
+        };
+        state.entityFeatureStateByAssetId[baseAssetId].selects[selectId] = value;
+      });
+    },
+
+    setEntityAnimationVariant: (assetId, variant) => {
+      set((state) => {
+        state.entityAnimationVariantByAssetId[assetId] = variant;
+      });
+    },
+
+    setJemDebugMode: (enabled: boolean) => {
+      set((state) => {
+        state.jemDebugMode = enabled;
       });
     },
 

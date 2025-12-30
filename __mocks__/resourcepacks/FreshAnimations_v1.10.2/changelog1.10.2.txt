@@ -1,0 +1,21 @@
+
+Recommended with Entity Model Features: https://modrinth.com/mod/entity-model-features
+
+Changes/Fixes:
+- fixed pack.mcmeta formatting for 1.21.9+
+- fixed villager nose z-flighting with some custom textures
+- fixed parrot crest texture uv to match vanilla
+- fixed happy ghast with harness
+- fixed sheep wool undercoat when turning or jumping/landing
+- un-flipped creeper leg uvs to match vanilla
+- added 'joy' face for adult happy ghast
+- mooshroom now blink just like normal cows
+- tweaked happy ghast twist novelty
+- smoothed ravager growl transition
+- changed how rule_index is handled in anims for chicken, cow, pig, mooshroom, goat, bee, snow golem
+	- now uses a variable defining the rule_index in the entity model itself
+- changed credit variable to =1 for all mobs
+- fixed armour frame delay for zombie, skeleton, stray, bogged, giant
+- fixed armour not animating for baby mobs: zombie, husk, drowned, zombie villager, piglin, zombified piglin
+- added models and textures for pre-1.21.5 pig, cow, and mooshrooms
+	- fixes mod and resource pack compatibility issues

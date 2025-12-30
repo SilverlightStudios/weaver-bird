@@ -332,8 +332,8 @@ export default function PreviewItem({
 
         <OrbitControls
           enablePan={false}
-          minDistance={1.5}
-          maxDistance={5}
+          minDistance={0.75}
+          maxDistance={10}
           target={[0, 0, 0]}
         />
 

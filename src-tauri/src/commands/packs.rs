@@ -371,6 +371,7 @@ pub fn get_pack_texture_path_impl(
     pack_path: String,
     asset_id: String,
     is_zip: bool,
+    version_folders: Option<Vec<String>>,
     app_handle: &tauri::AppHandle,
 ) -> Result<String, AppError> {
     println!(
@@ -387,23 +388,40 @@ pub fn get_pack_texture_path_impl(
         relative_path
     );
 
+    let mut candidate_paths: Vec<String> = Vec::new();
+    candidate_paths.push(relative_path.clone());
+    if let Some(folders) = &version_folders {
+        for folder in folders {
+            let trimmed = folder.trim().trim_matches('/');
+            if trimmed.is_empty() {
+                continue;
+            }
+            candidate_paths.push(format!("{}/{}", trimmed, relative_path));
+        }
+    }
+
     if is_zip {
         // For ZIP files, extract to temporary cache directory
         let zip_path_str = &pack_path;
 
-        // Extract the texture bytes from ZIP
-        println!(
-            "[get_pack_texture_path] Extracting from ZIP: {}",
-            zip_path_str
-        );
-        let bytes =
-            crate::util::zip::extract_zip_entry(zip_path_str, &relative_path).map_err(|e| {
-                println!(
-                    "[get_pack_texture_path] ERROR: Failed to extract {}: {}",
-                    relative_path, e
-                );
-                AppError::validation(format!("Texture not found in ZIP: {}", e))
-            })?;
+        // Extract the texture bytes from ZIP (try version-folder candidates too).
+        println!("[get_pack_texture_path] Extracting from ZIP: {}", zip_path_str);
+        let mut chosen_rel: Option<String> = None;
+        let mut bytes: Option<Vec<u8>> = None;
+        for cand in &candidate_paths {
+            match crate::util::zip::extract_zip_entry(zip_path_str, cand) {
+                Ok(b) => {
+                    chosen_rel = Some(cand.clone());
+                    bytes = Some(b);
+                    break;
+                }
+                Err(_) => continue,
+            }
+        }
+        let bytes = bytes.ok_or_else(|| {
+            AppError::validation(format!("Texture not found in ZIP: {}", relative_path))
+        })?;
+        let chosen_rel = chosen_rel.unwrap_or(relative_path.clone());
         println!(
             "[get_pack_texture_path] Successfully extracted {} bytes",
             bytes.len()
@@ -428,8 +446,8 @@ pub fn get_pack_texture_path_impl(
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
 
-        // Sanitize the relative path for filesystem
-        let safe_texture_path = relative_path.replace("/", "_").replace("\\", "_");
+        // Sanitize the chosen relative path for filesystem
+        let safe_texture_path = chosen_rel.replace("/", "_").replace("\\", "_");
         let cache_file = cache_dir.join(format!("{}_{}", zip_name, safe_texture_path));
 
         // Write the texture to cache if it doesn't exist or is outdated
@@ -450,16 +468,17 @@ pub fn get_pack_texture_path_impl(
     } else {
         // For directory packs, just combine the paths
         let pack_base = PathBuf::from(&pack_path);
-        let full_path = pack_base.join(&relative_path);
-
-        if full_path.exists() {
-            Ok(full_path.to_string_lossy().to_string())
-        } else {
-            Err(AppError::validation(format!(
-                "Texture not found in pack: {}",
-                relative_path
-            )))
+        for cand in &candidate_paths {
+            let full_path = pack_base.join(cand);
+            if full_path.exists() {
+                return Ok(full_path.to_string_lossy().to_string());
+            }
         }
+
+        Err(AppError::validation(format!(
+            "Texture not found in pack: {}",
+            relative_path
+        )))
     }
 }
 

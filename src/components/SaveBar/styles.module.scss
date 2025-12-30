@@ -1,142 +1,180 @@
 .root {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-bg);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: center;
-  min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    min-height: 44px;
 }
 
 .button {
-  flex-shrink: 0;
+    flex-shrink: 0;
 }
 
 .statusArea {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
 }
 
 .progress {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .progressBar {
-  flex: 1;
-  height: 4px;
-  background-color: var(--color-border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  max-width: 200px;
+    flex: 1;
+    height: 4px;
+    background-color: var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    max-width: 200px;
 
-  .fill {
-    height: 100%;
-    background-color: var(--color-primary);
-    transition: width 0.2s ease;
-  }
+    .fill {
+        height: 100%;
+        background-color: var(--color-primary);
+        transition: width 0.2s ease;
+    }
 }
 
 .progressText {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-light);
-  white-space: nowrap;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+    white-space: nowrap;
 }
 
 .status {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    max-width: 100%;
 
-  &[data-type="success"] {
-    background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
-    color: var(--color-success);
-  }
+    &[data-type="success"] {
+        background-color: color-mix(
+            in srgb,
+            var(--color-success) 15%,
+            transparent
+        );
+        color: var(--color-success);
+    }
 
-  &[data-type="error"] {
-    background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
-    color: var(--color-danger);
-  }
+    &[data-type="error"] {
+        background-color: color-mix(
+            in srgb,
+            var(--color-danger) 15%,
+            transparent
+        );
+        color: var(--color-danger);
+    }
 }
 
 .statusText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .clearButton {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  padding: 0;
-  width: 16px;
-  height: 16px;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  color: inherit;
-  opacity: 0.7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition:
+        opacity 0.15s ease,
+        background-color 0.15s ease;
 
-  &:hover {
-    opacity: 1;
-    background-color: rgba(0, 0, 0, 0.1);
-  }
+    &:hover {
+        opacity: 1;
+        background-color: rgba(0, 0, 0, 0.1);
+    }
 }
 
 .info {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: center;
-  flex-shrink: 0;
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .infoItem {
-  display: flex;
-  gap: var(--spacing-xs);
-  align-items: center;
-  font-size: var(--font-size-xs);
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    font-size: var(--font-size-xs);
 }
 
 .infoLabel {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  white-space: nowrap;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 .infoValue {
-  color: var(--color-text);
-  white-space: nowrap;
-  cursor: default;
+    color: var(--color-text);
+    white-space: nowrap;
+    cursor: default;
 
-  &:has(+ *), // When it's a tooltip trigger
+    &:has(+ *), // When it's a tooltip trigger
   button > & {
-    cursor: help;
-  }
+        cursor: help;
+    }
 }
 
 .colormapPreview {
-  padding: var(--spacing-xs);
+    padding: var(--spacing-xs);
 }
 
 .colormapImage {
-  display: block;
-  width: 256px;
-  height: 256px;
-  image-rendering: pixelated;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
+    display: block;
+    width: 256px;
+    height: 256px;
+    image-rendering: pixelated;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+}
+
+.debugControls {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding-left: var(--spacing-md);
+    border-left: 1px solid var(--color-border);
+}
+
+.debugLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        color: var(--color-text);
+    }
+}
+
+.debugCheckbox {
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
 }

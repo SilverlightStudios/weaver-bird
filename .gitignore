@@ -4,6 +4,9 @@ src-tauri/target/
 # Dependencies
 node_modules/
 
+# LLM Resource
+__mocks__/blockbench
+
 # Build output
 dist/
 build/

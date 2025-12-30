@@ -154,8 +154,9 @@ fn get_pack_texture_path(
     pack_path: String,
     asset_id: String,
     is_zip: bool,
+    version_folders: Option<Vec<String>>,
 ) -> Result<String, weaverbird_lib::AppError> {
-    get_pack_texture_path_impl(pack_path, asset_id, is_zip, &app_handle)
+    get_pack_texture_path_impl(pack_path, asset_id, is_zip, version_folders, &app_handle)
 }
 
 /// Tauri command wrapper for reading block model JSON (legacy - goes through blockstate resolution)

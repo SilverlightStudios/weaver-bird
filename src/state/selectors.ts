@@ -9,6 +9,7 @@ import { useStore } from "./store";
 import { AssetId, PackId, OverrideEntry, OverrideWirePayload } from "./types";
 import { assetMatchesQuery } from "@lib/searchUtils";
 import { shouldExcludeAsset } from "@lib/assetUtils";
+import { isEntityFeatureLayerTextureAssetId } from "@lib/entityComposite";
 
 /**
  * Get providers for an asset, sorted by current pack order
@@ -147,7 +148,9 @@ export const useSelectPaginatedAssets = () => {
   return useMemo(() => {
     // Filter assets by search query and exclude unwanted assets
     let filteredAssets = Object.values(assets).filter(
-      (asset) => !shouldExcludeAsset(asset.id),
+      (asset) =>
+        !shouldExcludeAsset(asset.id) &&
+        !isEntityFeatureLayerTextureAssetId(asset.id),
     );
 
     if (searchQuery) {

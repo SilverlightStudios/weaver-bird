@@ -3,6 +3,7 @@ import { buildWeaverNest, formatError } from "@lib/tauri";
 import Button from "@/ui/components/buttons/Button";
 import { SaveIcon } from "./SaveIcon";
 import type { SaveBarProps } from "./types";
+import { useStore } from "@state/store";
 import s from "./styles.module.scss";
 
 export const SaveBar = ({
@@ -19,6 +20,9 @@ export const SaveBar = ({
   statusType = "idle",
   onClearStatus,
 }: SaveBarProps) => {
+  const jemDebugMode = useStore((state) => state.jemDebugMode);
+  const setJemDebugMode = useStore((state) => state.setJemDebugMode);
+
   const percent = progress
     ? Math.round((progress.completed / Math.max(progress.total, 1)) * 100)
     : 0;
@@ -85,6 +89,18 @@ export const SaveBar = ({
             )}
           </div>
         ) : null}
+      </div>
+
+      <div className={s.debugControls}>
+        <label className={s.debugLabel}>
+          <input
+            type="checkbox"
+            checked={jemDebugMode}
+            onChange={(e) => setJemDebugMode(e.target.checked)}
+            className={s.debugCheckbox}
+          />
+          <span>JEM Debug Mode</span>
+        </label>
       </div>
     </div>
   );

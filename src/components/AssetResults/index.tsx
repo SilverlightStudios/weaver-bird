@@ -17,16 +17,11 @@
  *    - IMPACT: Initial page load feels instant, cards appear progressively
  */
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import {
-  beautifyAssetName,
-  getBlockStateIdFromAssetId,
-  isInventoryVariant,
-  is2DOnlyTexture,
-  isNumberedVariant,
-} from "@lib/assetUtils";
+import { isInventoryVariant, isNumberedVariant } from "@lib/assetUtils";
 import { assetGroupingWorker } from "@lib/assetGroupingWorker";
 import { useStore } from "@state/store";
 import { AssetCard } from "./components/AssetCard";
+import { SharedEntityThumbnailsCanvas } from "./components/SharedEntityThumbnailsCanvas";
 import { getWinningPack } from "./utilities";
 import type { Props } from "./types";
 import s from "./styles.module.scss";
@@ -143,11 +138,21 @@ export default function AssetResults({
         const inventoryVariant = group.variantIds.find((id) =>
           isInventoryVariant(id),
         );
-        const primaryId = inventoryVariant || group.variantIds[0];
-        const canonicalId =
-          primaryId.includes(":colormap/") || is2DOnlyTexture(primaryId)
-            ? primaryId
-            : getBlockStateIdFromAssetId(primaryId);
+        let primaryId = inventoryVariant || group.variantIds[0];
+
+        // Prefer the full banner texture for the banner family card icon.
+        if (group.baseId === "entity/banner") {
+          const full = group.variantIds.find((id) => id.endsWith(":entity/banner_base"));
+          if (full) primaryId = full;
+        }
+
+        // Prefer the base pot texture for the decorated pot family card icon.
+        if (group.baseId === "entity/decorated_pot") {
+          const base = group.variantIds.find((id) =>
+            id.endsWith(":entity/decorated_pot/decorated_pot_base"),
+          );
+          if (base) primaryId = base;
+        }
 
         // Count only numbered texture variants (e.g., acacia_planks1, acacia_planks2)
         // Block states (_on, _off) and faces (_top, _side) should NOT be counted as variants
@@ -155,7 +160,7 @@ export default function AssetResults({
 
         return {
           id: primaryId,
-          name: beautifyAssetName(canonicalId),
+          name: group.displayName,
           variantCount: numberedVariants.length,
           allVariants: group.variantIds,
         };
@@ -276,6 +281,7 @@ export default function AssetResults({
 
   return (
     <div className={s.root} ref={containerRef}>
+      <SharedEntityThumbnailsCanvas />
 
       <div className={s.paginationInfo}>
         Showing {displayRange.start}–{displayRange.end} of{" "}
