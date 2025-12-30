@@ -181,8 +181,14 @@ export function getEntityInfoFromAssetId(assetId: string): {
   const segments = fullPath.split("/");
 
   if (segments.length === 1) {
+    if (segments[0] === "banner_base") {
+      return { variant: "banner", parent: null };
+    }
     return { variant: segments[0], parent: null };
   } else {
+    if (segments[0] === "banner") {
+      return { variant: "banner", parent: null };
+    }
     if (segments[0] === "signs") {
       const woodType = segments[segments.length - 1];
       let signType = "";

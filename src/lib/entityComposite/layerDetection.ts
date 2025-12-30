@@ -21,6 +21,22 @@ export function isEntityFeatureLayerTextureAssetId(assetId: AssetId): boolean {
   const entityPath = getEntityPath(assetId);
   if (!entityPath) return false;
 
+  // Bee state textures are variants of the same entity model.
+  if (entityPath.startsWith("bee/")) {
+    const leaf = entityPath.split("/").pop() ?? "";
+    if (
+      leaf === "bee_angry" ||
+      leaf === "bee_nectar" ||
+      leaf === "bee_angry_nectar" ||
+      leaf === "bee_stinger" ||
+      leaf === "bee_angry_stinger" ||
+      leaf === "bee_nectar_stinger" ||
+      leaf === "bee_angry_nectar_stinger"
+    ) {
+      return true;
+    }
+  }
+
   // Villager feature layers
   if (entityPath.startsWith("villager/type/")) return true;
   if (entityPath.startsWith("villager/profession/")) return true;
@@ -30,7 +46,13 @@ export function isEntityFeatureLayerTextureAssetId(assetId: AssetId): boolean {
   if (entityPath.startsWith("zombie_villager/profession_level/")) return true;
 
   // Banner pattern masks
-  if (entityPath.startsWith("banner/")) return true;
+  if (entityPath.startsWith("banner/")) {
+    const leaf = entityPath.split("/").pop() ?? "";
+    // The base banner texture should be treated as a primary entity texture so
+    // it can be shown as a single resource card.
+    if (leaf === "base" || leaf === "banner_base") return false;
+    return true;
+  }
 
   // Common overlay suffixes (same-UV layers)
   const leaf = entityPath.split("/").pop() ?? "";
@@ -73,6 +95,12 @@ export function getLikelyBaseEntityAssetIdForLayer(
   const ns = layerAssetId.includes(":") ? layerAssetId.split(":")[0] : "minecraft";
   const mk = (path: string) => `${ns}:${path}` as AssetId;
 
+  // Bee variants -> base bee texture
+  if (entityPath.startsWith("bee/")) {
+    const candidates = [mk("entity/bee/bee"), mk("entity/bee")];
+    for (const c of candidates) if (set.has(c)) return c;
+  }
+
   // Villager overlays -> base villager texture
   if (entityPath.startsWith("villager/")) {
     const candidates = [
@@ -93,7 +121,12 @@ export function getLikelyBaseEntityAssetIdForLayer(
 
   // Banner patterns -> base banner texture
   if (entityPath.startsWith("banner/")) {
-    const candidates = [mk("entity/banner"), mk("entity/banner_base")];
+    const candidates = [
+      mk("entity/banner/base"),
+      mk("entity/banner/banner_base"),
+      mk("entity/banner_base"),
+      mk("entity/banner"),
+    ];
     for (const c of candidates) if (set.has(c)) return c;
   }
 

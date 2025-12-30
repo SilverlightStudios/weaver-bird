@@ -1117,6 +1117,11 @@ function applyVanillaHierarchy(
     parentMap = {
       saddle: "body",
     };
+  } else if (rootGroups.bell_body && rootGroups.bell_base) {
+    // Bell models: the ringing body rotates under a static base.
+    parentMap = {
+      bell_body: "bell_base",
+    };
   } else {
     return;
   }
@@ -1271,6 +1276,13 @@ function convertPart(
 
   const partTexture = textureMap[part.texturePath] ?? texture;
 
+  // Keep meshes for this part's own boxes in a dedicated subgroup so CEM
+  // animations can toggle `visible_boxes` without hiding child bones.
+  const boxesGroup = new THREE.Group();
+  // Do not name this group; it should not be addressable as a bone.
+  group.userData.boxesGroup = boxesGroup;
+  group.add(boxesGroup);
+
   for (let i = 0; i < part.boxes.length; i++) {
     const box = part.boxes[i];
     const mesh = createBoxMesh(
@@ -1281,7 +1293,7 @@ function convertPart(
       part.name,
       i,
     );
-    if (mesh) group.add(mesh);
+    if (mesh) boxesGroup.add(mesh);
   }
 
   // Children

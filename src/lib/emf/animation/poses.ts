@@ -3,7 +3,8 @@ import type { EntityState } from "./types";
 export type PoseToggleId =
   | "pose.aim_crossbow"
   | "pose.hold_axe_right"
-  | "pose.hold_axe_left";
+  | "pose.hold_axe_left"
+  | "pose.sneak";
 
 export interface PoseToggleDefinition {
   id: PoseToggleId;
@@ -11,6 +12,11 @@ export interface PoseToggleDefinition {
   description: string;
   /** If set, only one toggle in the same group can be enabled at a time. */
   exclusiveGroup?: string;
+  /**
+   * Optional entity-state overrides applied each frame while the toggle is enabled.
+   * Useful for vanilla-driven toggles like `is_sneaking`.
+   */
+  entityStateOverrides?: (state: EntityState) => Partial<EntityState>;
   /**
    * Injects "vanilla input" bone values into `context.boneValues` before JPM
    * evaluation so packs that infer poses from arm rotations can react.
@@ -52,6 +58,15 @@ export const POSE_TOGGLES: PoseToggleDefinition[] = [
     exclusiveGroup: "weapon",
     boneInputs: () => ({
       left_arm: { rx: degToRad(-90) },
+    }),
+  },
+  {
+    id: "pose.sneak",
+    name: "Sneak / Crouch",
+    description:
+      "Forces `is_sneaking=true` on top of the current base animation (some mobs use this for roll/curl states).",
+    entityStateOverrides: () => ({
+      is_sneaking: true,
     }),
   },
 ];

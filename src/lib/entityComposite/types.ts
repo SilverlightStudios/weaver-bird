@@ -77,6 +77,48 @@ export interface EntityCompositeSchema {
   entityRoot: string;
   controls: EntityFeatureControl[];
   /**
+   * Optional base texture override (e.g. bee angry/nectar variants) while keeping
+   * geometry tied to the selected entity/model asset.
+   */
+  getBaseTextureAssetId?: (state: EntityFeatureStateView) => AssetId;
+  /**
+   * Optional override for the base CEM/JEM entity type to load for this texture.
+   * Useful for "block entity" textures that share a texture family but have
+   * multiple model configurations (e.g. wall vs standing banners).
+   */
+  getCemEntityType?: (
+    state: EntityFeatureStateView,
+  ) => { entityType: string; parentEntity?: string | null };
+  /**
+   * Optional transform applied to the *root group* (not individual bones).
+   * Values are additive to the model's baseline transform and expressed in
+   * Three.js units/radians.
+   */
+  getRootTransform?: (
+    state: EntityFeatureStateView,
+  ) => {
+    position?: { x: number; y: number; z: number };
+    rotation?: { x: number; y: number; z: number };
+    scale?: { x: number; y: number; z: number };
+  };
+  /**
+   * Optional direct overrides for bone render properties (applied after each tick).
+   * Use for configuration toggles that must work even without JPM animations.
+   */
+  getBoneRenderOverrides?: (
+    state: EntityFeatureStateView,
+  ) => Partial<Record<string, { visible?: boolean }>>;
+  /**
+   * Optional per-frame bone input overrides applied before evaluating CEM/JPM.
+   * Useful for vanilla-driven booleans that packs expose via `bone.visible`
+   * (e.g. bee stinger present / absent).
+   *
+   * Values are raw numeric CEM properties (pixels/radians/0..1 for visible).
+   */
+  getBoneInputOverrides?: (
+    state: EntityFeatureStateView,
+  ) => Record<string, Record<string, number>>;
+  /**
    * Returns the layers to render for the current feature state.
    */
   getActiveLayers: (state: EntityFeatureStateView) => EntityLayerDefinition[];

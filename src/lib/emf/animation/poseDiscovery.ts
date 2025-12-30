@@ -29,6 +29,8 @@ export function getAvailablePoseToggleIdsForAnimationLayers(
   if (keys.has("var.melee_r") || has("var.melee_r")) available.push("pose.hold_axe_right");
   if (keys.has("var.melee_l") || has("var.melee_l")) available.push("pose.hold_axe_left");
 
+  // Some mobs (including newer ones like armadillo) drive alternative poses via vanilla booleans.
+  if (has("is_sneaking")) available.push("pose.sneak");
+
   return available.length > 0 ? available : null;
 }
-

@@ -119,8 +119,6 @@ async function getImageDimensions(
  * @param textureUrl - URL to the texture PNG
  * @returns Animation metadata or null if not found/invalid
  */
-// @ts-ignore - Keeping for future .mcmeta support
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function tryLoadMcmeta(
   textureUrl: string,
 ): Promise<AnimationMetadata | null> {
@@ -231,10 +229,9 @@ export async function parseAnimationTexture(
     // Calculate frame count
     const frameCount = height / width;
 
-    // Note: .mcmeta files are optional and provide frame timing/order customization
-    // For now, we skip loading .mcmeta to avoid 500 errors on missing files
-    // Default behavior is sequential frames at 1 tick per frame
-    const metadata = null;
+    // .mcmeta files are optional and provide frame timing/order customization.
+    // Missing/invalid metadata is treated as null.
+    const metadata = await tryLoadMcmeta(textureUrl);
 
     // Calculate configurations for displaying first frame only
 

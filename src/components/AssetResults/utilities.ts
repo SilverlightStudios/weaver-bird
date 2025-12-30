@@ -77,6 +77,10 @@ export function generateDisplayName(asset: AssetItem): string {
         // Remove entity/ prefix
         const entityPath = path.replace("entity/", "");
 
+        if (entityPath === "banner_base" || entityPath.startsWith("banner/")) {
+            return "Banner";
+        }
+
         // Handle different entity types
         if (entityPath.startsWith("signs/")) {
             // signs/hanging/birch -> Birch Hanging Sign
@@ -97,12 +101,19 @@ export function generateDisplayName(asset: AssetItem): string {
             return `${woodType} ${signType}`;
         }
 
-        // Generic entity handling: convert underscores to spaces, capitalize
+        // Generic entity handling:
+        // - Prefer an explicit grouped name (e.g., "Boat", "Bed", "Cat") when provided.
+        // - Otherwise fall back to the leaf name (e.g., "Oak", "Red").
         const entityName = entityPath
             .split("/").pop()! // Get last segment
             .split("_")
             .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(" ");
+
+        if (asset.name && asset.name !== entityName) {
+            return asset.name;
+        }
+
         return entityName;
     }
 

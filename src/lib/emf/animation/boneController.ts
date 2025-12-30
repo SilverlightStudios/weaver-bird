@@ -19,6 +19,7 @@ export interface BaseTransforms {
   rotation: THREE.Euler;
   scale: THREE.Vector3;
   visible: boolean;
+  boxesVisible: boolean;
 }
 
 export type BaseTransformMap = Map<string, BaseTransforms>;
@@ -77,11 +78,15 @@ export function storeBaseTransforms(bones: BoneMap): BaseTransformMap {
   const baseTransforms: BaseTransformMap = new Map();
 
   for (const [name, bone] of bones) {
+    const boxesGroup = (bone as any)?.userData?.boxesGroup as
+      | THREE.Object3D
+      | undefined;
     baseTransforms.set(name, {
       position: bone.position.clone(),
       rotation: bone.rotation.clone(),
       scale: bone.scale.clone(),
       visible: bone.visible,
+      boxesVisible: boxesGroup?.visible ?? true,
     });
   }
 
@@ -105,6 +110,10 @@ export function resetBone(
   bone.rotation.copy(baseTransform.rotation);
   bone.scale.copy(baseTransform.scale);
   bone.visible = baseTransform.visible;
+  const boxesGroup = (bone as any)?.userData?.boxesGroup as
+    | THREE.Object3D
+    | undefined;
+  if (boxesGroup) boxesGroup.visible = baseTransform.boxesVisible;
 }
 
 export function resetAllBones(
@@ -385,6 +394,13 @@ export function applyBoneTransform(
 
   if (transforms.visible !== undefined) {
     bone.visible = transforms.visible;
+  }
+
+  if (transforms.visible_boxes !== undefined) {
+    const boxesGroup = (bone as any)?.userData?.boxesGroup as
+      | THREE.Object3D
+      | undefined;
+    if (boxesGroup) boxesGroup.visible = transforms.visible_boxes;
   }
 
   if (shouldLog && (hasTranslation || hasRotation || hasScale)) {

@@ -166,13 +166,60 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
   const entityFeatureState = entityFeatureSchema
     ? entityFeatureStateByAssetId[entityFeatureSchema.baseAssetId]
     : undefined;
+  const entityFeatureStateView = useMemo(
+    () => ({
+      toggles: entityFeatureState?.toggles ?? {},
+      selects: entityFeatureState?.selects ?? {},
+    }),
+    [entityFeatureState],
+  );
+  const baseTextureAssetId = useMemo(() => {
+    if (!entityFeatureSchema?.getBaseTextureAssetId) return assetId;
+    try {
+      return entityFeatureSchema.getBaseTextureAssetId(entityFeatureStateView);
+    } catch {
+      return assetId;
+    }
+  }, [assetId, entityFeatureSchema, entityFeatureStateView]);
+  const featureBoneInputOverrides = useMemo(() => {
+    if (!entityFeatureSchema?.getBoneInputOverrides) return null;
+    try {
+      return entityFeatureSchema.getBoneInputOverrides(entityFeatureStateView);
+    } catch {
+      return null;
+    }
+  }, [entityFeatureSchema, entityFeatureStateView]);
+  const cemEntityOverride = useMemo(() => {
+    if (!entityFeatureSchema?.getCemEntityType) return null;
+    try {
+      return entityFeatureSchema.getCemEntityType(entityFeatureStateView);
+    } catch {
+      return null;
+    }
+  }, [entityFeatureSchema, entityFeatureStateView]);
+  const rootTransformOverride = useMemo(() => {
+    if (!entityFeatureSchema?.getRootTransform) return null;
+    try {
+      return entityFeatureSchema.getRootTransform(entityFeatureStateView);
+    } catch {
+      return null;
+    }
+  }, [entityFeatureSchema, entityFeatureStateView]);
+  const boneRenderOverrides = useMemo(() => {
+    if (!entityFeatureSchema?.getBoneRenderOverrides) return null;
+    try {
+      return entityFeatureSchema.getBoneRenderOverrides(entityFeatureStateView);
+    } catch {
+      return null;
+    }
+  }, [entityFeatureSchema, entityFeatureStateView]);
   const activeEntityLayers = useMemo(() => {
     if (!entityFeatureSchema) return [];
     return entityFeatureSchema.getActiveLayers({
-      toggles: entityFeatureState?.toggles ?? {},
-      selects: entityFeatureState?.selects ?? {},
+      toggles: entityFeatureStateView.toggles,
+      selects: entityFeatureStateView.selects,
     });
-  }, [entityFeatureSchema, entityFeatureState]);
+  }, [entityFeatureSchema, entityFeatureStateView]);
 
   // Load entity version variants when packs directory changes
   useEffect(() => {
@@ -229,11 +276,18 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
       setError(null);
       setAvailableAnimationPresets(null);
       setAvailableAnimationTriggers(null);
+      setPackAnimationLayers(undefined);
 
       try {
         console.log("=== [EntityModel] Starting Entity Model Load ===");
-        console.log("[EntityModel] Entity variant:", entityType);
-        console.log("[EntityModel] Parent entity:", parentEntity);
+        const cemEntityType = cemEntityOverride?.entityType ?? entityType!;
+        const cemParentEntity =
+          cemEntityOverride?.parentEntity === undefined
+            ? parentEntity
+            : cemEntityOverride?.parentEntity ?? null;
+
+        console.log("[EntityModel] Entity variant:", cemEntityType);
+        console.log("[EntityModel] Parent entity:", cemParentEntity);
 
         // Load the entity model definition. Model packs are not necessarily the
         // same as the "winner" texture pack (Fresh Animations often ships only
@@ -253,12 +307,12 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
         // from another (e.g. Fresh Animations leaking into the vanilla variant).
         if (resolvedPack && resolvedPackId !== "minecraft:vanilla") {
           const attempt = await loadEntityModel(
-            entityType!,
+            cemEntityType,
             resolvedPack.path,
             resolvedPack.is_zip,
             targetMinecraftVersion,
             entityVersionVariants,
-            parentEntity,
+            cemParentEntity,
             resolvedPack.pack_format,
             selectedEntityVariant,
           );
@@ -275,12 +329,12 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
         if (!parsedModel) {
           parsedModel = await loadEntityModel(
-            entityType!,
+            cemEntityType,
             undefined,
             undefined,
             targetMinecraftVersion,
             entityVersionVariants,
-            parentEntity,
+            cemParentEntity,
             undefined,
             selectedEntityVariant,
           );
@@ -290,12 +344,12 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
         if (!parsedModel) {
           // No custom entity model found - this is normal for packs without OptiFine CEM
           console.log(
-            `[EntityModel] No custom JEM model found for ${entityType}`,
+            `[EntityModel] No custom JEM model found for ${cemEntityType}`,
           );
           console.log(
             "[EntityModel] Entity models require OptiFine CEM files (assets/minecraft/optifine/cem/*.jem)",
           );
-          setError(`No custom entity model available for ${entityType}`);
+          setError(`No custom entity model available for ${cemEntityType}`);
           setAvailableAnimationPresets(null);
           setAvailableAnimationTriggers(null);
           setAvailablePoseToggles(null);
@@ -313,7 +367,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
         // Extract the texture path from the asset ID
         // e.g., "minecraft:entity/chest/normal" -> "entity/chest/normal"
-        const texturePath = assetId.replace(/^minecraft:/, "");
+        const texturePath = baseTextureAssetId.replace(/^minecraft:/, "");
         console.log("[EntityModel] Loading texture:", texturePath);
 
         // Load the texture
@@ -511,6 +565,9 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     assetId,
+    baseTextureAssetId,
+    cemEntityOverride?.entityType,
+    cemEntityOverride?.parentEntity,
     resolvedPackId,
     resolvedPack,
     packsDir,
@@ -519,14 +576,61 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
     selectedEntityVariant,
   ]);
 
+  const rootTransformBaseRef = useRef<{
+    position: THREE.Vector3;
+    rotation: THREE.Euler;
+    scale: THREE.Vector3;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!entityGroup) {
+      rootTransformBaseRef.current = null;
+      return;
+    }
+    rootTransformBaseRef.current = {
+      position: entityGroup.position.clone(),
+      rotation: entityGroup.rotation.clone(),
+      scale: entityGroup.scale.clone(),
+    };
+  }, [entityGroup]);
+
+  useEffect(() => {
+    if (!entityGroup) return;
+    const base = rootTransformBaseRef.current;
+    if (!base) return;
+
+    entityGroup.position.copy(base.position);
+    entityGroup.rotation.copy(base.rotation);
+    entityGroup.scale.copy(base.scale);
+
+    const t = rootTransformOverride;
+    if (t?.position) {
+      entityGroup.position.x += t.position.x;
+      entityGroup.position.y += t.position.y;
+      entityGroup.position.z += t.position.z;
+    }
+    if (t?.rotation) {
+      entityGroup.rotation.x += t.rotation.x;
+      entityGroup.rotation.y += t.rotation.y;
+      entityGroup.rotation.z += t.rotation.z;
+    }
+    if (t?.scale) {
+      entityGroup.scale.x *= t.scale.x;
+      entityGroup.scale.y *= t.scale.y;
+      entityGroup.scale.z *= t.scale.z;
+    }
+    entityGroup.updateMatrixWorld(true);
+  }, [entityGroup, rootTransformOverride]);
+
   // Apply selected animation variant (pack vs vanilla) without reloading geometry.
   useEffect(() => {
     const effectiveLayers =
       entityAnimationVariant === "vanilla" ? undefined : packAnimationLayers;
     setAnimationLayers(effectiveLayers);
-    setAvailableAnimationPresets(
-      getAvailableAnimationPresetIdsForAnimationLayers(effectiveLayers),
-    );
+    const info = getEntityInfoFromAssetId(assetId);
+    const isBanner = info?.variant === "banner";
+    const discovered = getAvailableAnimationPresetIdsForAnimationLayers(effectiveLayers);
+    setAvailableAnimationPresets(discovered ?? (isBanner ? ["idle"] : null));
     setAvailableAnimationTriggers(
       getAvailableAnimationTriggerIdsForAnimationLayers(effectiveLayers),
     );
@@ -539,6 +643,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
     setAvailableAnimationPresets,
     setAvailableAnimationTriggers,
     setAvailablePoseToggles,
+    assetId,
   ]);
 
   useEffect(() => {
@@ -835,9 +940,10 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
       return;
     }
 
-    console.log("[EntityModel] Creating animation engine");
-    const engine = createAnimationEngine(entityGroup, animationLayers);
-    animationEngineRef.current = engine;
+	    console.log("[EntityModel] Creating animation engine");
+	    const engine = createAnimationEngine(entityGroup, animationLayers);
+	    animationEngineRef.current = engine;
+	    engine.setFeatureBoneInputOverrides?.(featureBoneInputOverrides);
 
     // Set initial preset if one is selected
     if (animationPreset) {
@@ -863,7 +969,13 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
     };
     // Only recreate engine when model changes, not when animation settings change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityGroup, animationLayers]);
+	  }, [entityGroup, animationLayers]);
+
+	  useEffect(() => {
+	    const engine = animationEngineRef.current;
+	    if (!engine) return;
+	    engine.setFeatureBoneInputOverrides?.(featureBoneInputOverrides);
+	  }, [featureBoneInputOverrides]);
 
   // Sync animation preset changes to engine
   useEffect(() => {
@@ -959,6 +1071,20 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
     // Tick the animation engine
     engine.tick(delta);
+
+    const applyBoneVisibilityOverrides = () => {
+      if (!boneRenderOverrides) return;
+      const baseBones = baseBoneMapRef.current;
+      for (const [boneName, props] of Object.entries(boneRenderOverrides)) {
+        if (!props) continue;
+        const obj = baseBones.get(boneName);
+        if (!obj) continue;
+        if (typeof props.visible === "boolean") obj.visible = props.visible;
+      }
+    };
+
+    // Apply schema-driven visibility overrides after tick() (which may reset bones).
+    applyBoneVisibilityOverrides();
 
     // Sync overlay layers to the base pose (single engine drives all layers).
     if (!entityGroup) return;

@@ -66,10 +66,6 @@ export class AnimationEngine {
    * without relying on bone-name special cases.
    */
   private baselineBoneValues: Map<string, number> = new Map();
-  private crossBoneTranslationReadsByBone: Map<string, Set<"x" | "y" | "z">> =
-    new Map();
-  private crossBoneRotationReadsByBone: Map<string, Set<"x" | "y" | "z">> =
-    new Map();
 
   /** Tracks which bones animate translation axes (tx/ty/tz). */
   private translationAxesByBone: Map<string, Set<"x" | "y" | "z">> = new Map();
@@ -112,6 +108,8 @@ export class AnimationEngine {
 
   private triggerBoneInputOverrides: Record<string, Record<string, number>> = {};
   private poseBoneInputOverrides: Record<string, Record<string, number>> = {};
+  private featureBoneInputOverrides: Record<string, Record<string, number>> = {};
+  private poseEntityStateOverrides: Partial<EntityState> = {};
   private activePoseToggleIds: string[] = [];
 
   private inferredEatRuleIndex: number | null = null;
@@ -207,6 +205,12 @@ export class AnimationEngine {
   setPoseToggles(toggleIds: string[] | null | undefined): void {
     const next = (toggleIds ?? []).filter((id) => !!getPoseToggleDefinition(id));
     this.activePoseToggleIds = next;
+  }
+
+  setFeatureBoneInputOverrides(
+    overrides: Record<string, Record<string, number>> | null | undefined,
+  ): void {
+    this.featureBoneInputOverrides = overrides ? { ...overrides } : {};
   }
 
   playTrigger(triggerId: string): void {
@@ -311,18 +315,33 @@ export class AnimationEngine {
         visible: bone.visible ? 1 : 0,
       };
 
-      // For "placeholder" bones (no mesh geometry anywhere under them), seed
-      // translation values in the same units JPM expects when reading other
-      // bones (e.g., `neck.ty`, `head.rx` used as vanilla input drivers).
-      let hasMeshDescendant = false;
-      bone.traverse((obj) => {
-        if (obj !== bone && (obj as any).isMesh === true) hasMeshDescendant = true;
-      });
-      if (!hasMeshDescendant && originPx) {
-        // Seed with origin-based values (CEM-space pivot coordinates).
-        rest[name].tx = originPx[0];
-        rest[name].ty = originPx[1];
-        rest[name].tz = originPx[2];
+      // For "pivot-only" bones (no local boxes on this bone), seed translation
+      // values in the same units JPM expects when reading other bones.
+      //
+      // Important: the values expected by CEM expressions are *CEM-space* pivots
+      // (including `invertAxis` and the 24px Y origin), not the raw parsed origin.
+      const boxesGroup = (bone as any)?.userData?.boxesGroup as
+        | THREE.Object3D
+        | undefined;
+      const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
+      if (!hasLocalBoxes && base) {
+        // Root pivot-only bones are often placeholders for vanilla-driven inputs
+        // (e.g. blaze `stick*`), and we don't have vanilla runtime values here.
+        // Default them to 0 rather than baking in their authored rest position.
+        const isRoot = bone.parent === this.modelGroup;
+        if (isRoot) continue;
+
+        const invertAxis =
+          typeof (bone as any)?.userData?.invertAxis === "string"
+            ? ((bone as any).userData.invertAxis as string)
+            : "";
+        const localPxX = base.position.x * 16;
+        const localPxY = base.position.y * 16;
+        const localPxZ = base.position.z * 16;
+
+        rest[name].tx = invertAxis.includes("x") ? -localPxX : localPxX;
+        rest[name].tz = invertAxis.includes("z") ? -localPxZ : localPxZ;
+        rest[name].ty = invertAxis.includes("y") ? -localPxY : localPxY;
       } else if (originPx) {
         // Some JPMs read translation channels on geometry bones as inputs
         // (e.g. `leg.tz` used as a base pivot term). Seed only those channels
@@ -358,17 +377,20 @@ export class AnimationEngine {
               : 0;
           }
           if (reads.has("ty")) {
-            if (!pivots.has("ty")) {
+            const isRoot = bone.parent === this.modelGroup;
+            // Cross-bone reads like `rod1.ty = stick1.ty + 4` rely on input bones
+            // (often roots) being seeded with their rotationPoint-like values even
+            // if we don't detect an explicit self-pivot pattern.
+            const shouldSeedPivot =
+              pivots.has("ty") || (isRoot && Math.abs(localPxY) >= 10);
+            if (!shouldSeedPivot) {
               rest[name].ty = 0;
+            } else if (invertAxis.includes("y") && isRoot) {
+              rest[name].ty = CEM_Y_ORIGIN_PX - localPxY;
+            } else if (isRoot) {
+              rest[name].ty = localPxY + CEM_Y_ORIGIN_PX;
             } else {
-              const isRoot = bone.parent === this.modelGroup;
-              if (invertAxis.includes("y") && isRoot) {
-                rest[name].ty = CEM_Y_ORIGIN_PX - localPxY;
-              } else if (isRoot) {
-                rest[name].ty = localPxY + CEM_Y_ORIGIN_PX;
-              } else {
-                rest[name].ty = invertAxis.includes("y") ? -localPxY : localPxY;
-              }
+              rest[name].ty = invertAxis.includes("y") ? -localPxY : localPxY;
             }
           }
         }
@@ -403,17 +425,18 @@ export class AnimationEngine {
           const parsed = compileExpression(exprSource);
           if (isConstantExpression(parsed)) continue;
 
-          const getTargetTranslationVar = (
+          const getTranslationVar = (
             node: ASTNode,
-          ): "tx" | "ty" | "tz" | null => {
+          ): { bone: string; prop: "tx" | "ty" | "tz" } | null => {
             if (node.type !== "Variable") return null;
             const name = node.name;
             const dot = name.indexOf(".");
             if (dot === -1) return null;
-            const target = name.slice(0, dot);
-            if (target !== targetBone) return null;
+            const bone = name.slice(0, dot);
+            if (bone === "var" || bone === "render" || bone === "varb") return null;
             const prop = name.slice(dot + 1) as "tx" | "ty" | "tz";
-            return prop === "tx" || prop === "ty" || prop === "tz" ? prop : null;
+            if (prop !== "tx" && prop !== "ty" && prop !== "tz") return null;
+            return { bone, prop };
           };
           const getRotationVar = (
             node: ASTNode,
@@ -428,16 +451,16 @@ export class AnimationEngine {
             return prop === "rx" || prop === "ry" || prop === "rz" ? { bone, prop } : null;
           };
 
-          const markRead = (prop: "tx" | "ty" | "tz") => {
-            const set = reads.get(targetBone) ?? new Set<"tx" | "ty" | "tz">();
+          const markRead = (boneName: string, prop: "tx" | "ty" | "tz") => {
+            const set = reads.get(boneName) ?? new Set<"tx" | "ty" | "tz">();
             set.add(prop);
-            reads.set(targetBone, set);
+            reads.set(boneName, set);
           };
-          const markPivot = (prop: "tx" | "ty" | "tz") => {
+          const markPivot = (boneName: string, prop: "tx" | "ty" | "tz") => {
             const set =
-              pivotSeeds.get(targetBone) ?? new Set<"tx" | "ty" | "tz">();
+              pivotSeeds.get(boneName) ?? new Set<"tx" | "ty" | "tz">();
             set.add(prop);
-            pivotSeeds.set(targetBone, set);
+            pivotSeeds.set(boneName, set);
           };
 
           const markRotationInput = (bone: string, prop: "rx" | "ry" | "rz") => {
@@ -453,8 +476,9 @@ export class AnimationEngine {
             selfRotationReads.set(targetBone, set);
           };
 
-          const containsSelfTranslationVar = (
+          const containsTranslationVar = (
             node: ASTNode,
+            boneName: string,
             prop: "tx" | "ty" | "tz",
           ): boolean => {
             let found = false;
@@ -462,7 +486,7 @@ export class AnimationEngine {
               if (found) return;
               switch (n.type) {
                 case "Variable":
-                  found = n.name === `${targetBone}.${prop}`;
+                  found = n.name === `${boneName}.${prop}`;
                   return;
                 case "UnaryOp":
                   visit(n.operand);
@@ -493,8 +517,8 @@ export class AnimationEngine {
                 return;
 
               case "Variable": {
-                const prop = getTargetTranslationVar(node);
-                if (prop) markRead(prop);
+                const tv = getTranslationVar(node);
+                if (tv) markRead(tv.bone, tv.prop);
                 const rot = getRotationVar(node);
                 if (rot) {
                   markRotationInput(rot.bone, rot.prop);
@@ -512,8 +536,8 @@ export class AnimationEngine {
                 // `bone.t? +/- <large literal>` form, it likely expects the
                 // bone's rest pivot value rather than a 0-offset seed.
                 if (node.operator === "+" || node.operator === "-") {
-                  const leftProp = getTargetTranslationVar(node.left);
-                  const rightProp = getTargetTranslationVar(node.right);
+                  const leftVar = getTranslationVar(node.left);
+                  const rightVar = getTranslationVar(node.right);
 
                   const literalValue =
                     node.left.type === "Literal"
@@ -521,10 +545,10 @@ export class AnimationEngine {
                       : node.right.type === "Literal"
                         ? node.right.value
                         : null;
-                  const prop = leftProp ?? rightProp;
+                  const tv = leftVar ?? rightVar;
 
-                  if (prop && typeof literalValue === "number") {
-                    if (Math.abs(literalValue) >= 3) markPivot(prop);
+                  if (tv && typeof literalValue === "number") {
+                    if (Math.abs(literalValue) >= 3) markPivot(tv.bone, tv.prop);
                   }
                 }
                 visitWithTarget(node.left);
@@ -570,16 +594,16 @@ export class AnimationEngine {
                     if (
                       typeof consequentLiteral === "number" &&
                       shouldTreatAsPivotLiteral(consequentLiteral) &&
-                      containsSelfTranslationVar(alternate, prop)
+                      containsTranslationVar(alternate, targetBone, prop)
                     ) {
-                      markPivot(prop);
+                      markPivot(targetBone, prop);
                     }
                     if (
                       typeof alternateLiteral === "number" &&
                       shouldTreatAsPivotLiteral(alternateLiteral) &&
-                      containsSelfTranslationVar(consequent, prop)
+                      containsTranslationVar(consequent, targetBone, prop)
                     ) {
-                      markPivot(prop);
+                      markPivot(targetBone, prop);
                     }
                   }
                 }
@@ -746,7 +770,7 @@ export class AnimationEngine {
    * - For any bone axis that is animated in rotation, store baseline offsets so
    *   the baseline evaluates to the model's rest pose.
    */
-		  private initializeTransformNormalization(): void {
+ 		  private initializeTransformNormalization(): void {
 	    this.baselineBoneValues.clear();
 
 	    const baselineContext = createAnimationContext();
@@ -909,13 +933,40 @@ export class AnimationEngine {
 	        });
 	      }
 	    }
-	    this.crossBoneTranslationReadsByBone = translationCrossReadsByBone;
-	    this.crossBoneRotationReadsByBone = rotationCrossReadsByBone;
 
-	    // If a translation channel is used as an entity-space source (read by other
-	    // bones) and its baseline differs meaningfully between idle and walking-like
-	    // contexts, subtracting a single baseline offset can exaggerate motion when
-	    // conditions switch. Treat such channels (and any channels derived from them)
+	    // Some rigs read translation channels from placeholder bones that are
+	    // normally populated by vanilla runtime code (e.g. blaze `stick*`).
+	    // When a JPM derives authored channels from these placeholders (e.g.
+	    // `rod1.ty = stick1.ty + 4`), subtracting a baseline collapses the rig.
+	    const isInputOnlyTranslationBone = (boneName: string): boolean => {
+	      const bone = this.bones.get(boneName);
+	      if (!bone) return false;
+	      if (bone.parent !== this.modelGroup) return false;
+	      // No local boxes/meshes on this bone (placeholder).
+	      const boxesGroup = (bone as any)?.userData?.boxesGroup as
+	        | THREE.Object3D
+	        | undefined;
+	      const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
+	      if (hasLocalBoxes) return false;
+	      // Not authored in this JPM (read-only input).
+	      return !this.translationAxesByBone.has(boneName);
+	    };
+
+	    const derivedFromInputOnlyTranslationTargets = new Set<string>();
+	    for (const [target, deps] of translationChannelDeps) {
+	      for (const dep of deps) {
+	        const dot = dep.indexOf(".");
+	        const bone = dot === -1 ? dep : dep.slice(0, dot);
+	        if (isInputOnlyTranslationBone(bone)) {
+	          derivedFromInputOnlyTranslationTargets.add(target);
+	          break;
+	        }
+	      }
+	    }
+		    // If a translation channel is used as an entity-space source (read by other
+		    // bones) and its baseline differs meaningfully between idle and walking-like
+		    // contexts, subtracting a single baseline offset can exaggerate motion when
+		    // conditions switch. Treat such channels (and any channels derived from them)
 	    // as "authored" and do not baseline-normalize them.
 	    const poseDependentTranslationChannels = new Set<string>();
 	    const poseDeltaTolerancePx = 0.75;
@@ -1090,6 +1141,8 @@ export class AnimationEngine {
 		          // Absolute channels should remain absolute; do not normalize.
 		        } else if (poseDependentTranslationChannels.has(channel)) {
 		          // Pose-dependent channel: avoid baseline subtraction.
+		        } else if (derivedFromInputOnlyTranslationTargets.has(channel)) {
+		          // Derived from vanilla-driven placeholders: avoid baseline subtraction.
 		        } else if (
 		          typeof userData.translationOffsetXPx !== "number" &&
 		          typeof userData.translationOffsetX !== "number" &&
@@ -1106,6 +1159,8 @@ export class AnimationEngine {
 				          // Absolute channels should remain absolute; do not normalize.
 				        } else if (smallSharedTyChannels.has(channel)) {
 				          // Authored small offsets (and their derived channels): do not baseline-normalize.
+				        } else if (derivedFromInputOnlyTranslationTargets.has(channel)) {
+				          // Derived from vanilla-driven placeholders: avoid baseline subtraction.
 				        } else if (
 				          typeof userData.translationOffsetYPx !== "number" &&
 				          typeof userData.translationOffsetY !== "number"
@@ -1147,6 +1202,8 @@ export class AnimationEngine {
 		          // Absolute channels should remain absolute; do not normalize.
 		        } else if (poseDependentTranslationChannels.has(channel)) {
 		          // Pose-dependent channel: avoid baseline subtraction.
+		        } else if (derivedFromInputOnlyTranslationTargets.has(channel)) {
+		          // Derived from vanilla-driven placeholders: avoid baseline subtraction.
 		        } else if (
 		          typeof userData.translationOffsetZPx !== "number" &&
 		          typeof userData.translationOffsetZ !== "number" &&
@@ -1776,6 +1833,11 @@ export class AnimationEngine {
       return true;
     }
 
+    // When no CEM animation layers are present, keep the rig stable by
+    // re-applying the rest pose each frame. This prevents "sticky" transforms
+    // when switching feature toggles that affect visibility/attachment.
+    resetAllBones(this.bones, this.baseTransforms);
+
     // Fallback: Apply vanilla-style animations if no CEM animations
     if (this.isPlaying && this.activePreset) {
       this.applyVanillaFallback();
@@ -1842,6 +1904,17 @@ export class AnimationEngine {
         const base = this.baseTransforms.get("body");
         body.rotation.x = (base?.rotation.x ?? 0) + deathAngle;
       }
+    }
+
+    // Banner sway (standing + wall). Banners have no "walking" but do sway in vanilla.
+    const bannerCloth = this.bones.get("slate") ?? this.bones.get("flag");
+    if (bannerCloth) {
+      const base = this.baseTransforms.get(bannerCloth.name);
+      const t = state.age / 20; // seconds-ish
+      const swayX = Math.sin(t * 2.0) * 0.025;
+      const swayZ = Math.cos(t * 2.6) * 0.006;
+      bannerCloth.rotation.x = (base?.rotation.x ?? 0) + swayX;
+      bannerCloth.rotation.z = (base?.rotation.z ?? 0) + swayZ;
     }
   }
 
@@ -2030,18 +2103,21 @@ export class AnimationEngine {
         torsoBox = box;
       }
     });
-    if (!torsoMesh || !torsoBox || torsoVolume <= 1e-9) return false;
+	    if (!torsoMesh || !torsoBox || torsoVolume <= 1e-9) return false;
 
-    const torsoSize = new THREE.Vector3();
-    torsoBox.getSize(torsoSize);
+	    const torsoMeshResolved = torsoMesh as THREE.Object3D;
+	    const torsoBoxResolved = torsoBox as THREE.Box3;
 
-    // The correction is applied to the direct child of the modelGroup that owns
-    // the torso mesh, so the torso (and its attachments) move together.
-    let torsoRoot: THREE.Object3D | null = torsoMesh;
-    while (torsoRoot && torsoRoot.parent && torsoRoot.parent !== this.modelGroup) {
-      torsoRoot = torsoRoot.parent;
-    }
-    if (!torsoRoot || torsoRoot.parent !== this.modelGroup) return false;
+	    const torsoSize = new THREE.Vector3();
+	    torsoBoxResolved.getSize(torsoSize);
+
+	    // The correction is applied to the direct child of the modelGroup that owns
+	    // the torso mesh, so the torso (and its attachments) move together.
+	    let torsoRoot: THREE.Object3D | null = torsoMeshResolved;
+	    while (torsoRoot && torsoRoot.parent && torsoRoot.parent !== this.modelGroup) {
+	      torsoRoot = torsoRoot.parent;
+	    }
+	    if (!torsoRoot || torsoRoot.parent !== this.modelGroup) return false;
 
     // Identify likely limb roots among top-level siblings: smaller volumes,
     // below the torso, and not part of the torso subtree.
@@ -2063,7 +2139,7 @@ export class AnimationEngine {
       if (volume <= 1e-9) continue;
 
       // Must be plausibly below the torso's lower half.
-      if (box.max.y > torsoBox.min.y + torsoSize.y * 0.75) continue;
+	      if (box.max.y > torsoBoxResolved.min.y + torsoSize.y * 0.75) continue;
       // Prefer smaller elements (legs/limbs) over large sibling shells.
       if (volume > torsoVolume * 0.8) continue;
 
@@ -2081,8 +2157,8 @@ export class AnimationEngine {
     limbUnion.getSize(limbSize);
 
     // Compute gaps (positive means separated).
-    const gapY = torsoBox.min.y - limbUnion.max.y;
-    const protrusionZ = limbUnion.max.z - torsoBox.max.z;
+	    const gapY = torsoBoxResolved.min.y - limbUnion.max.y;
+	    const protrusionZ = limbUnion.max.z - torsoBoxResolved.max.z;
 
     // Only intervene when there's a clear vertical separation AND the limbs
     // protrude far beyond the torso (avoids affecting typical quadrupeds where
@@ -2129,6 +2205,14 @@ export class AnimationEngine {
 
     for (const [boneName, props] of Object.entries(
       this.poseBoneInputOverrides,
+    )) {
+      this.context.boneValues[boneName] = {
+        ...(this.context.boneValues[boneName] ?? {}),
+        ...props,
+      };
+    }
+    for (const [boneName, props] of Object.entries(
+      this.featureBoneInputOverrides,
     )) {
       this.context.boneValues[boneName] = {
         ...(this.context.boneValues[boneName] ?? {}),
@@ -2317,6 +2401,7 @@ export class AnimationEngine {
     this.activeTriggers = [];
     this.triggerBoneInputOverrides = {};
     this.poseBoneInputOverrides = {};
+    this.featureBoneInputOverrides = {};
     this.activePoseToggleIds = [];
     this.rootOverlay = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
     this.modelGroup.position.copy(this.baseRootPosition);
@@ -2337,18 +2422,29 @@ export class AnimationEngine {
 
   private updatePoseOverlays(): void {
     this.poseBoneInputOverrides = {};
+    this.poseEntityStateOverrides = {};
 
     for (const toggleId of this.activePoseToggleIds) {
       const def = getPoseToggleDefinition(toggleId);
-      if (!def?.boneInputs) continue;
-      const inputs = def.boneInputs(this.context.entityState);
-      for (const [boneName, props] of Object.entries(inputs)) {
-        this.poseBoneInputOverrides[boneName] = {
-          ...(this.poseBoneInputOverrides[boneName] ?? {}),
-          ...props,
-        };
+      if (!def) continue;
+      if (def.entityStateOverrides) {
+        Object.assign(
+          this.poseEntityStateOverrides,
+          def.entityStateOverrides(this.context.entityState),
+        );
+      }
+      if (def.boneInputs) {
+        const inputs = def.boneInputs(this.context.entityState);
+        for (const [boneName, props] of Object.entries(inputs)) {
+          this.poseBoneInputOverrides[boneName] = {
+            ...(this.poseBoneInputOverrides[boneName] ?? {}),
+            ...props,
+          };
+        }
       }
     }
+
+    Object.assign(this.context.entityState, this.poseEntityStateOverrides);
   }
 
   private updateTriggerOverlays(deltaSec: number): void {
