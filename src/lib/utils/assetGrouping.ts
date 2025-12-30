@@ -41,6 +41,11 @@ function getEntityAliasGroupKey(path: string): string | null {
     if (path === "entity/banner_base" || path.startsWith("entity/banner/")) {
         return "entity/banner";
     }
+    // Decorated pots have many texture variants in a dedicated directory
+    // (pottery pattern masks). Group them into a single resource card.
+    if (path.startsWith("entity/decorated_pot/")) {
+        return "entity/decorated_pot";
+    }
     return null;
 }
 

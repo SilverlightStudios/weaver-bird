@@ -75,4 +75,17 @@ describe("assetGrouping (entity variants)", () => {
     expect(groups[0]!.baseId).toBe("entity/banner");
     expect(groups[0]!.variantIds).toHaveLength(2);
   });
+
+  it("groups decorated pot patterns into a single resource card", () => {
+    const ids = [
+      "minecraft:entity/decorated_pot/decorated_pot_base",
+      "minecraft:entity/decorated_pot/angler_pottery_pattern",
+      "minecraft:entity/decorated_pot/archer_pottery_pattern",
+    ];
+
+    const groups = groupAssetsByVariant(ids);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.baseId).toBe("entity/decorated_pot");
+    expect(groups[0]!.variantIds).toHaveLength(3);
+  });
 });

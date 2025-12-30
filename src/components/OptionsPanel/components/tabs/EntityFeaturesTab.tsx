@@ -35,6 +35,20 @@ export function EntityFeaturesTab({
     (c): c is Extract<EntityFeatureControl, { kind: "select" }> => c.kind === "select",
   );
 
+  const isEquipment = schema.entityRoot === "equipment";
+  const equipmentUnderlayToggles = isEquipment
+    ? toggles.filter((t) => t.id.startsWith("equipment.add_"))
+    : [];
+  const equipmentPieceToggles = isEquipment
+    ? toggles.filter((t) => t.id.startsWith("equipment.show_"))
+    : [];
+  const otherToggles = isEquipment
+    ? toggles.filter(
+        (t) =>
+          !t.id.startsWith("equipment.add_") && !t.id.startsWith("equipment.show_"),
+      )
+    : toggles;
+
   return (
     <TabsContent value="entity-features">
       <div className="p-4">
@@ -69,30 +83,122 @@ export function EntityFeaturesTab({
         {toggles.length > 0 && (
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">Layers</label>
-            <div className="grid grid-cols-2 gap-2">
-              {toggles.map((control) => {
-                const enabled = !!getToggleValue(control);
-                return (
-                  <button
-                    key={control.id}
-                    onClick={() =>
-                      setToggle(schema.baseAssetId, control.id, !enabled)
-                    }
-                    className={`
-                      p-2 rounded-md border text-left transition-colors
-                      ${
-                        enabled
-                          ? "bg-primary/20 border-primary"
-                          : "bg-background border-border hover:bg-accent"
+
+            {isEquipment ? (
+              <div className="space-y-4">
+                {equipmentUnderlayToggles.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs text-muted-foreground">Underlay</div>
+                    {equipmentUnderlayToggles.map((control) => {
+                      const enabled = !!getToggleValue(control);
+                      return (
+                        <label
+                          key={control.id}
+                          className="flex items-center gap-2 text-sm"
+                          title={control.description}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={enabled}
+                            onChange={(e) =>
+                              setToggle(
+                                schema.baseAssetId,
+                                control.id,
+                                e.target.checked,
+                              )
+                            }
+                          />
+                          <span>{control.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {equipmentPieceToggles.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs text-muted-foreground">Armor Pieces</div>
+                    {equipmentPieceToggles.map((control) => {
+                      const enabled = !!getToggleValue(control);
+                      return (
+                        <label
+                          key={control.id}
+                          className="flex items-center gap-2 text-sm"
+                          title={control.description}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={enabled}
+                            onChange={(e) =>
+                              setToggle(
+                                schema.baseAssetId,
+                                control.id,
+                                e.target.checked,
+                              )
+                            }
+                          />
+                          <span>{control.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {otherToggles.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs text-muted-foreground">Other</div>
+                    {otherToggles.map((control) => {
+                      const enabled = !!getToggleValue(control);
+                      return (
+                        <label
+                          key={control.id}
+                          className="flex items-center gap-2 text-sm"
+                          title={control.description}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={enabled}
+                            onChange={(e) =>
+                              setToggle(
+                                schema.baseAssetId,
+                                control.id,
+                                e.target.checked,
+                              )
+                            }
+                          />
+                          <span>{control.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {toggles.map((control) => {
+                  const enabled = !!getToggleValue(control);
+                  return (
+                    <button
+                      key={control.id}
+                      onClick={() =>
+                        setToggle(schema.baseAssetId, control.id, !enabled)
                       }
-                    `}
-                    title={control.description}
-                  >
-                    <span className="text-sm truncate">{control.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+                      className={`
+                        p-2 rounded-md border text-left transition-colors
+                        ${
+                          enabled
+                            ? "bg-primary/20 border-primary"
+                            : "bg-background border-border hover:bg-accent"
+                        }
+                      `}
+                      title={control.description}
+                    >
+                      <span className="text-sm truncate">{control.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -105,4 +211,3 @@ export function EntityFeaturesTab({
     </TabsContent>
   );
 }
-

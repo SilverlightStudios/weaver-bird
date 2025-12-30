@@ -61,10 +61,12 @@ export function generateDisplayName(asset: AssetItem): string {
 
     // Special handling for entity decorated pot textures: show "Pattern - Decorated Pot"
     if (path.startsWith("entity/decorated_pot/")) {
-        const patternName = path
-            .replace("entity/decorated_pot/", "")
-            .replace(/\.png$/, "")
-            .replace(/_pottery_pattern$/, ""); // Remove "_pottery_pattern" suffix
+        const leaf = path.replace("entity/decorated_pot/", "").replace(/\.png$/, "");
+        if (leaf === "decorated_pot_base" || leaf === "decorated_pot_side") {
+            return "Decorated Pot";
+        }
+
+        const patternName = leaf.replace(/_pottery_pattern$/, ""); // Remove "_pottery_pattern" suffix
         const formattedPatternName = patternName
             .split("_")
             .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

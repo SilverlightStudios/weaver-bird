@@ -1528,6 +1528,13 @@ export class AnimationEngine {
       ["front_right_leg", -swingAmount],
       ["back_left_leg", -swingAmount],
       ["back_right_leg", swingAmount],
+      // Alternate naming (common on some exporters/converters)
+      ["left_front_leg", swingAmount],
+      ["right_front_leg", -swingAmount],
+      ["left_hind_leg", -swingAmount],
+      ["right_hind_leg", swingAmount],
+      ["left_rear_leg", -swingAmount],
+      ["right_rear_leg", swingAmount],
       // Multi-leg rigs (sniffer) use a tripod gait.
       ["middle_left_leg", -swingAmount],
       ["middle_right_leg", swingAmount],
@@ -1941,16 +1948,16 @@ export class AnimationEngine {
     }
 
     // Legs swing opposite to each other
-    const rightLeg = this.bones.get("right_leg");
+    const rightLeg = this.bones.get("right_leg") ?? this.bones.get("right_shoe");
     if (rightLeg) {
-      const base = this.baseTransforms.get("right_leg");
+      const base = this.baseTransforms.get(rightLeg.name);
       rightLeg.rotation.x = (base?.rotation.x ?? 0) - swingAmount;
       foundAny = true;
     }
 
-    const leftLeg = this.bones.get("left_leg");
+    const leftLeg = this.bones.get("left_leg") ?? this.bones.get("left_shoe");
     if (leftLeg) {
-      const base = this.baseTransforms.get("left_leg");
+      const base = this.baseTransforms.get(leftLeg.name);
       leftLeg.rotation.x = (base?.rotation.x ?? 0) + swingAmount;
       foundAny = true;
     }
@@ -2014,6 +2021,32 @@ export class AnimationEngine {
     if (backRightLeg) {
       const base = this.baseTransforms.get("back_right_leg");
       backRightLeg.rotation.x = (base?.rotation.x ?? 0) + swingAmount;
+    }
+
+    // Also try vanilla Mojang naming (common on some exporters/converters)
+    // left_front_leg/right_front_leg + left_hind_leg/right_hind_leg (or *_rear_leg)
+    const leftFrontLeg = this.bones.get("left_front_leg");
+    if (leftFrontLeg) {
+      const base = this.baseTransforms.get("left_front_leg");
+      leftFrontLeg.rotation.x = (base?.rotation.x ?? 0) + swingAmount;
+    }
+
+    const rightFrontLeg = this.bones.get("right_front_leg");
+    if (rightFrontLeg) {
+      const base = this.baseTransforms.get("right_front_leg");
+      rightFrontLeg.rotation.x = (base?.rotation.x ?? 0) - swingAmount;
+    }
+
+    const leftHindLeg = this.bones.get("left_hind_leg") ?? this.bones.get("left_rear_leg");
+    if (leftHindLeg) {
+      const base = this.baseTransforms.get(leftHindLeg.name);
+      leftHindLeg.rotation.x = (base?.rotation.x ?? 0) - swingAmount;
+    }
+
+    const rightHindLeg = this.bones.get("right_hind_leg") ?? this.bones.get("right_rear_leg");
+    if (rightHindLeg) {
+      const base = this.baseTransforms.get(rightHindLeg.name);
+      rightHindLeg.rotation.x = (base?.rotation.x ?? 0) + swingAmount;
     }
   }
 

@@ -9,6 +9,8 @@ import EntityModel from "./EntityModel";
 
 const loadEntityModelMock = vi.fn();
 const createAnimationEngineMock = vi.fn();
+const getEntityInfoFromAssetIdMock = vi.fn();
+const resolveEntityCompositeSchemaMock = vi.fn();
 
 vi.mock("@react-three/fiber", async () => {
   return {
@@ -37,7 +39,7 @@ vi.mock("@state/selectors", async () => {
 
 vi.mock("@lib/emf", async () => {
   return {
-    getEntityInfoFromAssetId: vi.fn(() => ({ variant: "zombie", parent: null })),
+    getEntityInfoFromAssetId: (...args: any[]) => getEntityInfoFromAssetIdMock(...args),
     jemToThreeJS: vi.fn(() => new THREE.Group()),
     loadEntityModel: (...args: any[]) => loadEntityModelMock(...args),
     isEntityTexture: () => true,
@@ -46,7 +48,8 @@ vi.mock("@lib/emf", async () => {
 
 vi.mock("@lib/entityComposite", async () => {
   return {
-    resolveEntityCompositeSchema: vi.fn(() => null),
+    resolveEntityCompositeSchema: (...args: any[]) =>
+      resolveEntityCompositeSchemaMock(...args),
   };
 });
 
@@ -81,6 +84,11 @@ function makeParsedModel(animations?: any) {
 beforeEach(() => {
   vi.clearAllMocks();
   useStore.getState().reset();
+  getEntityInfoFromAssetIdMock.mockImplementation(() => ({
+    variant: "zombie",
+    parent: null,
+  }));
+  resolveEntityCompositeSchemaMock.mockReturnValue(null);
 });
 
 describe("EntityModel variant resolution", () => {
@@ -137,5 +145,41 @@ describe("EntityModel variant resolution", () => {
 
     const [, passedLayers] = createAnimationEngineMock.mock.calls[0] ?? [];
     expect(passedLayers).toBeUndefined();
+  });
+
+  it("loads the model based on the resolved base texture (variant select can change geometry)", async () => {
+    // Pretend this entity has a texture-variant selector that swaps to bamboo.
+    resolveEntityCompositeSchemaMock.mockReturnValue({
+      baseAssetId: "minecraft:entity/boat/acacia",
+      entityRoot: "boat",
+      controls: [],
+      getActiveLayers: () => [],
+      getBaseTextureAssetId: () => "minecraft:entity/boat/bamboo",
+    });
+
+    getEntityInfoFromAssetIdMock.mockImplementation((id: string) => {
+      if (id.includes("/bamboo")) return { variant: "raft", parent: null };
+      return { variant: "boat", parent: null };
+    });
+
+    loadEntityModelMock.mockResolvedValue(makeParsedModel());
+    createAnimationEngineMock.mockReturnValue({
+      setPreset: () => {},
+      setSpeed: () => {},
+      setHeadOrientation: () => {},
+      setPoseToggles: () => {},
+      tick: () => {},
+      reset: () => {},
+      playTrigger: () => {},
+    });
+
+    render(<EntityModel assetId="minecraft:entity/boat/acacia" />);
+
+    await waitFor(() => {
+      expect(loadEntityModelMock).toHaveBeenCalled();
+    });
+
+    const [entityType] = loadEntityModelMock.mock.calls[0] ?? [];
+    expect(entityType).toBe("raft");
   });
 });

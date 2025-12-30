@@ -1419,9 +1419,14 @@ function createBoxMesh(
   }
 
   // Material
-  const side = isPlanar ? THREE.DoubleSide : THREE.FrontSide;
+  //
+  // Minecraft entity rendering effectively treats quads as double-sided for many
+  // model parts (and resource packs frequently use 0-width "planes" for details).
+  // To keep behavior consistent and avoid per-entity exceptions, default to
+  // DoubleSide for all entity model meshes.
+  const side = THREE.DoubleSide;
   const texKey = texture ? texture.uuid : "null";
-  const cacheKey = `${texKey}:${side}`;
+  const cacheKey = `${texKey}:double`;
   let material = materialCache.get(cacheKey);
   if (!material) {
     material = texture

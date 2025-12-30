@@ -145,6 +145,14 @@ export default function AssetResults({
           if (full) primaryId = full;
         }
 
+        // Prefer the base pot texture for the decorated pot family card icon.
+        if (group.baseId === "entity/decorated_pot") {
+          const base = group.variantIds.find((id) =>
+            id.endsWith(":entity/decorated_pot/decorated_pot_base"),
+          );
+          if (base) primaryId = base;
+        }
+
         // Count only numbered texture variants (e.g., acacia_planks1, acacia_planks2)
         // Block states (_on, _off) and faces (_top, _side) should NOT be counted as variants
         const numberedVariants = group.variantIds.filter(isNumberedVariant);

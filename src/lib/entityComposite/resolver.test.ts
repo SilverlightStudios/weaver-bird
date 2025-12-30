@@ -42,6 +42,23 @@ describe("entityComposite", () => {
     expect(isEntityFeatureLayerTextureAssetId("minecraft:entity/bee/bee_angry_nectar")).toBe(true);
     expect(isEntityFeatureLayerTextureAssetId("minecraft:entity/bee/bee_stinger")).toBe(true);
 
+    // Equipment textures (except humanoid layer-1).
+    expect(isEntityFeatureLayerTextureAssetId("minecraft:entity/equipment/humanoid/chainmail")).toBe(
+      false,
+    );
+    expect(
+      isEntityFeatureLayerTextureAssetId("minecraft:entity/equipment/humanoid_leggings/chainmail"),
+    ).toBe(true);
+    expect(
+      isEntityFeatureLayerTextureAssetId("minecraft:entity/equipment/horse_saddle/saddle"),
+    ).toBe(true);
+    expect(
+      isEntityFeatureLayerTextureAssetId("minecraft:entity/equipment/horse_body/diamond"),
+    ).toBe(true);
+    expect(isEntityFeatureLayerTextureAssetId("minecraft:entity/equipment/llama_body/black")).toBe(
+      true,
+    );
+
     expect(isEntityFeatureLayerTextureAssetId("minecraft:entity/enderman/enderman")).toBe(false);
   });
 
@@ -109,6 +126,176 @@ describe("entityComposite", () => {
     ).toBe(0);
   });
 
+  it("uses energy swirl material mode for creeper charge", () => {
+    const all = [
+      "minecraft:entity/creeper/creeper",
+      "minecraft:entity/creeper/creeper_armor",
+    ];
+    const schema = resolveEntityCompositeSchema("minecraft:entity/creeper/creeper", all);
+    expect(schema).toBeTruthy();
+    expect(schema!.controls.some((c) => c.id === "creeper.charge")).toBe(true);
+
+    const layers = schema!.getActiveLayers({
+      toggles: { "creeper.charge": true },
+      selects: {},
+    });
+    const charge = layers.find((l) => l.id === "creeper_charge") as any;
+    expect(charge).toBeTruthy();
+    expect(charge.materialMode?.kind).toBe("energySwirl");
+  });
+
+  it("resolves equipment (armor) controls + slot toggles + underlay behavior", () => {
+    const all = [
+      "minecraft:entity/equipment/humanoid/chainmail",
+      "minecraft:entity/equipment/humanoid_leggings/chainmail",
+    ];
+    const schema = resolveEntityCompositeSchema(all[0]!, all);
+    expect(schema).toBeTruthy();
+
+    expect(schema!.controls.some((c) => c.id === "equipment.add_player")).toBe(true);
+    expect(schema!.controls.some((c) => c.id === "equipment.add_armor_stand")).toBe(true);
+    expect(schema!.controls.some((c) => c.id === "equipment.show_helmet")).toBe(true);
+    expect(schema!.controls.some((c) => c.id === "equipment.show_chestplate")).toBe(true);
+    expect(schema!.controls.some((c) => c.id === "equipment.show_leggings")).toBe(true);
+    expect(schema!.controls.some((c) => c.id === "equipment.show_boots")).toBe(true);
+
+    expect(schema!.getBoneRenderOverrides).toBeTruthy();
+    // With no underlay toggles enabled, the base armor-stand rig is hidden.
+    const baseHidden = schema!.getBoneRenderOverrides!({
+      toggles: {},
+      selects: {},
+    }) as any;
+    expect(baseHidden["*"]?.visible).toBe(false);
+
+    // Humanoid equipment previews always use an armor-stand rig as the base
+    // (player optional), so armor is rendered as overlays.
+    expect(schema!.getBaseTextureAssetId).toBeTruthy();
+    expect(schema!.getBaseTextureAssetId!({ toggles: {}, selects: {} })).toBe(
+      "minecraft:entity/armor_stand",
+    );
+    expect(
+      schema!.getBaseTextureAssetId!({ toggles: { "equipment.add_player": true }, selects: {} }),
+    ).toBe("minecraft:entity/player/wide/steve");
+    expect(schema!.getCemEntityType).toBeTruthy();
+    expect(
+      schema!.getCemEntityType!({ toggles: { "equipment.add_player": true }, selects: {} })
+        .entityType,
+    ).toBe("player");
+    expect(schema!.getCemEntityType!({ toggles: {}, selects: {} }).entityType).toBe(
+      "armor_stand",
+    );
+
+    const layers = schema!.getActiveLayers({ toggles: {}, selects: {} });
+    expect(layers.some((l) => l.id === "equipment_armor_layer_1")).toBe(true);
+    expect(layers.some((l) => l.id === "equipment_armor_layer_2")).toBe(true);
+
+    // Piece selection is applied to the armor overlay layers (not the hidden base rig).
+    const helmetOnlyState = {
+      toggles: {
+        "equipment.show_helmet": true,
+        "equipment.show_chestplate": false,
+        "equipment.show_boots": false,
+        "equipment.show_leggings": false,
+      },
+      selects: {},
+    } as const;
+    const layersHelmetOnly = schema!.getActiveLayers(helmetOnlyState as any);
+    const layer1 = layersHelmetOnly.find((l) => l.id === "equipment_armor_layer_1") as any;
+    expect(layer1).toBeTruthy();
+    expect(layer1.boneRenderOverrides?.["*"]?.visible).toBe(false);
+    expect(layer1.boneRenderOverrides?.head?.visible).toBe(true);
+    expect(layer1.boneScaleMultipliers?.head).toEqual({ x: 1.01, y: 1.01, z: 1.01 });
+    expect(layer1.bonePositionOffsets).toBeUndefined();
+
+    // When previewing on the player, hide only headwear (not head) under helmets.
+    const playerUnderlayOverrides = schema!.getBoneRenderOverrides!({
+      toggles: { "equipment.add_player": true, "equipment.show_helmet": true },
+      selects: {},
+    }) as any;
+    expect(playerUnderlayOverrides.head).toBeUndefined();
+    expect(playerUnderlayOverrides.headwear?.visible).toBe(false);
+
+    const layersOnPlayer = schema!.getActiveLayers({
+      toggles: { "equipment.add_player": true },
+      selects: {},
+    } as any);
+    const playerLayer1 = layersOnPlayer.find((l) => l.id === "equipment_armor_layer_1") as any;
+    expect(playerLayer1?.bonePositionOffsets?.head?.y).toBeCloseTo(0.5 / 16, 6);
+  });
+
+  it("resolves decorated pot patterns as a single entity feature selector", () => {
+    const all = [
+      "minecraft:entity/decorated_pot/decorated_pot_base",
+      "minecraft:entity/decorated_pot/decorated_pot_side",
+      "minecraft:entity/decorated_pot/angler_pottery_pattern",
+      "minecraft:entity/decorated_pot/archer_pottery_pattern",
+    ];
+
+    // Selecting a pattern should still normalize to the base pot schema key.
+    const schema = resolveEntityCompositeSchema(
+      "minecraft:entity/decorated_pot/angler_pottery_pattern",
+      all,
+    );
+    expect(schema).toBeTruthy();
+    expect(schema!.baseAssetId).toBe("minecraft:entity/decorated_pot/decorated_pot_base");
+    expect(schema!.controls.some((c) => c.id === "decorated_pot.pattern")).toBe(true);
+    expect(schema!.getBaseTextureAssetId).toBeTruthy();
+    expect(schema!.getPartTextureOverrides).toBeTruthy();
+
+    expect(schema!.getBaseTextureAssetId!({ toggles: {}, selects: {} })).toBe(
+      "minecraft:entity/decorated_pot/decorated_pot_base",
+    );
+
+    const overrides = schema!.getPartTextureOverrides!({
+      toggles: {},
+      selects: { "decorated_pot.pattern": "archer_pottery_pattern" },
+    });
+    expect(overrides.front).toBe("minecraft:entity/decorated_pot/archer_pottery_pattern");
+    expect(overrides.neck).toBe("minecraft:entity/decorated_pot/decorated_pot_base");
+
+    const defaultSides = schema!.getPartTextureOverrides!({
+      toggles: {},
+      selects: { "decorated_pot.pattern": "none" },
+    });
+    expect(defaultSides.front).toBe("minecraft:entity/decorated_pot/decorated_pot_side");
+  });
+
+  it("resolves horse equipment controls + layers", () => {
+    const all = [
+      "minecraft:entity/horse/horse_brown",
+      "minecraft:entity/equipment/horse_body/diamond",
+      "minecraft:entity/equipment/horse_saddle/saddle",
+    ];
+    const schema = resolveEntityCompositeSchema("minecraft:entity/horse/horse_brown", all);
+    expect(schema).toBeTruthy();
+    expect(schema!.controls.some((c) => c.id === "horse.armor")).toBe(true);
+    expect(schema!.controls.some((c) => c.id === "horse.saddle")).toBe(true);
+
+    const layers = schema!.getActiveLayers({
+      toggles: { "horse.saddle": true },
+      selects: { "horse.armor": "diamond" },
+    });
+    expect(layers.some((l) => l.id === "horse_armor")).toBe(true);
+    expect(layers.some((l) => l.id === "horse_saddle")).toBe(true);
+  });
+
+  it("resolves llama decor controls + layers", () => {
+    const all = [
+      "minecraft:entity/llama/llama_creamy",
+      "minecraft:entity/equipment/llama_body/black",
+      "minecraft:entity/equipment/llama_body/white",
+    ];
+    const schema = resolveEntityCompositeSchema("minecraft:entity/llama/llama_creamy", all);
+    expect(schema).toBeTruthy();
+    expect(schema!.controls.some((c) => c.id === "llama.decor")).toBe(true);
+
+    const layers = schema!.getActiveLayers({
+      toggles: { "llama.decor": true },
+      selects: { "llama.decor_color": "black" },
+    });
+    expect(layers.some((l) => l.id === "llama_decor")).toBe(true);
+  });
+
   it("resolves axolotl variants as a base texture select", () => {
     const all = [
       "minecraft:entity/axolotl/axolotl_blue",
@@ -154,6 +341,25 @@ describe("entityComposite", () => {
         selects: { "entity.variant": "cold_frog" },
       }),
     ).toBe("minecraft:entity/frog/cold_frog");
+  });
+
+  it("resolves armadillo rolled/unrolled pose visibility", () => {
+    const all = ["minecraft:entity/armadillo/armadillo"];
+    const schema = resolveEntityCompositeSchema("minecraft:entity/armadillo/armadillo", all);
+    expect(schema).toBeTruthy();
+    expect(schema!.controls.some((c) => c.id === "armadillo.pose")).toBe(true);
+    expect(schema!.getBoneRenderOverrides).toBeTruthy();
+
+    const unrolled = schema!.getBoneRenderOverrides!({ toggles: {}, selects: {} });
+    expect(unrolled?.["*"]?.visible).toBe(true);
+    expect(unrolled?.cube?.visible).toBe(false);
+
+    const rolled = schema!.getBoneRenderOverrides!({
+      toggles: {},
+      selects: { "armadillo.pose": "rolled" },
+    });
+    expect(rolled?.["*"]?.visible).toBe(false);
+    expect(rolled?.cube?.visible).toBe(true);
   });
 
   it("resolves banner base + pattern selectors with tint layers", () => {

@@ -189,6 +189,47 @@ export function getEntityInfoFromAssetId(assetId: string): {
     if (segments[0] === "banner") {
       return { variant: "banner", parent: null };
     }
+    if (segments[0] === "decorated_pot") {
+      // Treat all decorated pot texture variants (base + pottery patterns)
+      // as one model family, similar to banners.
+      return { variant: "decorated_pot", parent: null };
+    }
+    if (segments[0] === "equipment") {
+      // Equipment textures are not standalone entities; they are rendered on top
+      // of base rigs (humanoid, horse, wolf, etc). Map them to our vanilla JEM
+      // "display rigs" so the preview can render.
+      const kind = segments[1] ?? "";
+      const lower = kind.toLowerCase();
+
+      // Humanoid armor uses two texture layers; leggings use layer 2, most
+      // other pieces use layer 1.
+      if (lower.includes("humanoid_leggings") || lower.includes("leggings")) {
+        return { variant: "armor_layer_2", parent: null };
+      }
+      if (lower.includes("humanoid")) {
+        return { variant: "armor_layer_1", parent: null };
+      }
+
+      // Animal equipment.
+      // Saddles/harnesses generally have their own CEM model named after the
+      // equipment kind (e.g. `pig_saddle`, `camel_saddle`, `happy_ghast_harness`).
+      if (lower.includes("_saddle") || lower.endsWith("saddle")) {
+        return { variant: lower, parent: null };
+      }
+      if (lower.includes("_harness") || lower.endsWith("harness")) {
+        return { variant: lower, parent: null };
+      }
+
+      // Horse armor textures live under `equipment/horse_body/*` but the model
+      // is named `horse_armor` in OptiFine/vanilla mocks.
+      if (lower.includes("horse")) return { variant: "horse_armor", parent: null };
+      if (lower.includes("wolf")) return { variant: "wolf_armor", parent: null };
+
+      // Default to the equipment kind (many equipment categories have a
+      // matching vanilla/pack CEM model). If missing, the renderer will show
+      // a placeholder instead of an incorrect humanoid rig.
+      return { variant: lower, parent: null };
+    }
     if (segments[0] === "signs") {
       const woodType = segments[segments.length - 1];
       let signType = "";
@@ -214,6 +255,9 @@ export function getEntityInfoFromAssetId(assetId: string): {
 
     if (parent === "boat" && variant === "bamboo") {
       return { variant: "raft", parent: null };
+    }
+    if (parent === "chest_boat" && variant === "bamboo") {
+      return { variant: "chest_raft", parent: null };
     }
 
     return { variant, parent };

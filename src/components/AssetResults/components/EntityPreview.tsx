@@ -7,10 +7,12 @@ import { useFrame } from "@react-three/fiber";
 interface Props {
   jemModel: any;
   textureUrl: string | null;
+  extraTextureUrls?: Record<string, string | null> | null;
 }
 
-export function EntityPreview({ jemModel, textureUrl }: Props) {
+export function EntityPreview({ jemModel, textureUrl, extraTextureUrls }: Props) {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [textureMap, setTextureMap] = useState<Record<string, THREE.Texture>>({});
   const groupRef = useRef<THREE.Group>(null);
 
   // Load texture
@@ -37,17 +39,64 @@ export function EntityPreview({ jemModel, textureUrl }: Props) {
     );
   }, [textureUrl]);
 
+  // Load any extra textures referenced by part.texturePath
+  useEffect(() => {
+    if (!extraTextureUrls || Object.keys(extraTextureUrls).length === 0) {
+      setTextureMap({});
+      return;
+    }
+
+    let cancelled = false;
+    const loader = new THREE.TextureLoader();
+    const next: Record<string, THREE.Texture> = {};
+
+    const entries = Object.entries(extraTextureUrls).filter(([, url]) => !!url) as Array<
+      [string, string]
+    >;
+    if (entries.length === 0) {
+      setTextureMap({});
+      return;
+    }
+
+    let remaining = entries.length;
+    for (const [key, url] of entries) {
+      loader.load(
+        url,
+        (tex) => {
+          if (cancelled) return;
+          tex.magFilter = THREE.NearestFilter;
+          tex.minFilter = THREE.NearestFilter;
+          tex.colorSpace = THREE.SRGBColorSpace;
+          next[key] = tex;
+          remaining--;
+          if (remaining <= 0 && !cancelled) setTextureMap(next);
+        },
+        undefined,
+        () => {
+          if (cancelled) return;
+          remaining--;
+          if (remaining <= 0 && !cancelled) setTextureMap(next);
+        },
+      );
+    }
+
+    return () => {
+      cancelled = true;
+      for (const tex of Object.values(next)) tex.dispose();
+    };
+  }, [extraTextureUrls]);
+
   // Convert JEM to Three.js group
   const group = useMemo(() => {
     if (!jemModel) return null;
     try {
-      const g = jemToThreeJS(jemModel, texture);
+      const g = jemToThreeJS(jemModel, texture, textureMap);
       return g;
     } catch (err) {
       console.error("[EntityPreview] Failed to convert JEM to ThreeJS:", err);
       return null;
     }
-  }, [jemModel, texture]);
+  }, [jemModel, texture, textureMap]);
 
   // Custom rotation logic
   useFrame((_, delta) => {

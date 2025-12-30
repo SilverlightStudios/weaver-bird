@@ -637,6 +637,18 @@ export const useStore = create<WeaverbirdStore>()(
           toggles: {},
           selects: {},
         };
+        // Mutual exclusivity for equipment underlay toggles (player vs armor stand).
+        // Keep this centralized so the UI doesn't need special casing.
+        if (enabled && toggleId === "equipment.add_player") {
+          state.entityFeatureStateByAssetId[baseAssetId].toggles[
+            "equipment.add_armor_stand"
+          ] = false;
+        }
+        if (enabled && toggleId === "equipment.add_armor_stand") {
+          state.entityFeatureStateByAssetId[baseAssetId].toggles[
+            "equipment.add_player"
+          ] = false;
+        }
         state.entityFeatureStateByAssetId[baseAssetId].toggles[toggleId] =
           enabled;
       });

@@ -21,6 +21,15 @@ export function isEntityFeatureLayerTextureAssetId(assetId: AssetId): boolean {
   const entityPath = getEntityPath(assetId);
   if (!entityPath) return false;
 
+  // Equipment textures are rendered as feature layers on their owning entities.
+  // Keep only humanoid layer-1 armor as a standalone preview card; hide leggings
+  // (layer 2) and all non-humanoid equipment (saddles, horse armor, harnesses, etc).
+  if (entityPath.startsWith("equipment/")) {
+    // Humanoid layer 1 armor textures remain visible (single card per material).
+    if (entityPath.startsWith("equipment/humanoid/")) return false;
+    return true;
+  }
+
   // Bee state textures are variants of the same entity model.
   if (entityPath.startsWith("bee/")) {
     const leaf = entityPath.split("/").pop() ?? "";
@@ -128,6 +137,35 @@ export function getLikelyBaseEntityAssetIdForLayer(
       mk("entity/banner"),
     ];
     for (const c of candidates) if (set.has(c)) return c;
+  }
+
+  // Equipment layers -> owning entity (best-effort).
+  if (entityPath.startsWith("equipment/")) {
+    const parts = entityPath.split("/");
+    const kind = parts[1] ?? "";
+    const kindLower = kind.toLowerCase();
+
+    const preferredEntities: string[] = [];
+    if (kindLower.includes("camel")) preferredEntities.push("camel");
+    if (kindLower.includes("donkey")) preferredEntities.push("donkey");
+    if (kindLower.includes("mule")) preferredEntities.push("mule");
+    if (kindLower.includes("horse")) preferredEntities.push("horse");
+    if (kindLower.includes("skeleton_horse")) preferredEntities.push("skeleton_horse");
+    if (kindLower.includes("zombie_horse")) preferredEntities.push("zombie_horse");
+    if (kindLower.includes("pig_saddle")) preferredEntities.push("pig");
+    if (kindLower.includes("strider")) preferredEntities.push("strider");
+    if (kindLower.includes("llama")) preferredEntities.push("llama", "trader_llama");
+    if (kindLower.includes("happy_ghast")) preferredEntities.push("happy_ghast");
+    if (kindLower.includes("piglin")) preferredEntities.push("piglin", "piglin_brute");
+
+    // Choose the first matching `entity/<name>/...` in the pack.
+    for (const entityName of preferredEntities) {
+      for (const id of set) {
+        const p = stripNamespace(id);
+        if (!p.startsWith(`entity/${entityName}/`)) continue;
+        return id;
+      }
+    }
   }
 
   const parts = entityPath.split("/");

@@ -144,7 +144,19 @@ export function resolveEntityCompositeSchema(
     selectedAssetId,
     allAssetIds,
   );
-  const baseAssetId = baseFromLayer ?? selectedAssetId;
+  let baseAssetId = baseFromLayer ?? selectedAssetId;
+
+  // Treat decorated pot patterns as feature variants of the base pot.
+  // This keeps feature state stable even if a user deep-links to a specific
+  // pottery pattern texture.
+  {
+    const ns = baseAssetId.includes(":") ? baseAssetId.split(":")[0] : "minecraft";
+    const path = stripNamespace(baseAssetId);
+    if (path.startsWith("entity/decorated_pot/") && !path.endsWith("/decorated_pot_base")) {
+      const candidate = `${ns}:entity/decorated_pot/decorated_pot_base` as AssetId;
+      if (all.has(candidate)) baseAssetId = candidate;
+    }
+  }
 
   const entityPath = getEntityPath(baseAssetId);
   if (!entityPath) return null;
@@ -169,6 +181,9 @@ export function resolveEntityCompositeSchema(
     | undefined;
   let getBoneInputOverrides:
     | EntityCompositeSchema["getBoneInputOverrides"]
+    | undefined;
+  let getPartTextureOverrides:
+    | EntityCompositeSchema["getPartTextureOverrides"]
     | undefined;
 
   // -----------------------------------------------------------------------
@@ -236,6 +251,296 @@ export function resolveEntityCompositeSchema(
         const chosen = getSelect(state, "entity.variant", direct.leaf);
         const candidate = `${ns}:entity/${direct.dir}/${chosen}` as AssetId;
         return all.has(candidate) ? candidate : baseAssetId;
+      };
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Decorated pot (block-entity style multi-texture rig)
+  //
+  // Vanilla stores a base pot texture plus many pottery pattern textures under
+  // `entity/decorated_pot/*`. The model uses the base texture for the neck/top/bottom
+  // and applies patterns only to the side faces. Expose a selector and apply
+  // per-part texture overrides so the pot wraps correctly.
+  // -----------------------------------------------------------------------
+  if (folderRoot === "decorated_pot" || dir === "decorated_pot") {
+    const basePotTexture =
+      findAssetId(
+        ns,
+        [
+          "entity/decorated_pot/decorated_pot_base",
+          "entity/decorated_pot_base",
+        ],
+        all,
+      ) ?? baseAssetId;
+    const sidePotTexture =
+      findAssetId(
+        ns,
+        [
+          "entity/decorated_pot/decorated_pot_side",
+          "entity/decorated_pot_side",
+        ],
+        all,
+      ) ?? basePotTexture;
+
+    const patternLeaves: string[] = [];
+    for (const id of all) {
+      const p = getEntityPath(id);
+      if (!p) continue;
+      if (!p.startsWith("decorated_pot/")) continue;
+      const leafName = p.split("/").pop();
+      if (!leafName) continue;
+      if (leafName === "decorated_pot_base" || leafName === "decorated_pot_side")
+        continue;
+      patternLeaves.push(leafName);
+    }
+
+    const patterns = stableUnique(patternLeaves);
+    controls.push({
+      kind: "select",
+      id: "decorated_pot.pattern",
+      label: "Pottery Sherd",
+      defaultValue: "none",
+      options: [
+        { value: "none", label: "None" },
+        ...patterns.map((p) => ({
+          value: p,
+          label: titleLabel(p.replace(/_pottery_pattern$/, "")),
+        })),
+      ],
+    });
+
+    // Always use the base pot texture as the "main" texture so the neck/top/bottom
+    // (and any un-patterned bits) wrap correctly. The selected pattern is applied
+    // only to side parts via part texture overrides.
+    getBaseTextureAssetId = () => basePotTexture;
+    getCemEntityType = () => ({ entityType: "decorated_pot", parentEntity: null });
+
+    getPartTextureOverrides = (state) => {
+      const chosen = getSelect(state, "decorated_pot.pattern", "none");
+      const patternCandidate =
+        chosen === "none"
+          ? null
+          : (`${ns}:entity/decorated_pot/${chosen}` as AssetId);
+      const patternTex =
+        patternCandidate && all.has(patternCandidate)
+          ? patternCandidate
+          : sidePotTexture;
+
+      // Default vanilla part names (from our vanilla JEM mocks).
+      return {
+        neck: basePotTexture,
+        top: basePotTexture,
+        bottom: basePotTexture,
+        front: patternTex,
+        back: patternTex,
+        left: patternTex,
+        right: patternTex,
+      };
+    };
+  }
+
+  // -----------------------------------------------------------------------
+  // Equipment (armor) textures
+  //
+  // Vanilla stores armor/equipment textures under `entity/equipment/*`. These
+  // textures are rendered on top of base rigs (player, armor stand, etc).
+  //
+  // For previews we map equipment textures to a display rig (see
+  // `getEntityInfoFromAssetId`) and provide:
+  // - slot selector (to show one armor piece at a time)
+  // - optional underlay (player / armor stand), mutually exclusive
+  // -----------------------------------------------------------------------
+  const isEquipment = folderRoot === "equipment";
+  let equipmentKind: string | null = null;
+  let equipmentInfo:
+    | null
+    | {
+        isHumanoid: boolean;
+        isLayer1: boolean;
+        isLayer2: boolean;
+        armorTextureLayer1: AssetId | null;
+        armorTextureLayer2: AssetId | null;
+        buildLayer1Overrides?: (state: EntityFeatureStateView) => Record<string, { visible?: boolean }>;
+        buildLayer2Overrides?: (state: EntityFeatureStateView) => Record<string, { visible?: boolean }>;
+      } = null;
+  if (isEquipment) {
+    const parts = entityPath.split("/");
+    equipmentKind = parts[1] ?? null;
+    const kindLower = (equipmentKind ?? "").toLowerCase();
+
+    const isHumanoid = kindLower.includes("humanoid");
+    const isLeggings =
+      kindLower.includes("humanoid_leggings") || kindLower.includes("leggings");
+    const isLayer1 = isHumanoid && !isLeggings;
+    const isLayer2 = isLeggings;
+
+    // Only humanoid armor supports player/armor-stand underlays and piece toggles.
+    const leggingsTexture = isLayer1
+      ? findAssetId(ns, [`entity/equipment/humanoid_leggings/${leaf}`], all)
+      : null;
+    const hasLeggings = isLayer1 && !!leggingsTexture;
+
+    if (isLayer1 || isLayer2) {
+      if (isHumanoid) {
+        controls.push({
+          kind: "toggle",
+          id: "equipment.add_player",
+          label: "Show Player",
+          defaultValue: false,
+        });
+        controls.push({
+          kind: "toggle",
+          id: "equipment.add_armor_stand",
+          label: "Show Armor Stand",
+          defaultValue: false,
+        });
+      }
+
+      if (isLayer1) {
+        controls.push({
+          kind: "toggle",
+          id: "equipment.show_helmet",
+          label: "Helmet",
+          defaultValue: true,
+        });
+        controls.push({
+          kind: "toggle",
+          id: "equipment.show_chestplate",
+          label: "Chestplate",
+          defaultValue: true,
+        });
+        if (hasLeggings) {
+          controls.push({
+            kind: "toggle",
+            id: "equipment.show_leggings",
+            label: "Leggings",
+            defaultValue: true,
+          });
+        }
+        controls.push({
+          kind: "toggle",
+          id: "equipment.show_boots",
+          label: "Boots",
+          defaultValue: true,
+        });
+      } else if (isLayer2) {
+        controls.push({
+          kind: "toggle",
+          id: "equipment.show_leggings",
+          label: "Leggings",
+          defaultValue: true,
+        });
+      }
+
+      // When showing a humanoid underlay, swap the base model + texture to the
+      // underlay rig so the base can animate (walking/sprinting) while armor is
+      // rendered as overlays.
+      if (isHumanoid) {
+        const armorStandTexture =
+          findAssetId(
+            ns,
+            [
+              // Modern vanilla path (textures/entity/armorstand/armorstand.png)
+              "entity/armorstand/armorstand",
+              // Some versions/packs use wood.png for armor stands.
+              "entity/armorstand/wood",
+              // Legacy/common naming (textures/entity/armor_stand.png)
+              "entity/armor_stand",
+              // Occasionally nested.
+              "entity/armor_stand/armor_stand",
+            ],
+            all,
+          ) ?? ("minecraft:entity/armor_stand" as AssetId);
+
+        getBaseTextureAssetId = (state) => {
+          const showPlayer = getToggle(state, "equipment.add_player", false);
+          if (showPlayer) return "minecraft:entity/player/wide/steve";
+          // Default to armor stand rig when not previewing on the player.
+          return armorStandTexture;
+        };
+
+        getCemEntityType = (state) => {
+          const showPlayer = getToggle(state, "equipment.add_player", false);
+          if (showPlayer) return { entityType: "player", parentEntity: null };
+          // Default base rig for humanoid equipment previews.
+          return { entityType: "armor_stand", parentEntity: null };
+        };
+      }
+
+      const buildArmorLayer1Overrides = (state: EntityFeatureStateView) => {
+        const showHelmet = getToggle(state, "equipment.show_helmet", true);
+        const showChest = getToggle(state, "equipment.show_chestplate", true);
+        const showBoots = getToggle(state, "equipment.show_boots", true);
+        if (showHelmet && showChest && showBoots) return { "*": { visible: true } };
+        const overrides: Record<string, { visible?: boolean }> = { "*": { visible: false } };
+        if (showHelmet) overrides.head = { visible: true };
+        if (showChest) {
+          overrides.body = { visible: true };
+          overrides.left_arm = { visible: true };
+          overrides.right_arm = { visible: true };
+        }
+        if (showBoots) {
+          overrides.left_shoe = { visible: true };
+          overrides.right_shoe = { visible: true };
+        }
+        return overrides;
+      };
+
+      const buildUnderlayBaseOverrides = (state: EntityFeatureStateView) => {
+        const showPlayer = getToggle(state, "equipment.add_player", false);
+        const showArmorStand = getToggle(
+          state,
+          "equipment.add_armor_stand",
+          false,
+        );
+        // When neither is enabled, the armor stand rig still drives animation
+        // but should not render (armor overlays are the focus).
+        const showBase = showPlayer || showArmorStand;
+        const overrides: Record<string, { visible?: boolean }> = {};
+        if (!showBase) overrides["*"] = { visible: false };
+
+        // Avoid hat/second-layer pixels poking through helmets in preview:
+        // hide the *headwear* layer when a helmet is enabled, but keep the
+        // head visible so alpha-cutout helmets (e.g. chainmail) can show the
+        // face beneath.
+        if (!isLayer1) return overrides;
+        const showHelmet = getToggle(state, "equipment.show_helmet", true);
+        if (!showHelmet) return overrides;
+        return {
+          ...overrides,
+          headwear: { visible: false },
+        };
+      };
+
+      const buildArmorLayer2Overrides = (state: EntityFeatureStateView) => {
+        const showLeggings = getToggle(state, "equipment.show_leggings", true);
+        return { "*": { visible: !!showLeggings } };
+      };
+
+      equipmentInfo = {
+        isHumanoid,
+        isLayer1,
+        isLayer2,
+        armorTextureLayer1: isLayer1 ? baseAssetId : null,
+        armorTextureLayer2: isLayer2 ? baseAssetId : leggingsTexture,
+        buildLayer1Overrides: isLayer1 ? buildArmorLayer1Overrides : undefined,
+        buildLayer2Overrides: isLayer2 ? buildArmorLayer2Overrides : undefined,
+      };
+
+      const existing = getBoneRenderOverrides;
+      getBoneRenderOverrides = (state) => {
+        // Humanoid equipment base is always player or armor stand.
+        const baseOverrides: Record<string, { visible?: boolean }> = {};
+        if (isHumanoid) {
+          Object.assign(baseOverrides, buildUnderlayBaseOverrides(state));
+        } else {
+          // Non-humanoid equipment falls back to rendering its own CEM rig as base.
+          if (isLayer1) Object.assign(baseOverrides, buildArmorLayer1Overrides(state));
+          if (isLayer2) Object.assign(baseOverrides, buildArmorLayer2Overrides(state));
+        }
+
+        return existing ? { ...existing(state), ...baseOverrides } : baseOverrides;
       };
     }
   }
@@ -415,6 +720,33 @@ export function resolveEntityCompositeSchema(
   }
 
   // -----------------------------------------------------------------------
+  // Armadillo curl-up pose (vanilla model includes both unrolled + rolled cube)
+  // -----------------------------------------------------------------------
+  if (folderRoot === "armadillo" || entityType === "armadillo" || entityType === "armadillo_baby") {
+    controls.push({
+      kind: "select",
+      id: "armadillo.pose",
+      label: "Pose",
+      defaultValue: "unrolled",
+      options: [
+        { value: "unrolled", label: "Unrolled" },
+        { value: "rolled", label: "Rolled Up" },
+      ],
+    });
+
+    const existing = getBoneRenderOverrides;
+    getBoneRenderOverrides = (state) => {
+      const pose = getSelect(state, "armadillo.pose", "unrolled");
+      const rolled = pose === "rolled";
+      const overrides: Record<string, { visible?: boolean }> = {
+        "*": { visible: !rolled },
+        cube: { visible: rolled },
+      };
+      return existing ? { ...existing(state), ...overrides } : overrides;
+    };
+  }
+
+  // -----------------------------------------------------------------------
   // Sheep wool/coat overlay + color
   // -----------------------------------------------------------------------
   let sheepWoolTexture: AssetId | null = null;
@@ -461,6 +793,193 @@ export function resolveEntityCompositeSchema(
       defaultValue: "white",
       options: dyeOptions,
     });
+  }
+
+  // -----------------------------------------------------------------------
+  // Entity equipment overlays (saddles, armor, harnesses, decorations)
+  // -----------------------------------------------------------------------
+  const findEquipment = (path: string): AssetId | null =>
+    findAssetId(ns, [`entity/equipment/${path}`], all);
+
+  // Horse: armor select + saddle toggle.
+  const horseSaddleTexture = findEquipment("horse_saddle/saddle");
+  let horseArmorOptions: Array<{ value: string; label: string; assetId: AssetId }> = [];
+  if (folderRoot === "horse") {
+    for (const id of all) {
+      if (!id.startsWith(`${ns}:entity/equipment/horse_body/`)) continue;
+      const leafName = stripNamespace(id).split("/").pop();
+      if (!leafName) continue;
+      horseArmorOptions.push({ value: leafName, label: titleLabel(leafName), assetId: id });
+    }
+    horseArmorOptions = stableUnique(horseArmorOptions.map((o) => o.value)).map(
+      (v) => horseArmorOptions.find((o) => o.value === v)!,
+    );
+
+    if (horseArmorOptions.length > 0) {
+      controls.push({
+        kind: "select",
+        id: "horse.armor",
+        label: "Horse Armor",
+        defaultValue: "none",
+        options: [{ value: "none", label: "None" }].concat(
+          horseArmorOptions.map((o) => ({ value: o.value, label: o.label })),
+        ),
+      });
+    }
+    if (horseSaddleTexture) {
+      controls.push({
+        kind: "toggle",
+        id: "horse.saddle",
+        label: "Saddle",
+        defaultValue: false,
+      });
+    }
+  }
+
+  // Camel: saddle toggle.
+  const camelSaddleTexture = findEquipment("camel_saddle/saddle");
+  if (folderRoot === "camel" && camelSaddleTexture) {
+    controls.push({
+      kind: "toggle",
+      id: "camel.saddle",
+      label: "Saddle",
+      defaultValue: false,
+    });
+  }
+
+  // Donkey: saddle toggle.
+  const donkeySaddleTexture = findEquipment("donkey_saddle/saddle");
+  if (folderRoot === "donkey" && donkeySaddleTexture) {
+    controls.push({
+      kind: "toggle",
+      id: "donkey.saddle",
+      label: "Saddle",
+      defaultValue: false,
+    });
+  }
+
+  // Happy ghast: harness toggle + color select.
+  let happyGhastHarnessColors: string[] = [];
+  if (folderRoot === "happy_ghast") {
+    for (const id of all) {
+      if (!id.startsWith(`${ns}:entity/equipment/happy_ghast_body/`)) continue;
+      const leafName = stripNamespace(id).split("/").pop();
+      if (!leafName || !leafName.endsWith("_harness")) continue;
+      happyGhastHarnessColors.push(leafName.replace(/_harness$/, ""));
+    }
+    happyGhastHarnessColors = stableUnique(happyGhastHarnessColors);
+    if (happyGhastHarnessColors.length > 0) {
+      controls.push({
+        kind: "toggle",
+        id: "happy_ghast.harness",
+        label: "Harness",
+        defaultValue: false,
+      });
+      controls.push({
+        kind: "select",
+        id: "happy_ghast.harness_color",
+        label: "Harness Color",
+        defaultValue: happyGhastHarnessColors.includes("brown")
+          ? "brown"
+          : happyGhastHarnessColors[0]!,
+        options: happyGhastHarnessColors.map((c) => ({
+          value: c,
+          label: titleLabel(c),
+        })),
+      });
+    }
+  }
+
+  // Piglin / piglin brute: optional humanoid armor overlay.
+  let humanoidArmorMaterials: string[] = [];
+  const isPiglinLike =
+    folderRoot === "piglin" &&
+    (entityType === "piglin" || entityType === "piglin_brute");
+  if (isPiglinLike) {
+    for (const id of all) {
+      if (!id.startsWith(`${ns}:entity/equipment/humanoid/`)) continue;
+      const leafName = stripNamespace(id).split("/").pop();
+      if (!leafName) continue;
+      humanoidArmorMaterials.push(leafName);
+    }
+    humanoidArmorMaterials = stableUnique(humanoidArmorMaterials);
+    if (humanoidArmorMaterials.length > 0) {
+      controls.push({
+        kind: "toggle",
+        id: "mob_armor.enabled",
+        label: "Armor",
+        defaultValue: false,
+      });
+      controls.push({
+        kind: "select",
+        id: "mob_armor.material",
+        label: "Armor Material",
+        defaultValue: humanoidArmorMaterials.includes("diamond")
+          ? "diamond"
+          : humanoidArmorMaterials[0]!,
+        options: humanoidArmorMaterials.map((m) => ({
+          value: m,
+          label: titleLabel(m),
+        })),
+      });
+      controls.push({
+        kind: "toggle",
+        id: "mob_armor.show_helmet",
+        label: "Helmet",
+        defaultValue: true,
+      });
+      controls.push({
+        kind: "toggle",
+        id: "mob_armor.show_chestplate",
+        label: "Chestplate",
+        defaultValue: true,
+      });
+      controls.push({
+        kind: "toggle",
+        id: "mob_armor.show_leggings",
+        label: "Leggings",
+        defaultValue: true,
+      });
+      controls.push({
+        kind: "toggle",
+        id: "mob_armor.show_boots",
+        label: "Boots",
+        defaultValue: true,
+      });
+    }
+  }
+
+  // Llama decorations: toggle + color select.
+  let llamaDecorColors: string[] = [];
+  const isLlamaFamily = folderRoot === "llama" || folderRoot === "trader_llama";
+  if (isLlamaFamily) {
+    for (const id of all) {
+      if (!id.startsWith(`${ns}:entity/equipment/llama_body/`)) continue;
+      const leafName = stripNamespace(id).split("/").pop();
+      if (!leafName) continue;
+      llamaDecorColors.push(leafName);
+    }
+    llamaDecorColors = stableUnique(llamaDecorColors);
+    if (llamaDecorColors.length > 0) {
+      controls.push({
+        kind: "toggle",
+        id: "llama.decor",
+        label: "Decor",
+        defaultValue: false,
+      });
+      controls.push({
+        kind: "select",
+        id: "llama.decor_color",
+        label: "Decor Color",
+        defaultValue: llamaDecorColors.includes("white")
+          ? "white"
+          : llamaDecorColors[0]!,
+        options: llamaDecorColors.map((c) => ({
+          value: c,
+          label: titleLabel(c),
+        })),
+      });
+    }
   }
 
   // -----------------------------------------------------------------------
@@ -682,6 +1201,299 @@ export function resolveEntityCompositeSchema(
   const getActiveLayers = (state: EntityFeatureStateView): EntityLayerDefinition[] => {
     const layers: EntityLayerDefinition[] = [];
 
+    // Equipment armor: when an underlay is enabled, render armor as overlays so
+    // the base rig can animate (walking/sprinting). Without an underlay, only
+    // add the missing layer (leggings) as a supplemental overlay for layer-1 assets.
+    if (equipmentInfo) {
+      const usesUnderlayRig = equipmentInfo.isHumanoid;
+
+      if (usesUnderlayRig) {
+        if (equipmentInfo.isLayer1 && equipmentInfo.armorTextureLayer1) {
+          const overrides = equipmentInfo.buildLayer1Overrides?.(state);
+          const showPlayer = getToggle(state, "equipment.add_player", false);
+          // Small nudge in Three.js units (pixels/16). Keep under 1px to avoid
+          // visibly "floating" helmets while still preventing z-fighting.
+          const helmetYOffset = 0.5 / 16;
+          layers.push({
+            id: "equipment_armor_layer_1",
+            label: "Armor",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["armor_layer_1"],
+            textureAssetId: equipmentInfo.armorTextureLayer1,
+            blend: "normal",
+            zIndex: 100,
+            opacity: 1,
+            materialMode: { kind: "default" },
+            boneRenderOverrides: overrides,
+            // On the player rig, the underlay head can z-fight with the helmet's
+            // top face due to coplanar geometry. Nudge the helmet up slightly
+            // to match in-game behavior without modifying vanilla JEM files.
+            bonePositionOffsets: showPlayer
+              ? { head: { x: 0, y: helmetYOffset, z: 0 } }
+              : undefined,
+            // Armor helmets can share coplanar faces with the underlay head in
+            // OptiFine's vanilla `armor_layer_1` model, causing occasional
+            // z-fighting/poking. Apply a tiny scale to the armor head bone to
+            // keep it consistently outside the head without editing JEMs.
+            boneScaleMultipliers: { head: { x: 1.01, y: 1.01, z: 1.01 } },
+          });
+        }
+
+        // Leggings layer for either:
+        // - layer-2 asset previews, or
+        // - layer-1 assets that also have a matching leggings texture.
+        if (equipmentInfo.armorTextureLayer2) {
+          const overrides = equipmentInfo.buildLayer2Overrides?.(state) ?? {
+            "*": { visible: getToggle(state, "equipment.show_leggings", true) },
+          };
+          layers.push({
+            id: "equipment_armor_layer_2",
+            label: "Leggings",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["armor_layer_2"],
+            textureAssetId: equipmentInfo.armorTextureLayer2,
+            blend: "normal",
+            // Slightly behind layer 1 so boots can visually sit on top.
+            zIndex: 90,
+            opacity: 1,
+            materialMode: { kind: "default" },
+            boneRenderOverrides: overrides,
+          });
+        }
+      } else {
+        // No underlay: add matching leggings as an extra layer for layer-1 textures.
+        if (
+          equipmentInfo.isLayer1 &&
+          equipmentInfo.armorTextureLayer2 &&
+          getToggle(state, "equipment.show_leggings", true)
+        ) {
+          layers.push({
+            id: "equipment_armor_layer_2",
+            label: "Leggings",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["armor_layer_2"],
+            textureAssetId: equipmentInfo.armorTextureLayer2,
+            blend: "normal",
+            zIndex: 90,
+            opacity: 1,
+            materialMode: { kind: "default" },
+          });
+        }
+      }
+    }
+
+    // Horse equipment
+    if (folderRoot === "horse") {
+      const armor = getSelect(state, "horse.armor", "none");
+      if (armor !== "none") {
+        const opt = horseArmorOptions.find((o) => o.value === armor);
+        if (opt) {
+          layers.push({
+            id: "horse_armor",
+            label: "Armor",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["horse_armor"],
+            textureAssetId: opt.assetId,
+            blend: "normal",
+            zIndex: 140,
+            opacity: 1,
+            materialMode: { kind: "default" },
+          });
+        }
+      }
+
+      if (horseSaddleTexture && getToggle(state, "horse.saddle", false)) {
+        layers.push({
+          id: "horse_saddle",
+          label: "Saddle",
+          kind: "cemModel",
+          cemEntityTypeCandidates: ["horse_saddle"],
+          textureAssetId: horseSaddleTexture,
+          blend: "normal",
+          zIndex: 135,
+          opacity: 1,
+          materialMode: { kind: "default" },
+          boneAliasMap: {
+            headpiece: "head",
+            noseband: "head",
+            left_bit: "head",
+            right_bit: "head",
+            left_rein: "head",
+            right_rein: "head",
+            saddle: "body",
+          },
+        });
+      }
+    }
+
+    // Camel equipment
+    if (folderRoot === "camel" && camelSaddleTexture) {
+      if (getToggle(state, "camel.saddle", false)) {
+        layers.push({
+          id: "camel_saddle",
+          label: "Saddle",
+          kind: "cemModel",
+          cemEntityTypeCandidates: ["camel_saddle"],
+          textureAssetId: camelSaddleTexture,
+          blend: "normal",
+          zIndex: 135,
+          opacity: 1,
+          materialMode: { kind: "default" },
+          boneAliasMap: {
+            saddle: "body",
+            bridle: "head",
+            reins: "head",
+          },
+        });
+      }
+    }
+
+    // Donkey equipment
+    if (folderRoot === "donkey" && donkeySaddleTexture) {
+      if (getToggle(state, "donkey.saddle", false)) {
+        layers.push({
+          id: "donkey_saddle",
+          label: "Saddle",
+          kind: "cemModel",
+          cemEntityTypeCandidates: ["donkey_saddle"],
+          textureAssetId: donkeySaddleTexture,
+          blend: "normal",
+          zIndex: 135,
+          opacity: 1,
+          materialMode: { kind: "default" },
+          boneAliasMap: {
+            headpiece: "head",
+            noseband: "head",
+            left_bit: "head",
+            right_bit: "head",
+            left_rein: "head",
+            right_rein: "head",
+            saddle: "body",
+          },
+        });
+      }
+    }
+
+    // Happy ghast harness
+    if (folderRoot === "happy_ghast" && happyGhastHarnessColors.length > 0) {
+      const enabled = getToggle(state, "happy_ghast.harness", false);
+      if (enabled) {
+        const color = getSelect(
+          state,
+          "happy_ghast.harness_color",
+          happyGhastHarnessColors[0]!,
+        );
+        const tex = findEquipment(`happy_ghast_body/${color}_harness`);
+        if (tex) {
+          layers.push({
+            id: "happy_ghast_harness",
+            label: "Harness",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["happy_ghast_harness"],
+            textureAssetId: tex,
+            blend: "normal",
+            zIndex: 140,
+            opacity: 1,
+            materialMode: { kind: "default" },
+            boneAliasMap: { goggles: "body", harness: "body" },
+          });
+        }
+      }
+    }
+
+    // Piglin wearable armor
+    if (isPiglinLike && humanoidArmorMaterials.length > 0) {
+      const enabled = getToggle(state, "mob_armor.enabled", false);
+      if (enabled) {
+        const material = getSelect(
+          state,
+          "mob_armor.material",
+          humanoidArmorMaterials[0]!,
+        );
+        const layer1Tex = findAssetId(ns, [`entity/equipment/humanoid/${material}`], all);
+        const layer2Tex = findAssetId(
+          ns,
+          [`entity/equipment/humanoid_leggings/${material}`],
+          all,
+        );
+
+        const showHelmet = getToggle(state, "mob_armor.show_helmet", true);
+        const showChest = getToggle(state, "mob_armor.show_chestplate", true);
+        const showBoots = getToggle(state, "mob_armor.show_boots", true);
+        const showLeggings = getToggle(state, "mob_armor.show_leggings", true);
+
+        const layer1Overrides: Record<string, { visible?: boolean }> =
+          showHelmet && showChest && showBoots
+            ? { "*": { visible: true } }
+            : {
+                "*": { visible: false },
+                ...(showHelmet ? { head: { visible: true } } : {}),
+                ...(showChest
+                  ? {
+                      body: { visible: true },
+                      left_arm: { visible: true },
+                      right_arm: { visible: true },
+                    }
+                  : {}),
+                ...(showBoots
+                  ? { left_shoe: { visible: true }, right_shoe: { visible: true } }
+                  : {}),
+              };
+
+        if (layer1Tex) {
+          layers.push({
+            id: "mob_armor_layer_1",
+            label: "Armor",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["armor_layer_1"],
+            textureAssetId: layer1Tex,
+            blend: "normal",
+            zIndex: 130,
+            opacity: 1,
+            materialMode: { kind: "default" },
+            boneRenderOverrides: layer1Overrides,
+            boneScaleMultipliers: { head: { x: 1.01, y: 1.01, z: 1.01 } },
+          });
+        }
+        if (layer2Tex) {
+          layers.push({
+            id: "mob_armor_layer_2",
+            label: "Leggings",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["armor_layer_2"],
+            textureAssetId: layer2Tex,
+            blend: "normal",
+            zIndex: 125,
+            opacity: 1,
+            materialMode: { kind: "default" },
+            boneRenderOverrides: { "*": { visible: !!showLeggings } },
+          });
+        }
+      }
+    }
+
+    // Llama decorations
+    if (isLlamaFamily && llamaDecorColors.length > 0) {
+      const enabled = getToggle(state, "llama.decor", false);
+      if (enabled) {
+        const color = getSelect(state, "llama.decor_color", llamaDecorColors[0]!);
+        const tex = findEquipment(`llama_body/${color}`);
+        if (tex) {
+          layers.push({
+            id: "llama_decor",
+            label: "Decor",
+            kind: "cemModel",
+            cemEntityTypeCandidates: ["llama_decor"],
+            textureAssetId: tex,
+            blend: "normal",
+            zIndex: 130,
+            opacity: 1,
+            materialMode: { kind: "default" },
+          });
+        }
+      }
+    }
+
     if (hasEyes && eyesTexture) {
       if (getToggle(state, "feature.glowing_eyes", true)) {
         layers.push({
@@ -708,7 +1520,13 @@ export function resolveEntityCompositeSchema(
           blend: "additive",
           zIndex: 180,
           opacity: 0.85,
-          materialMode: { kind: "emissive", intensity: 0.8 },
+          materialMode: {
+            kind: "energySwirl",
+            intensity: 1,
+            repeat: 2,
+            // Vanilla energy swirl offset is ~0.01 per tick (~0.2 per second).
+            scroll: { uPerSec: 0.2, vPerSec: 0.2 },
+          },
         });
       }
     }
@@ -961,6 +1779,7 @@ export function resolveEntityCompositeSchema(
     ...(getRootTransform ? { getRootTransform } : {}),
     ...(getBoneRenderOverrides ? { getBoneRenderOverrides } : {}),
     ...(getBoneInputOverrides ? { getBoneInputOverrides } : {}),
+    ...(getPartTextureOverrides ? { getPartTextureOverrides } : {}),
     getActiveLayers,
   };
 }

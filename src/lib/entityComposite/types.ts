@@ -31,7 +31,17 @@ export type EntityLayerMaterialMode =
    * convert this to linear before applying it to `material.color`.
    */
   | { kind: "tint"; color: { r: number; g: number; b: number } }
-  | { kind: "emissive"; intensity?: number };
+  | { kind: "emissive"; intensity?: number }
+  /**
+   * Minecraft-style "energy swirl" effect (charged creeper).
+   * Implemented as an emissive/additive unlit material with scrolling UVs.
+   */
+  | {
+      kind: "energySwirl";
+      intensity?: number;
+      repeat?: number;
+      scroll?: { uPerSec: number; vPerSec: number };
+    };
 
 export interface EntityLayerDefinitionBase {
   id: string;
@@ -43,6 +53,39 @@ export interface EntityLayerDefinitionBase {
    * Used to avoid z-fighting and preserve expected compositing order.
    */
   zIndex: number;
+  /**
+   * Optional per-layer visibility overrides applied after syncing this layer's
+   * bones to the base pose. Useful for "show only helmet" style controls.
+   */
+  boneRenderOverrides?: Partial<Record<string, { visible?: boolean }>>;
+  /**
+   * Optional per-layer mapping from overlay bone name -> base bone name.
+   * Useful when a vanilla equipment model uses different bone names than the
+   * owning entity model (e.g. horse_saddle's `headpiece` should follow `head`).
+   */
+  boneAliasMap?: Record<string, string>;
+  /**
+   * Optional per-layer bone position offsets (in Three.js units) applied after
+   * syncing the overlay rig to the base pose. Offsets are additive and applied
+   * every frame, but since overlays are re-synced each tick, this does not
+   * accumulate.
+   *
+   * Useful for small fit tweaks (e.g. nudging armor helmets up to avoid
+   * coplanar z-fighting with the underlay head).
+   */
+  bonePositionOffsets?: Record<string, { x: number; y: number; z: number }>;
+  /**
+   * Optional per-layer bone scale multipliers applied after syncing the overlay
+   * rig to the base pose. Values are multiplicative and applied every frame,
+   * but since overlays are re-synced each tick, this does not accumulate.
+   *
+   * Useful for small fit tweaks (e.g. armor helmets sitting slightly above the
+   * head without editing vanilla JEM files).
+   */
+  boneScaleMultipliers?: Record<
+    string,
+    { x: number; y: number; z: number }
+  >;
   /**
    * Opacity multiplier for the overlay material (0..1).
    */
@@ -104,6 +147,9 @@ export interface EntityCompositeSchema {
   /**
    * Optional direct overrides for bone render properties (applied after each tick).
    * Use for configuration toggles that must work even without JPM animations.
+   *
+   * Special key `"*"` applies defaults to all bones (useful for "show only X"
+   * configurations without needing to enumerate every bone name).
    */
   getBoneRenderOverrides?: (
     state: EntityFeatureStateView,
@@ -118,6 +164,16 @@ export interface EntityCompositeSchema {
   getBoneInputOverrides?: (
     state: EntityFeatureStateView,
   ) => Record<string, Record<string, number>>;
+  /**
+   * Optional per-part texture override map for the base model conversion.
+   *
+   * Keys are JEM part/bone names. Values are texture asset IDs to load and
+   * apply for that part (and its boxes). Useful for block-entity style rigs
+   * that combine multiple textures (e.g. decorated pot base + sherd patterns).
+   */
+  getPartTextureOverrides?: (
+    state: EntityFeatureStateView,
+  ) => Partial<Record<string, AssetId>>;
   /**
    * Returns the layers to render for the current feature state.
    */
