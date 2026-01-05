@@ -23,14 +23,11 @@ pub struct TextureIndex {
 impl TextureIndex {
     /// Build a texture index by scanning all blockstates and models in a pack
     pub fn build(pack: &PackMeta, vanilla_pack: &PackMeta) -> Result<Self> {
-        println!("[TextureIndex] Building index for pack: {}", pack.name);
-
         let mut texture_to_blocks: HashMap<String, HashSet<String>> = HashMap::new();
 
         let blockstates_dir = if pack.is_zip {
             // For ZIP packs, we'd need to enumerate ZIP entries
             // For now, we'll return empty index and rely on fallback
-            println!("[TextureIndex] ZIP pack - skipping index (use fallback logic)");
             return Ok(Self {
                 texture_to_blocks: HashMap::new(),
             });
@@ -49,11 +46,6 @@ impl TextureIndex {
             if !blockstates_path.exists() {
                 continue;
             }
-
-            println!(
-                "[TextureIndex] Scanning blockstates in: {}",
-                blockstates_path.display()
-            );
 
             // Scan all blockstate files
             let entries = match fs::read_dir(&blockstates_path) {
@@ -89,11 +81,6 @@ impl TextureIndex {
             .into_iter()
             .map(|(k, v)| (k, v.into_iter().collect()))
             .collect();
-
-        println!(
-            "[TextureIndex] Built index with {} texture mappings",
-            texture_to_blocks.len()
-        );
 
         Ok(Self { texture_to_blocks })
     }

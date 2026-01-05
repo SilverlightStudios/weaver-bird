@@ -5,6 +5,7 @@ description = "Minecraft Resource Pack Manager"
 authors = ["Weaverbird Team"]
 edition = "2021"
 rust-version = "1.60"
+default-run = "weaverbird"
 
 [lib]
 name = "weaverbird_lib"
@@ -14,6 +15,26 @@ path = "src/lib.rs"
 [[bin]]
 name = "weaverbird"
 path = "src/main.rs"
+
+[[bin]]
+name = "generate_particles"
+path = "src/bin/generate_particles.rs"
+
+[[bin]]
+name = "extract_block_emissions"
+path = "src/bin/extract_block_emissions.rs"
+
+[[bin]]
+name = "extract_particle_textures"
+path = "src/bin/extract_particle_textures.rs"
+
+[[bin]]
+name = "extract_particle_physics"
+path = "src/bin/extract_particle_physics.rs"
+
+[[bin]]
+name = "show_campfire"
+path = "src/bin/show_campfire.rs"
 
 [dependencies]
 tauri = { version = "2.5", features = ["macos-private-api", "protocol-asset"] }
@@ -32,7 +53,11 @@ image = "0.24"
 rand = "0.8"
 rand_chacha = "0.3"
 rayon = "1.8"
+regex = "1.10"
+reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1.35", features = ["rt-multi-thread", "fs"] }
+chrono = "0.4"
+cafebabe = "0.3"
 
 [build-dependencies]
 tauri-build = { version = "2.5", features = [] }

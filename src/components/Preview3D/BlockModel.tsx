@@ -44,7 +44,7 @@ function BlockModel({
   assetId,
   biomeColor,
   onTintDetected,
-  showPot = true,
+  showPot = false,
   isPotted = false,
   blockProps = {},
   seed = 0,

@@ -48,6 +48,7 @@ import AssetResults from "@components/AssetResults";
 import Preview3D from "@components/Preview3D";
 import Preview2D from "@components/Preview2D";
 import PreviewItem from "@components/PreviewItem";
+import PreviewParticle from "@components/PreviewParticle";
 import { OptionsPanel } from "@components/OptionsPanel";
 import { SaveBar } from "@components/SaveBar";
 import { Settings } from "@components/Settings";
@@ -108,6 +109,7 @@ import {
   is2DOnlyTexture,
   isEntityTexture,
   isMinecraftItem,
+  isParticleTexture,
 } from "@lib/assetUtils";
 import type { ItemDisplayMode } from "@lib/itemDisplayModes";
 import {
@@ -422,7 +424,7 @@ export default function MainRoute() {
   const setCanvasRenderMode = useStore((state) => state.setCanvasRenderMode);
 
   // Show pot state - managed in global store for access from OptionsPanel
-  const showPot = useStore((state) => state.showPot ?? true);
+  const showPot = useStore((state) => state.showPot ?? false);
 
   // Get providers for selected asset
   const providers = useSelectProvidersWithWinner(uiState.selectedAssetId);
@@ -469,6 +471,9 @@ export default function MainRoute() {
     if (uiState.selectedAssetId) {
       if (isMinecraftItem(uiState.selectedAssetId)) {
         setCanvasRenderMode("Item");
+      } else if (isParticleTexture(uiState.selectedAssetId)) {
+        // Particles default to 3D for live emitter preview
+        setCanvasRenderMode("3D");
       } else if (is2DOnlyTexture(uiState.selectedAssetId)) {
         setCanvasRenderMode("2D");
       } else {
@@ -958,21 +963,22 @@ export default function MainRoute() {
     });
   }, []);
 
-  // Track if vanilla texture initialization is running to prevent double-init in React StrictMode
-  const vanillaInitializedRef = useRef(false);
-
   // Initialize vanilla textures on startup (run once on mount)
   useEffect(() => {
-    // Prevent double initialization in React StrictMode (dev only)
-    if (vanillaInitializedRef.current) {
-      return;
-    }
-    vanillaInitializedRef.current = true;
+    console.log("[MainRoute] useEffect TRIGGERED - starting particle initialization");
+    let cancelled = false;
 
     const initVanillaTextures = async () => {
+      console.log("[MainRoute] initVanillaTextures function called, cancelled=", cancelled);
+      if (cancelled) return;
+
+      // Particle data is now lazy-loaded when Preview3D first renders
+      // No need to load it here - it will be loaded on-demand
+
+      // Initialize vanilla textures in background (slow, can run in parallel)
       try {
-        // Try to initialize vanilla textures automatically
         // This will search for Minecraft in multiple launcher locations
+        // This also extracts particle physics from the Minecraft JAR
         await initializeVanillaTextures();
         console.log("Vanilla textures initialized");
       } catch (error) {
@@ -982,6 +988,10 @@ export default function MainRoute() {
       }
     };
     initVanillaTextures();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Configure tabs for BlockyTabs layout
@@ -1214,12 +1224,16 @@ export default function MainRoute() {
     // Auto-determine if certain modes should be disabled
     const is2DOnly =
       uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId);
+    const isParticle =
+      uiState.selectedAssetId && isParticleTexture(uiState.selectedAssetId);
 
     // Override mode for special asset types
     let effectiveMode = canvasRenderMode;
-    // 2D-only textures (GUI, particles, etc.) can't be rendered as 3D or items
+    // 2D-only textures (GUI, etc.) can't be rendered as 3D or items
+    // Note: Particles are NOT 2D-only - they support both 2D and 3D modes via PreviewParticle
     if (
       is2DOnly &&
+      !isParticle &&
       (canvasRenderMode === "3D" || canvasRenderMode === "Item")
     ) {
       effectiveMode = "2D";
@@ -1229,33 +1243,39 @@ export default function MainRoute() {
     }
 
     let content;
-    switch (effectiveMode) {
-      case "2D":
-        content = uiState.selectedAssetId ? (
-          <Preview2D assetId={uiState.selectedAssetId} />
-        ) : null;
-        break;
-      case "Item":
-        content = uiState.selectedAssetId ? (
-          <PreviewItem
-            assetId={uiState.selectedAssetId}
-            displayMode={itemDisplayMode}
-          />
-        ) : null;
-        break;
-      case "3D":
-      default:
-        content = (
-          <Preview3D
-            assetId={viewingVariantId || uiState.selectedAssetId}
-            biomeColor={biomeColor}
-            onTintDetected={setTintInfo}
-            showPot={showPot}
-            blockProps={blockProps}
-            seed={seed}
-            allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
-          />
-        );
+
+    // Particles use PreviewParticle which handles both 2D and 3D modes internally
+    if (isParticle && uiState.selectedAssetId) {
+      content = <PreviewParticle assetId={uiState.selectedAssetId} />;
+    } else {
+      switch (effectiveMode) {
+        case "2D":
+          content = uiState.selectedAssetId ? (
+            <Preview2D assetId={uiState.selectedAssetId} />
+          ) : null;
+          break;
+        case "Item":
+          content = uiState.selectedAssetId ? (
+            <PreviewItem
+              assetId={uiState.selectedAssetId}
+              displayMode={itemDisplayMode}
+            />
+          ) : null;
+          break;
+        case "3D":
+        default:
+          content = (
+            <Preview3D
+              assetId={viewingVariantId || uiState.selectedAssetId}
+              biomeColor={biomeColor}
+              onTintDetected={setTintInfo}
+              showPot={showPot}
+              blockProps={blockProps}
+              seed={seed}
+              allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
+            />
+          );
+      }
     }
 
     return (
@@ -1305,19 +1325,22 @@ export default function MainRoute() {
             uiState.selectedAssetId
               ? !is2DOnlyTexture(uiState.selectedAssetId) &&
               !isEntityTexture(uiState.selectedAssetId) &&
-              !isMinecraftItem(uiState.selectedAssetId)
+              !isMinecraftItem(uiState.selectedAssetId) &&
+              !isParticleTexture(uiState.selectedAssetId)
               : false
           }
           disabled3D={
             uiState.selectedAssetId
-              ? is2DOnlyTexture(uiState.selectedAssetId) ||
+              ? (is2DOnlyTexture(uiState.selectedAssetId) &&
+                !isParticleTexture(uiState.selectedAssetId)) ||
               isMinecraftItem(uiState.selectedAssetId)
               : false
           }
           disabledItem={
             uiState.selectedAssetId
               ? isEntityTexture(uiState.selectedAssetId) ||
-              is2DOnlyTexture(uiState.selectedAssetId)
+              is2DOnlyTexture(uiState.selectedAssetId) ||
+              isParticleTexture(uiState.selectedAssetId)
               : false
           }
         />

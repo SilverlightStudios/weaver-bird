@@ -4,7 +4,10 @@ import {
   type BlockStateSchema,
   type BlockPropertySchema,
 } from "@lib/tauri/blockModels";
-import { getBlockStateIdFromAssetId } from "@lib/assetUtils";
+import {
+  applyNaturalBlockStateDefaults,
+  getBlockStateIdFromAssetId,
+} from "@lib/assetUtils";
 import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
 import { Select, type SelectOption } from "@/ui/components/Select/Select";
 import { NumberInput } from "@/ui/components/NumberInput";
@@ -107,12 +110,19 @@ export default function BlockStatePanel({
 
         // Initialize with default state synchronously when schema loads
         // This ensures blockProps are set BEFORE BlockModel tries to render
-        if (Object.keys(schemaData.defaultState).length > 0) {
+        if (
+          Object.keys(schemaData.defaultState).length > 0 &&
+          Object.keys(blockProps).length === 0
+        ) {
           console.log(
             "[BlockStatePanel.loadSchema] Setting default state:",
             schemaData.defaultState,
           );
-          onBlockPropsChange(schemaData.defaultState);
+          const naturalDefaults = applyNaturalBlockStateDefaults(
+            schemaData.defaultState,
+            assetId,
+          );
+          onBlockPropsChange(naturalDefaults);
         }
         setLoading(false);
       } catch (err) {
@@ -141,6 +151,7 @@ export default function BlockStatePanel({
     // This effect should only run when the asset changes, not when props change
     // We call onBlockPropsChange inside but it's intentionally not in deps
   ]);
+
 
   // Render property control based on type
   const renderPropertyControl = (prop: BlockPropertySchema) => {
@@ -171,13 +182,19 @@ export default function BlockStatePanel({
     };
 
     switch (prop.type) {
-      case "boolean":
+      case "boolean": {
+        const ripeDisabled =
+          prop.name === "ripe" &&
+          maxAge !== undefined &&
+          Number.isFinite(currentAge) &&
+          currentAge < maxAge;
         return (
           <label key={prop.name} className={s.property}>
             <span className={s.propertyName}>{prop.name}</span>
             <input
               type="checkbox"
               checked={currentValue === "true"}
+              disabled={ripeDisabled}
               onChange={(e) =>
                 handleChange(e.target.checked ? "true" : "false")
               }
@@ -185,6 +202,7 @@ export default function BlockStatePanel({
             />
           </label>
         );
+      }
 
       case "enum": {
         const options: SelectOption[] = (prop.values || []).map((value) => ({
@@ -286,6 +304,13 @@ export default function BlockStatePanel({
     // No properties to configure
     return null;
   }
+
+  const ageProp = schema.properties.find((prop) => prop.name === "age");
+  const maxAge = ageProp?.max;
+  const currentAge = parseInt(
+    blockProps?.age ?? ageProp?.default ?? "0",
+    10,
+  );
 
   return (
     <div className={s.root}>

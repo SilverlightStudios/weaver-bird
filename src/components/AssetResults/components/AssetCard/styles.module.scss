@@ -151,6 +151,24 @@
     image-rendering: crisp-edges;
 }
 
+.itemSprite {
+    width: 80%;
+    height: 80%;
+    position: relative;
+    overflow: hidden;
+}
+
+.itemSpriteImage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% * var(--frame-count));
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
 /* Container Queries for Adaptive Block Sizing */
 /* Browser support: Chrome 105+, Edge 105+, Safari 16+, Firefox 110+ */
 
@@ -163,7 +181,8 @@
     }
 
     .texture2D,
-    .itemTexture {
+    .itemTexture,
+    .itemSprite {
         width: 70%;
         height: 70%;
     }
@@ -178,7 +197,8 @@
     }
 
     .texture2D,
-    .itemTexture {
+    .itemTexture,
+    .itemSprite {
         width: 80%;
         height: 80%;
     }
@@ -193,7 +213,8 @@
     }
 
     .texture2D,
-    .itemTexture {
+    .itemTexture,
+    .itemSprite {
         width: 90%;
         height: 90%;
     }

@@ -5,12 +5,16 @@
 
 use weaverbird_lib::commands::{
     build_weaver_nest_impl, check_minecraft_installed_impl, detect_launchers_impl,
+    extract_block_emissions_impl, extract_particle_physics_impl,
+    generate_particle_typescript_impl, get_block_emissions_impl,
     get_block_state_schema_impl, get_cached_vanilla_version_impl, get_colormap_path_impl,
     get_default_packs_dir_impl, get_entity_version_variants_impl,
     get_launcher_resourcepacks_dir_impl, get_pack_texture_path_impl,
+    get_particle_data_impl, get_particle_data_for_version_impl, get_particle_physics_impl,
     get_suggested_minecraft_paths_impl, get_vanilla_mcmeta_path_impl,
     get_vanilla_texture_path_impl, identify_launcher_impl,
     initialize_vanilla_textures_from_custom_dir_impl, initialize_vanilla_textures_impl,
+    is_block_emissions_cached_impl, is_particle_physics_cached_impl,
     list_available_minecraft_versions_impl, load_model_json_impl, read_block_model_impl,
     read_pack_file_impl, read_vanilla_jem_impl, resolve_block_state_impl, scan_packs_folder_impl,
     set_vanilla_texture_version_impl, BuildWeaverNestRequest,
@@ -45,14 +49,83 @@ fn get_default_packs_dir() -> Result<String, weaverbird_lib::AppError> {
 }
 
 /// Tauri command wrapper for initializing vanilla textures (async for non-blocking UI)
+/// Also extracts particle physics data from the Minecraft JAR
 #[tauri::command]
 async fn initialize_vanilla_textures(
     window: tauri::Window,
 ) -> Result<String, weaverbird_lib::AppError> {
     // Use spawn_blocking for CPU/IO-heavy vanilla texture extraction
-    tokio::task::spawn_blocking(move || initialize_vanilla_textures_impl(window))
+    let result = tokio::task::spawn_blocking(move || initialize_vanilla_textures_impl(window))
         .await
-        .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))?
+        .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))??;
+
+    // Get the version that was extracted and extract particle physics
+    if let Ok(Some(version)) = get_cached_vanilla_version_impl() {
+        println!(
+            "[initialize_vanilla_textures] Extracting particle physics for {}...",
+            version
+        );
+        let physics_result = extract_particle_physics_impl(version.clone()).await;
+        match &physics_result {
+            Ok(data) => {
+                println!(
+                    "[initialize_vanilla_textures] Extracted physics for {} particles",
+                    data.particles.len()
+                );
+            }
+            Err(e) => {
+                // Don't fail the whole operation if physics extraction fails
+                eprintln!(
+                    "[initialize_vanilla_textures] Warning: Failed to extract particle physics: {}",
+                    e
+                );
+            }
+        }
+
+        println!(
+            "[initialize_vanilla_textures] Extracting block emissions for {}...",
+            version
+        );
+        let emissions_result = extract_block_emissions_impl(version.clone()).await;
+        match &emissions_result {
+            Ok(data) => {
+                println!(
+                    "[initialize_vanilla_textures] Extracted block emissions for {} blocks",
+                    data.blocks.len()
+                );
+            }
+            Err(e) => {
+                eprintln!(
+                    "[initialize_vanilla_textures] Warning: Failed to extract block emissions: {}",
+                    e
+                );
+            }
+        }
+
+        // Generate TypeScript file if both extractions succeeded
+        if let (Ok(physics), Ok(emissions)) = (physics_result, emissions_result) {
+            let project_root = std::env::current_dir().unwrap().parent().unwrap().to_path_buf();
+            let ts_output = project_root.join("src/constants/particles/generated.ts");
+
+            match weaverbird_lib::util::particle_typescript_gen::generate_particle_data_typescript(
+                &physics,
+                &emissions,
+                &ts_output,
+            ) {
+                Ok(_) => {
+                    println!("[initialize_vanilla_textures] Generated TypeScript particle data");
+                }
+                Err(e) => {
+                    eprintln!(
+                        "[initialize_vanilla_textures] Warning: Failed to generate TypeScript: {}",
+                        e
+                    );
+                }
+            }
+        }
+    }
+
+    Ok(result)
 }
 
 /// Tauri command wrapper for getting vanilla texture path
@@ -113,15 +186,45 @@ fn get_cached_vanilla_version() -> Result<Option<String>, weaverbird_lib::AppErr
 }
 
 /// Tauri command wrapper for setting vanilla texture version (async for non-blocking UI)
+/// Also extracts particle physics data from the Minecraft JAR
 #[tauri::command]
 async fn set_vanilla_texture_version(
     version: String,
     window: tauri::Window,
 ) -> Result<String, weaverbird_lib::AppError> {
+    let version_clone = version.clone();
+
     // Use spawn_blocking for CPU/IO-heavy vanilla texture extraction
-    tokio::task::spawn_blocking(move || set_vanilla_texture_version_impl(version, window))
-        .await
-        .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))?
+    let result = tokio::task::spawn_blocking(move || {
+        set_vanilla_texture_version_impl(version_clone, window)
+    })
+    .await
+    .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))??;
+
+    // After textures are extracted, also extract particle physics
+    // This uses the same JAR we just extracted textures from
+    println!(
+        "[set_vanilla_texture_version] Extracting particle physics for {}...",
+        version
+    );
+    match extract_particle_physics_impl(version.clone()).await {
+        Ok(data) => {
+            println!(
+                "[set_vanilla_texture_version] Extracted physics for {} particles",
+                data.particles.len()
+            );
+        }
+        Err(e) => {
+            // Don't fail the whole operation if physics extraction fails
+            // The app can still work with minimal defaults
+            eprintln!(
+                "[set_vanilla_texture_version] Warning: Failed to extract particle physics: {}",
+                e
+            );
+        }
+    }
+
+    Ok(result)
 }
 
 /// Tauri command wrapper for detecting all launchers
@@ -234,6 +337,78 @@ async fn get_entity_version_variants(
         .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))?
 }
 
+// NOTE: Deprecated - particle data is now generated as TypeScript files
+// instead of being fetched via Tauri commands at runtime.
+
+/// Tauri command wrapper for getting particle texture mappings
+#[tauri::command]
+fn get_particle_data(
+) -> Result<Option<weaverbird_lib::util::particle_data::ParticleData>, weaverbird_lib::AppError>
+{
+    get_particle_data_impl()
+}
+
+/// Tauri command wrapper for getting particle texture mappings for a specific version
+#[tauri::command]
+fn get_particle_data_for_version(
+    version: String,
+) -> Result<weaverbird_lib::util::particle_data::ParticleData, weaverbird_lib::AppError>
+{
+    get_particle_data_for_version_impl(version)
+}
+
+/// Tauri command wrapper for getting cached particle physics data
+#[tauri::command]
+fn get_particle_physics(
+) -> Result<Option<weaverbird_lib::util::particle_physics_extractor::ExtractedPhysicsData>, weaverbird_lib::AppError>
+{
+    get_particle_physics_impl()
+}
+
+/// Tauri command wrapper for checking if particle physics is cached
+#[tauri::command]
+fn is_particle_physics_cached(version: String) -> Result<bool, weaverbird_lib::AppError> {
+    is_particle_physics_cached_impl(version)
+}
+
+/// Tauri command wrapper for extracting particle physics (async, expensive operation)
+#[tauri::command]
+async fn extract_particle_physics(
+    version: String,
+) -> Result<weaverbird_lib::util::particle_physics_extractor::ExtractedPhysicsData, weaverbird_lib::AppError>
+{
+    extract_particle_physics_impl(version).await
+}
+
+/// Tauri command wrapper for getting cached block emissions
+#[tauri::command]
+fn get_block_emissions(
+) -> Result<Option<weaverbird_lib::util::block_particle_extractor::ExtractedBlockEmissions>, weaverbird_lib::AppError>
+{
+    get_block_emissions_impl()
+}
+
+/// Tauri command wrapper for checking if block emissions are cached
+#[tauri::command]
+fn is_block_emissions_cached(version: String) -> Result<bool, weaverbird_lib::AppError> {
+    is_block_emissions_cached_impl(version)
+}
+
+/// Tauri command wrapper for extracting block emissions (async, expensive operation)
+#[tauri::command]
+async fn extract_block_emissions(
+    version: String,
+) -> Result<weaverbird_lib::util::block_particle_extractor::ExtractedBlockEmissions, weaverbird_lib::AppError>
+{
+    extract_block_emissions_impl(version).await
+}
+
+/// Tauri command wrapper for generating TypeScript particle data from cache
+#[tauri::command]
+fn generate_particle_typescript() -> Result<String, weaverbird_lib::AppError> {
+    generate_particle_typescript_impl()
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -279,6 +454,42 @@ fn main() {
                     }
                 });
             }
+
+            // Generate TypeScript particle data from cached extractions (if available)
+            if let (Ok(Some(physics)), Ok(Some(emissions))) = (
+                get_particle_physics_impl(),
+                get_block_emissions_impl(),
+            ) {
+                // In dev mode, the binary runs from target/debug, so go up to project root
+                // In production, we'd need a different approach, but for now this works in dev
+                let exe_dir = std::env::current_exe()
+                    .ok()
+                    .and_then(|p| p.parent().map(|p| p.to_path_buf()));
+
+                let project_root = if let Some(dir) = exe_dir {
+                    // Go up from target/debug to project root
+                    dir.parent()
+                        .and_then(|p| p.parent())
+                        .map(|p| p.to_path_buf())
+                        .unwrap_or_else(|| std::env::current_dir().unwrap())
+                } else {
+                    std::env::current_dir().unwrap()
+                };
+
+                let ts_output = project_root.join("src/constants/particles/generated.ts");
+
+                println!("[startup] Attempting to generate TypeScript at: {:?}", ts_output);
+                if let Err(e) = weaverbird_lib::util::particle_typescript_gen::generate_particle_data_typescript(
+                    &physics,
+                    &emissions,
+                    &ts_output,
+                ) {
+                    eprintln!("[startup] Warning: Failed to generate TypeScript particle data: {}", e);
+                } else {
+                    println!("[startup] Generated TypeScript particle data from cache");
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -305,7 +516,16 @@ fn main() {
             load_model_json,
             get_block_state_schema,
             resolve_block_state,
-            get_entity_version_variants
+            get_entity_version_variants,
+            get_particle_data,
+            get_particle_data_for_version,
+            get_particle_physics,
+            is_particle_physics_cached,
+            extract_particle_physics,
+            get_block_emissions,
+            is_block_emissions_cached,
+            extract_block_emissions,
+            generate_particle_typescript
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -138,10 +138,6 @@ pub fn find_blockstate_file(pack_path: &Path, block_id: &str, is_zip: bool) -> O
     for file in blockstate_files {
         let normalized_file = file.replace('_', "").to_lowercase();
         if normalized_file == normalized_input {
-            println!(
-                "[find_blockstate_file] Matched '{}' -> '{}' via normalization",
-                block_id, file
-            );
             return Some(file);
         }
     }
@@ -159,17 +155,8 @@ pub fn find_blockstate_file(pack_path: &Path, block_id: &str, is_zip: bool) -> O
 /// # Returns
 /// The parsed Blockstate structure
 pub fn read_blockstate(pack_path: &Path, block_id: &str, is_zip: bool) -> AppResult<Blockstate> {
-    println!("=== [read_blockstate] START ===");
-    println!("[read_blockstate] pack_path: {:?}", pack_path);
-    println!("[read_blockstate] block_id: {}", block_id);
-    println!("[read_blockstate] is_zip: {}", is_zip);
-
     // Blockstates are at: assets/minecraft/blockstates/{block_id}.json
     let relative_path = format!("assets/minecraft/blockstates/{}.json", block_id);
-    println!(
-        "[read_blockstate] Constructed relative_path: {}",
-        relative_path
-    );
 
     let contents = if is_zip {
         // Read from ZIP archive
@@ -460,8 +447,16 @@ fn extract_properties_from_when(
                     for item in arr {
                         if let Some(s) = item.as_str() {
                             values_set.insert(s.to_string());
+                        } else if let Some(n) = item.as_i64() {
+                            values_set.insert(n.to_string());
+                        } else if let Some(b) = item.as_bool() {
+                            values_set.insert(b.to_string());
                         }
                     }
+                } else if let Some(n) = value.as_i64() {
+                    values_set.insert(n.to_string());
+                } else if let Some(b) = value.as_bool() {
+                    values_set.insert(b.to_string());
                 }
             }
         }
@@ -475,22 +470,12 @@ pub fn resolve_blockstate(
     state_props: Option<HashMap<String, String>>,
     seed: Option<u64>,
 ) -> AppResult<ResolutionResult> {
-    println!("=== [resolve_blockstate] START ===");
-    println!("[resolve_blockstate] block_id: {}", block_id);
-    println!("[resolve_blockstate] state_props: {:?}", state_props);
-
     let props = state_props.unwrap_or_default();
-    println!("[resolve_blockstate] Using props: {:?}", props);
     let mut resolved_models = Vec::new();
 
     // Handle variants format
     if let Some(variants) = &blockstate.variants {
         let variant_key = make_variant_key(&props);
-        println!("[resolve_blockstate] Made variant key: '{}'", variant_key);
-        println!(
-            "[resolve_blockstate] Available variants: {:?}",
-            variants.keys().collect::<Vec<_>>()
-        );
 
         // Special case: if the blockstate only has "" or "normal" variant and nothing else,
         // always use it regardless of properties. This handles simple blocks like leaves
@@ -499,29 +484,18 @@ pub fn resolve_blockstate(
             variants.len() == 1 && (variants.contains_key("") || variants.contains_key("normal"));
 
         let variant = if has_only_default {
-            println!(
-                "[resolve_blockstate] Blockstate has only default variant, using it regardless of props"
-            );
             variants.get("").or_else(|| variants.get("normal"))
         } else {
             // Try exact match, then empty string, then "normal"
             variants
                 .get(&variant_key)
-                .or_else(|| {
-                    println!("[resolve_blockstate] No exact match, trying empty string");
-                    variants.get("")
-                })
-                .or_else(|| {
-                    println!("[resolve_blockstate] No empty string, trying 'normal'");
-                    variants.get("normal")
-                })
+                .or_else(|| variants.get(""))
+                .or_else(|| variants.get("normal"))
         };
 
         if let Some(var) = variant {
-            println!("[resolve_blockstate] Found variant!");
             collect_models_from_variant(var, seed, &mut resolved_models)?;
         } else {
-            println!("[resolve_blockstate] ERROR: No variant found!");
             return Err(AppError::validation(format!(
                 "No variant found for key: '{}' in block '{}'",
                 variant_key, block_id
@@ -679,17 +653,36 @@ fn matches_when_clause(
 
             let prop_value = props.get(key);
 
-            if let Some(s) = value.as_str() {
+            let matches_value = if let Some(s) = value.as_str() {
                 // Handle pipe-separated OR values: "up|side|none"
                 let allowed: Vec<&str> = s.split('|').collect();
-                let matches = prop_value
+                prop_value
                     .map(|v| allowed.contains(&v.as_str()))
-                    .unwrap_or(false);
-
-                if !matches {
-                    return Ok(false);
-                }
+                    .unwrap_or(false)
+            } else if let Some(n) = value.as_i64() {
+                prop_value.map(|v| v == &n.to_string()).unwrap_or(false)
+            } else if let Some(b) = value.as_bool() {
+                prop_value.map(|v| v == &b.to_string()).unwrap_or(false)
+            } else if let Some(arr) = value.as_array() {
+                arr.iter().any(|item| {
+                    if let Some(s) = item.as_str() {
+                        let allowed: Vec<&str> = s.split('|').collect();
+                        prop_value
+                            .map(|v| allowed.contains(&v.as_str()))
+                            .unwrap_or(false)
+                    } else if let Some(n) = item.as_i64() {
+                        prop_value.map(|v| v == &n.to_string()).unwrap_or(false)
+                    } else if let Some(b) = item.as_bool() {
+                        prop_value.map(|v| v == &b.to_string()).unwrap_or(false)
+                    } else {
+                        false
+                    }
+                })
             } else {
+                false
+            };
+
+            if !matches_value {
                 return Ok(false);
             }
         }

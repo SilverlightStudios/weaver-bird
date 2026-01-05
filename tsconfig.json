@@ -31,6 +31,7 @@
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
+      "@constants/*": ["src/constants/*"],
       "@app/*": ["src/app/*"],
       "@lib/*": ["src/lib/*"],
       "@state": ["src/state"],

@@ -250,3 +250,224 @@ export async function getEntityVersionVariants(
     packsDir,
   });
 }
+
+/**
+ * Particle texture mapping from Minecraft
+ */
+export interface ParticleTextureMapping {
+  textures: string[];
+}
+
+/**
+ * Particle data extracted from Minecraft JAR
+ */
+export interface ParticleData {
+  version: string;
+  particles: Record<string, ParticleTextureMapping>;
+}
+
+/**
+ * Get particle texture mappings for the currently cached Minecraft version
+ *
+ * Extracts particle definition JSONs from Minecraft JAR if not already cached.
+ * This data is extracted on-demand from the user's installation, NOT bundled.
+ *
+ * @returns Particle data with particle type -> texture mappings, or null if not cached
+ */
+export async function getParticleData(): Promise<ParticleData | null> {
+  return invoke<ParticleData | null>("get_particle_data");
+}
+
+/**
+ * Get particle texture mappings for a specific Minecraft version
+ *
+ * @param version - Minecraft version string (e.g., "1.21.4")
+ * @returns Particle data with particle type -> texture mappings
+ */
+export async function getParticleDataForVersion(
+  version: string,
+): Promise<ParticleData> {
+  return invoke<ParticleData>("get_particle_data_for_version", { version });
+}
+
+/**
+ * Extracted particle physics values from Minecraft source
+ */
+export interface ExtractedParticlePhysics {
+  /** Lifetime range in game ticks [min, max] (20 ticks = 1 second) */
+  lifetime?: [number, number] | null;
+  /** Gravity value (negative = rises, positive = falls) */
+  gravity?: number | null;
+  /** Initial size (quad size) */
+  size?: number | null;
+  /** Size scale multiplier applied via `Particle.scale(...)` or constructor scale params */
+  scale?: number | null;
+  /** Whether the particle has physics (collision) */
+  has_physics?: boolean | null;
+  /** Initial alpha/opacity */
+  alpha?: number | null;
+  /** Friction/drag coefficient */
+  friction?: number | null;
+  /** Velocity multipliers applied in the particle constructor (per-axis) */
+  velocity_multiplier?: [number, number, number] | null;
+  /** Constant velocity added in the particle constructor (per-axis) */
+  velocity_add?: [number, number, number] | null;
+  /** Random velocity added in the particle constructor (per-axis), as rand(-0.5..0.5) * value */
+  velocity_jitter?: [number, number, number] | null;
+  /** Base RGB color (0..1) assigned in the particle constructor */
+  color?: [number, number, number] | null;
+  /** BaseAshSmokeParticle grayscale color scale (random.nextFloat() * color_scale) */
+  color_scale?: number | null;
+  /** BaseAshSmokeParticle base lifetime parameter (used in its lifetime formula) */
+  lifetime_base?: number | null;
+  /** If true, animation frames map to lifetime/age (SpriteSet.get(age, lifetime)) */
+  lifetime_animation?: boolean | null;
+  /** High-level behavior identifier (e.g., "particle", "rising", "ash_smoke", "flame") */
+  behavior?: string | null;
+}
+
+/**
+ * All extracted physics data for a Minecraft version
+ */
+export interface ExtractedPhysicsData {
+  schema_version?: number;
+  version: string;
+  particles: Record<string, ExtractedParticlePhysics>;
+}
+
+/**
+ * Get cached particle physics data for the current Minecraft version
+ *
+ * Returns physics data if already cached, otherwise returns null.
+ * Use `extractParticlePhysics` to extract and cache physics data.
+ *
+ * @returns Cached physics data or null
+ */
+export async function getParticlePhysics(): Promise<ExtractedPhysicsData | null> {
+  return invoke<ExtractedPhysicsData | null>("get_particle_physics");
+}
+
+/**
+ * Check if particle physics data is cached for a version
+ *
+ * @param version - Minecraft version string
+ * @returns true if physics data is cached
+ */
+export async function isParticlePhysicsCached(version: string): Promise<boolean> {
+  return invoke<boolean>("is_particle_physics_cached", { version });
+}
+
+/**
+ * Extract particle physics from Minecraft source code
+ *
+ * Downloads Mojang mappings, sets up CFR decompiler, and extracts physics
+ * values from decompiled particle classes. Results are cached per-version.
+ *
+ * This is an expensive operation - call sparingly and show a loading indicator.
+ *
+ * @param version - Minecraft version string (e.g., "1.21.4")
+ * @returns Extracted physics data
+ */
+export async function extractParticlePhysics(
+  version: string,
+): Promise<ExtractedPhysicsData> {
+  return invoke<ExtractedPhysicsData>("extract_particle_physics", { version });
+}
+
+// ============================================================================
+// BLOCK PARTICLE EMISSIONS
+// ============================================================================
+
+/**
+ * A single particle emission from a block
+ */
+export interface ExtractedBlockEmission {
+  /** Particle type ID (e.g., "FLAME", "SMOKE") */
+  particleId: string;
+  /** Optional ParticleOptions payload for particles that require parameters (e.g., dust color/scale) */
+  options?: {
+    /** Discriminator for how to interpret the options (e.g., "dust") */
+    kind: string;
+    /** Optional RGB color (0..1) */
+    color?: [number, number, number] | null;
+    /** Optional scale multiplier */
+    scale?: number | null;
+  } | null;
+  /** Block state condition if any (e.g., "LIT", "POWERED") */
+  condition?: string;
+  /** Position offset expressions [x, y, z] */
+  positionExpr?: [string, string, string];
+  /** Velocity expressions [vx, vy, vz] */
+  velocityExpr?: [string, string, string];
+}
+
+/**
+ * All emissions for a block
+ */
+export interface BlockEmissionData {
+  /** The block class name */
+  className: string;
+  /** List of particle emissions */
+  emissions: ExtractedBlockEmission[];
+}
+
+/**
+ * All extracted block emissions for a Minecraft version
+ */
+export interface ExtractedBlockEmissions {
+  schema_version?: number;
+  version: string;
+  blocks: Record<string, BlockEmissionData>;
+}
+
+/**
+ * Get cached block particle emissions for the current Minecraft version
+ *
+ * Returns emissions data if already cached, otherwise returns null.
+ * Use `extractBlockEmissions` to extract and cache emissions data.
+ *
+ * @returns Cached emissions data or null
+ */
+export async function getBlockEmissions(): Promise<ExtractedBlockEmissions | null> {
+  return invoke<ExtractedBlockEmissions | null>("get_block_emissions");
+}
+
+/**
+ * Check if block emissions data is cached for a version
+ *
+ * @param version - Minecraft version string
+ * @returns true if emissions data is cached
+ */
+export async function isBlockEmissionsCached(version: string): Promise<boolean> {
+  return invoke<boolean>("is_block_emissions_cached", { version });
+}
+
+/**
+ * Extract block particle emissions from Minecraft source code
+ *
+ * Downloads Mojang mappings, sets up CFR decompiler, and extracts particle
+ * emissions from decompiled block classes. Results are cached per-version.
+ *
+ * This is an expensive operation - call sparingly and show a loading indicator.
+ *
+ * @param version - Minecraft version string (e.g., "1.21.4")
+ * @returns Extracted block emissions data
+ */
+export async function extractBlockEmissions(
+  version: string,
+): Promise<ExtractedBlockEmissions> {
+  return invoke<ExtractedBlockEmissions>("extract_block_emissions", { version });
+}
+
+/**
+ * Generate TypeScript particle data file from cached extractions
+ *
+ * This reads the cached particle physics and block emissions data and generates
+ * a TypeScript file at `src/constants/particles/generated.ts` that the frontend
+ * can import directly.
+ *
+ * @returns Success message with version and path
+ */
+export async function generateParticleTypescript(): Promise<string> {
+  return invoke<string>("generate_particle_typescript");
+}

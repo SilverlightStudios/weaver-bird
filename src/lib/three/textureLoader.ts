@@ -31,6 +31,8 @@ const NON_INTERPOLATING_TEXTURES = new Set([
   "tall_seagrass_bottom",
   "kelp",
   "kelp_plant",
+  "campfire_fire",
+  "soul_campfire_fire",
   // Add more as discovered
 ]);
 

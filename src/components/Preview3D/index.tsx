@@ -10,6 +10,7 @@ import { useStore } from "@state/store";
 import BlockModel from "./BlockModel";
 import EntityModel, { isEntityAsset } from "./EntityModel";
 import GridFloor from "./GridFloor";
+import { ParticleWrapper } from "./ParticleWrapper";
 import {
   isBiomeColormapAsset,
   isPottedPlant,
@@ -54,6 +55,7 @@ export default function Preview3D({
 }: Props) {
   // Read grid visibility from global state
   const showGrid = useStore((state) => state.canvas3DShowGrid);
+  const showBlockParticles = useStore((state) => state.showBlockParticles);
 
   const [tintInfo, setTintInfo] = useState<{
     hasTint: boolean;
@@ -164,8 +166,8 @@ export default function Preview3D({
               // Multi-part block model
               multiBlockParts.map((part, index) => (
                 <BlockModel
-                  key={`${previewAssetId}-${index}`}
-                  assetId={previewAssetId}
+                  key={`${part.assetId ?? previewAssetId}-${index}`}
+                  assetId={part.assetId ?? previewAssetId}
                   biomeColor={biomeColor}
                   onTintDetected={index === 0 ? handleTintDetected : undefined}
                   showPot={showPot && !isColormapAsset}
@@ -190,6 +192,15 @@ export default function Preview3D({
                 seed={seed}
               />
             ))}
+
+          {/* Particle emissions (blocks and entities) */}
+          {previewAssetId && showBlockParticles && (
+            <ParticleWrapper
+              assetId={previewAssetId}
+              stateProps={blockProps}
+              enabled={showBlockParticles}
+            />
+          )}
 
           {/* Grid floor with dashed lines - 1 Minecraft block spacing */}
           {/* Grid offset by 0.5 units so lines pass through block centers, not edges */}

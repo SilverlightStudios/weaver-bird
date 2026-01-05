@@ -353,11 +353,13 @@ pub fn extract_vanilla_textures_with_progress(
 
         let file_path = file.name().to_string();
 
-        // Extract textures (PNG), animation metadata (PNG.MCMETA), models (JSON), and blockstates (JSON)
+        // Extract textures (PNG), animation metadata (PNG.MCMETA), models (JSON), blockstates (JSON), and particles (JSON)
         let should_extract = (file_path.starts_with("assets/minecraft/textures/")
             && (file_path.ends_with(".png") || file_path.ends_with(".png.mcmeta")))
             || (file_path.starts_with("assets/minecraft/models/") && file_path.ends_with(".json"))
             || (file_path.starts_with("assets/minecraft/blockstates/")
+                && file_path.ends_with(".json"))
+            || (file_path.starts_with("assets/minecraft/particles/")
                 && file_path.ends_with(".json"));
 
         if should_extract {

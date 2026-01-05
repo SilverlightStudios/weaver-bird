@@ -108,9 +108,6 @@ export const MinecraftCSSBlock = ({
   // QUEUE: Use global transition queue to ensure only 1-2 transitions per frame
   // This is especially important for Safari/WebKit which struggles with many 3D transforms at once
   useEffect(() => {
-    console.log(
-      `[MinecraftCSSBlock] useEffect: assetId=${assetId}, staggerIndex=${staggerIndex}`,
-    );
     const idleCallback =
       window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
 
@@ -143,9 +140,6 @@ export const MinecraftCSSBlock = ({
   // Effect 1: Load 2D fallback on mount (runs once per assetId change)
   // OPTIMIZATION: Also start processing 3D geometry eagerly in the background
   useEffect(() => {
-    console.log(
-      `[MinecraftCSSBlock] useEffect: assetId=${assetId}, staggerIndex=${staggerIndex}`,
-    );
     // If in entity mode, skip 2D fallback loading but ensure geometry is marked ready
     // so that Effect 2 can proceed with loading the 3D entity model
     if (renderMode === "entity") {
@@ -226,9 +220,6 @@ export const MinecraftCSSBlock = ({
   // Effect 2: Load 3D model when geometryReady becomes true (eager preloading)
   // This processes geometry in the background, even before use3DModel is set
   useEffect(() => {
-    console.log(
-      `[MinecraftCSSBlock] useEffect: assetId=${assetId}, staggerIndex=${staggerIndex}`,
-    );
     if (!geometryReady) return;
 
     let mounted = true;
@@ -248,10 +239,6 @@ export const MinecraftCSSBlock = ({
               jemModel,
               entityTextureUrl,
               scale,
-            );
-
-            console.log(
-              `[MinecraftCSSBlock] Entity converted: ${renderedElements.length} elements`,
             );
 
             if (mounted) {
@@ -505,12 +492,6 @@ export const MinecraftCSSBlock = ({
 
   // Render 2D fallback if 3D model is not ready or failed
   if (!use3DModel || error || !renderedElements.length) {
-    if (renderMode === "entity" && jemModel) {
-      console.log(
-        `[MinecraftCSSBlock] Fallback render: use3D=${use3DModel}, error=${error}, elements=${renderedElements.length}`,
-      );
-    }
-
     if (fallbackTextureUrl) {
       return (
         <Block2D
