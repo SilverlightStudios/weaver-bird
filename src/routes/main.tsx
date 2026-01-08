@@ -110,6 +110,7 @@ import {
   isEntityTexture,
   isMinecraftItem,
   isParticleTexture,
+  getBlockItemPair,
 } from "@lib/assetUtils";
 import type { ItemDisplayMode } from "@lib/itemDisplayModes";
 import {
@@ -242,6 +243,7 @@ export default function MainRoute() {
     tintType?: "grass" | "foliage";
   }>({ hasTint: false });
   const [blockProps, setBlockProps] = useState<Record<string, string>>({});
+  const [particleConditionOverrides, setParticleConditionOverrides] = useState<Record<string, string>>({});
   const [seed, setSeed] = useState(0);
   const setPacksDirInStore = useSetPacksDir();
 
@@ -287,6 +289,15 @@ export default function MainRoute() {
   const allAssets = useSelectAllAssets();
   const uiState = useSelectUIState();
   const currentPage = useStore((state) => state.currentPage);
+  const allAssetIds = useMemo(() => allAssets.map((asset) => asset.id), [allAssets]);
+  const blockItemPair = useMemo(() => {
+    if (!uiState.selectedAssetId) return null;
+    return getBlockItemPair(uiState.selectedAssetId, allAssetIds);
+  }, [allAssetIds, uiState.selectedAssetId]);
+
+  useEffect(() => {
+    setParticleConditionOverrides({});
+  }, [uiState.selectedAssetId]);
 
   // Pagination info received from AssetResults component
   const [paginationInfo, setPaginationInfo] = useState({
@@ -422,6 +433,12 @@ export default function MainRoute() {
   // Canvas render mode state
   const canvasRenderMode = useStore((state) => state.canvasRenderMode);
   const setCanvasRenderMode = useStore((state) => state.setCanvasRenderMode);
+  const canvas2DTextureSource = useStore(
+    (state) => state.canvas2DTextureSource,
+  );
+  const setCanvas2DTextureSource = useStore(
+    (state) => state.setCanvas2DTextureSource,
+  );
 
   // Show pot state - managed in global store for access from OptionsPanel
   const showPot = useStore((state) => state.showPot ?? false);
@@ -469,7 +486,8 @@ export default function MainRoute() {
 
     // Auto-select appropriate canvas mode based on asset type
     if (uiState.selectedAssetId) {
-      if (isMinecraftItem(uiState.selectedAssetId)) {
+      const hasBlockCounterpart = Boolean(blockItemPair?.blockId);
+      if (isMinecraftItem(uiState.selectedAssetId) && !hasBlockCounterpart) {
         setCanvasRenderMode("Item");
       } else if (isParticleTexture(uiState.selectedAssetId)) {
         // Particles default to 3D for live emitter preview
@@ -481,7 +499,13 @@ export default function MainRoute() {
         setCanvasRenderMode("3D");
       }
     }
-  }, [uiState.selectedAssetId, setCanvasRenderMode]);
+  }, [uiState.selectedAssetId, blockItemPair?.blockId, setCanvasRenderMode]);
+
+  useEffect(() => {
+    if (!blockItemPair?.blockId || !blockItemPair?.itemId) {
+      setCanvas2DTextureSource("block");
+    }
+  }, [blockItemPair?.blockId, blockItemPair?.itemId, setCanvas2DTextureSource]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -688,11 +712,7 @@ export default function MainRoute() {
   );
 
   const assetListItems = useMemo(
-    () =>
-      filteredAssets.assets.map((a: AssetRecord) => ({
-        id: a.id,
-        name: a.id,
-      })),
+    () => filteredAssets.assets,
     [filteredAssets.assets],
   );
 
@@ -1166,6 +1186,7 @@ export default function MainRoute() {
               onSelectProvider={handleSelectProvider}
               onBlockPropsChange={setBlockProps}
               onSeedChange={setSeed}
+              onParticleConditionOverridesChange={setParticleConditionOverrides}
               allAssets={allAssets.map((a: AssetRecord) => ({
                 id: a.id,
                 name: a.id,
@@ -1226,6 +1247,14 @@ export default function MainRoute() {
       uiState.selectedAssetId && is2DOnlyTexture(uiState.selectedAssetId);
     const isParticle =
       uiState.selectedAssetId && isParticleTexture(uiState.selectedAssetId);
+    const previewBlockId = blockItemPair?.blockId ?? uiState.selectedAssetId;
+    const previewItemId = blockItemPair?.itemId ?? uiState.selectedAssetId;
+    const preview2DId =
+      blockItemPair?.blockId &&
+      blockItemPair?.itemId &&
+      canvas2DTextureSource === "item"
+        ? blockItemPair.itemId
+        : previewBlockId ?? previewItemId;
 
     // Override mode for special asset types
     let effectiveMode = canvasRenderMode;
@@ -1251,13 +1280,13 @@ export default function MainRoute() {
       switch (effectiveMode) {
         case "2D":
           content = uiState.selectedAssetId ? (
-            <Preview2D assetId={uiState.selectedAssetId} />
+            <Preview2D assetId={preview2DId} />
           ) : null;
           break;
         case "Item":
           content = uiState.selectedAssetId ? (
             <PreviewItem
-              assetId={uiState.selectedAssetId}
+              assetId={previewItemId}
               displayMode={itemDisplayMode}
             />
           ) : null;
@@ -1266,13 +1295,14 @@ export default function MainRoute() {
         default:
           content = (
             <Preview3D
-              assetId={viewingVariantId || uiState.selectedAssetId}
+              assetId={viewingVariantId || previewBlockId}
               biomeColor={biomeColor}
               onTintDetected={setTintInfo}
               showPot={showPot}
               blockProps={blockProps}
+              particleConditionOverrides={particleConditionOverrides}
               seed={seed}
-              allAssetIds={allAssets.map((a: AssetRecord) => a.id)}
+              allAssetIds={allAssetIds}
             />
           );
       }
@@ -1333,7 +1363,7 @@ export default function MainRoute() {
             uiState.selectedAssetId
               ? (is2DOnlyTexture(uiState.selectedAssetId) &&
                 !isParticleTexture(uiState.selectedAssetId)) ||
-              isMinecraftItem(uiState.selectedAssetId)
+              (isMinecraftItem(uiState.selectedAssetId) && !blockItemPair?.blockId)
               : false
           }
           disabledItem={

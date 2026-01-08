@@ -50,9 +50,35 @@ pub struct ExtractedBlockEmission {
     /// If None, spawns exactly 1 particle per emission
     #[serde(rename = "countExpr", skip_serializing_if = "Option::is_none")]
     pub count_expr: Option<String>,
+    /// Optional loop count expression when a for-loop index is used in expressions
+    #[serde(rename = "loopCountExpr", skip_serializing_if = "Option::is_none")]
+    pub loop_count_expr: Option<String>,
+    /// Loop index variable name (e.g., "$7") when used in expressions
+    #[serde(rename = "loopIndexVar", skip_serializing_if = "Option::is_none")]
+    pub loop_index_var: Option<String>,
     /// Whether this uses addAlwaysVisibleParticle (true) or addParticle (false)
     #[serde(rename = "alwaysVisible", default, skip_serializing_if = "is_false")]
     pub always_visible: bool,
+    /// Which method this emission comes from ("animateTick", "particleTick", or other)
+    /// This determines the effective call rate:
+    /// - animateTick: ~2.3% per tick (random block sampling)
+    /// - particleTick: 100% per tick (called every tick)
+    #[serde(rename = "emissionSource", skip_serializing_if = "Option::is_none")]
+    pub emission_source: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct LoopContext {
+    var: String,
+    count_expr: String,
+    depth: usize,
+}
+
+#[derive(Debug, Clone)]
+struct ProbabilityGuard {
+    expr: String,
+    invert: bool,
+    depth: usize,
 }
 
 // Helper for skip_serializing_if
@@ -119,7 +145,7 @@ pub fn load_cached_block_emissions(version: &str) -> Result<Option<ExtractedBloc
         serde_json::from_str(&content).context("Failed to parse emissions cache file")?;
 
     // If the cache is from an older schema, force re-extraction to populate new fields.
-    const CURRENT_SCHEMA_VERSION: u32 = 3;
+    const CURRENT_SCHEMA_VERSION: u32 = 7;
     if data.schema_version < CURRENT_SCHEMA_VERSION {
         println!(
             "[block_emissions] Cached emissions schema {} is older than {}, re-extracting...",
@@ -215,6 +241,18 @@ fn expand_locals_inner(
     out
 }
 
+fn extract_super_class_name(source: &str, class_name: &str) -> Option<String> {
+    let class_re = Regex::new(r"class\s+[A-Za-z0-9_$]+\s+extends\s+([A-Za-z0-9_$.]+)").ok()?;
+    let caps = class_re.captures(source)?;
+    let raw = caps.get(1)?.as_str();
+    let base = raw.split('<').next().unwrap_or(raw).trim();
+    if base.contains('.') {
+        return Some(base.to_string());
+    }
+    let package = class_name.rsplitn(2, '.').nth(1)?;
+    Some(format!("{}.{}", package, base))
+}
+
 /// Extract the condition from an if statement with balanced parentheses
 /// Example: "if (a && b(c) > 0)" -> Some("a && b(c) > 0")
 fn extract_if_condition(line: &str) -> Option<String> {
@@ -295,6 +333,69 @@ fn java_to_javascript(expr: &str) -> String {
     result = double_suffix_re.replace_all(&result, "$1").to_string();
 
     result.trim().to_string()
+}
+
+fn normalize_cfr_var(name: &str) -> String {
+    if let Some(stripped) = name.strip_prefix("$$") {
+        return format!("${}", stripped);
+    }
+    name.to_string()
+}
+
+fn contains_random(expr: &str) -> bool {
+    expr.contains("nextInt")
+        || expr.contains("nextFloat")
+        || expr.contains("nextDouble")
+        || expr.contains("nextGaussian")
+        || expr.contains("Math.random")
+        || expr.contains("random")
+}
+
+fn extract_random_clause(expr: &str) -> String {
+    for clause in expr.split("||").flat_map(|part| part.split("&&")) {
+        if contains_random(clause) {
+            return clause.trim().to_string();
+        }
+    }
+    expr.trim().to_string()
+}
+
+fn invert_probability_expr(expr: &str) -> String {
+    let trimmed = expr.trim();
+    if let Some(rest) = trimmed.strip_prefix('!') {
+        return rest.trim().trim_matches(['(', ')']).to_string();
+    }
+
+    let comp_re = Regex::new(r"^(.*?)(==|!=|<=|>=|<|>)(.*)$").unwrap();
+    if let Some(caps) = comp_re.captures(trimmed) {
+        let lhs = caps.get(1).unwrap().as_str().trim();
+        let op = caps.get(2).unwrap().as_str();
+        let rhs = caps.get(3).unwrap().as_str().trim();
+        let inverted = match op {
+            "==" => "!=",
+            "!=" => "==",
+            "<" => ">=",
+            ">" => "<=",
+            "<=" => ">",
+            ">=" => "<",
+            _ => op,
+        };
+        return format!("{} {} {}", lhs, inverted, rhs);
+    }
+
+    format!("!({})", trimmed)
+}
+
+fn normalize_loop_bound(expr: &str, block_id: Option<&str>) -> String {
+    let trimmed = expr.trim();
+    if trimmed.contains(".size()") {
+        if let Some(id) = block_id {
+            if id.contains("campfire") && trimmed.contains("items") {
+                return "4".to_string();
+            }
+        }
+    }
+    trimmed.to_string()
 }
 
 /// Scan decompiled block directory for classes with animateTick() methods containing addParticle
@@ -554,7 +655,10 @@ fn extract_emissions_from_source(
     ).unwrap();
 
     // Pattern to match conditions like: if (state.getValue(LIT)) or if ($$0.getValue(LIT))
-    let condition_re = Regex::new(r"if\s*\(\s*(?:\$\$\d+|\w+)\.getValue\s*\(\s*(\w+)\s*\)\s*\)").unwrap();
+    let condition_re = Regex::new(
+        r"if\s*\(\s*(?:\$\$\d+|\w+)\.getValue\s*\(\s*(\w+)\s*\)\s*(?:\.booleanValue\s*\(\s*\))?\s*\)",
+    )
+    .unwrap();
     // Guard-style early return: if (!state.getValue(LIT).booleanValue()) { return; }
     // Emissions after this point are effectively conditional on PROP=true.
     let guard_re = Regex::new(
@@ -562,21 +666,29 @@ fn extract_emissions_from_source(
     )
     .unwrap();
 
-    // Pattern to match for loop bounds with random values
-    // Examples: "for (int i = 0; i < random.nextInt(1) + 1; ++i)"
-    let loop_count_re = Regex::new(
-        r"for\s*\([^<]*<\s*([^;]+);"
+    // Pattern to capture for-loop variable + bound
+    // Examples:
+    //   for (int i = 0; i < random.nextInt(1) + 1; ++i)
+    //   for (int $$7 = 0; $$7 < $$3.items.size(); ++$$7)
+    let loop_re = Regex::new(
+        r"for\s*\(\s*(?:int|long|var)?\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*[^;]*;\s*\1\s*<=?\s*([^;]+);"
     ).unwrap();
 
     let mut current_condition: Option<String> = None;
     let mut guard_condition: Option<String> = None;
-    let mut probability_guard: Option<String> = None;
-    let mut loop_count: Option<String> = None;
+    let mut probability_guard: Option<ProbabilityGuard> = None;
+    let mut loop_stack: Vec<LoopContext> = Vec::new();
+    let mut brace_depth: usize = 0;
+    let mut current_method: Option<String> = None;
     let mut locals: HashMap<String, String> = HashMap::new();
 
     // Helper to simplify and convert probability expressions
-    let simplify_and_convert_prob = |expr: &str| -> String {
-        let simplified = simplify_probability_expression(expr, field_values);
+    let simplify_and_convert_prob = |guard: &ProbabilityGuard| -> String {
+        let mut expr = extract_random_clause(&guard.expr);
+        if guard.invert {
+            expr = invert_probability_expr(&expr);
+        }
+        let simplified = simplify_probability_expression(&expr, field_values);
         // If simplified to "false", don't emit this particle at all (handled by caller)
         // If simplified to empty string (was "true"), return None (100% spawn rate)
         if simplified == "false" || simplified.is_empty() {
@@ -584,6 +696,40 @@ fn extract_emissions_from_source(
         } else {
             java_to_javascript(&simplified)
         }
+    };
+
+    let build_loop_metadata = |loop_stack: &[LoopContext], exprs: &[String]| -> (Option<String>, Option<String>, Option<String>) {
+        let mut loop_index_var: Option<String> = None;
+        let mut loop_count_expr: Option<String> = None;
+
+        for ctx in loop_stack.iter().rev() {
+            if exprs.iter().any(|expr| expr.contains(&ctx.var)) {
+                loop_index_var = Some(ctx.var.clone());
+                loop_count_expr = Some(ctx.count_expr.clone());
+                break;
+            }
+        }
+
+        let mut repeat_exprs: Vec<String> = Vec::new();
+        for ctx in loop_stack.iter().rev() {
+            if let Some(var) = loop_index_var.as_ref() {
+                if var == &ctx.var {
+                    continue;
+                }
+            }
+            repeat_exprs.push(ctx.count_expr.clone());
+        }
+
+        let count_expr = if repeat_exprs.is_empty() {
+            None
+        } else {
+            let mut iter = repeat_exprs.into_iter();
+            let first = iter.next().unwrap();
+            let combined = iter.fold(first, |acc, expr| format!("({}) * ({})", acc, expr));
+            Some(combined)
+        };
+
+        (count_expr, loop_count_expr, loop_index_var)
     };
 
     // CFR often emits local vars for world coordinates and offsets:
@@ -607,20 +753,17 @@ fn extract_emissions_from_source(
     let method_start_re = Regex::new(r"\b(?:public|private|protected)\s+(?:static\s+)?(?:void|[\w<>]+)\s+(\w+)\s*\(").unwrap();
 
     for line in source.lines() {
+        let open_braces = line.matches('{').count();
+        let close_braces = line.matches('}').count();
         // Reset context when entering a new method
-        if method_start_re.is_match(line) {
+        if let Some(caps) = method_start_re.captures(line) {
+            current_method = Some(caps.get(1).unwrap().as_str().to_string());
             locals.clear();
             current_condition = None;
             guard_condition = None;
             probability_guard = None;
-            loop_count = None;
-        }
-
-        // Clear probability/loop guards when exiting their scope (closing brace)
-        // This is a simple heuristic - works for most Minecraft code patterns
-        if line.trim() == "}" {
-            probability_guard = None;
-            loop_count = None;
+            loop_stack.clear();
+            brace_depth = 0;
         }
 
         // Capture CFR local assignments for later inlining.
@@ -645,19 +788,42 @@ fn extract_emissions_from_source(
         if !condition_re.is_match(line) && !guard_re.is_match(line) {
             if let Some(prob_expr) = extract_if_condition(line) {
                 // Only store if it contains random calls
-                if prob_expr.contains("next") {
-                    probability_guard = Some(prob_expr);
+                if contains_random(&prob_expr) {
+                    let invert = line.contains("continue")
+                        || line.contains("return")
+                        || line.contains("break");
+                    let guard_depth = if open_braces > 0 {
+                        brace_depth + open_braces
+                    } else {
+                        brace_depth
+                    };
+                    probability_guard = Some(ProbabilityGuard {
+                        expr: prob_expr,
+                        invert,
+                        depth: guard_depth,
+                    });
                 }
             }
         }
 
-        // Check for loop counts (for loops with random bounds)
-        if let Some(caps) = loop_count_re.captures(line) {
-            let count_expr = caps.get(1).unwrap().as_str().trim().to_string();
-            // Only store if it contains random calls
-            if count_expr.contains("next") {
-                loop_count = Some(count_expr);
-            }
+        // Capture for-loop bounds and variables (constant or random)
+        if let Some(caps) = loop_re.captures(line) {
+            let raw_var = caps.get(1).unwrap().as_str();
+            let raw_bound = caps.get(2).unwrap().as_str();
+            let var = normalize_cfr_var(raw_var);
+            let expanded = expand_locals(raw_bound, &locals);
+            let mut count_expr = java_to_javascript(&expanded);
+            count_expr = normalize_loop_bound(&count_expr, block_id);
+            let loop_depth = if open_braces > 0 {
+                brace_depth + open_braces
+            } else {
+                brace_depth
+            };
+            loop_stack.push(LoopContext {
+                var,
+                count_expr,
+                depth: loop_depth,
+            });
         }
 
         // Check for addParticle calls with ParticleTypes.XXX
@@ -678,23 +844,43 @@ fn extract_emissions_from_source(
                             continue;
                         }
 
+                        let position_offset = [
+                            java_to_javascript(&expand_locals(&params[0], &locals)),
+                            java_to_javascript(&expand_locals(&params[1], &locals)),
+                            java_to_javascript(&expand_locals(&params[2], &locals)),
+                        ];
+                        let velocity = [
+                            java_to_javascript(&expand_locals(&params[3], &locals)),
+                            java_to_javascript(&expand_locals(&params[4], &locals)),
+                            java_to_javascript(&expand_locals(&params[5], &locals)),
+                        ];
+
+                        let mut loop_exprs = vec![
+                            position_offset[0].clone(),
+                            position_offset[1].clone(),
+                            position_offset[2].clone(),
+                            velocity[0].clone(),
+                            velocity[1].clone(),
+                            velocity[2].clone(),
+                        ];
+                        if let Some(guard) = probability_guard.as_ref() {
+                            loop_exprs.push(guard.expr.clone());
+                        }
+                        let (count_expr, loop_count_expr, loop_index_var) =
+                            build_loop_metadata(&loop_stack, &loop_exprs);
+
                         emissions.push(ExtractedBlockEmission {
                             particle_id,
                             options: None,
                             condition: current_condition.clone().or_else(|| guard_condition.clone()),
-                            position_offset: Some([
-                                java_to_javascript(&expand_locals(&params[0], &locals)),
-                                java_to_javascript(&expand_locals(&params[1], &locals)),
-                                java_to_javascript(&expand_locals(&params[2], &locals)),
-                            ]),
-                            velocity: Some([
-                                java_to_javascript(&expand_locals(&params[3], &locals)),
-                                java_to_javascript(&expand_locals(&params[4], &locals)),
-                                java_to_javascript(&expand_locals(&params[5], &locals)),
-                            ]),
+                            position_offset: Some(position_offset),
+                            velocity: Some(velocity),
                             probability_expr: simplified_prob.filter(|s| !s.is_empty()),
-                            count_expr: loop_count.clone().map(|e| java_to_javascript(&e)),
+                            count_expr,
+                            loop_count_expr,
+                            loop_index_var,
                             always_visible,
+                            emission_source: current_method.clone(),
                         });
                     }
                 }
@@ -727,23 +913,43 @@ fn extract_emissions_from_source(
             let always_visible = line.contains("addAlwaysVisibleParticle");
             let simplified_prob = probability_guard.as_ref().map(|e| simplify_and_convert_prob(e));
             if simplified_prob.as_deref() != Some("false") {
+                let position_offset = [
+                    java_to_javascript(&expand_locals(caps.get(2).unwrap().as_str().trim(), &locals)),
+                    java_to_javascript(&expand_locals(caps.get(3).unwrap().as_str().trim(), &locals)),
+                    java_to_javascript(&expand_locals(caps.get(4).unwrap().as_str().trim(), &locals)),
+                ];
+                let velocity = [
+                    java_to_javascript(&expand_locals(caps.get(5).unwrap().as_str().trim(), &locals)),
+                    java_to_javascript(&expand_locals(caps.get(6).unwrap().as_str().trim(), &locals)),
+                    java_to_javascript(&expand_locals(caps.get(7).unwrap().as_str().trim(), &locals)),
+                ];
+
+                let mut loop_exprs = vec![
+                    position_offset[0].clone(),
+                    position_offset[1].clone(),
+                    position_offset[2].clone(),
+                    velocity[0].clone(),
+                    velocity[1].clone(),
+                    velocity[2].clone(),
+                ];
+                if let Some(guard) = probability_guard.as_ref() {
+                    loop_exprs.push(guard.expr.clone());
+                }
+                let (count_expr, loop_count_expr, loop_index_var) =
+                    build_loop_metadata(&loop_stack, &loop_exprs);
+
                 emissions.push(ExtractedBlockEmission {
                     particle_id,
                     options: None,
                     condition: current_condition.clone().or_else(|| guard_condition.clone()),
-                    position_offset: Some([
-                        java_to_javascript(&expand_locals(caps.get(2).unwrap().as_str().trim(), &locals)),
-                        java_to_javascript(&expand_locals(caps.get(3).unwrap().as_str().trim(), &locals)),
-                        java_to_javascript(&expand_locals(caps.get(4).unwrap().as_str().trim(), &locals)),
-                    ]),
-                    velocity: Some([
-                        java_to_javascript(&expand_locals(caps.get(5).unwrap().as_str().trim(), &locals)),
-                        java_to_javascript(&expand_locals(caps.get(6).unwrap().as_str().trim(), &locals)),
-                        java_to_javascript(&expand_locals(caps.get(7).unwrap().as_str().trim(), &locals)),
-                    ]),
+                    position_offset: Some(position_offset),
+                    velocity: Some(velocity),
                     probability_expr: simplified_prob.filter(|s| !s.is_empty()),
-                    count_expr: loop_count.clone().map(|e| java_to_javascript(&e)),
+                    count_expr,
+                    loop_count_expr,
+                    loop_index_var,
                     always_visible,
+                    emission_source: current_method.clone(),
                 });
             }
         }
@@ -766,6 +972,31 @@ fn extract_emissions_from_source(
             let scale = scale_token.trim_end_matches('f').trim_end_matches('F').parse::<f32>().ok();
 
             let always_visible = line.contains("addAlwaysVisibleParticle");
+            let position_offset = [
+                java_to_javascript(&expand_locals(caps.get(3).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(4).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(5).unwrap().as_str().trim(), &locals)),
+            ];
+            let velocity = [
+                java_to_javascript(&expand_locals(caps.get(6).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(7).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(8).unwrap().as_str().trim(), &locals)),
+            ];
+
+            let mut loop_exprs = vec![
+                position_offset[0].clone(),
+                position_offset[1].clone(),
+                position_offset[2].clone(),
+                velocity[0].clone(),
+                velocity[1].clone(),
+                velocity[2].clone(),
+            ];
+            if let Some(guard) = probability_guard.as_ref() {
+                loop_exprs.push(guard.expr.clone());
+            }
+            let (count_expr, loop_count_expr, loop_index_var) =
+                build_loop_metadata(&loop_stack, &loop_exprs);
+
             emissions.push(ExtractedBlockEmission {
                 particle_id: "dust".to_string(),
                 options: Some(ExtractedParticleOptions {
@@ -774,25 +1005,48 @@ fn extract_emissions_from_source(
                     scale,
                 }),
                 condition: current_condition.clone().or_else(|| guard_condition.clone()),
-                position_offset: Some([
-                    java_to_javascript(&expand_locals(caps.get(3).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(4).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(5).unwrap().as_str().trim(), &locals)),
-                ]),
-                velocity: Some([
-                    java_to_javascript(&expand_locals(caps.get(6).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(7).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(8).unwrap().as_str().trim(), &locals)),
-                ]),
-                probability_expr: probability_guard.as_ref().map(|e| simplify_and_convert_prob(e)).filter(|s| !s.is_empty()),
-                count_expr: loop_count.clone().map(|e| java_to_javascript(&e)),
+                position_offset: Some(position_offset),
+                velocity: Some(velocity),
+                probability_expr: probability_guard
+                    .as_ref()
+                    .map(|e| simplify_and_convert_prob(e))
+                    .filter(|s| !s.is_empty()),
+                count_expr,
+                loop_count_expr,
+                loop_index_var,
                 always_visible,
+                emission_source: current_method.clone(),
             });
         }
         // Check for DustParticleOptions constant addParticle (ParticleOptions overload)
         else if let Some(caps) = add_particle_dust_options_re.captures(line) {
             let option_name = caps.get(1).unwrap().as_str();
             let always_visible = line.contains("addAlwaysVisibleParticle");
+            let position_offset = [
+                java_to_javascript(&expand_locals(caps.get(2).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(3).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(4).unwrap().as_str().trim(), &locals)),
+            ];
+            let velocity = [
+                java_to_javascript(&expand_locals(caps.get(5).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(6).unwrap().as_str().trim(), &locals)),
+                java_to_javascript(&expand_locals(caps.get(7).unwrap().as_str().trim(), &locals)),
+            ];
+
+            let mut loop_exprs = vec![
+                position_offset[0].clone(),
+                position_offset[1].clone(),
+                position_offset[2].clone(),
+                velocity[0].clone(),
+                velocity[1].clone(),
+                velocity[2].clone(),
+            ];
+            if let Some(guard) = probability_guard.as_ref() {
+                loop_exprs.push(guard.expr.clone());
+            }
+            let (count_expr, loop_count_expr, loop_index_var) =
+                build_loop_metadata(&loop_stack, &loop_exprs);
+
             emissions.push(ExtractedBlockEmission {
                 // DustParticleOptions.getType() returns ParticleTypes.DUST.
                 particle_id: "dust".to_string(),
@@ -804,19 +1058,17 @@ fn extract_emissions_from_source(
                     })
                 }),
                 condition: current_condition.clone().or_else(|| guard_condition.clone()),
-                position_offset: Some([
-                    java_to_javascript(&expand_locals(caps.get(2).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(3).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(4).unwrap().as_str().trim(), &locals)),
-                ]),
-                velocity: Some([
-                    java_to_javascript(&expand_locals(caps.get(5).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(6).unwrap().as_str().trim(), &locals)),
-                    java_to_javascript(&expand_locals(caps.get(7).unwrap().as_str().trim(), &locals)),
-                ]),
-                probability_expr: probability_guard.as_ref().map(|e| simplify_and_convert_prob(e)).filter(|s| !s.is_empty()),
-                count_expr: loop_count.clone().map(|e| java_to_javascript(&e)),
+                position_offset: Some(position_offset),
+                velocity: Some(velocity),
+                probability_expr: probability_guard
+                    .as_ref()
+                    .map(|e| simplify_and_convert_prob(e))
+                    .filter(|s| !s.is_empty()),
+                count_expr,
+                loop_count_expr,
+                loop_index_var,
                 always_visible,
+                emission_source: current_method.clone(),
             });
         }
 
@@ -845,23 +1097,43 @@ fn extract_emissions_from_source(
                         // For ternary expressions, emit both particle types
                         // The condition is implicit in the ternary (e.g., SIGNAL_FIRE for campfire)
                         for particle_type in particle_types {
+                            let position_offset = [
+                                java_to_javascript(&expand_locals(&params[2], &locals)),
+                                java_to_javascript(&expand_locals(&params[3], &locals)),
+                                java_to_javascript(&expand_locals(&params[4], &locals)),
+                            ];
+                            let velocity = [
+                                java_to_javascript(&expand_locals(&params[5], &locals)),
+                                java_to_javascript(&expand_locals(&params[6], &locals)),
+                                java_to_javascript(&expand_locals(&params[7], &locals)),
+                            ];
+
+                            let mut loop_exprs = vec![
+                                position_offset[0].clone(),
+                                position_offset[1].clone(),
+                                position_offset[2].clone(),
+                                velocity[0].clone(),
+                                velocity[1].clone(),
+                                velocity[2].clone(),
+                            ];
+                            if let Some(guard) = probability_guard.as_ref() {
+                                loop_exprs.push(guard.expr.clone());
+                            }
+                            let (count_expr, loop_count_expr, loop_index_var) =
+                                build_loop_metadata(&loop_stack, &loop_exprs);
+
                             emissions.push(ExtractedBlockEmission {
                                 particle_id: particle_type,
                                 options: None,
                                 condition: current_condition.clone().or_else(|| guard_condition.clone()),
-                                position_offset: Some([
-                                    java_to_javascript(&expand_locals(&params[2], &locals)),
-                                    java_to_javascript(&expand_locals(&params[3], &locals)),
-                                    java_to_javascript(&expand_locals(&params[4], &locals)),
-                                ]),
-                                velocity: Some([
-                                    java_to_javascript(&expand_locals(&params[5], &locals)),
-                                    java_to_javascript(&expand_locals(&params[6], &locals)),
-                                    java_to_javascript(&expand_locals(&params[7], &locals)),
-                                ]),
+                                position_offset: Some(position_offset),
+                                velocity: Some(velocity),
                                 probability_expr: probability_guard.as_ref().map(|e| simplify_and_convert_prob(e)).filter(|s| !s.is_empty()),
-                                count_expr: loop_count.clone().map(|e| java_to_javascript(&e)),
+                                count_expr,
+                                loop_count_expr,
+                                loop_index_var,
                                 always_visible: true, // This is addAlwaysVisibleParticle
+                                emission_source: current_method.clone(),
                             });
                         }
                     }
@@ -869,8 +1141,20 @@ fn extract_emissions_from_source(
             }
         }
 
+        // Update brace depth and clear scoped guards
+        brace_depth = brace_depth
+            .saturating_add(open_braces)
+            .saturating_sub(close_braces);
+
+        loop_stack.retain(|ctx| ctx.depth <= brace_depth);
+        if let Some(guard) = probability_guard.as_ref() {
+            if brace_depth < guard.depth {
+                probability_guard = None;
+            }
+        }
+
         // Reset condition after a closing brace
-        if line.trim() == "}" {
+        if close_braces > 0 {
             current_condition = None;
         }
     }
@@ -1287,6 +1571,20 @@ pub async fn extract_block_emissions(
         &class_mappings,
     )?;
 
+    let mut class_parents: HashMap<String, String> = HashMap::new();
+    let mut class_sources: HashMap<String, String> = HashMap::new();
+    for class_name in block_id_to_class.values() {
+        if class_sources.contains_key(class_name) {
+            continue;
+        }
+        if let Ok(source) = read_decompiled_class(&decompile_dir, class_name) {
+            if let Some(parent) = extract_super_class_name(&source, class_name) {
+                class_parents.insert(class_name.clone(), parent);
+            }
+            class_sources.insert(class_name.clone(), source);
+        }
+    }
+
     // Step 4: Extract emissions from discovered classes
     let mut extracted_blocks = HashMap::new();
     let mut extracted_entities = HashMap::new();
@@ -1346,6 +1644,75 @@ pub async fn extract_block_emissions(
                 }
             }
         }
+    }
+
+    // Inherit emissions from parent classes when a block class doesn't define its own
+    let mut inherited_blocks = 0usize;
+    for (block_id, class_name) in &block_id_to_class {
+        if extracted_blocks.contains_key(block_id) {
+            continue;
+        }
+
+        let field_values = if let Some(params) = constructor_params.get(block_id.as_str()) {
+            if let Some(source) = class_sources.get(class_name) {
+                build_field_value_map(block_id, class_name, params, source)
+            } else {
+                HashMap::new()
+            }
+        } else {
+            HashMap::new()
+        };
+
+        let mut current = class_name.clone();
+        let mut seen = HashSet::new();
+        while let Some(parent) = class_parents.get(&current) {
+            if !seen.insert(parent.clone()) {
+                break;
+            }
+
+            let parent_source = match read_decompiled_class(&decompile_dir, parent) {
+                Ok(source) => source,
+                Err(_) => {
+                    current = parent.clone();
+                    continue;
+                }
+            };
+
+            let emissions = extract_emissions_from_source(
+                &parent_source,
+                &dust_options,
+                Some(block_id.as_str()),
+                &block_particle_types,
+                &field_values,
+            );
+
+            if !emissions.is_empty() {
+                println!(
+                    "[block_emissions] Inherited {} emissions for {} from {}",
+                    emissions.len(),
+                    block_id,
+                    parent
+                );
+                extracted_blocks.insert(
+                    block_id.clone(),
+                    BlockEmissionData {
+                        class_name: parent.clone(),
+                        emissions,
+                    },
+                );
+                inherited_blocks += 1;
+                break;
+            }
+
+            current = parent.clone();
+        }
+    }
+
+    if inherited_blocks > 0 {
+        println!(
+            "[block_emissions] Inherited emissions for {} blocks from parent classes",
+            inherited_blocks
+        );
     }
 
     // Extract from BlockEntity classes (merge with block emissions)
@@ -1439,7 +1806,7 @@ pub async fn extract_block_emissions(
     }
 
     let data = ExtractedBlockEmissions {
-        schema_version: 4,
+        schema_version: 7,
         version: version.to_string(),
         blocks: extracted_blocks,
         entities: extracted_entities,

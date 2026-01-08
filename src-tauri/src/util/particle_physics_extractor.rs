@@ -63,6 +63,13 @@ pub struct ExtractedParticlePhysics {
     /// Example: lava particle spawns smoke with 10% probability
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spawns_particles: Option<Vec<SpawnedParticle>>,
+    /// Whether this particle skips friction (overrides tick() without calling super)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skips_friction: Option<bool>,
+    /// Whether this particle uses static random texture (picks one texture and keeps it)
+    /// Detected by ParticleProvider passing a single TextureAtlasSprite to constructor
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uses_static_texture: Option<bool>,
 }
 
 /// Particle spawned by another particle during tick()
@@ -186,7 +193,7 @@ pub fn load_cached_physics_data(version: &str) -> Result<Option<ExtractedPhysics
         serde_json::from_str(&content).context("Failed to parse physics cache file")?;
 
     // If the cache is from an older schema, force re-extraction to populate new fields.
-    const CURRENT_SCHEMA_VERSION: u32 = 3;
+    const CURRENT_SCHEMA_VERSION: u32 = 5;
     if data.schema_version < CURRENT_SCHEMA_VERSION {
         println!(
             "[particle_physics] Cached physics schema {} is older than {}, re-extracting...",
@@ -539,6 +546,8 @@ fn get_base_particle_defaults() -> ExtractedParticlePhysics {
         behavior: Some("particle".to_string()),
         tick_velocity_delta: None,
         spawns_particles: None,
+        skips_friction: Some(false), // Base Particle applies friction
+        uses_static_texture: None,
     }
 }
 
@@ -565,6 +574,8 @@ fn get_rising_particle_defaults() -> ExtractedParticlePhysics {
         behavior: Some("rising".to_string()),
         tick_velocity_delta: None,
         spawns_particles: None,
+        skips_friction: Some(false), // RisingParticle applies friction
+        uses_static_texture: None,
     }
 }
 
@@ -592,6 +603,8 @@ fn get_ash_smoke_particle_defaults() -> ExtractedParticlePhysics {
         behavior: Some("ash_smoke".to_string()),
         tick_velocity_delta: None,
         spawns_particles: None,
+        skips_friction: Some(false), // BaseAshSmokeParticle applies friction
+        uses_static_texture: None,
     }
 }
 
@@ -631,7 +644,9 @@ fn get_particle_inheritance() -> HashMap<&'static str, &'static str> {
 
     // Particles that extend SimpleAnimatedParticle
     map.insert("campfire_cosy_smoke", "__base_simple_animated");
-    map.insert("campfire_signal_smoke", "__base_simple_animated");
+    // campfire_signal_smoke inherits from campfire_cosy_smoke to get class physics
+    // (both use CampfireSmokeParticle class, but only cosy is mapped to the class)
+    map.insert("campfire_signal_smoke", "campfire_cosy_smoke");
     map.insert("portal", "__base_simple_animated");
     map.insert("reverse_portal", "__base_simple_animated");
     map.insert("end_rod", "__base_simple_animated");
@@ -856,6 +871,15 @@ fn extract_physics_from_super_call(source: &str, field_mappings: &ParticleFieldM
 fn extract_physics_from_provider(source: &str) -> ExtractedParticlePhysics {
     let mut physics = ExtractedParticlePhysics::default();
 
+    // Detect static random texture: providers that pass sprites.get(RandomSource) instead of sprites
+    // Pattern: new ClassName(..., this.sprites.get($something), ...)
+    // vs: new ClassName(..., this.sprites)
+    let uses_sprite_get = Regex::new(r"this\.\w+\.get\s*\(\s*\$\$\d+\s*\)")
+        .ok()
+        .map(|re| re.is_match(source))
+        .unwrap_or(false);
+    physics.uses_static_texture = Some(uses_sprite_get);
+
     // Look for "new <ClassName>(" followed by constructor arguments
     // The pattern for RisingParticle subclasses typically passes gravity and lifetime as last args
     // Example: new hci($$0, $$1, $$2, $$3, $$4, $$5, $$6, this.b, 0.96f, 8 + $$0.v().a(4))
@@ -863,8 +887,9 @@ fn extract_physics_from_provider(source: &str) -> ExtractedParticlePhysics {
 
     // Pattern for finding constructor calls with numeric literals at the end
     // Match: new ClassName(args..., floatLiteral, intLiteral + random)
+    // Supports scientific notation like 3.0E-6
     let constructor_re = Regex::new(
-        r"new\s+\w+\s*\([^)]*,\s*(-?[\d.]+)[fF]?\s*,\s*(\d+)(?:\s*\+\s*[\w.]+\((\d+)\))?\s*\)"
+        r"new\s+\w+\s*\([^)]*,\s*(-?[\d.]+(?:[eE][+-]?\d+)?)[fF]?\s*,\s*(\d+)(?:\s*\+\s*[\w.]+\((\d+)\))?\s*\)"
     ).ok();
 
     if let Some(re) = constructor_re {
@@ -885,8 +910,8 @@ fn extract_physics_from_provider(source: &str) -> ExtractedParticlePhysics {
     }
 
     // Also look for simpler patterns where values are set after construction
-    // Pattern: particle.setGravity(X) or similar
-    let gravity_setter_re = Regex::new(r"\.\w*[Gg]ravity\s*[=(]\s*(-?[\d.]+)[fF]?").ok();
+    // Pattern: particle.setGravity(X) or similar (supports scientific notation like 3.0E-6)
+    let gravity_setter_re = Regex::new(r"\.\w*[Gg]ravity\s*[=(]\s*(-?[\d.]+(?:[eE][+-]?\d+)?)[fF]?").ok();
     if physics.gravity.is_none() {
         if let Some(re) = gravity_setter_re {
             if let Some(caps) = re.captures(source) {
@@ -929,6 +954,35 @@ fn extract_physics_from_provider(source: &str) -> ExtractedParticlePhysics {
     physics
 }
 
+/// Detect if a particle skips friction by overriding tick() without calling super.tick()
+///
+/// In Minecraft, particles that override tick() without calling super.tick() don't apply friction.
+/// This function checks if the particle class has a tick() method that doesn't call super.tick()
+fn detect_skips_friction(source: &str) -> Option<bool> {
+    // Check if there's a tick() method override
+    let has_tick_override = Regex::new(r"@Override\s+public\s+void\s+tick\s*\(\s*\)")
+        .ok()?
+        .is_match(source);
+
+    if !has_tick_override {
+        return Some(false); // No override = uses default tick with friction
+    }
+
+    // Check if super.tick() is called anywhere in the file
+    let calls_super_tick = source.contains("super.tick()");
+
+    // If it overrides tick() but doesn't call super.tick(), it skips friction
+    let result = !calls_super_tick;
+
+    // Debug output for campfire particles
+    if source.contains("CampfireSmokeParticle") {
+        println!("[detect_skips_friction] CampfireSmokeParticle: has_tick_override={}, calls_super_tick={}, result={}",
+            has_tick_override, calls_super_tick, result);
+    }
+
+    Some(result)
+}
+
 /// Extract particle physics from decompiled source
 ///
 /// This is a regex-based parser that looks for common patterns in particle constructors
@@ -941,18 +995,63 @@ fn extract_physics_from_source(source: &str, field_mappings: &ParticleFieldMappi
     // Handles patterns like: this.lifetime = 8 + this.random.nextInt(4)
     //                   or: this.t = 8 + this.o.a(4)
     if let Some(lifetime_field) = &field_mappings.lifetime {
-        let pattern = format!(
-            r"this\.{}\s*=\s*(\d+)(?:\s*\+\s*[\w.]+\((\d+)\))?",
+        // First try ternary conditional pattern: this.lifetime = condition ? (random.nextInt(X) + Y) : (random.nextInt(A) + B)
+        // Example: this.lifetime = $$7 ? this.random.nextInt(50) + 280 : this.random.nextInt(50) + 80
+        let ternary_pattern = format!(
+            r"this\.{}\s*=\s*\$\$\d+\s*\?\s*[\w.]+\((\d+)\)\s*\+\s*(\d+)\s*:\s*[\w.]+\((\d+)\)\s*\+\s*(\d+)",
             regex::escape(lifetime_field)
         );
-        if let Ok(lifetime_re) = Regex::new(&pattern) {
-            if let Some(caps) = lifetime_re.captures(source) {
-                let base: i32 = caps.get(1).unwrap().as_str().parse().unwrap_or(20);
-                let range: i32 = caps
-                    .get(2)
-                    .map(|m| m.as_str().parse().unwrap_or(0))
-                    .unwrap_or(0);
-                physics.lifetime = Some([base, base + range]);
+        if let Ok(ternary_re) = Regex::new(&ternary_pattern) {
+            if let Some(caps) = ternary_re.captures(source) {
+                // Extract both branches: if_true (range1 + base1) and if_false (range2 + base2)
+                let range1: i32 = caps.get(1).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
+                let base1: i32 = caps.get(2).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
+                let range2: i32 = caps.get(3).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
+                let base2: i32 = caps.get(4).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
+
+                // Use the longer lifetime range as the default (typically the "true" branch for signal smoke)
+                let lifetime1 = [base1, base1 + range1];
+                let lifetime2 = [base2, base2 + range2];
+                physics.lifetime = Some(if lifetime1[1] > lifetime2[1] { lifetime1 } else { lifetime2 });
+            }
+        }
+
+        // Try division-based lifetime pattern: (int)(X / (Math.random() * Y + Z))
+        // Example: this.lifetime = (int)(16.0 / (Math.random() * 0.8 + 0.2))
+        // This gives range [X/Y+Z, X/Z] = [16.0/1.0, 16.0/0.2] = [16, 80]
+        if physics.lifetime.is_none() {
+            let division_pattern = format!(
+                r"this\.{}\s*=\s*\(int\)\s*\(\s*([\d.]+)\s*/\s*\([\w.]+\s*\*\s*([\d.]+)\s*\+\s*([\d.]+)\s*\)\s*\)",
+                regex::escape(lifetime_field)
+            );
+            if let Ok(div_re) = Regex::new(&division_pattern) {
+                if let Some(caps) = div_re.captures(source) {
+                    let numerator: f32 = caps.get(1).and_then(|m| m.as_str().parse().ok()).unwrap_or(16.0);
+                    let rand_mult: f32 = caps.get(2).and_then(|m| m.as_str().parse().ok()).unwrap_or(0.8);
+                    let rand_add: f32 = caps.get(3).and_then(|m| m.as_str().parse().ok()).unwrap_or(0.2);
+                    // Lifetime range: [numerator / (rand_mult + rand_add), numerator / rand_add]
+                    let min = (numerator / (rand_mult + rand_add)) as i32;
+                    let max = (numerator / rand_add) as i32;
+                    physics.lifetime = Some([min, max]);
+                }
+            }
+        }
+
+        // If ternary pattern didn't match, try simple pattern
+        if physics.lifetime.is_none() {
+            let pattern = format!(
+                r"this\.{}\s*=\s*(\d+)(?:\s*\+\s*[\w.]+\((\d+)\))?",
+                regex::escape(lifetime_field)
+            );
+            if let Ok(lifetime_re) = Regex::new(&pattern) {
+                if let Some(caps) = lifetime_re.captures(source) {
+                    let base: i32 = caps.get(1).unwrap().as_str().parse().unwrap_or(20);
+                    let range: i32 = caps
+                        .get(2)
+                        .map(|m| m.as_str().parse().unwrap_or(0))
+                        .unwrap_or(0);
+                    physics.lifetime = Some([base, base + range]);
+                }
             }
         }
     }
@@ -1025,6 +1124,48 @@ fn extract_physics_from_source(source: &str, field_mappings: &ParticleFieldMappi
         if let Ok(friction_re) = Regex::new(&pattern) {
             if let Some(caps) = friction_re.captures(source) {
                 physics.friction = caps.get(1).unwrap().as_str().parse().ok();
+            }
+        }
+    }
+
+    // Pattern: Velocity multipliers - this.xd *= (double)X; (and yd, zd)
+    // Example: this.xd *= (double)0.8f; this.yd *= (double)0.8f; this.zd *= (double)0.8f;
+    if let Some(xd_field) = &field_mappings.xd {
+        if let Some(yd_field) = &field_mappings.yd {
+            if let Some(zd_field) = &field_mappings.zd {
+                // Try to find velocity multiplication: this.xd *= (double)VALUE
+                let xd_mult_pattern = format!(
+                    r"this\.{}\s*\*=\s*\(double\)\s*([\d.]+)[fF]?",
+                    regex::escape(xd_field)
+                );
+                let yd_mult_pattern = format!(
+                    r"this\.{}\s*\*=\s*\(double\)\s*([\d.]+)[fF]?",
+                    regex::escape(yd_field)
+                );
+                let zd_mult_pattern = format!(
+                    r"this\.{}\s*\*=\s*\(double\)\s*([\d.]+)[fF]?",
+                    regex::escape(zd_field)
+                );
+
+                let xd_mult = Regex::new(&xd_mult_pattern)
+                    .ok()
+                    .and_then(|re| re.captures(source))
+                    .and_then(|caps| caps.get(1))
+                    .and_then(|m| m.as_str().parse::<f32>().ok());
+                let yd_mult = Regex::new(&yd_mult_pattern)
+                    .ok()
+                    .and_then(|re| re.captures(source))
+                    .and_then(|caps| caps.get(1))
+                    .and_then(|m| m.as_str().parse::<f32>().ok());
+                let zd_mult = Regex::new(&zd_mult_pattern)
+                    .ok()
+                    .and_then(|re| re.captures(source))
+                    .and_then(|caps| caps.get(1))
+                    .and_then(|m| m.as_str().parse::<f32>().ok());
+
+                if let (Some(x), Some(y), Some(z)) = (xd_mult, yd_mult, zd_mult) {
+                    physics.velocity_multiplier = Some([x, y, z]);
+                }
             }
         }
     }
@@ -1174,46 +1315,137 @@ fn extract_physics_from_source(source: &str, field_mappings: &ParticleFieldMappi
     physics
 }
 
+fn extract_if_condition(line: &str) -> Option<String> {
+    let trimmed = line.trim();
+    if !trimmed.starts_with("if") {
+        return None;
+    }
+
+    let start = trimmed.find('(')?;
+    let chars: Vec<char> = trimmed.chars().collect();
+    let mut depth = 0;
+    let mut end = start;
+
+    for i in start..chars.len() {
+        if chars[i] == '(' {
+            depth += 1;
+        } else if chars[i] == ')' {
+            depth -= 1;
+            if depth == 0 {
+                end = i;
+                break;
+            }
+        }
+    }
+
+    if depth != 0 {
+        return None;
+    }
+
+    let condition: String = chars[(start + 1)..end].iter().collect();
+    Some(condition.trim().to_string())
+}
+
+fn extract_tick_method_body(source: &str) -> Option<String> {
+    let tick_method_re = Regex::new(r"(?:public\s+)?void\s+tick\s*\(\s*\)\s*\{").ok()?;
+    let mat = tick_method_re.find(source)?;
+    let start = mat.end();
+    let bytes = source.as_bytes();
+    let mut depth = 1usize;
+    let mut i = start;
+
+    while i < bytes.len() {
+        match bytes[i] as char {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(source[start..i].to_string());
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+
+    None
+}
+
 /// Parse tick() method to extract particles spawned during the particle's lifetime
 fn parse_tick_spawned_particles(source: &str) -> Option<Vec<SpawnedParticle>> {
     let mut spawned = Vec::new();
 
-    // Find the tick() method
-    let tick_method_re = Regex::new(r"(?:public\s+)?void\s+tick\s*\(\s*\)\s*\{").unwrap();
-    if let Some(mat) = tick_method_re.find(source) {
-        let start = mat.end();
+    let method_body = match extract_tick_method_body(source) {
+        Some(body) => body,
+        None => return None,
+    };
 
-        // Find the end of the method (simplified - look for addParticle within reasonable range)
-        let method_body = &source[start..std::cmp::min(start + 5000, source.len())];
+    let add_particle_re = Regex::new(
+        r"(?:this\.)?level\.addParticle\s*\(\s*ParticleTypes\s*\.\s*(\w+)",
+    )
+    .unwrap();
+    let loop_count_re = Regex::new(r"for\s*\([^<]*<\s*([^;]+);").unwrap();
+    let local_assign_re =
+        Regex::new(r"(?:final\s+)?(?:double|float|int|long)\s+(\$\$\d+)\s*=\s*([^;]+);")
+            .unwrap();
+    let local_ref_re = Regex::new(r"\$\$\d+").unwrap();
 
-        // Pattern: level.addParticle(ParticleTypes.XXX, ...)
-        // Similar to block extraction pattern but simpler
-        let add_particle_re = Regex::new(
-            r"(?:this\.)?level\.addParticle\s*\(\s*ParticleTypes\s*\.\s*(\w+)"
-        ).unwrap();
+    let mut probability_guard: Option<String> = None;
+    let mut loop_count: Option<String> = None;
+    let mut locals: HashMap<String, String> = HashMap::new();
 
-        // Track probability guards
-        let prob_re = Regex::new(
-            r"if\s*\(\s*(?:this\.)?random\s*\.([^)]+)\)\s*\{[^}]*addParticle"
-        ).unwrap();
+    let inline_locals = |expr: &str, locals: &HashMap<String, String>| -> String {
+        local_ref_re
+            .replace_all(expr, |caps: &regex::Captures| {
+                let token = caps.get(0).unwrap().as_str();
+                locals
+                    .get(token)
+                    .cloned()
+                    .unwrap_or_else(|| token.to_string())
+            })
+            .to_string()
+    };
 
-        for caps in add_particle_re.captures_iter(method_body) {
+    for line in method_body.lines() {
+        let trimmed = line.trim();
+        if trimmed == "}" {
+            probability_guard = None;
+            loop_count = None;
+            locals.clear();
+        }
+
+        if let Some(caps) = local_assign_re.captures(trimmed) {
+            let var = caps.get(1).unwrap().as_str().to_string();
+            let expr = caps.get(2).unwrap().as_str().trim().to_string();
+            locals.insert(var, expr);
+            continue;
+        }
+
+        if let Some(prob_expr) = extract_if_condition(line) {
+            if prob_expr.contains("random") || prob_expr.contains("next") {
+                probability_guard = Some(inline_locals(&prob_expr, &locals));
+            }
+        }
+
+        if let Some(caps) = loop_count_re.captures(line) {
+            let count_expr = caps.get(1).unwrap().as_str().trim().to_string();
+            if count_expr.contains("next") {
+                loop_count = Some(inline_locals(&count_expr, &locals));
+            }
+        }
+
+        for caps in add_particle_re.captures_iter(line) {
             let particle_type = caps.get(1).unwrap().as_str().to_lowercase();
-
-            // Try to find probability expression
-            let prob_expr = prob_re.captures(method_body).and_then(|p| {
-                let cond = p.get(1).unwrap().as_str();
-                // Convert to JavaScript-style expression
-                Some(cond.replace("nextInt", "nextInt")
-                        .replace("nextFloat", "nextFloat")
-                        .replace("nextDouble", "nextDouble"))
-            });
 
             spawned.push(SpawnedParticle {
                 particle_id: particle_type,
-                probability_expr: prob_expr,
-                count_expr: None, // Could extract loop counts if needed
+                probability_expr: probability_guard.clone(),
+                count_expr: loop_count.clone(),
             });
+        }
+
+        if line.trim_start().starts_with("if") && !line.contains('{') {
+            probability_guard = None;
         }
     }
 
@@ -1438,19 +1670,41 @@ pub async fn extract_particle_physics(
         version
     );
 
-    // Download mappings
+    // Download mappings for validation only (not used for class lookups since we use deobfuscated names)
     let mappings_path = download_mojang_mappings(version).await?;
-    let (class_mappings, field_mappings) = parse_mappings(&mappings_path)?;
+    let (_class_mappings, _obfuscated_field_mappings) = parse_mappings(&mappings_path)?;
 
-    // Ensure CFR is available
-    let cfr_path = ensure_cfr_available().await?;
+    // Use deobfuscated field names since blocks_decompile has deobfuscated code
+    let field_mappings = ParticleFieldMappings {
+        lifetime: Some("lifetime".to_string()),
+        gravity: Some("gravity".to_string()),
+        has_physics: Some("hasPhysics".to_string()),
+        friction: Some("friction".to_string()),
+        xd: Some("xd".to_string()),
+        yd: Some("yd".to_string()),
+        zd: Some("zd".to_string()),
+        quad_size: Some("quadSize".to_string()),
+        r_col: Some("rCol".to_string()),
+        g_col: Some("gCol".to_string()),
+        b_col: Some("bCol".to_string()),
+        alpha: Some("alpha".to_string()),
+    };
 
-    // Create temp directory for decompiled output
-    let temp_dir = get_physics_cache_dir()?.join("decompiled").join(version);
-    fs::create_dir_all(&temp_dir).context("Failed to create temp directory")?;
+    // Use the existing blocks_decompile directory (shared with block_emissions extraction)
+    // This contains deobfuscated code which is much easier to parse
+    let temp_dir = get_physics_cache_dir()?.join("blocks_decompile");
 
-    // Decompile the entire JAR once (much faster than per-class)
-    decompile_entire_jar(&cfr_path, jar_path, &temp_dir)?;
+    // Only decompile if directory doesn't exist or is empty
+    if !temp_dir.exists() || temp_dir.read_dir().ok().map_or(true, |mut d| d.next().is_none()) {
+        // Ensure CFR is available
+        let cfr_path = ensure_cfr_available().await?;
+        fs::create_dir_all(&temp_dir).context("Failed to create decompile directory")?;
+
+        // Decompile the entire JAR once (much faster than per-class)
+        decompile_entire_jar(&cfr_path, jar_path, &temp_dir)?;
+    } else {
+        println!("[particle_physics] Using cached decompiled source at {:?}", temp_dir);
+    }
 
     let particle_classes = get_particle_class_mappings();
     let provider_map = get_provider_to_particle_map();
@@ -1471,25 +1725,28 @@ pub async fn extract_particle_physics(
             if count % 10 == 0 || count == total {
                 println!("[particle_physics] Progress: {}/{} particles processed", count, total);
             }
-            // Find the obfuscated name
-            let obfuscated_name = class_mappings
-                .iter()
-                .find(|(_, v)| *v == *class_name)
-                .map(|(k, _)| k.as_str())?;
-
-            let source = read_decompiled_class(&temp_dir, obfuscated_name).ok()?;
+            // Use deobfuscated class name since blocks_decompile has deobfuscated files
+            // (CFR was run with --obfuscationmappings flag during decompilation)
+            let source = read_decompiled_class(&temp_dir, class_name).ok()?;
 
             // Use different extraction strategies
             let physics = if particle_type.starts_with("__provider_") {
-                extract_physics_from_provider(&source)
+                let provider_physics = extract_physics_from_provider(&source);
+                if particle_type.contains("campfire") {
+                    println!("[extraction] {} (provider): {:?}", particle_type, provider_physics);
+                }
+                provider_physics
             } else {
                 // First try direct field assignments
                 let direct = extract_physics_from_source(&source, &field_mappings);
                 // Then try super() call extraction
                 let from_super = extract_physics_from_super_call(&source, &field_mappings);
 
+                // Detect skips_friction (particle overrides tick() without calling super.tick())
+                let skips_friction = detect_skips_friction(&source);
+
                 // Merge both, preferring direct assignments
-                ExtractedParticlePhysics {
+                let class_physics = ExtractedParticlePhysics {
                     lifetime: direct.lifetime.or(from_super.lifetime),
                     gravity: direct.gravity.or(from_super.gravity),
                     size: direct.size.or(from_super.size),
@@ -1507,7 +1764,13 @@ pub async fn extract_particle_physics(
                     behavior: direct.behavior.or(from_super.behavior),
                     tick_velocity_delta: direct.tick_velocity_delta.or(from_super.tick_velocity_delta),
                     spawns_particles: direct.spawns_particles.or(from_super.spawns_particles),
+                    skips_friction,
+                    uses_static_texture: None, // Will be set from provider analysis
+                };
+                if particle_type.contains("campfire") {
+                    println!("[extraction] {} (class): {:?}", particle_type, class_physics);
                 }
+                class_physics
             };
 
             // Only include if we found any physics values
@@ -1516,6 +1779,8 @@ pub async fn extract_particle_physics(
                 || physics.size.is_some()
                 || physics.has_physics.is_some()
                 || physics.friction.is_some()
+                || physics.skips_friction.is_some()
+                || physics.uses_static_texture.is_some()
             {
                 // For provider classes, map to the actual particle type
                 let target_type = if particle_type.starts_with("__provider_") {
@@ -1529,7 +1794,70 @@ pub async fn extract_particle_physics(
                 None
             }
         })
-        .collect();
+        .fold(
+            || HashMap::new(),
+            |mut map: HashMap<String, ExtractedParticlePhysics>, (particle_type, physics)| {
+                // Merge with existing physics for this particle type instead of overwriting
+                map.entry(particle_type)
+                    .and_modify(|existing| {
+                        // Merge: prefer new values if present, otherwise keep existing
+                        *existing = ExtractedParticlePhysics {
+                            lifetime: physics.lifetime.or(existing.lifetime),
+                            gravity: physics.gravity.or(existing.gravity),
+                            size: physics.size.or(existing.size),
+                            scale: physics.scale.or(existing.scale),
+                            has_physics: physics.has_physics.or(existing.has_physics),
+                            alpha: physics.alpha.or(existing.alpha),
+                            friction: physics.friction.or(existing.friction),
+                            velocity_multiplier: physics.velocity_multiplier.or(existing.velocity_multiplier),
+                            velocity_add: physics.velocity_add.or(existing.velocity_add),
+                            velocity_jitter: physics.velocity_jitter.or(existing.velocity_jitter),
+                            color: physics.color.or(existing.color),
+                            color_scale: physics.color_scale.or(existing.color_scale),
+                            lifetime_base: physics.lifetime_base.or(existing.lifetime_base),
+                            lifetime_animation: physics.lifetime_animation.or(existing.lifetime_animation),
+                            behavior: physics.behavior.clone().or(existing.behavior.clone()),
+                            tick_velocity_delta: physics.tick_velocity_delta.or(existing.tick_velocity_delta),
+                            spawns_particles: physics.spawns_particles.clone().or(existing.spawns_particles.clone()),
+                            skips_friction: physics.skips_friction.or(existing.skips_friction),
+                            uses_static_texture: physics.uses_static_texture.or(existing.uses_static_texture),
+                        };
+                    })
+                    .or_insert(physics);
+                map
+            },
+        )
+        .reduce(|| HashMap::new(), |mut a, b| {
+            for (k, v) in b {
+                a.entry(k)
+                    .and_modify(|existing| {
+                        // Merge again during reduce
+                        *existing = ExtractedParticlePhysics {
+                            lifetime: v.lifetime.or(existing.lifetime),
+                            gravity: v.gravity.or(existing.gravity),
+                            size: v.size.or(existing.size),
+                            scale: v.scale.or(existing.scale),
+                            has_physics: v.has_physics.or(existing.has_physics),
+                            alpha: v.alpha.or(existing.alpha),
+                            friction: v.friction.or(existing.friction),
+                            velocity_multiplier: v.velocity_multiplier.or(existing.velocity_multiplier),
+                            velocity_add: v.velocity_add.or(existing.velocity_add),
+                            velocity_jitter: v.velocity_jitter.or(existing.velocity_jitter),
+                            color: v.color.or(existing.color),
+                            color_scale: v.color_scale.or(existing.color_scale),
+                            lifetime_base: v.lifetime_base.or(existing.lifetime_base),
+                            lifetime_animation: v.lifetime_animation.or(existing.lifetime_animation),
+                            behavior: v.behavior.clone().or(existing.behavior.clone()),
+                            tick_velocity_delta: v.tick_velocity_delta.or(existing.tick_velocity_delta),
+                            spawns_particles: v.spawns_particles.clone().or(existing.spawns_particles.clone()),
+                            skips_friction: v.skips_friction.or(existing.skips_friction),
+                            uses_static_texture: v.uses_static_texture.or(existing.uses_static_texture),
+                        };
+                    })
+                    .or_insert(v);
+            }
+            a
+        });
 
     let elapsed = start_time.elapsed();
     println!(
@@ -1584,6 +1912,8 @@ pub async fn extract_particle_physics(
             behavior: current.behavior.or(parent_physics.behavior),
             tick_velocity_delta: current.tick_velocity_delta.or(parent_physics.tick_velocity_delta),
             spawns_particles: current.spawns_particles.or(parent_physics.spawns_particles),
+            skips_friction: current.skips_friction.or(parent_physics.skips_friction),
+            uses_static_texture: current.uses_static_texture.or(parent_physics.uses_static_texture),
         };
 
         // Only add if we have some useful values
@@ -1633,7 +1963,7 @@ pub async fn extract_particle_physics(
     final_particles.retain(|k, _| !k.starts_with("__base_") && !k.starts_with("__provider_"));
 
     let data = ExtractedPhysicsData {
-        schema_version: 3,
+        schema_version: 5,
         version: version.to_string(),
         particles: final_particles,
     };
@@ -1641,8 +1971,7 @@ pub async fn extract_particle_physics(
     // Cache the results
     save_physics_data_to_cache(&data)?;
 
-    // Clean up temp directory
-    let _ = fs::remove_dir_all(&temp_dir);
+    // Keep decompiled directory cached for future extractions (shared with block_emissions)
 
     Ok(data)
 }

@@ -143,27 +143,20 @@ export const useSelectFilteredAssets = () => {
  */
 export const useSelectPaginatedAssets = () => {
   const assets = useStore((state) => state.assets);
-  const searchQuery = useStore((state) => state.searchQuery);
 
   return useMemo(() => {
-    // Filter assets by search query and exclude unwanted assets
+    // Filter out unwanted assets
     let filteredAssets = Object.values(assets).filter(
       (asset) =>
         !shouldExcludeAsset(asset.id) &&
         !isEntityFeatureLayerTextureAssetId(asset.id),
     );
 
-    if (searchQuery) {
-      filteredAssets = filteredAssets.filter((asset) =>
-        assetMatchesQuery(asset.id, asset.labels, searchQuery),
-      );
-    }
-
     // Return all filtered assets - pagination happens after grouping
     return {
       assets: filteredAssets,
     };
-  }, [assets, searchQuery]);
+  }, [assets]);
 };
 
 /**

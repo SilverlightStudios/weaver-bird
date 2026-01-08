@@ -78,6 +78,7 @@ interface StoreActions {
   setCanvas3DShowGrid: (show: boolean) => void;
   setCanvas2DShowPixelGrid: (show: boolean) => void;
   setCanvas2DShowUVWrap: (show: boolean) => void;
+  setCanvas2DTextureSource: (source: AppState["canvas2DTextureSource"]) => void;
   setCanvasItemShowGrid: (show: boolean) => void;
   setCanvasItemRotate: (rotate: boolean) => void;
   setCanvasItemHover: (hover: boolean) => void;
@@ -185,6 +186,7 @@ const initialState: AppState = {
   canvas3DShowGrid: true, // Show floor grid by default in 3D
   canvas2DShowPixelGrid: false, // Hide pixel grid by default in 2D
   canvas2DShowUVWrap: false, // Hide UV wrap overlay by default in 2D
+  canvas2DTextureSource: "block", // Default to block texture
   canvasItemShowGrid: true, // Show grid by default in item canvas
   canvasItemRotate: true, // Enable rotation by default
   canvasItemHover: true, // Enable hover by default
@@ -505,6 +507,11 @@ export const useStore = create<WeaverbirdStore>()(
     setCanvas2DShowUVWrap: (show: boolean) => {
       set((state) => {
         state.canvas2DShowUVWrap = show;
+      });
+    },
+    setCanvas2DTextureSource: (source: AppState["canvas2DTextureSource"]) => {
+      set((state) => {
+        state.canvas2DTextureSource = source;
       });
     },
 

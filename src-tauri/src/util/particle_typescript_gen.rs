@@ -3,7 +3,7 @@
 /// Generates a comprehensive TypeScript file containing all particle data:
 /// - Physics (from decompiled particle classes)
 /// - Block emissions (from decompiled block classes)
-/// - Entity emissions (to be added in future)
+/// - Entity emissions (from decompiled entity classes)
 ///
 /// This eliminates the need for runtime Tauri calls.
 
@@ -27,6 +27,8 @@ pub fn generate_particle_data_typescript(
         .context("Failed to serialize physics data")?;
     let blocks_json = serde_json::to_string_pretty(&block_emissions.blocks)
         .context("Failed to serialize block emissions")?;
+    let entities_json = serde_json::to_string_pretty(&block_emissions.entities)
+        .context("Failed to serialize entity emissions")?;
 
     // Get timestamp
     let timestamp = std::time::SystemTime::now()
@@ -54,7 +56,7 @@ export const particleData: ParticleData = {{
   extractedAt: "{}",
   physics: {},
   blocks: {},
-  entities: {{}},
+  entities: {},
 }};
 "#,
         physics.version,
@@ -63,6 +65,7 @@ export const particleData: ParticleData = {{
         datetime,
         physics_json,
         blocks_json,
+        entities_json,
     );
 
     fs::write(output_path, ts_content)

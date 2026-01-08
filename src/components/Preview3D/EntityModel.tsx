@@ -10,6 +10,7 @@ import {
 import {
   loadEntityModel,
   getEntityInfoFromAssetId,
+  getEntityTextureAssetId,
   isEntityTexture,
   jemToThreeJS,
 } from "@lib/emf";
@@ -260,6 +261,10 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
       return assetId;
     }
   }, [assetId, entityFeatureSchema, entityFeatureStateView]);
+  const textureAssetId = useMemo(
+    () => getEntityTextureAssetId(baseTextureAssetId),
+    [baseTextureAssetId],
+  );
   const partTextureOverrides = useMemo(() => {
     if (!entityFeatureSchema?.getPartTextureOverrides) return null;
     try {
@@ -477,7 +482,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
         // Extract the texture path from the asset ID
         // e.g., "minecraft:entity/chest/normal" -> "entity/chest/normal"
-        const texturePath = baseTextureAssetId.replace(/^minecraft:/, "");
+        const texturePath = textureAssetId.replace(/^minecraft:/, "");
         console.log("[EntityModel] Loading texture:", texturePath);
 
         const versionFolders = buildVersionFolderCandidates(

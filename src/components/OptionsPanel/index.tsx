@@ -24,6 +24,7 @@ import {
   isHangingSign,
   isEntityTexture,
 } from "@lib/assetUtils";
+import { groupAssetsForCards } from "@lib/utils/assetGrouping";
 import { getEntityVariants } from "@lib/emf";
 import {
   getBlockStateSchema,
@@ -68,6 +69,7 @@ export const OptionsPanel = ({
   onSelectProvider,
   onBlockPropsChange,
   onSeedChange,
+  onParticleConditionOverridesChange,
   allAssets = [],
   onSelectVariant,
   onViewingVariantChange,
@@ -163,9 +165,24 @@ export const OptionsPanel = ({
   const isHangingSignAsset = assetId ? isHangingSign(assetId) : false;
 
   const allAssetIds = useMemo(() => allAssets.map((a) => a.id), [allAssets]);
+  const combinedAssetIds = useMemo(() => {
+    if (!assetId || allAssetIds.length === 0) return assetId ? [assetId] : [];
+    const groups = groupAssetsForCards(allAssetIds);
+    const group = groups.find((g) => g.variantIds.includes(assetId));
+    return group ? group.variantIds : [assetId];
+  }, [assetId, allAssetIds]);
   const entityFeatureSchema = useMemo(() => {
     if (!assetId) return null;
-    return resolveEntityCompositeSchema(assetId, allAssetIds);
+    console.log(
+      `[OptionsPanel.entityFeatureSchema] Resolving schema for assetId="${assetId}"`,
+    );
+    const schema = resolveEntityCompositeSchema(assetId, allAssetIds);
+    if (schema) {
+      console.log(
+        `[OptionsPanel.entityFeatureSchema] Schema resolved: baseAssetId="${schema.baseAssetId}" controls=${schema.controls.length}`,
+      );
+    }
+    return schema;
   }, [assetId, allAssetIds]);
 
   const packsDir = useSelectPacksDir();
@@ -454,6 +471,8 @@ export const OptionsPanel = ({
           <ParticlePropertiesTab
             assetId={assetId}
             isEntity={assetId?.includes("entity/") ?? false}
+            stateProps={blockProps}
+            onConditionOverride={onParticleConditionOverridesChange}
           />
         )}
 
@@ -476,6 +495,7 @@ export const OptionsPanel = ({
 
         <AdvancedTab
           assetId={assetId}
+          combinedAssetIds={combinedAssetIds}
           seed={seed}
           blockProps={blockProps}
           schema={schema}

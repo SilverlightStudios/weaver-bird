@@ -122,9 +122,12 @@ export function BlockParticles({
             velocityExpr={emission.velocityExpr}
             probabilityExpr={emission.probabilityExpr}
             countExpr={emission.countExpr}
+            loopCountExpr={emission.loopCountExpr}
+            loopIndexVar={emission.loopIndexVar}
             blockProps={effectiveProps}
             tint={tint}
             scale={emission.options?.scale}
+            emissionSource={emission.emissionSource}
             enabled={enabled}
           />
         );

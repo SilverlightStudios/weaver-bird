@@ -374,11 +374,17 @@ export function resolveEntityCompositeSchema(
         ? sortByPreferredOrder(uniqueLeavesRaw, DYE_COLORS.map((d) => d.id))
         : uniqueLeavesRaw;
 
+      const defaultValue = uniqueLeaves.includes(direct.leaf) ? direct.leaf : uniqueLeaves[0]!;
+
+      console.log(
+        `[entityComposite.resolver] Building variant control for "${direct.dir}": leaf="${direct.leaf}" defaultValue="${defaultValue}" options=${uniqueLeaves.length}`,
+      );
+
       controls.push({
         kind: "select",
         id: "entity.variant",
         label,
-        defaultValue: uniqueLeaves.includes(direct.leaf) ? direct.leaf : uniqueLeaves[0]!,
+        defaultValue,
         options: uniqueLeaves.map((v) => ({
           value: v,
           label: isDyeDir

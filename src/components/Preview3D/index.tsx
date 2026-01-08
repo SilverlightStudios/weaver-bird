@@ -40,6 +40,7 @@ interface Props {
   }) => void;
   showPot: boolean;
   blockProps?: Record<string, string>;
+  particleConditionOverrides?: Record<string, string>;
   seed?: number;
   allAssetIds?: string[];
 }
@@ -50,6 +51,7 @@ export default function Preview3D({
   onTintDetected,
   showPot,
   blockProps = {},
+  particleConditionOverrides = {},
   seed = 0,
   allAssetIds = [],
 }: Props) {
@@ -85,6 +87,10 @@ export default function Preview3D({
   const multiBlockParts: MultiBlockPart[] | null = previewAssetId
     ? getMultiBlockParts(previewAssetId, blockProps)
     : null;
+  const particleStateProps = useMemo(
+    () => ({ ...blockProps, ...particleConditionOverrides }),
+    [blockProps, particleConditionOverrides],
+  );
 
   useEffect(() => {
     console.log(
@@ -197,7 +203,7 @@ export default function Preview3D({
           {previewAssetId && showBlockParticles && (
             <ParticleWrapper
               assetId={previewAssetId}
-              stateProps={blockProps}
+              stateProps={particleStateProps}
               enabled={showBlockParticles}
             />
           )}

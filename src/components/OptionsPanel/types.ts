@@ -17,6 +17,7 @@ export interface OptionsPanelProps {
     onSelectProvider?: (packId: string) => void;
     onBlockPropsChange?: (props: Record<string, string>) => void;
     onSeedChange?: (seed: number) => void;
+    onParticleConditionOverridesChange?: (overrides: Record<string, string>) => void;
     allAssets?: Array<{ id: string; name: string }>;
     onSelectVariant?: (variantId: string) => void;
     onViewingVariantChange?: (variantId: string | undefined) => void;

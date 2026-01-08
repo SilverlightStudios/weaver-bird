@@ -615,6 +615,11 @@ export function applyNaturalBlockStateDefaults(
     }
   }
 
+  // signal_fire: Default to "false" for campfires (true only when hay bale below)
+  if (!result.signal_fire && name.includes("campfire")) {
+    result.signal_fire = "false";
+  }
+
   return result;
 }
 
@@ -768,6 +773,22 @@ export function getBaseName(assetId: string): string {
 
   // Fix fungi -> fungus (warped_fungi -> warped_fungus, crimson_fungi -> crimson_fungus)
   name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
+
+  // Campfire textures map to the base campfire blockstate
+  if (
+    name === "campfire_log" ||
+    name === "campfire_log_lit" ||
+    name === "campfire_fire"
+  ) {
+    return "campfire";
+  }
+  if (
+    name === "soul_campfire_log" ||
+    name === "soul_campfire_log_lit" ||
+    name === "soul_campfire_fire"
+  ) {
+    return "soul_campfire";
+  }
 
   // Handle pitcherbot/pitchertop -> pitcher_crop (custom pack abbreviations)
   if (name.startsWith("pitcherbot") || name.startsWith("pitchertop")) {
@@ -1274,7 +1295,7 @@ export function getVariantGroupKey(assetId: string): string {
     // If no structural suffix matched, try state suffixes
     if (blockName === before) {
       blockName = blockName.replace(
-        /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|honey|partial_tilt|full_tilt|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+)$/,
+      /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|honey|partial_tilt|full_tilt|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+|not_cracked|slightly_cracked|very_cracked)$/,
         "",
       );
     }
@@ -1357,6 +1378,73 @@ export function getVariantNumber(assetId: string): string | null {
   }
   const match = name.match(/(\d+)$/);
   return match ? match[1] : null;
+}
+
+export function getBlockItemPair(
+  assetId: string,
+  allAssetIds: string[],
+): { blockId?: string; itemId?: string } {
+  const normalizedAssetId = normalizeAssetId(assetId);
+  const namespace = normalizedAssetId.includes(":")
+    ? normalizedAssetId.split(":")[0]!
+    : "minecraft";
+  const assetPath = normalizedAssetId.includes(":")
+    ? normalizedAssetId.split(":")[1]!
+    : normalizedAssetId;
+
+  const findByPath = (path: string): string | undefined => {
+    const exactMatch = allAssetIds.find((id) => {
+      const normalized = normalizeAssetId(id);
+      return (
+        normalized.startsWith(`${namespace}:`) &&
+        normalized.split(":")[1] === path
+      );
+    });
+    if (exactMatch) return exactMatch;
+
+    return allAssetIds.find((id) => {
+      const normalized = normalizeAssetId(id);
+      return normalized.split(":")[1] === path;
+    });
+  };
+
+  const findBlockVariantByGroupKey = (groupKey: string): string | undefined => {
+    const candidates = allAssetIds.filter((id) => {
+      if (!id.includes(":block/")) return false;
+      return getVariantGroupKey(id) === groupKey;
+    });
+    if (candidates.length === 0) return undefined;
+
+    const inNamespace = candidates.filter((id) =>
+      normalizeAssetId(id).startsWith(`${namespace}:`),
+    );
+    const ordered = inNamespace.length > 0 ? inNamespace : candidates;
+    return ordered.find((id) => !isInventoryVariant(id)) ?? ordered[0];
+  };
+
+  if (assetPath.startsWith("item/")) {
+    const baseName = assetPath.slice("item/".length);
+    return {
+      blockId:
+        findByPath(`block/${baseName}`) ??
+        findBlockVariantByGroupKey(`block/${baseName}`),
+      itemId: findByPath(`item/${baseName}`),
+    };
+  }
+
+  if (assetPath.startsWith("block/")) {
+    const groupKey = getVariantGroupKey(normalizedAssetId);
+    const baseName = groupKey.startsWith("block/")
+      ? groupKey.slice("block/".length)
+      : assetPath.slice("block/".length);
+
+    return {
+      blockId: findByPath(`block/${baseName}`),
+      itemId: findByPath(`item/${baseName}`),
+    };
+  }
+
+  return {};
 }
 
 /**

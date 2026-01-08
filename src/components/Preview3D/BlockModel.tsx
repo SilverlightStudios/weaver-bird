@@ -257,6 +257,7 @@ function BlockModel({
 
           // Apply polygon offset to prevent Z-fighting in multipart models
           // Each subsequent model gets a slightly higher offset
+          // Use stronger offset values for better separation between overlapping parts
           if (resolution.models.length > 1) {
             modelGroup.traverse((obj) => {
               if (obj instanceof THREE.Mesh && obj.material) {
@@ -264,10 +265,15 @@ function BlockModel({
                   ? obj.material
                   : [obj.material];
                 materials.forEach((mat) => {
-                  if (mat instanceof THREE.MeshStandardMaterial) {
+                  // Apply to all material types (MeshStandardMaterial and ShaderMaterial)
+                  if (
+                    mat instanceof THREE.MeshStandardMaterial ||
+                    mat instanceof THREE.ShaderMaterial
+                  ) {
                     mat.polygonOffset = true;
-                    mat.polygonOffsetFactor = -i * 0.1;
-                    mat.polygonOffsetUnits = -i * 0.1;
+                    // Increased from 0.1 to 1.0 for better separation
+                    mat.polygonOffsetFactor = -i * 1.0;
+                    mat.polygonOffsetUnits = -i * 1.0;
                   }
                 });
               }

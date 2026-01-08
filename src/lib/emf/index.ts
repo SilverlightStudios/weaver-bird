@@ -124,6 +124,32 @@ const entityModelCache = new Map<
   (ParsedEntityModel & { jemSource: string; usedLegacyJem: boolean }) | null
 >();
 
+function getShulkerBoxBlockColor(path: string): string | null {
+  const normalizedPath = path.replace(/\.png$/i, "");
+  if (normalizedPath === "block/shulker_box") return "";
+  const match = normalizedPath.match(/^block\/(.+)_shulker_box$/);
+  return match ? match[1] ?? "" : null;
+}
+
+export function getEntityTextureAssetId(assetId: string): string {
+  const normalized = (assetId.includes(":") ? assetId : `minecraft:${assetId}`)
+    .replace(/\.png$/i, "");
+  const [namespace, rawPath] = normalized.split(":");
+  const path = rawPath ?? "";
+
+  if (path.startsWith("entity/") || path.startsWith("chest/")) {
+    return normalized;
+  }
+
+  const shulkerColor = getShulkerBoxBlockColor(path);
+  if (shulkerColor !== null) {
+    const suffix = shulkerColor ? `_${shulkerColor}` : "";
+    return `${namespace}:entity/shulker/shulker${suffix}`;
+  }
+
+  return normalized;
+}
+
 export function isEntityTexture(assetId: string): boolean {
   if (assetId.includes("entity/")) {
     const match = assetId.match(/entity\/(.+)/);
@@ -151,7 +177,8 @@ export function isEntityTexture(assetId: string): boolean {
     return true;
   }
 
-  return false;
+  const path = assetId.replace(/^minecraft:/, "");
+  return getShulkerBoxBlockColor(path) !== null;
 }
 
 export function getEntityInfoFromAssetId(assetId: string): {
@@ -171,6 +198,10 @@ export function getEntityInfoFromAssetId(assetId: string): {
     }
 
     if (path.includes("shulker_box/")) {
+      return { variant: "shulker_box", parent: null };
+    }
+
+    if (getShulkerBoxBlockColor(path) !== null) {
       return { variant: "shulker_box", parent: null };
     }
 

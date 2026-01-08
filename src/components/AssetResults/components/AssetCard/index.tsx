@@ -18,6 +18,7 @@ import {
 import {
   isEntityTexture,
   getEntityInfoFromAssetId,
+  getEntityTextureAssetId,
   loadEntityModel,
 } from "@lib/emf";
 import {
@@ -382,6 +383,7 @@ export const AssetCard = memo(
         try {
           const normalizedAssetId = normalizeAssetId(asset.id);
           const entityInfo = getEntityInfoFromAssetId(normalizedAssetId);
+          const textureAssetId = getEntityTextureAssetId(normalizedAssetId);
           const path = normalizedAssetId.includes(":")
             ? normalizedAssetId.split(":")[1]!
             : normalizedAssetId;
@@ -469,7 +471,7 @@ export const AssetCard = memo(
               extra![sidePotAssetId] = null;
             }
           } else {
-            texturePath = await resolveTexturePath(normalizedAssetId);
+            texturePath = await resolveTexturePath(textureAssetId);
           }
 
           if (mounted) {

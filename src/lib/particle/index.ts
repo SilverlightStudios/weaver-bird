@@ -4,7 +4,7 @@
  * Renders Minecraft particles using sprites with actual game textures.
  */
 
-export { ParticleEngine, type EmitConfig, type ParticleQuality } from "./ParticleEngine";
+export { ParticleEngine, type EmitConfig, type ParticleQuality, type SpawnTextureConfig } from "./ParticleEngine";
 
 export {
   loadParticleTextures,

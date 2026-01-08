@@ -7,12 +7,19 @@ import { getBlockEmissions as getBlockEmissionsFromTauri } from "@lib/tauri";
 export interface ParticleEmission {
   particleId: string;
   condition?: string;
-  /** Emissions per second */
-  rate: number;
+  /** Which method this emission comes from (determines call rate):
+   * - "animateTick": ~2% per tick (random block sampling)
+   * - "particleTick": 100% per tick (called every tick)
+   */
+  emissionSource?: string;
   /** Position expressions [x,y,z] taken from Minecraft source */
   positionExpr?: [string, string, string];
   /** Velocity expressions [vx,vy,vz] taken from Minecraft source (blocks/tick) */
   velocityExpr?: [string, string, string];
+  /** Emission probability expression (e.g., "nextInt(5) == 0") */
+  probabilityExpr?: string;
+  /** Particle count expression (e.g., "nextInt(1) + 1") */
+  countExpr?: string;
   /** Optional per-emission tint override [r,g,b] 0-255 */
   tint?: [number, number, number];
   /** Optional per-emission scale multiplier */
@@ -73,10 +80,11 @@ function toEmission(extracted: ExtractedBlockEmission): ParticleEmission {
   return {
     particleId: extracted.particleId.toLowerCase(),
     condition: toCondition(extracted.condition),
-    // animateTick runs once per client tick (20Hz); each addParticle call is one emission per tick.
-    rate: 20,
+    emissionSource: extracted.emissionSource,
     positionExpr: extracted.positionExpr,
     velocityExpr: extracted.velocityExpr,
+    probabilityExpr: extracted.probabilityExpr,
+    countExpr: extracted.countExpr,
     tint,
     scale,
   };
@@ -97,9 +105,29 @@ export function isEmissionConditionMet(
   blockProps: Record<string, string>,
 ): boolean {
   if (!emission.condition) return true;
-  const [key, expected] = emission.condition.split("=");
-  if (!key || expected === undefined) return true;
-  return blockProps[key] === expected;
+  const condition = emission.condition.trim();
+  if (!condition) return true;
+
+  const evaluatePart = (expr: string): boolean => {
+    const trimmed = expr.trim();
+    if (!trimmed) return true;
+    if (trimmed === "true") return true;
+    if (trimmed === "false") return false;
+    if (trimmed.includes("=")) {
+      const [key, expected] = trimmed.split("=");
+      if (!key || expected === undefined) return true;
+      return blockProps[key] === expected;
+    }
+    const key = trimmed.toLowerCase();
+    return blockProps[key] === "true";
+  };
+
+  const orGroups = condition.split("||").map((group) => group.trim()).filter(Boolean);
+  return orGroups.some((group) => {
+    const andParts = group.split("&&").map((part) => part.trim()).filter(Boolean);
+    if (andParts.length === 0) return true;
+    return andParts.every((part) => evaluatePart(part));
+  });
 }
 
 export function getBlocksEmittingParticle(particleId: string): string[] {

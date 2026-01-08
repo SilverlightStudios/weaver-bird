@@ -8,7 +8,17 @@
  * If extraction hasn't run, particles are hidden (not rendered).
  */
 
-import type { ExtractedPhysicsData, ExtractedParticlePhysics } from "@lib/tauri";
+import type {
+  ExtractedPhysicsData,
+  ExtractedParticlePhysics,
+  SpawnedParticle as ExtractedSpawnedParticle,
+} from "@lib/tauri";
+
+export interface SpawnedParticle {
+  particleId: string;
+  probabilityExpr?: string;
+  countExpr?: string;
+}
 
 /**
  * Physics configuration for a particle type (all values from extraction)
@@ -22,6 +32,8 @@ export interface ParticlePhysics {
   gravity: number;
   /** Friction/drag coefficient applied per game tick (0-1, higher = less drag) */
   friction?: number;
+  /** Whether this particle has physics (collision detection) */
+  hasPhysics?: boolean;
   /** Velocity multipliers applied in the particle constructor (per-axis, blocks/tick) */
   velocityMultiplier?: [number, number, number];
   /** Constant velocity added in the particle constructor (per-axis, blocks/tick) */
@@ -46,6 +58,14 @@ export interface ParticlePhysics {
   lifetimeAnimation?: boolean;
   /** High-level behavior identifier */
   behavior?: string;
+  /** Velocity delta per tick [dx, dy, dz] for special movement patterns */
+  tickVelocityDelta?: [number, number, number];
+  /** Particles spawned by this particle during tick() */
+  spawnsParticles?: SpawnedParticle[];
+  /** Whether this particle skips friction (overrides tick() without calling super) */
+  skipsFriction?: boolean;
+  /** Whether this particle uses static random texture (picks one texture and keeps it) */
+  usesStaticTexture?: boolean;
 }
 
 // ============================================================================
@@ -228,6 +248,38 @@ function convertExtractedPhysics(extracted: ExtractedParticlePhysics): ParticleP
 
   if (typeof extracted.behavior === "string" && extracted.behavior.trim()) {
     result.behavior = extracted.behavior;
+  }
+
+  // Friction and texture behavior flags
+  if (typeof extracted.has_physics === "boolean") {
+    result.hasPhysics = extracted.has_physics;
+  }
+
+  if (typeof extracted.skips_friction === "boolean") {
+    result.skipsFriction = extracted.skips_friction;
+  }
+
+  if (typeof extracted.uses_static_texture === "boolean") {
+    result.usesStaticTexture = extracted.uses_static_texture;
+  }
+
+  const tickDelta = extracted.tick_velocity_delta;
+  if (Array.isArray(tickDelta) && tickDelta.length === 3 && tickDelta.every((v) => typeof v === "number" && Number.isFinite(v))) {
+    result.tickVelocityDelta = [tickDelta[0], tickDelta[1], tickDelta[2]];
+  }
+
+  const spawns = extracted.spawns_particles as ExtractedSpawnedParticle[] | undefined | null;
+  if (Array.isArray(spawns)) {
+    const mapped = spawns
+      .map((spawn) => ({
+        particleId: spawn.particle_id,
+        probabilityExpr: spawn.probability_expr ?? undefined,
+        countExpr: spawn.count_expr ?? undefined,
+      }))
+      .filter((spawn) => spawn.particleId);
+    if (mapped.length > 0) {
+      result.spawnsParticles = mapped;
+    }
   }
 
   return result;

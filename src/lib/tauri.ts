@@ -324,6 +324,20 @@ export interface ExtractedParticlePhysics {
   lifetime_animation?: boolean | null;
   /** High-level behavior identifier (e.g., "particle", "rising", "ash_smoke", "flame") */
   behavior?: string | null;
+  /** Velocity delta applied each tick [dx, dy, dz] */
+  tick_velocity_delta?: [number, number, number] | null;
+  /** Particles spawned by this particle during tick() */
+  spawns_particles?: SpawnedParticle[] | null;
+  /** Whether this particle skips friction (overrides tick() without calling super) */
+  skips_friction?: boolean | null;
+  /** Whether this particle uses static random texture (picks one texture and keeps it) */
+  uses_static_texture?: boolean | null;
+}
+
+export interface SpawnedParticle {
+  particle_id: string;
+  probability_expr?: string | null;
+  count_expr?: string | null;
 }
 
 /**
@@ -399,6 +413,21 @@ export interface ExtractedBlockEmission {
   positionExpr?: [string, string, string];
   /** Velocity expressions [vx, vy, vz] */
   velocityExpr?: [string, string, string];
+  /** Emission probability expression (e.g., "$3.nextInt(5) == 0") */
+  probabilityExpr?: string;
+  /** Particle count expression (e.g., "$3.nextInt(1) + 1") */
+  countExpr?: string;
+  /** Optional loop count expression when a for-loop index appears in expressions */
+  loopCountExpr?: string;
+  /** Loop index variable token (e.g., "$7") when used in expressions */
+  loopIndexVar?: string;
+  /** If true, particle always renders (even when reduced particles option is enabled) */
+  alwaysVisible?: boolean;
+  /** Which method this emission comes from (determines call rate):
+   * - "animateTick": ~2% per tick (random block sampling)
+   * - "particleTick": 100% per tick (called every tick)
+   */
+  emissionSource?: string;
 }
 
 /**
@@ -418,6 +447,7 @@ export interface ExtractedBlockEmissions {
   schema_version?: number;
   version: string;
   blocks: Record<string, BlockEmissionData>;
+  entities?: Record<string, BlockEmissionData>;
 }
 
 /**

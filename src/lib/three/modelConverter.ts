@@ -438,6 +438,7 @@ async function createFaceMaterials(
         opacity: 0, // Invisible for undefined faces
         roughness: 0.8,
         metalness: 0.2,
+        side: THREE.DoubleSide, // Render both sides for bars, panes, and thin elements
       }),
     );
   }
@@ -535,6 +536,7 @@ async function createFaceMaterials(
             roughness: 0.8,
             metalness: 0.2,
             flatShading: false, // Keep smooth for correct texture appearance
+            side: THREE.DoubleSide, // Render both sides for bars, panes, and thin elements
           });
         }
       } else {
@@ -547,6 +549,7 @@ async function createFaceMaterials(
           opacity: 0,
           roughness: 0.8,
           metalness: 0.2,
+          side: THREE.DoubleSide, // Render both sides for bars, panes, and thin elements
         });
       }
     } catch (err) {
@@ -560,6 +563,7 @@ async function createFaceMaterials(
         opacity: 0,
         roughness: 0.8,
         metalness: 0.2,
+        side: THREE.DoubleSide, // Render both sides for bars, panes, and thin elements
       });
     }
   }

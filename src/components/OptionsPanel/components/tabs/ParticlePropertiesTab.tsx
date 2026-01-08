@@ -17,7 +17,11 @@ import {
   getBlockEmissions,
   getEntityEmissions,
 } from "@constants/particles";
-import { getBlockStateIdFromAssetId } from "@lib/assetUtils";
+import {
+  applyNaturalBlockStateDefaults,
+  extractBlockStateProperties,
+  getBlockStateIdFromAssetId,
+} from "@lib/assetUtils";
 import { loadParticleTextures, type LoadedParticleTexture } from "@lib/particle";
 import { useSelectWinner, useSelectPack } from "@state/selectors";
 
@@ -26,6 +30,8 @@ interface ParticlePropertiesTabProps {
   assetId: string;
   /** Whether this is an entity (vs block) */
   isEntity: boolean;
+  /** Current state props for condition evaluation */
+  stateProps?: Record<string, string>;
   /** Callback when condition overrides change */
   onConditionOverride?: (overrides: Record<string, string>) => void;
 }
@@ -42,6 +48,29 @@ function assetIdToEmissionId(assetId: string, isEntity: boolean): string {
     const blockStateId = getBlockStateIdFromAssetId(assetId);
     return blockStateId.replace(/:block\//, ":");
   }
+}
+
+function parseConditionPart(condition: string): { key: string; value: "true" | "false" } | null {
+  const trimmed = condition.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.includes("=")) {
+    const [rawKey, rawValue] = trimmed.split("=");
+    if (!rawKey || rawValue === undefined) return null;
+    const key = rawKey.trim().toLowerCase();
+    const value = rawValue.trim().toLowerCase();
+    if (!key || (value !== "true" && value !== "false")) return null;
+    return { key, value: value as "true" | "false" };
+  }
+
+  return { key: trimmed.toLowerCase(), value: "true" };
+}
+
+function parseConditionProperties(condition: string): Array<{ key: string; value: "true" | "false" }> {
+  return condition
+    .split(/&&|\|\|/)
+    .map((part) => parseConditionPart(part))
+    .filter((value): value is { key: string; value: "true" | "false" } => Boolean(value));
 }
 
 /**
@@ -141,6 +170,7 @@ function ParticleTexturePreview({
 export const ParticlePropertiesTab = ({
   assetId,
   isEntity,
+  stateProps = {},
   onConditionOverride,
 }: ParticlePropertiesTabProps) => {
   const showBlockParticles = useStore((state) => state.showBlockParticles);
@@ -170,17 +200,34 @@ export const ParticlePropertiesTab = ({
     return data;
   }, [assetId, isEntity, particleDataReady]);
 
-  // Extract unique conditions from emissions
-  const uniqueConditions = useMemo(() => {
+  const effectiveStateProps = useMemo(() => {
+    if (isEntity) return stateProps;
+    const inferredProps = extractBlockStateProperties(assetId);
+    const merged = { ...inferredProps, ...stateProps };
+    return applyNaturalBlockStateDefaults(merged, assetId);
+  }, [assetId, isEntity, stateProps]);
+
+  // Extract boolean condition properties from emissions
+  const conditionProperties = useMemo(() => {
     if (!emissions) return [];
 
-    const conditions = new Set<string>();
+    const props = new Map<string, Set<string>>();
     for (const emission of emissions.emissions) {
-      if (emission.condition) {
-        conditions.add(emission.condition);
+      if (!emission.condition) continue;
+      const parsed = parseConditionProperties(emission.condition);
+      for (const entry of parsed) {
+        const values = props.get(entry.key) ?? new Set<string>();
+        values.add(entry.value);
+        props.set(entry.key, values);
       }
     }
-    return Array.from(conditions);
+
+    return Array.from(props.entries())
+      .map(([key, values]) => ({
+        key,
+        values: Array.from(values.values()),
+      }))
+      .sort((a, b) => a.key.localeCompare(b.key));
   }, [emissions]);
 
   // Extract unique particle types for texture preview
@@ -197,43 +244,26 @@ export const ParticlePropertiesTab = ({
     return Array.from(types);
   }, [emissions]);
 
-  // Handle condition override change
-  const handleConditionChange = (condition: string, value: boolean) => {
-    const newOverrides = { ...conditionOverrides };
+  useEffect(() => {
+    setConditionOverrides({});
+    onConditionOverride?.({});
+  }, [assetId, isEntity, onConditionOverride]);
 
-    // Parse condition (supports "key=value" or uppercase "KEY" format)
-    if (condition.includes("=")) {
-      const [key, expected] = condition.split("=");
-      if (key) {
-        if (value) {
-          newOverrides[key] = expected ?? "true";
-        } else {
-          delete newOverrides[key];
-        }
-      }
-    } else {
-      // Uppercase property name like "LIT"
-      const key = condition.toLowerCase();
-      if (value) {
-        newOverrides[key] = "true";
-      } else {
-        delete newOverrides[key];
-      }
-    }
-
+  const handleConditionToggle = (key: string, value: boolean) => {
+    const newOverrides = {
+      ...conditionOverrides,
+      [key]: value ? "true" : "false",
+    };
     setConditionOverrides(newOverrides);
     onConditionOverride?.(newOverrides);
   };
 
-  // Check if a condition is currently overridden
-  const isConditionOverridden = (condition: string): boolean => {
-    if (condition.includes("=")) {
-      const [key, expected] = condition.split("=");
-      return key ? conditionOverrides[key] === expected : false;
-    } else {
-      const key = condition.toLowerCase();
-      return conditionOverrides[key] === "true";
+  const isConditionEnabled = (key: string): boolean => {
+    const overrideValue = conditionOverrides[key];
+    if (overrideValue !== undefined) {
+      return overrideValue === "true";
     }
+    return effectiveStateProps[key] === "true";
   };
 
   if (!emissions || emissions.emissions.length === 0) {
@@ -343,7 +373,7 @@ export const ParticlePropertiesTab = ({
         </label>
 
         {/* Condition Overrides */}
-        {uniqueConditions.length > 0 && (
+        {conditionProperties.length > 0 && (
           <div style={{ marginBottom: "1rem" }}>
             <Separator style={{ margin: "0.75rem 0" }} />
             <h4
@@ -365,9 +395,9 @@ export const ParticlePropertiesTab = ({
             >
               Force conditions to test different particle behaviors:
             </p>
-            {uniqueConditions.map((condition) => (
+            {conditionProperties.map((prop) => (
               <label
-                key={condition}
+                key={prop.key}
                 style={{
                   display: "flex",
                   gap: "0.5rem",
@@ -377,13 +407,11 @@ export const ParticlePropertiesTab = ({
               >
                 <input
                   type="checkbox"
-                  checked={isConditionOverridden(condition)}
-                  onChange={(e) =>
-                    handleConditionChange(condition, e.target.checked)
-                  }
+                  checked={isConditionEnabled(prop.key)}
+                  onChange={(e) => handleConditionToggle(prop.key, e.target.checked)}
                 />
                 <span style={{ fontSize: "0.85rem", fontFamily: "monospace" }}>
-                  {condition}
+                  {prop.key}
                 </span>
               </label>
             ))}

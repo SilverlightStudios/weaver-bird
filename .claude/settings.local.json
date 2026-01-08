@@ -52,7 +52,13 @@
       "Bash(cargo doc:*)",
       "Bash(tee:*)",
       "Bash(xargs cat:*)",
-      "WebFetch(domain:www.spigotmc.org)"
+      "WebFetch(domain:www.spigotmc.org)",
+      "Bash(while [ ! -f ~/Library/Caches/weaverbird/particle_physics/1.21.10-0.18.1.json ])",
+      "Bash(do sleep 1)",
+      "Bash(done)",
+      "Bash(for i in {1..15})",
+      "Bash(do if [ -f ~/Library/Caches/weaverbird/particle_physics/1.21.10-0.18.1.json ])",
+      "Bash(then echo \"Cache file exists!\" cat ~/Library/Caches/weaverbird/particle_physics/1.21.10-0.18.1.json)"
     ],
     "deny": [],
     "ask": []

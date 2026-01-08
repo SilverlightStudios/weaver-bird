@@ -122,6 +122,10 @@ export function EntityParticles({
             emissionRate={emission.rate}
             positionExpr={emission.positionExpr}
             velocityExpr={emission.velocityExpr}
+            probabilityExpr={emission.probabilityExpr}
+            countExpr={emission.countExpr}
+            loopCountExpr={emission.loopCountExpr}
+            loopIndexVar={emission.loopIndexVar}
             blockProps={entityProps} // Reuse blockProps for entity state
             tint={tint}
             scale={emission.options?.scale}

@@ -42,6 +42,39 @@ export interface LoadedParticleTexture {
   frameDuration?: number;
 }
 
+function splitParticleFrames(texture: THREE.Texture): THREE.Texture[] {
+  const image = texture.image as {
+    width?: number;
+    height?: number;
+    naturalWidth?: number;
+    naturalHeight?: number;
+  } | undefined;
+  const width = image?.width ?? image?.naturalWidth ?? 0;
+  const height = image?.height ?? image?.naturalHeight ?? 0;
+
+  if (!width || !height || height <= width || height % width !== 0) {
+    return [texture];
+  }
+
+  const frameCount = height / width;
+  const frames: THREE.Texture[] = [];
+  for (let i = 0; i < frameCount; i++) {
+    const frame = texture.clone();
+    frame.needsUpdate = true;
+    frame.repeat.set(1, 1 / frameCount);
+    frame.offset.set(0, (frameCount - 1 - i) / frameCount);
+    frame.magFilter = texture.magFilter;
+    frame.minFilter = texture.minFilter;
+    frame.wrapS = texture.wrapS;
+    frame.wrapT = texture.wrapT;
+    frame.colorSpace = texture.colorSpace;
+    frame.flipY = texture.flipY;
+    frames.push(frame);
+  }
+
+  return frames;
+}
+
 /**
  * Initialize dynamic particle data from Minecraft JAR
  * This is called lazily on first particle load
@@ -126,7 +159,8 @@ export async function loadParticleTextures(
     const texture = await loadSingleParticleTexture(textureName, packPath, isZip);
     console.log(`[loadParticleTextures] Texture loaded:`, !!texture);
     if (texture) {
-      loadedTextures.push(texture);
+      const frames = splitParticleFrames(texture);
+      loadedTextures.push(...frames);
     }
   }
 
@@ -208,4 +242,3 @@ async function loadSingleParticleTexture(
     return null;
   }
 }
-
