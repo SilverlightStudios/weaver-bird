@@ -262,6 +262,7 @@ export function ParticleWrapper({
             blockProps={effectiveProps}
             tint={tint}
             scale={emission.options?.scale}
+            emissionSource={emission.emissionSource}
             enabled={enabled}
           />
         );
