@@ -263,11 +263,13 @@ function normalizeParticleData(raw: ParticleData): ParticleData {
       ),
     };
   }
+  const particles = raw.particles ?? {};
   return {
     ...raw,
     physics,
     blocks,
     entities,
+    particles,
   };
 }
 
@@ -288,6 +290,7 @@ const EMPTY_PARTICLE_DATA: ParticleData = {
   physics: {},
   blocks: {},
   entities: {},
+  particles: {},
 };
 
 /**
@@ -318,7 +321,8 @@ export async function loadParticleData(): Promise<ParticleData> {
       console.log(
         `[ParticleData] Loaded: ${Object.keys(normalized.physics).length} physics, ` +
           `${Object.keys(normalized.blocks).length} blocks, ` +
-          `${Object.keys(normalized.entities).length} entities`,
+          `${Object.keys(normalized.entities).length} entities, ` +
+          `${Object.keys(normalized.particles ?? {}).length} textures`,
       );
       return normalized;
     } catch (error) {

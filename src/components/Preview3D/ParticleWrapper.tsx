@@ -140,19 +140,21 @@ function EmissionPointMarker({
 
 /**
  * Convert asset ID to block ID format
- * "minecraft:block/campfire" -> "minecraft:campfire"
+ * "minecraft:block/campfire" -> "campfire"
  */
 function assetIdToBlockId(assetId: string): string {
   const blockStateId = getBlockStateIdFromAssetId(assetId);
-  return blockStateId.replace(/:block\//, ":");
+  // Strip namespace and block/ prefix to match generated data keys
+  return blockStateId.replace(/^[^:]+:block\//, "");
 }
 
 /**
  * Convert asset ID to entity ID format
- * "minecraft:entity/zombie" -> "minecraft:zombie"
+ * "minecraft:entity/zombie" -> "zombie"
  */
 function assetIdToEntityId(assetId: string): string {
-  return assetId.replace(/^minecraft:entity\//, "minecraft:");
+  // Strip namespace and entity/ prefix to match generated data keys
+  return assetId.replace(/^[^:]+:entity\//, "");
 }
 
 /**
@@ -171,6 +173,8 @@ export function ParticleWrapper({
   // Subscribe to particleDataReady to re-render when caches load
   const particleDataReady = useStore((state) => state.particleDataReady);
   const setParticleDataReady = useStore((state) => state.setParticleDataReady);
+
+  console.log(`[ParticleWrapper] Rendering for ${assetId}, enabled=${enabled}, particleDataReady=${particleDataReady}`);
 
   // Trigger lazy loading of particle data when first rendered
   useEffect(() => {
@@ -207,7 +211,9 @@ export function ParticleWrapper({
 
   // Get active emissions
   const activeEmissions = useMemo(() => {
+    console.log(`[ParticleWrapper] activeEmissions useMemo called for ${assetId}, particleDataReady=${particleDataReady}`);
     if (!particleDataReady) {
+      console.log(`[ParticleWrapper] Particle data not ready yet for ${assetId}`);
       return [];
     }
 
@@ -215,13 +221,18 @@ export function ParticleWrapper({
       ? assetIdToEntityId(assetId)
       : assetIdToBlockId(assetId);
 
+    console.log(`[ParticleWrapper] Looking up emissions for ${emissionId} (isEntity=${isEntity})`);
+
     const emissions = isEntity
       ? getEntityEmissions(emissionId)
       : getBlockEmissions(emissionId);
 
     if (!emissions) {
+      console.log(`[ParticleWrapper] No emissions found for ${emissionId}`);
       return [];
     }
+
+    console.log(`[ParticleWrapper] Found ${emissions.length} emissions for ${emissionId}`);
 
     return emissions.emissions.filter((emission: ParticleEmission) =>
       isEmissionConditionMet(emission, effectiveProps),
@@ -231,8 +242,11 @@ export function ParticleWrapper({
   // Get showEmissionPoints from store
   const showEmissionPoints = useStore((state) => state.showEmissionPoints);
 
+  console.log(`[ParticleWrapper] activeEmissions.length=${activeEmissions.length}, enabled=${enabled}`);
+
   // Don't render if no active emissions or disabled
   if (!enabled || activeEmissions.length === 0) {
+    console.log(`[ParticleWrapper] Returning null - no emissions or disabled`);
     return null;
   }
 
@@ -253,15 +267,15 @@ export function ParticleWrapper({
             key={`${emission.particleId}-${index}`}
             particleType={emission.particleId}
             emissionRate={emission.rate}
-            positionExpr={emission.positionExpr}
-            velocityExpr={emission.velocityExpr}
+            positionExpr={emission.positionExpr ?? undefined}
+            velocityExpr={emission.velocityExpr ?? undefined}
             probabilityExpr={emission.probabilityExpr}
             countExpr={emission.countExpr}
             loopCountExpr={emission.loopCountExpr}
             loopIndexVar={emission.loopIndexVar}
             blockProps={effectiveProps}
             tint={tint}
-            scale={emission.options?.scale}
+            scale={emission.options?.scale ?? undefined}
             emissionSource={emission.emissionSource}
             enabled={enabled}
           />

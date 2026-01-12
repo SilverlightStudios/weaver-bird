@@ -10,8 +10,8 @@
  */
 
 use weaverbird_lib::commands::get_cached_vanilla_version_impl;
+use weaverbird_lib::util::particle_cache;
 use weaverbird_lib::util::particle_physics_extractor::extract_particle_physics;
-use weaverbird_lib::util::vanilla_textures;
 
 fn main() {
     println!("[extract_particle_physics] Starting extraction...");
@@ -31,21 +31,13 @@ fn main() {
 
     println!("[extract_particle_physics] Extracting for Minecraft {}", version);
 
-    // Get the JAR path for this version
-    let versions = match vanilla_textures::list_all_available_versions() {
-        Ok(v) => v,
+    let jar_path = match particle_cache::resolve_jar_path(&version) {
+        Ok(path) => path,
         Err(e) => {
-            eprintln!("Error listing versions: {}", e);
+            eprintln!("Error resolving JAR path: {}", e);
             std::process::exit(1);
         }
     };
-
-    let version_info = versions
-        .iter()
-        .find(|v| v.version == version)
-        .expect("Version not found");
-
-    let jar_path = std::path::PathBuf::from(&version_info.jar_path);
 
     // Create runtime for async extraction
     let runtime = tokio::runtime::Runtime::new().unwrap();
@@ -58,7 +50,6 @@ fn main() {
             // Show a few examples
             if let Some((name, data)) = physics.particles.get_key_value("smoke") {
                 println!("\nExample - {}:", name);
-                println!("  behavior: {:?}", data.behavior);
                 println!("  color_scale: {:?}", data.color_scale);
                 println!("  gravity: {:?}", data.gravity);
                 println!("  friction: {:?}", data.friction);
@@ -66,7 +57,6 @@ fn main() {
 
             if let Some((name, data)) = physics.particles.get_key_value("flame") {
                 println!("\nExample - {}:", name);
-                println!("  behavior: {:?}", data.behavior);
                 println!("  lifetime: {:?}", data.lifetime);
                 println!("  gravity: {:?}", data.gravity);
             }

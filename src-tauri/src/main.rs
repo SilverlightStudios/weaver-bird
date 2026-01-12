@@ -19,6 +19,7 @@ use weaverbird_lib::commands::{
     read_pack_file_impl, read_vanilla_jem_impl, resolve_block_state_impl, scan_packs_folder_impl,
     set_vanilla_texture_version_impl, BuildWeaverNestRequest,
 };
+use weaverbird_lib::util::particle_cache;
 
 /// Tauri command wrapper for scanning resource packs (async for non-blocking UI)
 #[tauri::command]
@@ -48,8 +49,56 @@ fn get_default_packs_dir() -> Result<String, weaverbird_lib::AppError> {
     get_default_packs_dir_impl()
 }
 
+async fn ensure_particle_assets(context: &str, version: &str) {
+    println!(
+        "[{}] Ensuring particle caches and TypeScript for {}...",
+        context, version
+    );
+
+    let jar_path = match particle_cache::resolve_jar_path(version) {
+        Ok(path) => path,
+        Err(err) => {
+            eprintln!(
+                "[{}] Warning: Failed to resolve Minecraft JAR path: {}",
+                context, err
+            );
+            return;
+        }
+    };
+
+    let output_path = match particle_cache::resolve_generated_ts_path() {
+        Ok(path) => path,
+        Err(err) => {
+            eprintln!(
+                "[{}] Warning: Failed to resolve TypeScript output path: {}",
+                context, err
+            );
+            return;
+        }
+    };
+
+    match particle_cache::ensure_particle_typescript(version, &jar_path, &output_path).await {
+        Ok(data) => {
+            println!(
+                "[{}] Particle data ready: {} physics, {} blocks, {} entities, {} textures",
+                context,
+                data.physics.particles.len(),
+                data.emissions.blocks.len(),
+                data.emissions.entities.len(),
+                data.textures.particles.len()
+            );
+        }
+        Err(err) => {
+            eprintln!(
+                "[{}] Warning: Failed to build particle caches: {}",
+                context, err
+            );
+        }
+    }
+}
+
 /// Tauri command wrapper for initializing vanilla textures (async for non-blocking UI)
-/// Also extracts particle physics data from the Minecraft JAR
+/// Also ensures particle caches and generated TypeScript are up to date
 #[tauri::command]
 async fn initialize_vanilla_textures(
     window: tauri::Window,
@@ -59,70 +108,8 @@ async fn initialize_vanilla_textures(
         .await
         .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))??;
 
-    // Get the version that was extracted and extract particle physics
     if let Ok(Some(version)) = get_cached_vanilla_version_impl() {
-        println!(
-            "[initialize_vanilla_textures] Extracting particle physics for {}...",
-            version
-        );
-        let physics_result = extract_particle_physics_impl(version.clone()).await;
-        match &physics_result {
-            Ok(data) => {
-                println!(
-                    "[initialize_vanilla_textures] Extracted physics for {} particles",
-                    data.particles.len()
-                );
-            }
-            Err(e) => {
-                // Don't fail the whole operation if physics extraction fails
-                eprintln!(
-                    "[initialize_vanilla_textures] Warning: Failed to extract particle physics: {}",
-                    e
-                );
-            }
-        }
-
-        println!(
-            "[initialize_vanilla_textures] Extracting block emissions for {}...",
-            version
-        );
-        let emissions_result = extract_block_emissions_impl(version.clone()).await;
-        match &emissions_result {
-            Ok(data) => {
-                println!(
-                    "[initialize_vanilla_textures] Extracted block emissions for {} blocks",
-                    data.blocks.len()
-                );
-            }
-            Err(e) => {
-                eprintln!(
-                    "[initialize_vanilla_textures] Warning: Failed to extract block emissions: {}",
-                    e
-                );
-            }
-        }
-
-        // Generate TypeScript file if both extractions succeeded
-        if let (Ok(physics), Ok(emissions)) = (physics_result, emissions_result) {
-            let project_root = std::env::current_dir().unwrap().parent().unwrap().to_path_buf();
-            let ts_output = project_root.join("src/constants/particles/generated.ts");
-
-            match weaverbird_lib::util::particle_typescript_gen::generate_particle_data_typescript(
-                &physics,
-                &emissions,
-                &ts_output,
-            ) {
-                Ok(_) => {
-                    println!("[initialize_vanilla_textures] Generated TypeScript particle data");
-                }
-                Err(e) => {
-                    eprintln!(
-                        "[initialize_vanilla_textures] Warning: Failed to generate TypeScript: {}",
-                        e
-                    );
-                }
-            }
-        }
+        ensure_particle_assets("initialize_vanilla_textures", &version).await;
     }
 
     Ok(result)
@@ -164,11 +151,17 @@ async fn initialize_vanilla_textures_from_custom_dir(
     minecraft_dir: String,
 ) -> Result<String, weaverbird_lib::AppError> {
     // Use spawn_blocking for CPU/IO-heavy vanilla texture extraction
-    tokio::task::spawn_blocking(move || {
+    let result = tokio::task::spawn_blocking(move || {
         initialize_vanilla_textures_from_custom_dir_impl(minecraft_dir)
     })
     .await
-    .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))?
+    .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))??;
+
+    if let Ok(Some(version)) = get_cached_vanilla_version_impl() {
+        ensure_particle_assets("initialize_vanilla_textures_from_custom_dir", &version).await;
+    }
+
+    Ok(result)
 }
 
 /// Tauri command wrapper for listing available Minecraft versions
@@ -186,7 +179,7 @@ fn get_cached_vanilla_version() -> Result<Option<String>, weaverbird_lib::AppErr
 }
 
 /// Tauri command wrapper for setting vanilla texture version (async for non-blocking UI)
-/// Also extracts particle physics data from the Minecraft JAR
+/// Also ensures particle caches and generated TypeScript are up to date
 #[tauri::command]
 async fn set_vanilla_texture_version(
     version: String,
@@ -201,28 +194,7 @@ async fn set_vanilla_texture_version(
     .await
     .map_err(|e| weaverbird_lib::AppError::internal("Task join error", format!("{}", e)))??;
 
-    // After textures are extracted, also extract particle physics
-    // This uses the same JAR we just extracted textures from
-    println!(
-        "[set_vanilla_texture_version] Extracting particle physics for {}...",
-        version
-    );
-    match extract_particle_physics_impl(version.clone()).await {
-        Ok(data) => {
-            println!(
-                "[set_vanilla_texture_version] Extracted physics for {} particles",
-                data.particles.len()
-            );
-        }
-        Err(e) => {
-            // Don't fail the whole operation if physics extraction fails
-            // The app can still work with minimal defaults
-            eprintln!(
-                "[set_vanilla_texture_version] Warning: Failed to extract particle physics: {}",
-                e
-            );
-        }
-    }
+    ensure_particle_assets("set_vanilla_texture_version", &version).await;
 
     Ok(result)
 }
@@ -456,37 +428,21 @@ fn main() {
             }
 
             // Generate TypeScript particle data from cached extractions (if available)
-            if let (Ok(Some(physics)), Ok(Some(emissions))) = (
-                get_particle_physics_impl(),
-                get_block_emissions_impl(),
-            ) {
-                // In dev mode, the binary runs from target/debug, so go up to project root
-                // In production, we'd need a different approach, but for now this works in dev
-                let exe_dir = std::env::current_exe()
-                    .ok()
-                    .and_then(|p| p.parent().map(|p| p.to_path_buf()));
-
-                let project_root = if let Some(dir) = exe_dir {
-                    // Go up from target/debug to project root
-                    dir.parent()
-                        .and_then(|p| p.parent())
-                        .map(|p| p.to_path_buf())
-                        .unwrap_or_else(|| std::env::current_dir().unwrap())
-                } else {
-                    std::env::current_dir().unwrap()
-                };
-
-                let ts_output = project_root.join("src/constants/particles/generated.ts");
-
-                println!("[startup] Attempting to generate TypeScript at: {:?}", ts_output);
-                if let Err(e) = weaverbird_lib::util::particle_typescript_gen::generate_particle_data_typescript(
-                    &physics,
-                    &emissions,
-                    &ts_output,
-                ) {
-                    eprintln!("[startup] Warning: Failed to generate TypeScript particle data: {}", e);
-                } else {
-                    println!("[startup] Generated TypeScript particle data from cache");
+            if let Ok(Some(version)) = get_cached_vanilla_version_impl() {
+                if let Ok(Some(cache)) = particle_cache::load_cached_particle_cache(&version) {
+                    if let Ok(ts_output) = particle_cache::resolve_generated_ts_path() {
+                        println!("[startup] Attempting to generate TypeScript at: {:?}", ts_output);
+                        if let Err(e) = weaverbird_lib::util::particle_typescript_gen::generate_particle_data_typescript(
+                            &cache.physics,
+                            &cache.emissions,
+                            &cache.textures,
+                            &ts_output,
+                        ) {
+                            eprintln!("[startup] Warning: Failed to generate TypeScript particle data: {}", e);
+                        } else {
+                            println!("[startup] Generated TypeScript particle data from cache");
+                        }
+                    }
                 }
             }
 

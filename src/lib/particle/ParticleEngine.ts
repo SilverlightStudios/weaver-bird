@@ -225,53 +225,42 @@ export class ParticleEngine {
       particle.position.set(config.position.x, config.position.y, config.position.z);
       particle.prevPosition.copy(particle.position);
 
-      // RisingParticle constructor jitter: (randFloat - randFloat) * 0.05 on each axis.
-      if (physics.behavior === "rising") {
-        particle.position.x += (Math.random() - Math.random()) * 0.05;
-        particle.position.y += (Math.random() - Math.random()) * 0.05;
-        particle.position.z += (Math.random() - Math.random()) * 0.05;
+      // UNIVERSAL: Apply position jitter if present (e.g., RisingParticle: (rand - rand) * 0.05)
+      // EXTRACTED: position_jitter field contains jitter amplitudes per axis
+      if (physics.position_jitter) {
+        particle.position.x += (Math.random() - Math.random()) * physics.position_jitter[0];
+        particle.position.y += (Math.random() - Math.random()) * physics.position_jitter[1];
+        particle.position.z += (Math.random() - Math.random()) * physics.position_jitter[2];
         particle.prevPosition.copy(particle.position);
       }
 
-      // Lifetime (ticks)
+      // UNIVERSAL: Lifetime (ticks) from extracted physics
+      // EXTRACTED: Backend computes lifetime ranges for all particles (ash_smoke, rising, etc.)
       particle.age = 0;
       const scale = (physics.scale ?? 1.0) * (config.scale ?? 1.0);
-      if (physics.behavior === "ash_smoke" && typeof physics.lifetimeBase === "number") {
-        const divisor = Math.random() * 0.8 + 0.2;
-        particle.lifetime = Math.max(Math.floor((physics.lifetimeBase / divisor) * scale), 1);
-      } else if (physics.behavior === "rising") {
-        particle.lifetime = Math.floor(8.0 / (Math.random() * 0.8 + 0.2)) + 4;
-      } else {
-        // Use lifetimeTicks (schema v3+) or lifetime (schema v2)
-        const lifetimeRange = physics.lifetimeTicks ?? (Array.isArray(physics.lifetime) ? physics.lifetime : [physics.lifetime ?? 20, physics.lifetime ?? 20]);
-        const [minTicks, maxTicks] = lifetimeRange;
-        const t = minTicks + Math.random() * (maxTicks - minTicks);
-        particle.lifetime = Math.max(1, Math.floor(t));
-      }
 
-      // Velocity (blocks/tick)
+      // Debug scale for ALL particles (temporarily)
+      console.log(`[ParticleEngine] SCALE DEBUG: ${config.particleType} - physics.scale=${physics.scale}, config.scale=${config.scale}, combined=${scale}`);
+
+      // Use lifetimeTicks (schema v3+) or lifetime (schema v2)
+      const lifetimeRange = physics.lifetimeTicks ?? (Array.isArray(physics.lifetime) ? physics.lifetime : [physics.lifetime ?? 20, physics.lifetime ?? 20]);
+      const [minTicks, maxTicks] = lifetimeRange;
+      const t = minTicks + Math.random() * (maxTicks - minTicks);
+      particle.lifetime = Math.max(1, Math.floor(t));
+
+      // UNIVERSAL: Velocity initialization from extracted physics
+      // EXTRACTED: velocity_multiplier, velocity_add, velocity_jitter applied universally
       const inVel = config.velocity ?? [0, 0, 0];
+
       if (
         config.particleType === "campfire_signal_smoke" ||
         config.particleType === "campfire_cosy_smoke"
       ) {
-        // Campfire smoke sets its own velocity; avoid base randomization.
+        // SPECIAL CASE: CampfireSmokeParticle directly sets xd/yd/zd without calling super()
+        // with velocity params, so it bypasses base randomization.
         particle.velocity.set(inVel[0], inVel[1], inVel[2]);
-      } else if (physics.behavior === "ash_smoke") {
-        // BaseAshSmokeParticle calls super(..., 0,0,0, sprite) and then:
-        // xd *= xMul; yd *= yMul; zd *= zMul;  then adds incoming speed.
-        const v = this.initBaseVelocity([0, 0, 0]);
-        const vm = physics.velocityMultiplier ?? [1, 1, 1];
-        v.set(v.x * vm[0] + inVel[0], v.y * vm[1] + inVel[1], v.z * vm[2] + inVel[2]);
-        particle.velocity.copy(v);
-      } else if (physics.behavior === "rising") {
-        // RisingParticle: super(..., xSpeed,ySpeed,zSpeed, sprite), then:
-        // xd = xd*0.01 + xSpeed (same for y/z)
-        const v = this.initBaseVelocity(inVel);
-        v.set(v.x * 0.01 + inVel[0], v.y * 0.01 + inVel[1], v.z * 0.01 + inVel[2]);
-        particle.velocity.copy(v);
       } else {
-        // Generic: base ctor randomization, then extracted constructor modifiers.
+        // UNIVERSAL: Base velocity randomization + extracted modifiers
         const v = this.initBaseVelocity(inVel);
         const vm = physics.velocityMultiplier ?? [1, 1, 1];
         v.set(v.x * vm[0], v.y * vm[1], v.z * vm[2]);
@@ -287,19 +276,30 @@ export class ParticleEngine {
       }
 
       // Initial quad size (half-size)
-      if (typeof physics.quadSize === "number" && Number.isFinite(physics.quadSize) && physics.quadSize > 0) {
-        particle.quadSize = physics.quadSize;
+      // Check both quadSize (schema v3+) and size (legacy extracted data)
+      const extractedQuadSize = physics.quadSize ?? physics.size;
+      const hasScaleMultiplier = typeof physics.scale === "number" && physics.scale !== 1.0;
+
+      // If size is the default 0.1 AND there's a scale multiplier, this particle uses
+      // the SingleQuadParticle random formula (0.1 to 0.2) then applies scale.
+      // Don't treat 0.1 as an explicit size override in this case.
+      const isDefaultSizeWithScale = extractedQuadSize === 0.1 && hasScaleMultiplier;
+
+      if (typeof extractedQuadSize === "number" && Number.isFinite(extractedQuadSize) && extractedQuadSize > 0 && !isDefaultSizeWithScale) {
+        particle.quadSize = extractedQuadSize;
       } else {
         // SingleQuadParticle: 0.1f * (rand*0.5f + 0.5f) * 2.0f  (range 0.1..0.2)
         particle.quadSize = 0.1 * (Math.random() * 0.5 + 0.5) * 2.0;
       }
 
-      // Apply per-particle scale.
-      if (physics.behavior === "ash_smoke") {
-        particle.quadSize *= 0.75 * scale;
-      } else {
-        particle.quadSize *= scale;
-      }
+      const baseQuadSize = particle.quadSize;
+
+      // UNIVERSAL: Apply per-particle scale from extracted physics
+      // EXTRACTED: scale field contains all particle-specific scaling
+      particle.quadSize *= scale;
+
+      // Debug quadSize for ALL particles (temporarily)
+      console.log(`[ParticleEngine] QUADSIZE DEBUG: ${config.particleType} - base=${baseQuadSize.toFixed(3)}, scale=${scale.toFixed(3)}, final=${particle.quadSize.toFixed(3)}, diameter=${(particle.quadSize * 2).toFixed(3)}`);
 
       // Initial material state (per-particle material; do not share between particles)
       particle.material.map = particle.textures[particle.frameIndex] ?? particle.textures[0];
@@ -308,7 +308,15 @@ export class ParticleEngine {
 
       // Color/tint
       const colorScale = physics.colorScale ?? physics.color_scale;
-      if (physics.behavior === "ash_smoke" && typeof colorScale === "number") {
+      // Check for randomized color marker: [-1.0, -1.0, -1.0]
+      // This indicates color should be computed as: random() * color_scale for each channel
+      const hasRandomizedColor = physics.color &&
+        physics.color[0] === -1.0 &&
+        physics.color[1] === -1.0 &&
+        physics.color[2] === -1.0;
+
+      if (hasRandomizedColor && typeof colorScale === "number") {
+        // Randomized grayscale color (BaseAshSmokeParticle pattern)
         const gray = Math.random() * colorScale;
         particle.material.color.setRGB(gray, gray, gray);
       } else if (config.tint) {
@@ -327,6 +335,9 @@ export class ParticleEngine {
       particle.sprite.position.copy(particle.position);
       const initialFullSize = this.getFullSizeForRender(particle, 0);
       particle.sprite.scale.set(initialFullSize, initialFullSize, 1);
+
+      // Debug sprite scale being set
+      console.log(`[ParticleEngine] SPRITE SCALE SET: ${config.particleType} - fullSize=${initialFullSize.toFixed(3)}, sprite.scale=${particle.sprite.scale.x.toFixed(3)}`);
 
       this.activeCount++;
 
@@ -565,26 +576,27 @@ export class ParticleEngine {
    * This method handles special cases like portal particle rising.
    */
   private applyBehaviorTick(particle: Particle, physics: ParticlePhysics): void {
-    // Check for tickVelocityDelta from extracted physics
+    // UNIVERSAL: Apply constant tick velocity delta if present
+    // EXTRACTED: tick_velocity_delta contains constant per-tick velocity changes
     const tickDelta = physics.tickVelocityDelta ?? physics.tick_velocity_delta;
     if (tickDelta) {
       particle.velocity.x += tickDelta[0];
       particle.velocity.y += tickDelta[1];
       particle.velocity.z += tickDelta[2];
-      return;
     }
 
-    // Behavior-specific handling
-    switch (particle.particleType) {
-      case "campfire_signal_smoke":
-      case "campfire_cosy_smoke":
-        // CampfireSmokeParticle.tick() adds random velocity jitter
-        // xd += (double)(this.random.nextFloat() / 5000.0f * (float)(this.random.nextBoolean() ? 1 : -1));
-        // zd += (double)(this.random.nextFloat() / 5000.0f * (float)(this.random.nextBoolean() ? 1 : -1));
-        particle.velocity.x += (Math.random() / 5000.0) * (Math.random() > 0.5 ? 1 : -1);
-        particle.velocity.z += (Math.random() / 5000.0) * (Math.random() > 0.5 ? 1 : -1);
-        break;
+    // UNIVERSAL: Apply random tick velocity jitter if present
+    // EXTRACTED: tick_velocity_jitter contains jitter amplitudes (e.g., CampfireSmokeParticle: [0.0002, 0, 0.0002])
+    // Pattern: velocity += random(0..1) * amplitude * (±1)
+    const tickJitter = physics.tickVelocityJitter ?? physics.tick_velocity_jitter;
+    if (tickJitter) {
+      particle.velocity.x += Math.random() * tickJitter[0] * (Math.random() > 0.5 ? 1 : -1);
+      particle.velocity.y += Math.random() * tickJitter[1] * (Math.random() > 0.5 ? 1 : -1);
+      particle.velocity.z += Math.random() * tickJitter[2] * (Math.random() > 0.5 ? 1 : -1);
+    }
 
+    // Behavior-specific handling (for particles that still need special logic)
+    switch (particle.particleType) {
       case "portal":
       case "reverse_portal":
         // Portal particles rise and spiral toward center
@@ -652,23 +664,58 @@ export class ParticleEngine {
   }
 
   private getQuadSizeForRender(particle: Particle, partialTick: number): number {
-    const physics = particle.physics;
-    if (!physics) return particle.quadSize;
+    // UNIVERSAL: Quad size rendering with extracted animation curves
+    const curve = particle.physics?.quadSizeCurve ?? particle.physics?.quad_size_curve;
 
-    const t = (particle.age + partialTick) / particle.lifetime;
-
-    if (physics.behavior === "ash_smoke") {
-      // BaseAshSmokeParticle.getQuadSize: quadSize * clamp(((age+pt)/lifetime)*32, 0, 1)
-      const ramp = THREE.MathUtils.clamp(t * 32.0, 0, 1);
-      return particle.quadSize * ramp;
+    if (!curve || curve.type === "constant") {
+      return particle.quadSize;
     }
 
-    // FlameParticle.getQuadSize curve (torch flame / small flame).
-    if (particle.particleType === "flame" || particle.particleType === "small_flame") {
-      return particle.quadSize * (1.0 - t * t * 0.5);
-    }
+    const age = particle.age + partialTick;
+    const ageRatio = age / particle.lifetime;
 
-    return particle.quadSize;
+    switch (curve.type) {
+      case "linear_grow_clamped": {
+        // Formula: quadSize * clamp(ageRatio * multiplier, 0, 1)
+        const growth = Math.min(1.0, Math.max(0.0, ageRatio * curve.multiplier));
+        return particle.quadSize * growth;
+      }
+
+      case "quadratic_shrink": {
+        // Formula: quadSize * (1 - ageRatio² * factor)
+        return particle.quadSize * (1.0 - ageRatio * ageRatio * curve.factor);
+      }
+
+      case "linear_shrink": {
+        // Formula: quadSize * (1 - ageRatio / lifetimeMultiplier)
+        const shrink = 1.0 - age / (particle.lifetime * curve.lifetime_multiplier);
+        return particle.quadSize * Math.max(0.0, shrink);
+      }
+
+      case "ease_in_quad": {
+        // Formula: quadSize * (1 - (1 - ageRatio)²)
+        // Portal particle easing curve
+        let t = 1.0 - ageRatio;
+        t = t * t;
+        t = 1.0 - t;
+        return particle.quadSize * t;
+      }
+
+      case "sine_wave": {
+        // Formula: amplitude * sin((age + partialTick + phase) * frequency * PI)
+        // Firework particle animation
+        return curve.amplitude * Math.sin((age + curve.phase) * curve.frequency * Math.PI);
+      }
+
+      case "absolute": {
+        // Formula: constant (ignores quadSize)
+        // BlockMarker particle
+        return curve.size;
+      }
+
+      default:
+        return particle.quadSize;
+    }
   }
 
   /**

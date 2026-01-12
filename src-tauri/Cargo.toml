@@ -21,6 +21,10 @@ name = "generate_particles"
 path = "src/bin/generate_particles.rs"
 
 [[bin]]
+name = "rebuild_particle_cache"
+path = "src/bin/rebuild_particle_cache.rs"
+
+[[bin]]
 name = "extract_block_emissions"
 path = "src/bin/extract_block_emissions.rs"
 
@@ -35,6 +39,10 @@ path = "src/bin/extract_particle_physics.rs"
 [[bin]]
 name = "show_campfire"
 path = "src/bin/show_campfire.rs"
+
+[[bin]]
+name = "init_vanilla_cache"
+path = "src/bin/init_vanilla_cache.rs"
 
 [dependencies]
 tauri = { version = "2.5", features = ["macos-private-api", "protocol-asset"] }

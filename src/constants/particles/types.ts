@@ -49,6 +49,9 @@ export interface ParticlePhysics {
   /** Random velocity added in the particle constructor (per-axis, blocks/tick) */
   velocityJitter?: [number, number, number] | null;
   velocity_jitter?: [number, number, number] | null;
+  /** Random position offset added in the particle constructor (per-axis, blocks) */
+  positionJitter?: [number, number, number] | null;
+  position_jitter?: [number, number, number] | null;
   /** Size multiplier (single value or range) */
   size?: number | [number, number] | null;
   /** Explicit quad size - schema v3+ */
@@ -73,6 +76,9 @@ export interface ParticlePhysics {
   /** Velocity delta per tick [dx, dy, dz] for special movement patterns */
   tickVelocityDelta?: [number, number, number] | null;
   tick_velocity_delta?: [number, number, number] | null;
+  /** Random velocity jitter applied in tick() method (per-axis, blocks/tick) */
+  tickVelocityJitter?: [number, number, number] | null;
+  tick_velocity_jitter?: [number, number, number] | null;
   /** Particles spawned during tick() */
   spawnsParticles?: SpawnedParticle[] | null;
   spawns_particles?: SpawnedParticle[] | null;
@@ -82,7 +88,23 @@ export interface ParticlePhysics {
   /** Whether this particle uses static random texture (picks one texture and keeps it) */
   usesStaticTexture?: boolean | null;
   uses_static_texture?: boolean | null;
+  /** Quad size animation curve (from getQuadSize() method) */
+  quadSizeCurve?: QuadSizeCurve | null;
+  quad_size_curve?: QuadSizeCurve | null;
 }
+
+/**
+ * Particle size animation curve types
+ * Determines how particle size changes over its lifetime
+ */
+export type QuadSizeCurve =
+  | { type: "constant" }
+  | { type: "linear_grow_clamped"; multiplier: number }
+  | { type: "quadratic_shrink"; factor: number }
+  | { type: "linear_shrink"; lifetime_multiplier: number }
+  | { type: "ease_in_quad" }
+  | { type: "sine_wave"; amplitude: number; frequency: number; phase: number }
+  | { type: "absolute"; size: number };
 
 /**
  * Map of particle type ID to physics configuration
@@ -167,6 +189,25 @@ export interface EntityEmissions {
 export type EntityEmissionsMap = Record<string, EntityEmissions>;
 
 // ============================================================================
+// PARTICLE TEXTURE TYPES
+// ============================================================================
+
+/**
+ * Texture configuration for a particle type
+ * Maps particle IDs to their texture file names
+ */
+export interface ParticleTextures {
+  /** Array of texture file names (without .png extension) */
+  textures: string[];
+}
+
+/**
+ * Map of particle type ID to texture configuration
+ * Example: { "smoke": { textures: ["generic_7", "generic_6", ...] }, "flame": { textures: ["flame"] } }
+ */
+export type ParticleTexturesMap = Record<string, ParticleTextures>;
+
+// ============================================================================
 // COMBINED DATA TYPES
 // ============================================================================
 
@@ -187,6 +228,8 @@ export interface ParticleData {
   blocks: BlockEmissionsMap;
   /** Entity particle emissions */
   entities: EntityEmissionsMap;
+  /** Particle texture mappings */
+  particles: ParticleTexturesMap;
 }
 
 // ============================================================================

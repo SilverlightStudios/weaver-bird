@@ -46,10 +46,31 @@ export interface ParticleEmitter3DProps {
   emissionSource?: string;
 }
 
+// Minecraft's animateTick sampling mechanics:
+// - Every tick, 667 random block positions are sampled in each chunk section (32×32×32 volume)
+// - Base probability per block: 1 - (1 - 1/32768)^667 ≈ 2.04%
+//
+// This 2.04% is correct for Minecraft's world where thousands of blocks compete for sampling.
+// However, in our single-block preview, this creates an artificially low spawn rate because:
+// 1. Players focusing on one campfire in-game see it sampled more frequently in practice
+// 2. Our preview has no competing blocks - it's always "in focus"
+// 3. The base 2.04% gives campfire lava: 0.0816 particles/sec (1 every ~12 seconds)
+//
+// Investigation findings (see detailed analysis):
+// - Campfire lava particles spawn ONLY from animateTick (not block entity)
+// - Probability: 20% when animateTick fires (nextInt(5) == 0)
+// - Count: Always exactly 1 particle (nextInt(1) + 1)
+// - NO burst mechanism - observed "bursts" are pure Poisson distribution clustering
+// - Rate calculation: 20 tps × 2.04% sample × 20% probability × 1 count = 0.0816/sec
+//
+// For single-block preview, we apply 5x multiplier to match player experience:
+// - Base rate: 0.0816 particles/sec (too sparse for preview)
+// - With 5x: 0.408 particles/sec (1 every ~2.4 seconds) - better represents focused observation
 const ANIMATE_TICK_SAMPLE_COUNT = 667;
 const ANIMATE_TICK_SAMPLE_VOLUME = 32 * 32 * 32;
-const ANIMATE_TICK_SAMPLE_CHANCE =
+const ANIMATE_TICK_BASE_CHANCE =
   1 - Math.pow(1 - 1 / ANIMATE_TICK_SAMPLE_VOLUME, ANIMATE_TICK_SAMPLE_COUNT);
+const ANIMATE_TICK_SAMPLE_CHANCE = ANIMATE_TICK_BASE_CHANCE * 5.0;
 
 function useCompiledTriplet(
   expr?: [string, string, string],
@@ -262,17 +283,15 @@ export function ParticleEmitter3D({
       while (accumulator.current >= 1) {
         accumulator.current -= 1;
 
-        // For animateTick emissions, simulate random block sampling
-        // In Minecraft, animateTick is only called on ~2% of ticks for a specific block
-        // due to random sampling of blocks around the player
+        // For animateTick emissions, apply Minecraft's random block sampling
+        // Minecraft samples 667 blocks out of 32×32×32 blocks per tick (~2.01% chance per block)
+        // This is part of the game's actual behavior - animateTick is NOT called every tick
+        // The probability expressions (like "nextInt(5) == 0") happen INSIDE animateTick
         if (emissionSource === "animateTick") {
-          // Sampling probability: 667 samples over 32^3 blocks in a 16-block radius cube.
           const roll = Math.random();
           if (roll > ANIMATE_TICK_SAMPLE_CHANCE) {
-            // Uncomment for debugging: console.log(`[ParticleEmitter3D] Skipped ${particleType} emission due to animateTick sampling (roll=${roll.toFixed(4)})`);
-            continue;
+            continue; // Block not sampled this tick
           }
-          console.log(`[ParticleEmitter3D] ${particleType} passed animateTick sampling (roll=${roll.toFixed(4)})`);
         }
         // particleTick emissions are called every tick (no sampling needed)
 
@@ -300,6 +319,9 @@ export function ParticleEmitter3D({
             particleCount = Number.isFinite(rawCount)
               ? Math.max(0, Math.trunc(rawCount))
               : 0;
+            if (particleType === "lava") {
+              console.log(`[ParticleEmitter3D] Lava count: rawCount=${rawCount}, particleCount=${particleCount}, countExpr="${countExpr}"`);
+            }
           }
           // If no countExpr, spawn exactly 1 particle (no random batching)
 

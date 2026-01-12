@@ -7,8 +7,8 @@
 /// - Reduces boilerplate with validation module
 use crate::model::{OverrideSelection, ScanResult};
 use crate::util::{
-    asset_indexer, launcher_detection, mc_paths, pack_scanner, particle_data, texture_index,
-    vanilla_textures, weaver_nest,
+    asset_indexer, launcher_detection, mc_paths, pack_scanner, particle_cache, particle_data,
+    texture_index, vanilla_textures, weaver_nest,
 };
 use crate::{validation, AppError};
 use serde::{Deserialize, Serialize};
@@ -438,6 +438,22 @@ pub fn get_pack_texture_path_impl(
         if !cache_file.exists() {
             std::fs::write(&cache_file, &bytes)
                 .map_err(|e| AppError::io(format!("Failed to write cached texture: {}", e)))?;
+        }
+
+        // Try to extract matching .mcmeta file for animated textures (non-fatal)
+        let mcmeta_cache_file = cache_file.with_extension("png.mcmeta");
+        if !mcmeta_cache_file.exists() {
+            let mcmeta_rel = format!("{}.mcmeta", chosen_rel);
+            if let Ok(mcmeta_bytes) =
+                crate::util::zip::extract_zip_entry(zip_path_str, &mcmeta_rel)
+            {
+                if let Err(err) = std::fs::write(&mcmeta_cache_file, &mcmeta_bytes) {
+                    eprintln!(
+                        "[packs] Failed to write cached mcmeta for {}: {}",
+                        mcmeta_rel, err
+                    );
+                }
+            }
         }
 
         Ok(cache_file.to_string_lossy().to_string())
@@ -1135,31 +1151,32 @@ pub async fn extract_block_emissions_impl(
 /// # Returns
 /// Success message if generation succeeded
 pub fn generate_particle_typescript_impl() -> Result<String, AppError> {
-    // Load cached data
-    let physics = get_particle_physics_impl()?
-        .ok_or_else(|| AppError::validation("No cached particle physics data found. Extract physics first.".to_string()))?;
+    let version = particle_cache::resolve_cached_version()
+        .map_err(|e| AppError::validation(e.to_string()))?;
 
-    let emissions = get_block_emissions_impl()?
-        .ok_or_else(|| AppError::validation("No cached block emissions data found. Extract emissions first.".to_string()))?;
+    let cache = particle_cache::load_cached_particle_cache(&version)
+        .map_err(|e| AppError::io(format!("Failed to load particle caches: {}", e)))?
+        .ok_or_else(|| {
+            AppError::validation(
+                "Missing cached particle data. Extract physics, emissions, and textures first."
+                    .to_string(),
+            )
+        })?;
 
-    // Determine output path - go up from src-tauri to project root
-    let src_tauri_dir = std::env::current_dir()
-        .map_err(|e| AppError::io(format!("Failed to get current dir: {}", e)))?;
-    let project_root = src_tauri_dir.parent()
-        .ok_or_else(|| AppError::io("No parent directory found".to_string()))?;
-    let ts_output = project_root.join("src/constants/particles/generated.ts");
+    let ts_output = particle_cache::resolve_generated_ts_path()
+        .map_err(|e| AppError::io(format!("Failed to resolve output path: {}", e)))?;
 
-    // Generate the TypeScript file
     crate::util::particle_typescript_gen::generate_particle_data_typescript(
-        &physics,
-        &emissions,
+        &cache.physics,
+        &cache.emissions,
+        &cache.textures,
         &ts_output,
     )
     .map_err(|e| AppError::io(format!("Failed to generate TypeScript: {}", e)))?;
 
     Ok(format!(
         "Generated particle data for {} at {:?}",
-        physics.version, ts_output
+        cache.version, ts_output
     ))
 }
 

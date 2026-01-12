@@ -11,8 +11,9 @@ use anyhow::{Context, Result};
 use serde_json;
 use std::fs;
 use std::path::Path;
-use super::particle_physics_extractor::ExtractedPhysicsData;
 use super::block_particle_extractor::ExtractedBlockEmissions;
+use super::particle_data::ParticleData as ParticleTextureData;
+use super::particle_physics_extractor::ExtractedPhysicsData;
 
 /// Generate comprehensive TypeScript particle data file
 ///
@@ -20,6 +21,7 @@ use super::block_particle_extractor::ExtractedBlockEmissions;
 pub fn generate_particle_data_typescript(
     physics: &ExtractedPhysicsData,
     block_emissions: &ExtractedBlockEmissions,
+    particle_textures: &ParticleTextureData,
     output_path: &Path,
 ) -> Result<()> {
     // Serialize data to JSON
@@ -29,6 +31,8 @@ pub fn generate_particle_data_typescript(
         .context("Failed to serialize block emissions")?;
     let entities_json = serde_json::to_string_pretty(&block_emissions.entities)
         .context("Failed to serialize entity emissions")?;
+    let textures_json = serde_json::to_string_pretty(&particle_textures.particles)
+        .context("Failed to serialize particle textures")?;
 
     // Get timestamp
     let timestamp = std::time::SystemTime::now()
@@ -57,6 +61,7 @@ export const particleData: ParticleData = {{
   physics: {},
   blocks: {},
   entities: {},
+  particles: {},
 }};
 "#,
         physics.version,
@@ -66,10 +71,14 @@ export const particleData: ParticleData = {{
         physics_json,
         blocks_json,
         entities_json,
+        textures_json,
     );
 
-    fs::write(output_path, ts_content)
+    let tmp_path = output_path.with_extension("ts.tmp");
+    fs::write(&tmp_path, ts_content)
         .context("Failed to write TypeScript particle data file")?;
+    fs::rename(&tmp_path, output_path)
+        .context("Failed to finalize TypeScript particle data file")?;
 
     println!("[particle_data] Generated TypeScript at {:?}", output_path);
     Ok(())

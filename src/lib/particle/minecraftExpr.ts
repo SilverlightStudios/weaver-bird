@@ -261,9 +261,19 @@ export function compileMinecraftExpr(
 
   js = js.replace(/\((?:double|float)\)/g, "");
   js = replaceIntCasts(js);
+
+  // Entity random position methods (must be before .get[XYZ]() replacement)
+  // getRandomX(width) = getX() + (2*random - 1) * width * getBbWidth()
+  // Since getX() becomes 0 and we don't have getBbWidth(), approximate as:
+  // getRandomX(multiplier) -> (rand() * 2 - 1) * multiplier
+  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getRandomX\s*\(([^)]+)\)/g, "(rand() * 2 - 1) * $1");
+  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getRandomZ\s*\(([^)]+)\)/g, "(rand() * 2 - 1) * $1");
+  // getRandomY() = getY() + random * getBbHeight()
+  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getRandomY\s*\(\)/g, "rand()");
+
+  // Convert entity/block position accessors to 0 (centered at origin in preview)
   js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.get[XYZ]\(\)/g, "0");
   js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.[xyz](?:\(\))?/g, "0");
-  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getRandom[XYZ]\s*\([^)]*\)/g, "rand()");
   js = js.replace(/(?:[A-Za-z_$][A-Za-z0-9_$]*\.)*nextBoolean\(\)/g, "(rand() > 0.5)");
   js = js.replace(/(?:[A-Za-z_$][A-Za-z0-9_$]*\.)*nextFloat\(\)/g, "rand()");
   js = js.replace(/(?:[A-Za-z_$][A-Za-z0-9_$]*\.)*nextDouble\(\)/g, "rand()");

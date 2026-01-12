@@ -118,15 +118,15 @@ export function BlockParticles({
           <ParticleEmitter3D
             key={`${emission.particleId}-${index}`}
             particleType={emission.particleId}
-            positionExpr={emission.positionExpr}
-            velocityExpr={emission.velocityExpr}
+            positionExpr={emission.positionExpr ?? undefined}
+            velocityExpr={emission.velocityExpr ?? undefined}
             probabilityExpr={emission.probabilityExpr}
             countExpr={emission.countExpr}
             loopCountExpr={emission.loopCountExpr}
             loopIndexVar={emission.loopIndexVar}
             blockProps={effectiveProps}
             tint={tint}
-            scale={emission.options?.scale}
+            scale={emission.options?.scale ?? undefined}
             emissionSource={emission.emissionSource}
             enabled={enabled}
           />

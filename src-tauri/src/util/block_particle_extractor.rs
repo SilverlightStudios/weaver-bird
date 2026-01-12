@@ -140,9 +140,26 @@ pub fn load_cached_block_emissions(version: &str) -> Result<Option<ExtractedBloc
         return Ok(None);
     }
 
-    let content = fs::read_to_string(&cache_file).context("Failed to read emissions cache file")?;
-    let data: ExtractedBlockEmissions =
-        serde_json::from_str(&content).context("Failed to parse emissions cache file")?;
+    let content = match fs::read_to_string(&cache_file) {
+        Ok(content) => content,
+        Err(error) => {
+            println!(
+                "[block_emissions] Failed to read emissions cache for {}: {}",
+                version, error
+            );
+            return Ok(None);
+        }
+    };
+    let data: ExtractedBlockEmissions = match serde_json::from_str(&content) {
+        Ok(data) => data,
+        Err(error) => {
+            println!(
+                "[block_emissions] Failed to parse emissions cache for {}: {}",
+                version, error
+            );
+            return Ok(None);
+        }
+    };
 
     // If the cache is from an older schema, force re-extraction to populate new fields.
     const CURRENT_SCHEMA_VERSION: u32 = 7;
@@ -154,7 +171,32 @@ pub fn load_cached_block_emissions(version: &str) -> Result<Option<ExtractedBloc
         return Ok(None);
     }
 
+    if data.blocks.is_empty() {
+        println!(
+            "[block_emissions] Cached emissions for {} has no block data, re-extracting...",
+            version
+        );
+        return Ok(None);
+    }
+
     Ok(Some(data))
+}
+
+pub fn clear_block_emissions_cache(version: &str) -> Result<()> {
+    clear_block_emissions_data_cache(version)?;
+    let decompile_dir = get_emissions_cache_dir()?.join("decompiled").join(version);
+    if decompile_dir.exists() {
+        fs::remove_dir_all(&decompile_dir).context("Failed to remove emissions decompile cache")?;
+    }
+    Ok(())
+}
+
+pub fn clear_block_emissions_data_cache(version: &str) -> Result<()> {
+    let cache_file = get_emissions_cache_file(version)?;
+    if cache_file.exists() {
+        fs::remove_file(cache_file).context("Failed to remove emissions cache file")?;
+    }
+    Ok(())
 }
 
 /// Save block emissions to cache
@@ -314,12 +356,13 @@ fn java_to_javascript(expr: &str) -> String {
     result = cast_re.replace_all(&result, "").to_string();
 
     // Convert random.nextDouble() and variants to Math.random()
-    let next_double_re = Regex::new(r"\b(?:random|\$\d+)\.next(?:Double|Float)\(\)").unwrap();
+    // Also handles this.random.nextDouble() (common in entities)
+    let next_double_re = Regex::new(r"(?:this\.)?(?:random|\$\d+)\.next(?:Double|Float)\(\)").unwrap();
     result = next_double_re.replace_all(&result, "Math.random()").to_string();
 
     // Convert random.nextGaussian() to a simple approximation
     // Note: True Gaussian would need Box-Muller, but for particles we can approximate
-    let next_gaussian_re = Regex::new(r"\b(?:random|\$\d+)\.nextGaussian\(\)").unwrap();
+    let next_gaussian_re = Regex::new(r"(?:this\.)?(?:random|\$\d+)\.nextGaussian\(\)").unwrap();
     result = next_gaussian_re
         .replace_all(&result, "(Math.random() * 2 - 1)")
         .to_string();
@@ -670,8 +713,9 @@ fn extract_emissions_from_source(
     // Examples:
     //   for (int i = 0; i < random.nextInt(1) + 1; ++i)
     //   for (int $$7 = 0; $$7 < $$3.items.size(); ++$$7)
+    // Note: Rust regex doesn't support backreferences, so we match the variable pattern twice
     let loop_re = Regex::new(
-        r"for\s*\(\s*(?:int|long|var)?\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*[^;]*;\s*\1\s*<=?\s*([^;]+);"
+        r"for\s*\(\s*(?:int|long|var)?\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*[^;]*;\s*[A-Za-z_$][A-Za-z0-9_$]*\s*<=?\s*([^;]+);"
     ).unwrap();
 
     let mut current_condition: Option<String> = None;
@@ -1238,9 +1282,16 @@ fn batch_decompile_classes(
 }
 
 /// Read a decompiled class file
+fn class_name_to_source_path(class_name: &str) -> PathBuf {
+    let mut class_path = class_name.replace('.', "/");
+    if !class_path.ends_with(".java") {
+        class_path.push_str(".java");
+    }
+    PathBuf::from(class_path)
+}
+
 fn read_decompiled_class(output_dir: &Path, deobfuscated_name: &str) -> Result<String> {
-    let class_path = deobfuscated_name.replace('.', "/") + ".java";
-    let output_file = output_dir.join(&class_path);
+    let output_file = output_dir.join(class_name_to_source_path(deobfuscated_name));
 
     if output_file.exists() {
         fs::read_to_string(&output_file).context("Failed to read decompiled file")
@@ -1358,17 +1409,38 @@ fn parse_block_registrations(
     let mut constructor_params: HashMap<String, Vec<String>> = HashMap::new();
 
     // Decompile Blocks class if not already done
-    let blocks_class_path = decompile_dir.join("dux.java");
-    if !blocks_class_path.exists() {
-        // Find obfuscated name for Blocks class
-        if let Some((obf, _)) = class_mappings.iter().find(|(_, v)| *v == "net.minecraft.world.level.block.Blocks") {
+    let blocks_deobf = "net.minecraft.world.level.block.Blocks";
+    let blocks_deobf_path = decompile_dir.join(class_name_to_source_path(blocks_deobf));
+    let blocks_obf = class_mappings
+        .iter()
+        .find(|(_, v)| *v == blocks_deobf)
+        .map(|(obf, _)| obf.as_str());
+    let blocks_obf_path = blocks_obf
+        .map(|obf| decompile_dir.join(class_name_to_source_path(obf)));
+
+    if !blocks_deobf_path.exists()
+        && !blocks_obf_path.as_ref().map(|path| path.exists()).unwrap_or(false)
+    {
+        if let Some(obf) = blocks_obf {
             println!("[block_emissions] Decompiling Blocks class...");
-            batch_decompile_classes(cfr_path, jar_path, &[obf.as_str()], decompile_dir, mappings_path)?;
+            batch_decompile_classes(cfr_path, jar_path, &[obf], decompile_dir, mappings_path)?;
         }
     }
 
+    let blocks_class_path = if blocks_deobf_path.exists() {
+        blocks_deobf_path
+    } else if let Some(obf_path) = blocks_obf_path.as_ref().filter(|path| path.exists()) {
+        obf_path.clone()
+    } else {
+        return Err(anyhow!(
+            "Blocks class not found in decompile output (expected {} or obfuscated equivalent)",
+            blocks_deobf
+        ));
+    };
+
     // Read and parse Blocks class
-    if let Ok(source) = std::fs::read_to_string(&blocks_class_path) {
+    let source = std::fs::read_to_string(&blocks_class_path)
+        .with_context(|| format!("Failed to read Blocks class at {:?}", blocks_class_path))?;
         // Match general pattern: register("block_id", new SomeBlock(...))
         // Examples:
         //   register("campfire", new CampfireBlock(...))
@@ -1385,6 +1457,11 @@ fn parse_block_registrations(
             r#"register\("([^"]+)",\s*\([^)]*\)\s*->\s*new\s+([A-Z][A-Za-z0-9_]*)\("#
         ).unwrap();
 
+        // Pattern 3: Method reference: register("id", ClassName::new, ...)
+        let method_ref_pattern = Regex::new(
+            r#"register\("([^"]+)",\s*([A-Z][A-Za-z0-9_]+)::new"#
+        ).unwrap();
+
         // Extract all block registrations
         for caps in direct_pattern.captures_iter(&source) {
             let block_id = caps.get(1).unwrap().as_str();
@@ -1395,6 +1472,13 @@ fn parse_block_registrations(
         }
 
         for caps in lambda_pattern.captures_iter(&source) {
+            let block_id = caps.get(1).unwrap().as_str();
+            let class_name = caps.get(2).unwrap().as_str();
+            let full_class = format!("net.minecraft.world.level.block.{}", class_name);
+            block_id_to_class.insert(block_id.to_string(), full_class);
+        }
+
+        for caps in method_ref_pattern.captures_iter(&source) {
             let block_id = caps.get(1).unwrap().as_str();
             let class_name = caps.get(2).unwrap().as_str();
             let full_class = format!("net.minecraft.world.level.block.{}", class_name);
@@ -1458,7 +1542,6 @@ fn parse_block_registrations(
             block_id_to_class.len(),
             constructor_params.len()
         );
-    }
 
     Ok((block_id_to_class, particle_types, constructor_params))
 }

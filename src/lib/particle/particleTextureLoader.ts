@@ -10,12 +10,8 @@
 
 import * as THREE from "three";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import {
-  getVanillaTexturePath,
-  getPackTexturePath,
-  getParticleData,
-  type ParticleData,
-} from "@lib/tauri";
+import { getVanillaTexturePath, getPackTexturePath } from "@lib/tauri";
+import { loadParticleData, type ParticleData } from "@constants/particles";
 
 interface ParticleTextureMapping {
   textures: string[];
@@ -91,7 +87,7 @@ async function ensureDynamicDataLoaded(): Promise<ParticleData | null> {
 
   dynamicDataLoading = (async () => {
     try {
-      const data = await getParticleData();
+      const data = await loadParticleData();
       dynamicParticleData = data;
       return data;
     } catch {
