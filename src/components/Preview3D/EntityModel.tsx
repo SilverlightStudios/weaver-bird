@@ -33,6 +33,8 @@ import { JEMInspectorV2 } from "@lib/emf/JEMInspectorV2";
 interface Props {
   assetId: string;
   positionOffset?: [number, number, number];
+  entityTypeOverride?: string;
+  parentEntityOverride?: string | null;
 }
 
 const buildVersionFolderCandidates = (
@@ -72,7 +74,12 @@ const buildVersionFolderCandidates = (
  * Uses EMF (Entity Model Features) JEM format for entity geometry.
  * Supports custom pack models with vanilla fallback.
  */
-function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
+function EntityModel({
+  assetId,
+  positionOffset = [0, 0, 0],
+  entityTypeOverride,
+  parentEntityOverride,
+}: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const [entityGroup, setEntityGroup] = useState<THREE.Group | null>(null);
   const [layerGroups, setLayerGroups] = useState<
@@ -261,6 +268,13 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
       return assetId;
     }
   }, [assetId, entityFeatureSchema, entityFeatureStateView]);
+  const resolvedEntityInfo = useMemo(
+    () =>
+      entityTypeOverride
+        ? { variant: entityTypeOverride, parent: parentEntityOverride ?? null }
+        : getEntityInfoFromAssetId(baseTextureAssetId),
+    [entityTypeOverride, parentEntityOverride, baseTextureAssetId],
+  );
   const textureAssetId = useMemo(
     () => getEntityTextureAssetId(baseTextureAssetId),
     [baseTextureAssetId],
@@ -350,7 +364,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
     // Model selection follows the *base texture* after entity-feature overrides
     // (e.g. boats -> bamboo uses the raft model).
-    const entityInfo = getEntityInfoFromAssetId(baseTextureAssetId);
+    const entityInfo = resolvedEntityInfo;
     if (!entityInfo) {
       console.warn("[EntityModel] Unknown entity type for:", baseTextureAssetId);
       setError("Unknown entity type");
@@ -691,9 +705,12 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
   }, [
     assetId,
     baseTextureAssetId,
+    resolvedEntityInfo,
     partTextureOverrides,
     cemEntityOverride?.entityType,
     cemEntityOverride?.parentEntity,
+    entityTypeOverride,
+    parentEntityOverride,
     resolvedPackId,
     resolvedPack,
     packsDir,
@@ -836,11 +853,11 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
 
       let tex: THREE.Texture | null = null;
       if (pack) {
-        const info = getEntityInfoFromAssetId(baseTextureAssetId);
-        const baseEntityType = cemEntityOverride?.entityType ?? info?.variant ?? "";
+        const baseEntityType =
+          cemEntityOverride?.entityType ?? resolvedEntityInfo?.variant ?? "";
         const baseParentEntity =
           cemEntityOverride?.parentEntity === undefined
-            ? info?.parent
+            ? resolvedEntityInfo?.parent
             : cemEntityOverride?.parentEntity ?? null;
         const versionFolders = buildVersionFolderCandidates(
           targetMinecraftVersion,
@@ -1142,6 +1159,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0] }: Props) {
   }, [
     activeEntityLayers,
     baseTextureAssetId,
+    resolvedEntityInfo,
     cemEntityOverride,
     disabledPackIds,
     entityFeatureSchema,

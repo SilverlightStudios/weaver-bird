@@ -318,17 +318,27 @@ export class ParticleEngine {
       if (hasRandomizedColor && typeof colorScale === "number") {
         // Randomized grayscale color (BaseAshSmokeParticle pattern)
         const gray = Math.random() * colorScale;
-        particle.material.color.setRGB(gray, gray, gray);
+        particle.material.color.setRGB(gray, gray, gray, THREE.SRGBColorSpace);
       } else if (config.tint) {
-        particle.material.color.setRGB(
-          config.tint[0] / 255,
-          config.tint[1] / 255,
-          config.tint[2] / 255,
-        );
+        // Apply tint color
+        let r = config.tint[0] / 255;
+        let g = config.tint[1] / 255;
+        let b = config.tint[2] / 255;
+
+        // For dust particles (redstone, etc.), randomize brightness to match vanilla
+        // Vanilla Minecraft dust particles have varied brightness (0.75x to 1.0x)
+        if (config.particleType === "dust" || config.particleType === "minecraft:dust") {
+          const brightnessMult = 0.75 + Math.random() * 0.25; // 75% to 100%
+          r *= brightnessMult;
+          g *= brightnessMult;
+          b *= brightnessMult;
+        }
+
+        particle.material.color.setRGB(r, g, b, THREE.SRGBColorSpace);
       } else if (physics.color) {
-        particle.material.color.setRGB(physics.color[0], physics.color[1], physics.color[2]);
+        particle.material.color.setRGB(physics.color[0], physics.color[1], physics.color[2], THREE.SRGBColorSpace);
       } else {
-        particle.material.color.setRGB(1, 1, 1);
+        particle.material.color.setRGB(1, 1, 1, THREE.SRGBColorSpace);
       }
 
       // Apply initial interpolated position/size immediately.

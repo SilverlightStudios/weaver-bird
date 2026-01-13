@@ -12,7 +12,7 @@ use crate::util::{
 };
 use crate::{validation, AppError};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -848,8 +848,19 @@ pub fn resolve_block_state_impl(
     let schema = crate::util::blockstates::build_block_state_schema(&blockstate, &used_block_id);
 
     // Get the set of valid property names for this block
-    let valid_props: std::collections::HashSet<String> =
-        schema.properties.iter().map(|p| p.name.clone()).collect();
+    let valid_props: HashSet<String> = schema.properties.iter().map(|p| p.name.clone()).collect();
+    let allowed_values: HashMap<String, HashSet<String>> = schema
+        .properties
+        .iter()
+        .filter_map(|prop| {
+            prop.values.as_ref().map(|values| {
+                (
+                    prop.name.clone(),
+                    values.iter().cloned().collect::<HashSet<String>>(),
+                )
+            })
+        })
+        .collect();
 
     // CRITICAL: Merge provided state props with defaults, but ONLY include properties
     // that are actually defined in the blockstate schema. This filters out invalid
@@ -858,7 +869,14 @@ pub fn resolve_block_state_impl(
         Some(map) if !map.is_empty() => {
             let mut merged = schema.default_state.clone();
             for (key, value) in map {
-                if valid_props.contains(&key) {
+                if !valid_props.contains(&key) {
+                    continue;
+                }
+                if let Some(values) = allowed_values.get(&key) {
+                    if values.contains(&value) {
+                        merged.insert(key, value);
+                    }
+                } else {
                     merged.insert(key, value);
                 }
             }
@@ -944,6 +962,25 @@ pub fn read_pack_file_impl(
 pub fn read_vanilla_jem_impl(entity_type: String) -> Result<String, AppError> {
     use std::fs;
     use std::path::PathBuf;
+
+    if let Ok(cache_dir) = vanilla_textures::get_vanilla_cache_dir() {
+        let cache_path = cache_dir
+            .join("assets/minecraft/optifine/cem")
+            .join(format!("{}.jem", entity_type));
+        if cache_path.exists() {
+            println!(
+                "[read_vanilla_jem] Reading vanilla JEM from cache: {}",
+                cache_path.display()
+            );
+            return fs::read_to_string(&cache_path).map_err(|e| {
+                AppError::io(format!(
+                    "Failed to read vanilla JEM at {}: {}",
+                    cache_path.display(),
+                    e
+                ))
+            });
+        }
+    }
 
     // Use the manifest directory as the base (src-tauri's parent directory)
     let manifest_dir = env!("CARGO_MANIFEST_DIR");

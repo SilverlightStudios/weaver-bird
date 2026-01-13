@@ -1181,7 +1181,9 @@ export default function MainRoute() {
           defaultDrawerSize: 30,
           content: (
             <OptionsPanel
-              assetId={uiState.selectedAssetId}
+              assetId={
+                blockItemPair?.blockId ?? uiState.selectedAssetId
+              }
               providers={providers}
               onSelectProvider={handleSelectProvider}
               onBlockPropsChange={setBlockProps}

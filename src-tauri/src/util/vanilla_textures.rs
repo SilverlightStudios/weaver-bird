@@ -302,6 +302,9 @@ pub fn get_cached_version() -> Result<Option<String>> {
 }
 
 fn has_any_file_with_suffix(dir: &Path, suffix: &str) -> bool {
+    if !dir.exists() {
+        return false;
+    }
     WalkDir::new(dir)
         .into_iter()
         .filter_map(Result::ok)
@@ -334,11 +337,32 @@ fn jar_contains_mcmeta(jar_path: &Path) -> Result<bool> {
     Ok(false)
 }
 
+fn jar_contains_cem(jar_path: &Path) -> Result<bool> {
+    let jar_file = fs::File::open(jar_path).context("Failed to open Minecraft JAR file")?;
+    let mut archive = ZipArchive::new(jar_file).context("Failed to read JAR archive")?;
+
+    for i in 0..archive.len() {
+        let file = archive
+            .by_index(i)
+            .context("Failed to read archive entry")?;
+        let file_path = file.name();
+
+        if file_path.starts_with("assets/minecraft/optifine/cem/")
+            && (file_path.ends_with(".jem") || file_path.ends_with(".jpm"))
+        {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
 fn is_cache_complete(cache_dir: &Path, jar_path: &Path) -> Result<bool> {
     let textures_dir = cache_dir.join("assets/minecraft/textures");
     let models_dir = cache_dir.join("assets/minecraft/models");
     let blockstates_dir = cache_dir.join("assets/minecraft/blockstates");
     let particles_dir = cache_dir.join("assets/minecraft/particles");
+    let cem_dir = cache_dir.join("assets/minecraft/optifine/cem");
 
     if !textures_dir.exists()
         || !models_dir.exists()
@@ -366,6 +390,16 @@ fn is_cache_complete(cache_dir: &Path, jar_path: &Path) -> Result<bool> {
     if jar_has_mcmeta {
         println!("[vanilla_textures] Cache missing .png.mcmeta files");
         return Ok(false);
+    }
+
+    let jar_has_cem = jar_contains_cem(jar_path)?;
+    if jar_has_cem {
+        let has_cem =
+            has_any_file_with_suffix(&cem_dir, ".jem") || has_any_file_with_suffix(&cem_dir, ".jpm");
+        if !has_cem {
+            println!("[vanilla_textures] Cache missing CEM files");
+            return Ok(false);
+        }
     }
 
     println!("[vanilla_textures] No .png.mcmeta files found in jar");
@@ -438,7 +472,9 @@ pub fn extract_vanilla_textures_with_progress(
             || (file_path.starts_with("assets/minecraft/blockstates/")
                 && file_path.ends_with(".json"))
             || (file_path.starts_with("assets/minecraft/particles/")
-                && file_path.ends_with(".json"));
+                && file_path.ends_with(".json"))
+            || (file_path.starts_with("assets/minecraft/optifine/cem/")
+                && (file_path.ends_with(".jem") || file_path.ends_with(".jpm")));
 
         if should_extract {
             files_to_extract.push((i, file_path));

@@ -35,6 +35,7 @@ const PROPERTY_DESCRIPTIONS: Record<string, string> = {
   pickles: "Number of sea pickles in this block (1-4).",
   eggs: "Number of turtle eggs in this nest (1-4).",
   layers: "Number of snow layers (1-8).",
+  wall: "Mount this block on a wall (torches, signs, banners, etc.).",
 };
 
 interface Props {
@@ -175,10 +176,13 @@ export default function BlockStatePanel({
         return;
       }
 
-      onBlockPropsChange({
+      const updatedProps = {
         ...blockProps,
         [prop.name]: newValue,
-      });
+      };
+      console.log(`[BlockStatePanel] Updating ${prop.name} from ${blockProps[prop.name]} to ${newValue}`);
+      console.log(`[BlockStatePanel] New blockProps:`, updatedProps);
+      onBlockPropsChange(updatedProps);
     };
 
     switch (prop.type) {
@@ -209,6 +213,12 @@ export default function BlockStatePanel({
           value,
           label: value,
         }));
+
+        // Conditional: disable "facing" property when "wall" is false
+        // This handles wall-mounted blocks (torches, signs, banners, etc.)
+        const isFacingDisabled =
+          prop.name === "facing" && blockProps?.wall === "false";
+
         return (
           <div key={prop.name} className={s.property}>
             <span className={s.propertyName}>{prop.name}</span>
@@ -219,7 +229,13 @@ export default function BlockStatePanel({
               placeholder="Select..."
               emptyMessage="No options"
               className={s.select}
+              disabled={isFacingDisabled}
             />
+            {isFacingDisabled && (
+              <div className={s.disabledHint}>
+                Enable "wall" to set facing direction
+              </div>
+            )}
           </div>
         );
       }

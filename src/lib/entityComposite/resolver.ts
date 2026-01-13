@@ -140,6 +140,7 @@ export function resolveEntityCompositeSchema(
   allAssetIds: AssetId[],
 ): EntityCompositeSchema | null {
   const all = new Set(allAssetIds);
+  const selectedPath = stripNamespace(selectedAssetId);
   const baseFromLayer = getLikelyBaseEntityAssetIdForLayer(
     selectedAssetId,
     allAssetIds,
@@ -1561,6 +1562,31 @@ export function resolveEntityCompositeSchema(
       const placement = getSelect(state, "banner.placement", "standing");
       if (placement !== "wall") return {};
       return { stand: { visible: false } };
+    };
+  }
+
+  // -----------------------------------------------------------------------
+  // Signs (standing vs wall)
+  // -----------------------------------------------------------------------
+  if (dir === "signs") {
+    const signDefaultPlacement = selectedPath.includes("wall_sign")
+      ? "wall"
+      : "standing";
+    controls.push({
+      kind: "select",
+      id: "sign.placement",
+      label: "Placement",
+      defaultValue: signDefaultPlacement,
+      options: [
+        { value: "standing", label: "Standing" },
+        { value: "wall", label: "Wall" },
+      ],
+    });
+
+    getCemEntityType = (state) => {
+      const placement = getSelect(state, "sign.placement", "standing");
+      const suffix = placement === "wall" ? "_wall_sign" : "_sign";
+      return { entityType: `${leaf}${suffix}`, parentEntity: "signs" };
     };
   }
 

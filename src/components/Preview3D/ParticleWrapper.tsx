@@ -41,13 +41,46 @@ function isEntityAsset(assetId: string): boolean {
 }
 
 /**
+ * Get direction offset for a facing direction
+ * Returns the step value for the given axis
+ */
+function getDirectionStep(facing: string, axis: "x" | "y" | "z"): number {
+  const steps: Record<string, { x: number; y: number; z: number }> = {
+    north: { x: 0, y: 0, z: -1 },
+    south: { x: 0, y: 0, z: 1 },
+    west: { x: -1, y: 0, z: 0 },
+    east: { x: 1, y: 0, z: 0 },
+    up: { x: 0, y: 1, z: 0 },
+    down: { x: 0, y: -1, z: 0 },
+  };
+  return steps[facing]?.[axis] ?? 0;
+}
+
+/**
+ * Get opposite facing direction
+ */
+function getOppositeFacing(facing: string): string {
+  const opposites: Record<string, string> = {
+    north: "south",
+    south: "north",
+    west: "east",
+    east: "west",
+    up: "down",
+    down: "up",
+  };
+  return opposites[facing] ?? facing;
+}
+
+/**
  * Evaluate a position expression to get a numeric value
  * Handles simple expressions like "0.5", "random()", "pos.getX() + 0.5"
+ * Also handles Minecraft facing-based expressions for wall torches:
+ *   "$0.getValue(FACING).getOpposite().getStepX()"
  */
 function evaluatePositionExpr(
   expr: string | undefined,
   axis: "x" | "y" | "z",
-  _blockProps: Record<string, string>,
+  blockProps: Record<string, string>,
 ): number {
   if (!expr) {
     // Default positions: center of block
@@ -62,7 +95,22 @@ function evaluatePositionExpr(
 
   try {
     // Process the expression to make it evaluatable
-    let processed = expr
+    let processed = expr;
+
+    // Handle FACING property references (e.g., wall torches)
+    // Pattern: ($0.getValue(FACING)).getOpposite().getStepX()
+    // or: ($0.getValue(FACING)).getStepZ()
+    const facingPattern = /\(\$0\.getValue\(FACING\)\)(\.getOpposite\(\))?\.(getStep[XYZ])\(\)/g;
+    processed = processed.replace(facingPattern, (match, opposite, stepMethod) => {
+      const facing = blockProps.facing || "north";
+      const actualFacing = opposite ? getOppositeFacing(facing) : facing;
+      const stepAxis = stepMethod.slice(7).toLowerCase() as "x" | "y" | "z"; // getStepX -> x
+      const step = getDirectionStep(actualFacing, stepAxis);
+      return step.toString();
+    });
+
+    // Now continue with the standard processing
+    processed = processed
       // Remove type casts
       .replace(/\((?:double|float|int|long)\)\s*/g, "")
       // Replace BlockPos getters with 0 (block center in our coordinate system)
@@ -209,6 +257,9 @@ export function ParticleWrapper({
     return props;
   }, [assetId, stateProps, isEntity]);
 
+  // Calculate block ID for special handling (e.g., redstone color tinting)
+  const blockId = isEntity ? null : assetIdToBlockId(assetId);
+
   // Get active emissions
   const activeEmissions = useMemo(() => {
     console.log(`[ParticleWrapper] activeEmissions useMemo called for ${assetId}, particleDataReady=${particleDataReady}`);
@@ -225,18 +276,44 @@ export function ParticleWrapper({
 
     const emissions = isEntity
       ? getEntityEmissions(emissionId)
-      : getBlockEmissions(emissionId);
+      : getBlockEmissions(emissionId, effectiveProps);
 
     if (!emissions) {
       console.log(`[ParticleWrapper] No emissions found for ${emissionId}`);
       return [];
     }
 
-    console.log(`[ParticleWrapper] Found ${emissions.length} emissions for ${emissionId}`);
+    console.log(`[ParticleWrapper] Found ${emissions.emissions.length} emissions for ${emissionId}`);
 
-    return emissions.emissions.filter((emission: ParticleEmission) =>
-      isEmissionConditionMet(emission, effectiveProps),
-    );
+    return emissions.emissions.filter((emission: ParticleEmission) => {
+      // Check standard condition system first
+      if (!isEmissionConditionMet(emission, effectiveProps)) {
+        return false;
+      }
+
+      // Special case: redstone_wire only spawns particles when powered (power > 0)
+      // From RedStoneWireBlock.java: if ($4 == 0) return; // where $4 is power level
+      if (emissionId === "redstone_wire" && emission.particleId === "dust") {
+        const powerStr = effectiveProps.power ?? "0";
+        const power = parseInt(powerStr, 10);
+        if (isNaN(power) || power <= 0) {
+          return false;
+        }
+      }
+
+      // Special case: redstone_ore and deepslate_redstone_ore only spawn particles when lit=true
+      // The extractor currently sets condition=null for these blocks, but Minecraft only spawns
+      // particles when the ore is lit (after being clicked/walked on)
+      // From RedStoneOreBlock.java: private void spawnParticles(Level level, BlockPos pos) - only called when lit
+      if ((emissionId === "redstone_ore" || emissionId === "deepslate_redstone_ore") && emission.particleId === "dust") {
+        const lit = effectiveProps.lit ?? "false";
+        if (lit !== "true") {
+          return false;
+        }
+      }
+
+      return true;
+    });
   }, [assetId, effectiveProps, particleDataReady, isEntity]);
 
   // Get showEmissionPoints from store
@@ -250,17 +327,44 @@ export function ParticleWrapper({
     return null;
   }
 
+  // Helper function to calculate redstone wire color based on power level
+  // Formula extracted from RedStoneWireBlock.java (Minecraft 1.21.11)
+  const getRedstoneColor = (power: number): [number, number, number] => {
+    const powerRatio = power / 15.0;
+    const r = powerRatio * 0.6 + (powerRatio > 0.0 ? 0.4 : 0.3);
+    const g = Math.max(0.0, Math.min(1.0, powerRatio * powerRatio * 0.7 - 0.5));
+    const b = Math.max(0.0, Math.min(1.0, powerRatio * powerRatio * 0.6 - 0.7));
+    return [r * 255, g * 255, b * 255];
+  };
+
   return (
     <group>
       {activeEmissions.map((emission: ParticleEmission, index: number) => {
-        // Convert particle options color (0-1 range) to tint (0-255 range)
-        const tint = emission.options?.color
-          ? ([
-              emission.options.color[0] * 255,
-              emission.options.color[1] * 255,
-              emission.options.color[2] * 255,
-            ] as [number, number, number])
-          : undefined;
+        // Determine particle tint color
+        let tint: [number, number, number] | undefined;
+
+        // Special handling for redstone_wire: calculate color from power level
+        // and add 20% spawn probability (from spawnParticlesAlongLine method)
+        let probabilityExpr = emission.probabilityExpr;
+        if (blockId === "redstone_wire" && emission.particleId === "dust") {
+          const powerStr = effectiveProps.power ?? "0";
+          const power = parseInt(powerStr, 10);
+          if (!isNaN(power) && power >= 0 && power <= 15) {
+            tint = getRedstoneColor(power);
+          }
+          // RedStoneWireBlock.spawnParticlesAlongLine has 20% spawn probability:
+          // if (random.nextFloat() >= 0.2f * range) return;
+          // Simplified to 20% probability for preview (average across different ranges)
+          probabilityExpr = "nextInt(5) == 0"; // 20% chance
+        }
+        // Otherwise use emission options color if present
+        else if (emission.options?.color) {
+          tint = [
+            emission.options.color[0] * 255,
+            emission.options.color[1] * 255,
+            emission.options.color[2] * 255,
+          ] as [number, number, number];
+        }
 
         return (
           <ParticleEmitter3D
@@ -269,7 +373,7 @@ export function ParticleWrapper({
             emissionRate={emission.rate}
             positionExpr={emission.positionExpr ?? undefined}
             velocityExpr={emission.velocityExpr ?? undefined}
-            probabilityExpr={emission.probabilityExpr}
+            probabilityExpr={probabilityExpr}
             countExpr={emission.countExpr}
             loopCountExpr={emission.loopCountExpr}
             loopIndexVar={emission.loopIndexVar}
@@ -314,9 +418,16 @@ export function useAssetHasParticles(assetId: string): boolean {
       ? assetIdToEntityId(assetId)
       : assetIdToBlockId(assetId);
 
+    // For blocks, compute effectiveProps to handle wall torches correctly
+    let blockProps: Record<string, string> | undefined;
+    if (!isEntity) {
+      const inferredProps = extractBlockStateProperties(assetId);
+      blockProps = applyNaturalBlockStateDefaults(inferredProps, assetId);
+    }
+
     const emissions = isEntity
       ? getEntityEmissions(emissionId)
-      : getBlockEmissions(emissionId);
+      : getBlockEmissions(emissionId, blockProps);
 
     return emissions !== null && emissions.emissions.length > 0;
   }, [assetId, particleDataReady]);

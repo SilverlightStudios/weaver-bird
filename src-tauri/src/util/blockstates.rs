@@ -489,6 +489,15 @@ pub fn resolve_blockstate(
             // Try exact match, then empty string, then "normal"
             variants
                 .get(&variant_key)
+                .or_else(|| {
+                    variants.iter().find_map(|(key, variant)| {
+                        if canonicalize_variant_key(key) == variant_key {
+                            Some(variant)
+                        } else {
+                            None
+                        }
+                    })
+                })
                 .or_else(|| variants.get(""))
                 .or_else(|| variants.get("normal"))
         };
@@ -541,6 +550,25 @@ fn make_variant_key(props: &HashMap<String, String>) -> String {
     }
 
     let mut pairs: Vec<_> = props.iter().collect();
+    pairs.sort_by_key(|(k, _)| *k);
+
+    pairs
+        .iter()
+        .map(|(k, v)| format!("{}={}", k, v))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+/// Canonicalize a variant key by sorting property names
+fn canonicalize_variant_key(key: &str) -> String {
+    if key.is_empty() || key == "normal" {
+        return key.to_string();
+    }
+
+    let mut pairs: Vec<(&str, &str)> = key
+        .split(',')
+        .filter_map(|pair| pair.split_once('='))
+        .collect();
     pairs.sort_by_key(|(k, _)| *k);
 
     pairs

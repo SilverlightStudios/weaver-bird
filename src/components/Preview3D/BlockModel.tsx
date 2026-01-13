@@ -23,6 +23,7 @@ import {
   isPottedPlant,
   getPottedAssetId,
 } from "@lib/assetUtils";
+import { createDefaultElement } from "@components/MinecraftCSSBlock/utilities";
 import { getBlockTintType } from "@/constants/vanillaBlockColors";
 
 interface Props {
@@ -171,13 +172,55 @@ function BlockModel({
         // Apply natural defaults (e.g. axis=y instead of x)
         mergedProps = applyNaturalBlockStateDefaults(mergedProps, assetId);
 
-        const blockStateAssetId = getBlockStateIdFromAssetId(modelAssetId);
+        // Filter synthetic properties based on context:
+        // 1. Remove empty string values (used for optional properties)
+        // 2. Remove "wall" property (synthetic toggle, not a real blockstate property)
+        // 3. Remove "facing" when wall=false (floor variant doesn't have facing)
+        const cleanedProps: Record<string, string> = {};
+        for (const [key, value] of Object.entries(mergedProps)) {
+          // Skip empty strings
+          if (value === "") continue;
+
+          // Skip synthetic "wall" property (not a real Minecraft blockstate property)
+          if (key === "wall") continue;
+
+          // Skip "facing" when wall is false (floor variant has no facing property)
+          if (key === "facing" && mergedProps.wall === "false") continue;
+
+          cleanedProps[key] = value;
+        }
+
+        let blockStateAssetId = getBlockStateIdFromAssetId(modelAssetId);
+
+        // Pattern-based: when wall=true, load the wall variant blockstate
+        // Example: torch + wall=true → wall_torch
+        // This is necessary because wall_torch and torch use different blockstate files
+        if (mergedProps.wall === "true") {
+          // Add wall_ prefix/infix to the blockstate ID
+          const parts = blockStateAssetId.split("/");
+          const lastPart = parts[parts.length - 1];
+
+          // Try prefix first: "torch" -> "wall_torch"
+          let wallVariant = `wall_${lastPart}`;
+
+          // If that doesn't work, try infix: "redstone_torch" -> "redstone_wall_torch"
+          if (lastPart.includes("_")) {
+            const nameParts = lastPart.split("_");
+            nameParts.splice(nameParts.length - 1, 0, "wall");
+            wallVariant = nameParts.join("_");
+          }
+
+          // Update the blockstate ID to use wall variant
+          parts[parts.length - 1] = wallVariant;
+          blockStateAssetId = parts.join("/");
+          console.log(`[BlockModel] Using wall variant blockstate: ${blockStateAssetId}`);
+        }
 
         const resolution = await resolveBlockState(
           packId,
           blockStateAssetId,
           packsDirPath,
-          Object.keys(mergedProps).length > 0 ? mergedProps : undefined,
+          Object.keys(cleanedProps).length > 0 ? cleanedProps : undefined,
           seed,
         );
 
@@ -222,9 +265,38 @@ function BlockModel({
             packsDirPath,
           );
 
+          let renderModel = model;
+          if (!model.elements || model.elements.length === 0) {
+            const itemModelId = resolvedModel.modelId
+              .replace(/^minecraft:block\//, "minecraft:item/")
+              .replace(/^block\//, "item/");
+            let fallbackTextures = model.textures;
+
+            try {
+              const itemModel = await loadModelJson(
+                packId,
+                itemModelId,
+                packsDirPath,
+              );
+              if (itemModel.textures && Object.keys(itemModel.textures).length) {
+                fallbackTextures = itemModel.textures;
+              }
+            } catch {
+              // Ignore item model failures - fall back to block textures if any.
+            }
+
+            if (fallbackTextures && Object.keys(fallbackTextures).length) {
+              renderModel = {
+                ...model,
+                textures: fallbackTextures,
+                elements: createDefaultElement(fallbackTextures),
+              };
+            }
+          }
+
           // Check if this model has tintindex
           let modelHasTint = false;
-          model.elements?.forEach((element) => {
+          renderModel.elements?.forEach((element) => {
             const faces = element.faces ?? {};
             Object.values<ElementFace>(faces).forEach((face) => {
               if (face.tintindex !== undefined && face.tintindex !== null) {
@@ -248,11 +320,21 @@ function BlockModel({
             "[BlockModel] Passing biomeColor to converter:",
             biomeColor,
           );
+
+          // Convert assetId to blockId format for light emission calculation
+          // e.g., "minecraft:block/torch" -> "torch"
+          // Strip both namespace and block/ prefix to match blockLightEmission.ts keys
+          const blockIdForLight = blockStateAssetId
+            .replace(/^minecraft:/, "")
+            .replace(/^block\//, "");
+
           const modelGroup = await blockModelToThreeJs(
-            model,
+            renderModel,
             textureLoader,
             biomeColor,
             resolvedModel, // Pass resolved model for rotations and uvlock
+            blockIdForLight, // Block ID for light emission calculation
+            cleanedProps, // Block properties for conditional light emission (empty strings filtered out)
           );
 
           // Apply polygon offset to prevent Z-fighting in multipart models

@@ -30,7 +30,12 @@ import {
   loadModelJson,
   type ModelElement,
 } from "@lib/tauri/blockModels";
-import { getBlockStateIdFromAssetId, normalizeAssetId } from "@lib/assetUtils";
+import {
+  applyNaturalBlockStateDefaults,
+  extractBlockStateProperties,
+  getBlockStateIdFromAssetId,
+  normalizeAssetId,
+} from "@lib/assetUtils";
 import { useStore } from "@state/store";
 import { transitionQueue } from "@lib/transitionQueue";
 import { blockGeometryWorker } from "@lib/blockGeometryWorker";
@@ -167,6 +172,19 @@ export const MinecraftCSSBlock = ({
       return convertFileSrc(texturePath);
     };
 
+    const scheduleGeometryReady = () => {
+      const idleCallback =
+        window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+      idleCallback(
+        () => {
+          if (mounted) {
+            setGeometryReady(true);
+          }
+        },
+        { timeout: 100 },
+      );
+    };
+
     const load2DFallback = async () => {
       try {
         const normalizedAssetId = normalizeAssetId(assetId);
@@ -178,16 +196,7 @@ export const MinecraftCSSBlock = ({
 
           // EAGER PRELOADING: Start processing 3D geometry in background immediately
           // This happens while showing 2D fallback, so geometry is ready when user switches tabs
-          const idleCallback =
-            window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
-          idleCallback(
-            () => {
-              if (mounted) {
-                setGeometryReady(true);
-              }
-            },
-            { timeout: 100 },
-          ); // Short timeout to start processing quickly
+          scheduleGeometryReady(); // Short timeout to start processing quickly
         }
       } catch (err) {
         console.warn(
@@ -195,8 +204,11 @@ export const MinecraftCSSBlock = ({
           err,
         );
         if (mounted) {
-          setError(true);
-          onError?.();
+          // Missing base textures (e.g., stairs/slabs) should still attempt 3D loading.
+          setFallbackTextureUrl(null);
+          setRenderedElements([]);
+          setError(false);
+          scheduleGeometryReady();
         }
       }
     };
@@ -340,10 +352,18 @@ export const MinecraftCSSBlock = ({
         if (packsDir && packId) {
           try {
             const blockStateId = getBlockStateIdFromAssetId(normalizedAssetId);
+            const inferredProps = extractBlockStateProperties(normalizedAssetId);
+            const mergedProps = applyNaturalBlockStateDefaults(
+              inferredProps,
+              normalizedAssetId,
+            );
+            const stateProps =
+              Object.keys(mergedProps).length > 0 ? mergedProps : undefined;
             const resolution = await resolveBlockState(
               packId,
               blockStateId,
               packsDir,
+              stateProps,
             );
 
             if (resolution.models.length > 0) {

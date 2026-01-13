@@ -432,6 +432,15 @@ export function extractBlockStateProperties(
     }
   }
 
+  // Pattern-based: wall-mounted blocks in asset ID set wall=true and facing=south
+  // Examples: wall_torch, redstone_wall_torch, oak_wall_sign, oak_wall_banner, etc.
+  // We default to south so the block faces forward at the default camera angle
+  // Note: This only applies to actual wall_ asset IDs
+  if (name.includes("wall_")) {
+    props.wall = "true";
+    props.facing = "south";
+  }
+
   return props;
 }
 
@@ -565,6 +574,11 @@ export function applyNaturalBlockStateDefaults(
     result.half = "bottom";
   }
 
+  // shape: Default to "straight" for stairs
+  if (!result.shape && name.includes("stairs")) {
+    result.shape = "straight";
+  }
+
   // open: Default to "false"
   const hasOpen =
     name.includes("door") ||
@@ -618,6 +632,13 @@ export function applyNaturalBlockStateDefaults(
   // signal_fire: Default to "false" for campfires (true only when hay bale below)
   if (!result.signal_fire && name.includes("campfire")) {
     result.signal_fire = "false";
+  }
+
+  // power: Default to "15" (fully powered) for redstone_wire
+  // Redstone wire has power levels 0-15, where 0 = no particles/dark, 15 = full particles/bright red
+  // Default to 15 to show the active/powered state in previews
+  if (!result.power && name.includes("redstone_wire")) {
+    result.power = "15";
   }
 
   return result;
@@ -773,6 +794,17 @@ export function getBaseName(assetId: string): string {
 
   // Fix fungi -> fungus (warped_fungi -> warped_fungus, crimson_fungi -> crimson_fungus)
   name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
+
+  // Pattern-based: wall-mounted blocks use the same blockstate as floor/standing variants
+  // This is pattern-based, not name-based - works for any block with "_wall_" in the name
+  // Examples: wall_torch -> torch, redstone_wall_torch -> redstone_torch, oak_wall_sign -> oak_sign
+  if (name.startsWith("wall_")) {
+    // Remove "wall_" prefix
+    name = name.replace(/^wall_/, "");
+  } else if (name.includes("_wall_")) {
+    // Remove "_wall_" infix
+    name = name.replace(/_wall_/, "_");
+  }
 
   // Campfire textures map to the base campfire blockstate
   if (
@@ -1203,6 +1235,31 @@ export function getVariantGroupKey(assetId: string): string {
   const pathMatch = normalized.match(/^[^:]*:(.+)$/);
   let path = pathMatch ? pathMatch[1] : normalized;
 
+  // Pattern-based grouping: wall-mounted variants group with floor/standing variants
+  // This handles torches, buttons, banners, signs, etc. without hardcoding specific blocks
+  // Examples:
+  //   - wall_torch -> torch, redstone_wall_torch -> redstone_torch
+  //   - oak_wall_sign -> oak_sign, birch_wall_banner -> birch_banner
+  //   - stone_wall_button -> stone_button (if it existed)
+  if (path.includes("/wall_")) {
+    // Remove "wall_" prefix: "block/wall_torch" -> "block/torch"
+    path = path.replace(/\/wall_/, "/");
+  } else if (path.includes("_wall_")) {
+    // Remove "_wall_" infix: "block/redstone_wall_torch" -> "block/redstone_torch"
+    path = path.replace(/_wall_/, "_");
+  }
+
+  // Special case: item/redstone groups with block/redstone_wire
+  // Similar to how campfire item groups with campfire block
+  if (path === "item/redstone") {
+    return "block/redstone_wire";
+  }
+
+  // Special case: GUI redstone_dust sprite groups with block/redstone_wire
+  if (path.startsWith("gui/sprites/container/slot/redstone_dust")) {
+    return "block/redstone_wire";
+  }
+
   if (path.startsWith("colormap/")) {
     const parts = path.split("/");
     if (parts.length > 1) {
@@ -1267,6 +1324,22 @@ export function getVariantGroupKey(assetId: string): string {
   const pathParts = path.split("/");
   let blockName = pathParts[pathParts.length - 1];
   let pathPrefix = pathParts.slice(0, -1).join("/");
+
+  // Group wall hanging signs with their base hanging sign
+  if (blockName.endsWith("_wall_hanging_sign")) {
+    blockName = blockName.replace(/_wall_hanging_sign$/, "_hanging_sign");
+  }
+  // Group wall signs with their standing sign base
+  if (blockName.endsWith("_wall_sign")) {
+    blockName = blockName.replace(/_wall_sign$/, "_sign");
+  }
+
+  // Group redstone_dust textures with redstone_wire block
+  // (dot, line0, line1, overlay are all parts of the multipart redstone_wire model)
+  if (blockName.startsWith("redstone_dust")) {
+    blockName = "redstone_wire";
+    pathPrefix = "block";
+  }
 
   // Group campfire fire/log textures with their base campfire
   if (blockName === "campfire_fire" || blockName === "campfire_log") {
@@ -1424,6 +1497,18 @@ export function getBlockItemPair(
 
   if (assetPath.startsWith("item/")) {
     const baseName = assetPath.slice("item/".length);
+
+    // Special case: redstone item -> redstone_wire block
+    // Similar to how campfire item -> campfire block, sniffer_egg item -> sniffer_egg block
+    if (baseName === "redstone") {
+      return {
+        blockId: findByPath("block/redstone_dust_dot") ??
+                 findByPath("block/redstone_dust_line0") ??
+                 findBlockVariantByGroupKey("block/redstone_wire"),
+        itemId: findByPath(`item/${baseName}`),
+      };
+    }
+
     return {
       blockId:
         findByPath(`block/${baseName}`) ??
@@ -1437,6 +1522,17 @@ export function getBlockItemPair(
     const baseName = groupKey.startsWith("block/")
       ? groupKey.slice("block/".length)
       : assetPath.slice("block/".length);
+
+    // Special case: redstone_wire block -> redstone item
+    // The block is called "redstone_wire" but the item is "redstone"
+    if (baseName === "redstone_wire") {
+      return {
+        blockId: findByPath(`block/${baseName}`) ??
+                 findByPath("block/redstone_dust_dot") ??
+                 findByPath("block/redstone_dust_line0"),
+        itemId: findByPath("item/redstone"),
+      };
+    }
 
     return {
       blockId: findByPath(`block/${baseName}`),

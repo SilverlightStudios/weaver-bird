@@ -9,6 +9,7 @@ use walkdir::WalkDir;
 
 const ASSET_PATH_PREFIX: &str = "assets/";
 const TEXTURE_PATH: &str = "textures/";
+const BLOCKSTATE_PATH: &str = "blockstates/";
 const CEM_PATH: &str = "assets/minecraft/optifine/cem/";
 
 /// Index all assets from a list of packs
@@ -32,12 +33,8 @@ pub fn index_assets(
                 pack.name,
                 pack.is_zip
             );
-            let pack_assets = if pack.is_zip {
-                index_zip_pack(&pack.path, &pack.id)
-            } else {
-                index_folder_pack(&pack.path, &pack.id)
-            };
 
+            let pack_assets = index_pack(pack);
             match pack_assets {
                 Ok(assets) => {
                     println!(
@@ -88,54 +85,74 @@ pub fn index_assets(
     Ok((assets, providers))
 }
 
-/// Index assets from a zip pack
-fn index_zip_pack(zip_path: &str, _pack_id: &str) -> Result<HashMap<String, Vec<String>>> {
-    println!("[index_zip_pack] Listing files in ZIP: {}", zip_path);
-    let files = zip::list_zip_files(zip_path)?;
-    println!("[index_zip_pack] Found {} files in ZIP", files.len());
+/// Index assets from a pack (zip or folder) using shared file listing logic
+fn index_pack(pack: &PackMeta) -> Result<HashMap<String, Vec<String>>> {
+    let files = list_pack_files(pack)?;
+    println!(
+        "[index_assets] Found {} files in pack {}",
+        files.len(),
+        pack.name
+    );
 
-    // Debug: Print first few files to see their structure
     for (i, file) in files.iter().take(10).enumerate() {
-        println!("[index_zip_pack] Sample file {}: {}", i, file);
+        println!("[index_assets] Sample file {}: {}", i, file);
     }
 
-    // Debug: Show which files are being rejected and why
     let mut rejected_count = 0;
     for file in files.iter() {
-        if extract_asset_id(&file).is_none() {
+        if extract_asset_id(file).is_none() {
             if rejected_count < 5 {
-                println!("[index_zip_pack] REJECTED (not a texture): {}", file);
+                println!("[index_assets] REJECTED (not an asset): {}", file);
             }
             rejected_count += 1;
         }
     }
-    println!("[index_zip_pack] Total rejected files: {}", rejected_count);
+    println!(
+        "[index_assets] Total rejected files in {}: {}",
+        pack.name, rejected_count
+    );
 
     let mut assets_map: HashMap<String, Vec<String>> = HashMap::new();
 
     for (i, file) in files.iter().enumerate() {
         if i % 1000 == 0 {
-            println!("[index_zip_pack] Processing file {}/{}", i, files.len());
+            println!(
+                "[index_assets] Processing file {}/{} in {}",
+                i,
+                files.len(),
+                pack.name
+            );
         }
-        if let Some(asset_id) = extract_asset_id(&file) {
+        if let Some(asset_id) = extract_texture_asset_id(file) {
             assets_map
                 .entry(asset_id)
                 .or_insert_with(Vec::new)
                 .push(file.clone());
         }
     }
-    println!(
-        "[index_zip_pack] Extracted {} unique assets",
-        assets_map.len()
-    );
+
+    for file in files.iter() {
+        if let Some(asset_id) = extract_blockstate_asset_id(file) {
+            if !assets_map.contains_key(&asset_id) {
+                assets_map
+                    .entry(asset_id)
+                    .or_insert_with(Vec::new)
+                    .push(file.clone());
+            }
+        }
+    }
 
     Ok(assets_map)
 }
 
-/// Index assets from an uncompressed folder pack
-fn index_folder_pack(folder_path: &str, _pack_id: &str) -> Result<HashMap<String, Vec<String>>> {
-    let path = Path::new(folder_path);
-    let mut assets_map: HashMap<String, Vec<String>> = HashMap::new();
+/// List all files in a pack (zip or folder) with normalized relative paths
+fn list_pack_files(pack: &PackMeta) -> Result<Vec<String>> {
+    if pack.is_zip {
+        return zip::list_zip_files(&pack.path);
+    }
+
+    let path = Path::new(&pack.path);
+    let mut files = Vec::new();
 
     for entry in WalkDir::new(path)
         .into_iter()
@@ -145,53 +162,63 @@ fn index_folder_pack(folder_path: &str, _pack_id: &str) -> Result<HashMap<String
         let rel_path = entry
             .path()
             .strip_prefix(path)
-            .map(|p| p.to_string_lossy().to_string())?;
-
-        if let Some(asset_id) = extract_asset_id(&rel_path) {
-            assets_map
-                .entry(asset_id)
-                .or_insert_with(Vec::new)
-                .push(rel_path);
-        }
+            .map(|p| p.to_string_lossy().replace('\\', "/"))?;
+        files.push(rel_path);
     }
 
-    Ok(assets_map)
+    Ok(files)
 }
 
-/// Extract asset ID from a file path
-/// E.g., "assets/minecraft/textures/block/stone.png" -> "minecraft:block/stone"
-fn extract_asset_id(file_path: &str) -> Option<String> {
-    // Must be in assets/
+fn split_asset_path(file_path: &str) -> Option<(&str, &str)> {
     if !file_path.starts_with(ASSET_PATH_PREFIX) {
         return None;
     }
 
     let after_assets = &file_path[ASSET_PATH_PREFIX.len()..];
+    let mut parts = after_assets.splitn(2, '/');
+    let namespace = parts.next()?;
+    let rest = parts.next()?;
 
-    // Split namespace and rest
-    let parts: Vec<&str> = after_assets.splitn(2, '/').collect();
-    if parts.len() != 2 {
-        return None;
-    }
+    Some((namespace, rest))
+}
 
-    let namespace = parts[0];
-    let rest = parts[1];
-
-    // For now, only index texture files in textures/ subdirectory
+/// Extract asset ID from a texture file path
+/// E.g., "assets/minecraft/textures/block/stone.png" -> "minecraft:block/stone"
+fn extract_texture_asset_id(file_path: &str) -> Option<String> {
+    let (namespace, rest) = split_asset_path(file_path)?;
     if !rest.starts_with(TEXTURE_PATH) {
         return None;
     }
 
     let texture_path = &rest[TEXTURE_PATH.len()..];
+    if !texture_path.ends_with(".png") {
+        return None;
+    }
 
-    // Remove file extension
-    let asset_path = if let Some(dot_idx) = texture_path.rfind('.') {
-        &texture_path[..dot_idx]
-    } else {
-        texture_path
-    };
-
+    let asset_path = texture_path.trim_end_matches(".png");
     Some(format!("{}:{}", namespace, asset_path))
+}
+
+/// Extract asset ID from a blockstate file path
+/// E.g., "assets/minecraft/blockstates/oak_stairs.json" -> "minecraft:block/oak_stairs"
+fn extract_blockstate_asset_id(file_path: &str) -> Option<String> {
+    let (namespace, rest) = split_asset_path(file_path)?;
+    if !rest.starts_with(BLOCKSTATE_PATH) {
+        return None;
+    }
+
+    let blockstate_path = &rest[BLOCKSTATE_PATH.len()..];
+    if !blockstate_path.ends_with(".json") {
+        return None;
+    }
+
+    let block_id = blockstate_path.trim_end_matches(".json");
+    Some(format!("{}:block/{}", namespace, block_id))
+}
+
+/// Extract asset ID from a file path (textures or blockstates)
+fn extract_asset_id(file_path: &str) -> Option<String> {
+    extract_texture_asset_id(file_path).or_else(|| extract_blockstate_asset_id(file_path))
 }
 
 /// Extract labels from an asset ID

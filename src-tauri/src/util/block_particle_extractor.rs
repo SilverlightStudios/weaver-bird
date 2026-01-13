@@ -589,19 +589,77 @@ fn parse_rgb24_int(color: i32) -> [f32; 3] {
     [r, g, b]
 }
 
-fn load_dust_particle_option_constants(decompile_dir: &Path) -> HashMap<String, ExtractedParticleOptions> {
+fn load_dust_particle_option_constants(decompile_dir: &Path, class_mappings: &HashMap<String, String>) -> HashMap<String, ExtractedParticleOptions> {
     let mut out: HashMap<String, ExtractedParticleOptions> = HashMap::new();
-    let file = decompile_dir.join("net/minecraft/core/particles/DustParticleOptions.java");
-    let Ok(source) = fs::read_to_string(&file) else {
+
+    // Try to find DustParticleOptions class (obfuscated or deobfuscated)
+    let dust_deobf = "net.minecraft.core.particles.DustParticleOptions";
+    let dust_deobf_path = decompile_dir.join(class_name_to_source_path(dust_deobf));
+    let dust_obf = class_mappings
+        .iter()
+        .find(|(_, v)| v.as_str() == dust_deobf)
+        .map(|(obf, _)| obf.as_str());
+    let dust_obf_path = dust_obf.map(|obf| decompile_dir.join(class_name_to_source_path(obf)));
+
+    // Try to read either deobfuscated or obfuscated file
+    let file_path = if dust_deobf_path.exists() {
+        dust_deobf_path
+    } else if let Some(obf_path) = dust_obf_path.as_ref().filter(|path| path.exists()) {
+        obf_path.clone()
+    } else {
+        println!("[dust_options] DustParticleOptions class not found in decompile output");
         return out;
     };
 
+    let Ok(source) = fs::read_to_string(&file_path) else {
+        return out;
+    };
+
+    // Load field mappings for DustParticleOptions to deobfuscate field names
+    // Mappings file path is in decompile_dir parent/parent (cache root)
+    let mappings_path = decompile_dir.parent()
+        .and_then(|p| p.parent())
+        .map(|p| p.join(format!("{}-mappings.txt", decompile_dir.file_name().unwrap().to_str().unwrap())));
+
+    let mut field_mappings: HashMap<String, String> = HashMap::new(); // obfuscated -> deobfuscated
+    if let Some(mappings_file) = mappings_path {
+        if let Ok(mappings_content) = fs::read_to_string(&mappings_file) {
+            let mut in_dust_class = false;
+            for line in mappings_content.lines() {
+                // Check if we're in the DustParticleOptions class section
+                if line == format!("{} ->", dust_deobf).trim() || line.starts_with(&format!("{} -> ", dust_deobf)) {
+                    in_dust_class = true;
+                    continue;
+                }
+                // Exit when we hit another class
+                if in_dust_class && line.ends_with(':') && !line.starts_with("    ") {
+                    break;
+                }
+                // Parse field mappings (lines starting with 4 spaces)
+                if in_dust_class && line.starts_with("    ") && line.contains(" -> ") {
+                    let trimmed = line.trim();
+                    if let Some(arrow_pos) = trimmed.rfind(" -> ") {
+                        let after_arrow = &trimmed[arrow_pos + 4..];
+                        let obf_field = after_arrow.trim_end_matches(':');
+                        // Extract field name from before arrow (last token)
+                        let before_arrow = &trimmed[..arrow_pos];
+                        if let Some(deobf_field) = before_arrow.split_whitespace().last() {
+                            field_mappings.insert(obf_field.to_string(), deobf_field.to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Pattern for obfuscated code: public static final <classname> <field> = new <classname>(0xFF0000, 1.0f);
+    // The class name might be obfuscated (e.g., "ls") or deobfuscated ("DustParticleOptions")
     let const_re = Regex::new(
-        r"public\s+static\s+final\s+DustParticleOptions\s+(\w+)\s*=\s*new\s+DustParticleOptions\s*\(\s*(0x[0-9A-Fa-f]+|\d+)\s*,\s*([-+]?[\d.]+(?:[eE][+-]?\d+)?)[fF]?\s*\)",
+        r"public\s+static\s+final\s+(?:DustParticleOptions|\w+)\s+(\w+)\s*=\s*new\s+(?:DustParticleOptions|\w+)\s*\(\s*(0x[0-9A-Fa-f]+|\d+)\s*,\s*([-+]?[\d.]+(?:[eE][+-]?\d+)?)[fF]?\s*\)",
     ).unwrap();
 
     for caps in const_re.captures_iter(&source) {
-        let name = caps.get(1).unwrap().as_str().to_string();
+        let field_name = caps.get(1).unwrap().as_str();
         let color_token = caps.get(2).unwrap().as_str();
         let scale_token = caps.get(3).unwrap().as_str();
 
@@ -612,8 +670,14 @@ fn load_dust_particle_option_constants(decompile_dir: &Path) -> HashMap<String, 
         };
 
         let scale = scale_token.parse::<f32>().ok();
+
+        // Deobfuscate the field name if we have a mapping
+        let deobf_name = field_mappings.get(field_name).unwrap_or(&field_name.to_string()).clone();
+
+        println!("[dust_options] Found constant: {} = 0x{:06X} @ scale {}", deobf_name, color_int, scale.unwrap_or(1.0));
+
         out.insert(
-            name,
+            deobf_name,
             ExtractedParticleOptions {
                 kind: "dust".to_string(),
                 color: Some(parse_rgb24_int(color_int)),
@@ -1671,7 +1735,7 @@ pub async fn extract_block_emissions(
     // Step 4: Extract emissions from discovered classes
     let mut extracted_blocks = HashMap::new();
     let mut extracted_entities = HashMap::new();
-    let dust_options = load_dust_particle_option_constants(&decompile_dir);
+    let dust_options = load_dust_particle_option_constants(&decompile_dir, &class_mappings);
 
     // Create reverse mapping: class_name -> [block_ids]
     let mut class_to_block_ids: HashMap<String, Vec<String>> = HashMap::new();

@@ -378,9 +378,40 @@ export function getParticlePhysics(particleId: string): ParticlePhysics | null {
  * @param blockId - Block ID (e.g., "minecraft:torch", "torch")
  * @returns Block emissions or null if not found
  */
-export function getBlockEmissions(blockId: string): BlockEmissions | null {
+export function getBlockEmissions(blockId: string, blockProps?: Record<string, string>): BlockEmissions | null {
   // Normalize block ID: "minecraft:torch" -> "torch"
-  const id = blockId.replace(/^minecraft:/, "");
+  let id = blockId.replace(/^minecraft:/, "");
+
+  // Pattern-based: if block has wall property set to true, use wall-mounted variant for particles
+  // This handles blocks where wall/floor variants use the same blockstate but different particle positions
+  // Examples: torch/wall_torch, sign/wall_sign, banner/wall_banner
+  // The "wall" property is synthetic (not from Minecraft), added by our schema augmentation
+  if (blockProps?.wall === "true") {
+    let wallVariant: string;
+
+    // Pattern 1: "torch" -> "wall_torch" (prefix)
+    if (!id.includes("_wall_") && !id.startsWith("wall_")) {
+      // Try adding "wall_" prefix first
+      wallVariant = `wall_${id}`;
+      let wallData = getParticleDataSync().blocks[wallVariant];
+
+      // If prefix doesn't work, try infix: "redstone_torch" -> "redstone_wall_torch"
+      if (!wallData) {
+        const parts = id.split("_");
+        if (parts.length > 1) {
+          // Insert "wall" before the last part
+          parts.splice(parts.length - 1, 0, "wall");
+          wallVariant = parts.join("_");
+          wallData = getParticleDataSync().blocks[wallVariant];
+        }
+      }
+
+      if (wallData) {
+        id = wallVariant;
+      }
+    }
+  }
+
   const rawData = getParticleDataSync().blocks[id];
 
   if (!rawData) return null;

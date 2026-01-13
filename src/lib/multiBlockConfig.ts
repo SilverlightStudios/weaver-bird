@@ -37,11 +37,16 @@ export function getMultiBlockParts(
   const isDoor =
     canonicalPath.includes("door") && !canonicalPath.includes("trapdoor");
   const isTrapdoor = canonicalPath.includes("trapdoor");
+  const isStairs = canonicalPath.includes("stairs");
 
   // Trapdoors are single-block items - they should NOT be treated as multi-blocks
   // Their "half" property indicates where in the block space they sit (top/bottom),
   // not that they are part of a multi-block structure
   if (isTrapdoor) {
+    return null;
+  }
+
+  if (isStairs) {
     return null;
   }
 
@@ -73,24 +78,11 @@ export function getMultiBlockParts(
     ];
   }
 
-  // For other blocks with half property (like tall plants), only create multi-block
-  // if the block explicitly has the half property set
-  if (halfProp && !isDoor) {
-    const facing =
-      blockProps.facing || blockProps.horizontal_facing || blockProps.axis;
-
-    const commonOverrides: Record<string, string> = {};
-    if (facing) commonOverrides.facing = facing;
-
+  // Only treat as multi-block for explicit double-height properties
+  if (halfProp === "double_block_half" && !isDoor) {
     return [
-      {
-        offset: [0, 0, 0],
-        overrides: { ...commonOverrides, [halfProp]: "lower" },
-      },
-      {
-        offset: [0, 1, 0],
-        overrides: { ...commonOverrides, [halfProp]: "upper" },
-      },
+      { offset: [0, 0, 0], overrides: { double_block_half: "lower" } },
+      { offset: [0, 1, 0], overrides: { double_block_half: "upper" } },
     ];
   }
 

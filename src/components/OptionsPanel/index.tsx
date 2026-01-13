@@ -26,6 +26,7 @@ import {
 } from "@lib/assetUtils";
 import { groupAssetsForCards } from "@lib/utils/assetGrouping";
 import { getEntityVariants } from "@lib/emf";
+import { resolveBlockEntityRenderSpec } from "@lib/blockEntityResolver";
 import {
   getBlockStateSchema,
   type BlockStateSchema,
@@ -165,6 +166,11 @@ export const OptionsPanel = ({
   const isHangingSignAsset = assetId ? isHangingSign(assetId) : false;
 
   const allAssetIds = useMemo(() => allAssets.map((a) => a.id), [allAssets]);
+  const blockEntitySpec = useMemo(
+    () => (assetId ? resolveBlockEntityRenderSpec(assetId, allAssetIds) : null),
+    [assetId, allAssetIds],
+  );
+  const entityAssetId = blockEntitySpec?.assetId ?? assetId;
   const combinedAssetIds = useMemo(() => {
     if (!assetId || allAssetIds.length === 0) return assetId ? [assetId] : [];
     const groups = groupAssetsForCards(allAssetIds);
@@ -172,18 +178,18 @@ export const OptionsPanel = ({
     return group ? group.variantIds : [assetId];
   }, [assetId, allAssetIds]);
   const entityFeatureSchema = useMemo(() => {
-    if (!assetId) return null;
+    if (!entityAssetId) return null;
     console.log(
-      `[OptionsPanel.entityFeatureSchema] Resolving schema for assetId="${assetId}"`,
+      `[OptionsPanel.entityFeatureSchema] Resolving schema for assetId="${entityAssetId}"`,
     );
-    const schema = resolveEntityCompositeSchema(assetId, allAssetIds);
+    const schema = resolveEntityCompositeSchema(entityAssetId, allAssetIds);
     if (schema) {
       console.log(
         `[OptionsPanel.entityFeatureSchema] Schema resolved: baseAssetId="${schema.baseAssetId}" controls=${schema.controls.length}`,
       );
     }
     return schema;
-  }, [assetId, allAssetIds]);
+  }, [entityAssetId, allAssetIds]);
 
   const packsDir = useSelectPacksDir();
   const blockStateAssetId =
@@ -195,6 +201,7 @@ export const OptionsPanel = ({
     // Skip schema loading for GUI textures and entity textures (they don't have blockstates)
     const isGUITexture = assetId?.includes("gui/");
     const isEntityTexture = assetId?.includes("entity/");
+
     if (
       !assetId ||
       isColormapSelection ||
@@ -209,6 +216,7 @@ export const OptionsPanel = ({
 
     const targetPackId =
       winnerPackId ?? (isMinecraftNamespace ? "minecraft:vanilla" : null);
+
     if (!targetPackId) {
       setSchema(null);
       return;
@@ -254,8 +262,9 @@ export const OptionsPanel = ({
       setBlockProps({});
       setSeed(0);
       setViewingVariantId(undefined);
+      onBlockPropsChange?.({});
     }
-  }, [assetId]);
+  }, [assetId, onBlockPropsChange]);
 
   // Determine which tabs to show
   const hasVariantsTab = useMemo(() => {
@@ -296,13 +305,15 @@ export const OptionsPanel = ({
     !isColormapSelection && (isPlantPotted || canBePotted);
   const shouldShowBlockStateTab =
     !isColormapSelection && !isItem && (schema?.properties.length ?? 0) > 0;
-  const shouldShowEntityVariantTab = assetId
-    ? getEntityVariants(assetId).length > 0
+  const shouldShowEntityVariantTab = entityAssetId
+    ? getEntityVariants(entityAssetId).length > 0
     : false;
-  const shouldShowAnimationsTab = assetId ? isEntityTexture(assetId) : false;
+  const shouldShowAnimationsTab = entityAssetId
+    ? isEntityTexture(entityAssetId)
+    : false;
   const shouldShowEntityFeaturesTab =
-    assetId != null &&
-    assetId.includes("entity/") &&
+    entityAssetId != null &&
+    entityAssetId.includes("entity/") &&
     entityFeatureSchema != null &&
     entityFeatureSchema.controls.length > 0;
   const shouldShowItemTab =
@@ -455,7 +466,9 @@ export const OptionsPanel = ({
           />
         )}
 
-        {shouldShowEntityVariantTab && <EntityVariantTab assetId={assetId} />}
+        {shouldShowEntityVariantTab && entityAssetId && (
+          <EntityVariantTab assetId={entityAssetId} />
+        )}
 
         {shouldShowAnimationsTab && <AnimationsTab />}
 
