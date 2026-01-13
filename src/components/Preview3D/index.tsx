@@ -261,12 +261,34 @@ export default function Preview3D({
           {/* Model rendering - use EntityModel for entities, BlockModel for blocks */}
           {previewAssetId &&
             (entityAssetId ? (
-              // Entity model (chests, shulker boxes, etc.)
-              <EntityModel
-                assetId={entityAssetId}
-                entityTypeOverride={blockEntitySpec?.entityTypeOverride}
-                parentEntityOverride={blockEntitySpec?.parentEntityOverride}
-              />
+              blockEntitySpec?.renderBoth ? (
+                // Composite rendering: both block model AND entity model (e.g., bells)
+                // Block model renders the frame/structure, entity model renders the dynamic part
+                <>
+                  <BlockModel
+                    assetId={previewAssetId}
+                    biomeColor={effectiveBiomeColor}
+                    onTintDetected={handleTintDetected}
+                    showPot={showPot && !isColormapAsset}
+                    isPotted={(isPlantPotted || canBePotted) && !isColormapAsset}
+                    blockProps={blockProps}
+                    seed={seed}
+                  />
+                  <EntityModel
+                    assetId={entityAssetId}
+                    entityTypeOverride={blockEntitySpec?.entityTypeOverride}
+                    parentEntityOverride={blockEntitySpec?.parentEntityOverride}
+                  />
+                </>
+              ) : (
+                // Entity-only rendering (chests, shulker boxes, signs, etc.)
+                // Block model is empty, only entity model has geometry
+                <EntityModel
+                  assetId={entityAssetId}
+                  entityTypeOverride={blockEntitySpec?.entityTypeOverride}
+                  parentEntityOverride={blockEntitySpec?.parentEntityOverride}
+                />
+              )
             ) : multiBlockParts ? (
               // Multi-part block model
               multiBlockParts.map((part, index) => (

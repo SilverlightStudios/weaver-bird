@@ -145,10 +145,13 @@ export const useSelectPaginatedAssets = () => {
   const assets = useStore((state) => state.assets);
 
   return useMemo(() => {
+    // Create set of all asset IDs for data-driven exclusion
+    const allAssetIds = new Set(Object.keys(assets));
+
     // Filter out unwanted assets
     let filteredAssets = Object.values(assets).filter(
       (asset) =>
-        !shouldExcludeAsset(asset.id) &&
+        !shouldExcludeAsset(asset.id, allAssetIds) &&
         !isEntityFeatureLayerTextureAssetId(asset.id),
     );
 
