@@ -1,0 +1,1000 @@
+/// Block Particle Emission Extractor
+///
+/// Extracts particle emission data from decompiled Minecraft block classes.
+/// Parses animateTick methods to find addParticle calls and their conditions.
+///
+/// This data is NOT bundled with the app - it's extracted on-demand
+/// from the user's Minecraft installation.
+
+use anyhow::{anyhow, Context, Result};
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use super::particle_physics_extractor::{download_mojang_mappings, ensure_cfr_available};
+
+/// Extracted particle options (for ParticleOptions-based emissions like dust)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractedParticleOptions {
+    /// Discriminator for how to interpret the options (e.g., "dust")
+    pub kind: String,
+    /// Optional RGB color (0..1)
+    pub color: Option<[f32; 3]>,
+    /// Optional scale multiplier
+    pub scale: Option<f32>,
+}
+
+/// A single particle emission from a block
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractedBlockEmission {
+    /// Particle type ID (e.g., "FLAME", "SMOKE")
+    #[serde(rename = "particleId")]
+    pub particle_id: String,
+    /// Optional ParticleOptions payload for particles that require additional parameters (e.g., dust color/scale)
+    pub options: Option<ExtractedParticleOptions>,
+    /// Block state condition if any (e.g., "LIT", "POWERED")
+    pub condition: Option<String>,
+    /// Position offset expressions [x, y, z]
+    #[serde(rename = "positionExpr")]
+    pub position_offset: Option<[String; 3]>,
+    /// Velocity expressions [vx, vy, vz]
+    #[serde(rename = "velocityExpr")]
+    pub velocity: Option<[String; 3]>,
+}
+
+/// All emissions for a block
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BlockEmissionData {
+    /// The block class name
+    #[serde(rename = "className")]
+    pub class_name: String,
+    /// List of particle emissions
+    pub emissions: Vec<ExtractedBlockEmission>,
+}
+
+/// All extracted block and entity emissions for a Minecraft version
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractedBlockEmissions {
+    /// Schema version for cache compatibility
+    #[serde(default)]
+    pub schema_version: u32,
+    pub version: String,
+    pub blocks: HashMap<String, BlockEmissionData>,
+    /// Entity particle emissions (schema v4+)
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub entities: HashMap<String, BlockEmissionData>,
+}
+
+/// Get the cache directory for block emissions
+fn get_emissions_cache_dir() -> Result<PathBuf> {
+    let cache_dir = dirs::cache_dir()
+        .ok_or_else(|| anyhow!("Could not find cache directory"))?
+        .join("weaverbird")
+        .join("block_emissions");
+
+    fs::create_dir_all(&cache_dir).context("Failed to create block emissions cache directory")?;
+
+    Ok(cache_dir)
+}
+
+/// Get the cache file path for block emissions
+fn get_emissions_cache_file(version: &str) -> Result<PathBuf> {
+    let cache_dir = get_emissions_cache_dir()?;
+    Ok(cache_dir.join(format!("{}.json", version)))
+}
+
+/// Check if block emissions are cached for a version
+pub fn is_block_emissions_cached(version: &str) -> Result<bool> {
+    Ok(load_cached_block_emissions(version)?.is_some())
+}
+
+/// Load cached block emissions
+pub fn load_cached_block_emissions(version: &str) -> Result<Option<ExtractedBlockEmissions>> {
+    let cache_file = get_emissions_cache_file(version)?;
+
+    if !cache_file.exists() {
+        return Ok(None);
+    }
+
+    let content = fs::read_to_string(&cache_file).context("Failed to read emissions cache file")?;
+    let data: ExtractedBlockEmissions =
+        serde_json::from_str(&content).context("Failed to parse emissions cache file")?;
+
+    // If the cache is from an older schema, force re-extraction to populate new fields.
+    const CURRENT_SCHEMA_VERSION: u32 = 3;
+    if data.schema_version < CURRENT_SCHEMA_VERSION {
+        println!(
+            "[block_emissions] Cached emissions schema {} is older than {}, re-extracting...",
+            data.schema_version, CURRENT_SCHEMA_VERSION
+        );
+        return Ok(None);
+    }
+
+    Ok(Some(data))
+}
+
+/// Save block emissions to cache
+fn save_emissions_to_cache(data: &ExtractedBlockEmissions) -> Result<()> {
+    let cache_file = get_emissions_cache_file(&data.version)?;
+    println!(
+        "[block_emissions] Saving {} blocks to {:?}",
+        data.blocks.len(),
+        cache_file
+    );
+
+    let content = serde_json::to_string_pretty(data).context("Failed to serialize emissions")?;
+    fs::write(&cache_file, &content).context("Failed to write emissions cache file")?;
+
+    println!(
+        "[block_emissions] ✓ Cached emissions for version {} ({} blocks, {} bytes)",
+        data.version,
+        data.blocks.len(),
+        content.len()
+    );
+
+    Ok(())
+}
+
+fn is_ident_start(c: char) -> bool {
+    c.is_ascii_alphabetic() || c == '_' || c == '$'
+}
+
+fn is_ident_char(c: char) -> bool {
+    c.is_ascii_alphanumeric() || c == '_' || c == '$'
+}
+
+fn expand_locals(expr: &str, locals: &HashMap<String, String>) -> String {
+    expand_locals_inner(expr, locals, &mut HashSet::new(), 0)
+}
+
+fn expand_locals_inner(
+    expr: &str,
+    locals: &HashMap<String, String>,
+    visiting: &mut HashSet<String>,
+    depth: usize,
+) -> String {
+    // Prevent pathological recursion in weird decompiler output.
+    if depth > 12 {
+        return expr.to_string();
+    }
+
+    let chars: Vec<char> = expr.chars().collect();
+    let mut out = String::with_capacity(chars.len());
+    let mut i = 0;
+
+    while i < chars.len() {
+        let c = chars[i];
+        if is_ident_start(c) {
+            let start = i;
+            i += 1;
+            while i < chars.len() && is_ident_char(chars[i]) {
+                i += 1;
+            }
+            let ident: String = chars[start..i].iter().collect();
+
+            if let Some(replacement) = locals.get(&ident) {
+                // Prevent infinite recursion on self-referential locals.
+                if visiting.contains(&ident) {
+                    out.push_str(&ident);
+                    continue;
+                }
+                visiting.insert(ident.clone());
+                let expanded = expand_locals_inner(replacement, locals, visiting, depth + 1);
+                visiting.remove(&ident);
+
+                out.push('(');
+                out.push_str(expanded.trim());
+                out.push(')');
+            } else {
+                out.push_str(&ident);
+            }
+        } else {
+            out.push(c);
+            i += 1;
+        }
+    }
+
+    out
+}
+
+/// Known block classes that emit particles
+/// Maps deobfuscated class name to block type ID
+/// Returns Vec of (class_name, block_id) pairs to support multiple blocks per class
+fn get_particle_emitting_block_classes() -> Vec<(&'static str, &'static str)> {
+    let mut list = Vec::new();
+
+    // Torches (multiple torch types use the same TorchBlock class)
+    list.push(("net.minecraft.world.level.block.TorchBlock", "torch"));
+    list.push(("net.minecraft.world.level.block.TorchBlock", "soul_torch"));
+    list.push(("net.minecraft.world.level.block.WallTorchBlock", "wall_torch"));
+    list.push(("net.minecraft.world.level.block.WallTorchBlock", "soul_wall_torch"));
+
+    // Campfires
+    list.push(
+        "net.minecraft.world.level.block.CampfireBlock",
+        "campfire",
+    );
+
+    // Candles
+    list.push("net.minecraft.world.level.block.CandleBlock", "candle");
+
+    // End rod
+    list.push("net.minecraft.world.level.block.EndRodBlock", "end_rod");
+
+    // Brewing stand
+    list.push(
+        "net.minecraft.world.level.block.BrewingStandBlock",
+        "brewing_stand",
+    );
+
+    // Enchanting table
+    list.push(
+        "net.minecraft.world.level.block.EnchantingTableBlock",
+        "enchanting_table",
+    );
+
+    // Spawners
+    list.push(
+        "net.minecraft.world.level.block.SpawnerBlock",
+        "spawner",
+    );
+    list.push(
+        "net.minecraft.world.level.block.TrialSpawnerBlock",
+        "trial_spawner",
+    );
+
+    // Furnaces
+    list.push(
+        "net.minecraft.world.level.block.FurnaceBlock",
+        "furnace",
+    );
+    list.push(
+        "net.minecraft.world.level.block.BlastFurnaceBlock",
+        "blast_furnace",
+    );
+    list.push(
+        "net.minecraft.world.level.block.SmokerBlock",
+        "smoker",
+    );
+
+    // Spore blossom
+    list.push(
+        "net.minecraft.world.level.block.SporeBlossomBlock",
+        "spore_blossom",
+    );
+
+    // Nether
+    list.push(
+        "net.minecraft.world.level.block.CryingObsidianBlock",
+        "crying_obsidian",
+    );
+    list.push(
+        "net.minecraft.world.level.block.RespawnAnchorBlock",
+        "respawn_anchor",
+    );
+    list.push(
+        "net.minecraft.world.level.block.NetherPortalBlock",
+        "nether_portal",
+    );
+
+    // Sculk
+    list.push(
+        "net.minecraft.world.level.block.SculkCatalystBlock",
+        "sculk_catalyst",
+    );
+    list.push(
+        "net.minecraft.world.level.block.SculkShriekerBlock",
+        "sculk_shrieker",
+    );
+
+    // Mycelium
+    list.push(
+        "net.minecraft.world.level.block.MyceliumBlock",
+        "mycelium",
+    );
+
+    // Redstone
+    list.push(
+        "net.minecraft.world.level.block.RedStoneWireBlock",
+        "redstone_wire",
+    );
+    list.push(
+        "net.minecraft.world.level.block.RedstoneTorchBlock",
+        "redstone_torch",
+    );
+    list.push(
+        "net.minecraft.world.level.block.RedstoneWallTorchBlock",
+        "redstone_wall_torch",
+    );
+
+    // Lava
+    list.push(
+        "net.minecraft.world.level.block.LiquidBlock",
+        "lava",
+    );
+
+    // Beehive
+    list.push((
+        "net.minecraft.world.level.block.BeehiveBlock",
+        "beehive",
+    ));
+
+    list
+}
+
+/// Get all entity classes that might emit particles
+/// Scans the decompiled entity directory for any classes with addParticle calls
+fn get_particle_emitting_entity_classes(decompile_dir: &Path) -> Result<HashMap<String, String>> {
+    let entity_dir = decompile_dir.join("net/minecraft/world/entity");
+    let mut entity_classes = HashMap::new();
+
+    if !entity_dir.exists() {
+        return Ok(entity_classes);
+    }
+
+    // Recursively scan all Java files in the entity directory
+    fn scan_dir(dir: &Path, base_entity_dir: &Path, classes: &mut HashMap<String, String>) -> Result<()> {
+        if !dir.is_dir() {
+            return Ok(());
+        }
+
+        for entry in fs::read_dir(dir).context("Failed to read entity directory")? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                scan_dir(&path, base_entity_dir, classes)?;
+            } else if path.extension().and_then(|s| s.to_str()) == Some("java") {
+                // Check if this file contains addParticle calls
+                if let Ok(content) = fs::read_to_string(&path) {
+                    if content.contains("addParticle") {
+                        // Convert file path to class name
+                        // e.g., .../monster/EnderMan.java -> monster/EnderMan
+                        if let Ok(rel_path) = path.strip_prefix(base_entity_dir) {
+                            let class_path = rel_path
+                                .with_extension("")
+                                .to_string_lossy()
+                                .replace(std::path::MAIN_SEPARATOR, "/");
+
+                            // Build fully qualified class name
+                            let deobf_class = format!("net.minecraft.world.entity.{}", class_path.replace('/', "."));
+
+                            // Extract entity ID from class name (e.g., monster/EnderMan -> enderman)
+                            let file_stem = path.file_stem()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or("unknown");
+
+                            // Convert to snake_case entity ID
+                            let entity_id = camel_to_snake_case(file_stem);
+
+                            classes.insert(deobf_class, entity_id);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    scan_dir(&entity_dir, &entity_dir, &mut entity_classes)?;
+
+    println!("[entity_emissions] Found {} entity classes with addParticle calls", entity_classes.len());
+
+    Ok(entity_classes)
+}
+
+/// Convert CamelCase to snake_case
+fn camel_to_snake_case(s: &str) -> String {
+    let mut result = String::new();
+    let mut chars = s.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        if c.is_uppercase() {
+            if !result.is_empty() {
+                result.push('_');
+            }
+            result.push(c.to_lowercase().next().unwrap());
+        } else {
+            result.push(c);
+        }
+    }
+
+    result
+}
+
+fn parse_rgb24_int(color: i32) -> [f32; 3] {
+    let c = (color as u32) & 0x00FF_FFFF;
+    let r = ((c >> 16) & 0xFF) as f32 / 255.0;
+    let g = ((c >> 8) & 0xFF) as f32 / 255.0;
+    let b = (c & 0xFF) as f32 / 255.0;
+    [r, g, b]
+}
+
+fn load_dust_particle_option_constants(decompile_dir: &Path) -> HashMap<String, ExtractedParticleOptions> {
+    let mut out: HashMap<String, ExtractedParticleOptions> = HashMap::new();
+    let file = decompile_dir.join("net/minecraft/core/particles/DustParticleOptions.java");
+    let Ok(source) = fs::read_to_string(&file) else {
+        return out;
+    };
+
+    let const_re = Regex::new(
+        r"public\s+static\s+final\s+DustParticleOptions\s+(\w+)\s*=\s*new\s+DustParticleOptions\s*\(\s*(0x[0-9A-Fa-f]+|\d+)\s*,\s*([-+]?[\d.]+(?:[eE][+-]?\d+)?)[fF]?\s*\)",
+    ).unwrap();
+
+    for caps in const_re.captures_iter(&source) {
+        let name = caps.get(1).unwrap().as_str().to_string();
+        let color_token = caps.get(2).unwrap().as_str();
+        let scale_token = caps.get(3).unwrap().as_str();
+
+        let color_int: i32 = if let Some(hex) = color_token.strip_prefix("0x") {
+            i32::from_str_radix(hex, 16).unwrap_or(0)
+        } else {
+            color_token.parse::<i32>().unwrap_or(0)
+        };
+
+        let scale = scale_token.parse::<f32>().ok();
+        out.insert(
+            name,
+            ExtractedParticleOptions {
+                kind: "dust".to_string(),
+                color: Some(parse_rgb24_int(color_int)),
+                scale,
+            },
+        );
+    }
+
+    out
+}
+
+/// Extract particle emissions from decompiled source
+fn extract_emissions_from_source(
+    source: &str,
+    dust_options: &HashMap<String, ExtractedParticleOptions>,
+) -> Vec<ExtractedBlockEmission> {
+    let mut emissions = Vec::new();
+
+    // Pattern to match addParticle calls with ParticleTypes.XXX
+    // CFR uses $$0, $$1 etc. for parameter names, so we match those too
+    // Examples:
+    //   $$1.addParticle(ParticleTypes.SMOKE, $$4, $$5, $$6, 0.0, 0.0, 0.0);
+    //   level.addParticle(ParticleTypes.FLAME, x, y, z, vx, vy, vz);
+    //   this.level().addParticle(ParticleTypes.PORTAL, x, y, z, vx, vy, vz);
+    let add_particle_re = Regex::new(
+        r"(?:(?:\$\$\d+|level|world|pLevel|pWorld|\w+Level|this\.level\(\)|this\.getLevel\(\)))\s*\.\s*addParticle\s*\(\s*ParticleTypes\s*\.\s*(\w+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\)"
+    ).unwrap();
+
+    // Also match addParticle with instance field particles like: this.flameParticle
+    // $$1.addParticle(this.flameParticle, $$4, $$5, $$6, 0.0, 0.0, 0.0);
+    let add_particle_field_re = Regex::new(
+        r"(?:(?:\$\$\d+|level|world|pLevel|pWorld|\w+Level|this\.level\(\)|this\.getLevel\(\)))\s*\.\s*addParticle\s*\(\s*this\.(\w+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\)"
+    ).unwrap();
+
+    // DustParticleOptions constant (ParticleOptions-based addParticle overload)
+    // Example:
+    //   $$1.addParticle(DustParticleOptions.REDSTONE, $$4, $$5, $$6, 0.0, 0.0, 0.0);
+    let add_particle_dust_options_re = Regex::new(
+        r"(?:(?:\$\$\d+|level|world|pLevel|pWorld|\w+Level|this\.level\(\)|this\.getLevel\(\)))\s*\.\s*addParticle\s*\(\s*DustParticleOptions\s*\.\s*(\w+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\)"
+    ).unwrap();
+
+    // Pattern to match conditions like: if (state.getValue(LIT)) or if ($$0.getValue(LIT))
+    let condition_re = Regex::new(r"if\s*\(\s*(?:\$\$\d+|\w+)\.getValue\s*\(\s*(\w+)\s*\)\s*\)").unwrap();
+    // Guard-style early return: if (!state.getValue(LIT).booleanValue()) { return; }
+    // Emissions after this point are effectively conditional on PROP=true.
+    let guard_re = Regex::new(
+        r"if\s*\(\s*!\s*(?:\$\$\d+|\w+)\.getValue\s*\(\s*(\w+)\s*\)\s*(?:\.booleanValue\s*\(\s*\))?\s*\)",
+    )
+    .unwrap();
+
+    let mut current_condition: Option<String> = None;
+    let mut guard_condition: Option<String> = None;
+    let mut locals: HashMap<String, String> = HashMap::new();
+
+    // CFR often emits local vars for world coordinates and offsets:
+    // double $$4 = (double)$$2.getX() + 0.5;
+    // level.addParticle(..., $$4, $$5, $$6, ...)
+    // We inline these locals so the frontend expression compiler can evaluate positions/velocities.
+    let local_assign_re = Regex::new(
+        r"^\s*(?:final\s+)?(?:double|float|int|Direction)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*(.+);\s*$",
+    )
+    .unwrap();
+
+    // Pattern for inline DustParticleOptions construction:
+    // addParticle(new DustParticleOptions(0xFF0000, 1.0f), ...)
+    let add_particle_dust_inline_re = Regex::new(
+        r"(?:(?:\$\$\d+|level|world|pLevel|pWorld|\w+Level|this\.level\(\)|this\.getLevel\(\)))\s*\.\s*addParticle\s*\(\s*new\s+DustParticleOptions\s*\(\s*(0x[0-9A-Fa-f]+|\d+|[A-Za-z_$][A-Za-z0-9_$]*(?:\s*\[\s*[^\]]+\s*\])?)\s*,\s*([-+]?[\d.]+[fF]?)\s*\)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\)"
+    ).unwrap();
+
+    // Track method boundaries to reset locals/conditions per method
+    let method_start_re = Regex::new(r"\b(?:public|private|protected)\s+(?:static\s+)?(?:void|[\w<>]+)\s+(\w+)\s*\(").unwrap();
+
+    for line in source.lines() {
+        // Reset context when entering a new method
+        if method_start_re.is_match(line) {
+            locals.clear();
+            current_condition = None;
+            guard_condition = None;
+        }
+
+        // Capture CFR local assignments for later inlining.
+        if let Some(caps) = local_assign_re.captures(line) {
+            let var = caps.get(1).unwrap().as_str().trim().to_string();
+            let expr = caps.get(2).unwrap().as_str().trim().to_string();
+            locals.insert(var, expr);
+        }
+
+        // Check for conditions
+        if guard_condition.is_none() {
+            if let Some(caps) = guard_re.captures(line) {
+                guard_condition = Some(caps.get(1).unwrap().as_str().to_string());
+            }
+        }
+        if let Some(caps) = condition_re.captures(line) {
+            current_condition = Some(caps.get(1).unwrap().as_str().to_string());
+        }
+
+        // Check for addParticle calls with ParticleTypes.XXX
+        if let Some(caps) = add_particle_re.captures(line) {
+            let particle_id = caps.get(1).unwrap().as_str().to_lowercase();
+            emissions.push(ExtractedBlockEmission {
+                particle_id,
+                options: None,
+                condition: current_condition.clone().or_else(|| guard_condition.clone()),
+                position_offset: Some([
+                    expand_locals(caps.get(2).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(3).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(4).unwrap().as_str().trim(), &locals),
+                ]),
+                velocity: Some([
+                    expand_locals(caps.get(5).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(6).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(7).unwrap().as_str().trim(), &locals),
+                ]),
+            });
+        }
+        // Check for addParticle with instance field (like this.flameParticle)
+        else if let Some(caps) = add_particle_field_re.captures(line) {
+            // For field references, we use a placeholder that indicates dynamic particle
+            let field_name = caps.get(1).unwrap().as_str();
+            // Common field names map to their likely particle types
+            let particle_id = match field_name {
+                "flameParticle" => "flame".to_string(),
+                _ => format!("FIELD:{}", field_name),
+            };
+            emissions.push(ExtractedBlockEmission {
+                particle_id,
+                options: None,
+                condition: current_condition.clone().or_else(|| guard_condition.clone()),
+                position_offset: Some([
+                    expand_locals(caps.get(2).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(3).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(4).unwrap().as_str().trim(), &locals),
+                ]),
+                velocity: Some([
+                    expand_locals(caps.get(5).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(6).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(7).unwrap().as_str().trim(), &locals),
+                ]),
+            });
+        }
+        // Check for inline DustParticleOptions construction
+        else if let Some(caps) = add_particle_dust_inline_re.captures(line) {
+            let color_token = caps.get(1).unwrap().as_str();
+            let scale_token = caps.get(2).unwrap().as_str();
+
+            // Parse color (can be hex, int, or variable reference)
+            let color = if let Some(hex) = color_token.strip_prefix("0x") {
+                let color_int = i32::from_str_radix(hex, 16).unwrap_or(0xFF0000);
+                Some(parse_rgb24_int(color_int))
+            } else if let Ok(color_int) = color_token.parse::<i32>() {
+                Some(parse_rgb24_int(color_int))
+            } else {
+                // Variable reference like COLORS[$$4] - can't determine statically
+                None
+            };
+
+            let scale = scale_token.trim_end_matches('f').trim_end_matches('F').parse::<f32>().ok();
+
+            emissions.push(ExtractedBlockEmission {
+                particle_id: "dust".to_string(),
+                options: Some(ExtractedParticleOptions {
+                    kind: "dust".to_string(),
+                    color,
+                    scale,
+                }),
+                condition: current_condition.clone().or_else(|| guard_condition.clone()),
+                position_offset: Some([
+                    expand_locals(caps.get(3).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(4).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(5).unwrap().as_str().trim(), &locals),
+                ]),
+                velocity: Some([
+                    expand_locals(caps.get(6).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(7).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(8).unwrap().as_str().trim(), &locals),
+                ]),
+            });
+        }
+        // Check for DustParticleOptions constant addParticle (ParticleOptions overload)
+        else if let Some(caps) = add_particle_dust_options_re.captures(line) {
+            let option_name = caps.get(1).unwrap().as_str();
+            emissions.push(ExtractedBlockEmission {
+                // DustParticleOptions.getType() returns ParticleTypes.DUST.
+                particle_id: "dust".to_string(),
+                options: dust_options.get(option_name).cloned().or_else(|| {
+                    Some(ExtractedParticleOptions {
+                        kind: "dust".to_string(),
+                        color: None,
+                        scale: None,
+                    })
+                }),
+                condition: current_condition.clone().or_else(|| guard_condition.clone()),
+                position_offset: Some([
+                    expand_locals(caps.get(2).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(3).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(4).unwrap().as_str().trim(), &locals),
+                ]),
+                velocity: Some([
+                    expand_locals(caps.get(5).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(6).unwrap().as_str().trim(), &locals),
+                    expand_locals(caps.get(7).unwrap().as_str().trim(), &locals),
+                ]),
+            });
+        }
+
+        // Reset condition after a closing brace
+        if line.trim() == "}" {
+            current_condition = None;
+        }
+    }
+
+    emissions
+}
+
+/// Parse Mojang mappings to get class name mappings
+fn parse_class_mappings(mappings_path: &Path) -> Result<HashMap<String, String>> {
+    let content = fs::read_to_string(mappings_path).context("Failed to read mappings file")?;
+
+    let mut class_mappings = HashMap::new();
+
+    for line in content.lines() {
+        // Class mappings look like:
+        // net.minecraft.world.level.block.TorchBlock -> abc:
+        if line.ends_with(':') && !line.starts_with("    ") {
+            let parts: Vec<&str> = line.trim_end_matches(':').split(" -> ").collect();
+            if parts.len() == 2 {
+                let deobfuscated = parts[0].to_string();
+                let obfuscated = parts[1].to_string();
+                class_mappings.insert(obfuscated, deobfuscated);
+            }
+        }
+    }
+
+    Ok(class_mappings)
+}
+
+/// Batch decompile multiple classes from the JAR with Mojang mappings
+/// This is much faster than decompiling one class at a time
+fn batch_decompile_classes(
+    cfr_path: &Path,
+    jar_path: &Path,
+    obfuscated_names: &[&str],
+    output_dir: &Path,
+    mappings_path: &Path,
+) -> Result<()> {
+    use std::process::Command;
+
+    if obfuscated_names.is_empty() {
+        return Ok(());
+    }
+
+    println!(
+        "[block_emissions] Batch decompiling {} classes...",
+        obfuscated_names.len()
+    );
+
+    // Build CFR command with all class names
+    let mut args = vec![
+        "-jar".to_string(),
+        cfr_path.to_str().unwrap().to_string(),
+        jar_path.to_str().unwrap().to_string(),
+        "--outputdir".to_string(),
+        output_dir.to_str().unwrap().to_string(),
+        "--obfuscationpath".to_string(),
+        mappings_path.to_str().unwrap().to_string(),
+    ];
+
+    // Add all class names to decompile
+    for name in obfuscated_names {
+        args.push(name.to_string());
+    }
+
+    let output = Command::new("java")
+        .args(&args)
+        .output()
+        .context("Failed to run CFR decompiler")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        // CFR may report warnings but still succeed - only fail on actual errors
+        if stderr.contains("Exception") || stderr.contains("Error:") {
+            return Err(anyhow!("CFR decompilation failed: {}", stderr));
+        }
+    }
+
+    println!("[block_emissions] Batch decompilation complete");
+    Ok(())
+}
+
+/// Read a decompiled class file
+fn read_decompiled_class(output_dir: &Path, deobfuscated_name: &str) -> Result<String> {
+    let class_path = deobfuscated_name.replace('.', "/") + ".java";
+    let output_file = output_dir.join(&class_path);
+
+    if output_file.exists() {
+        fs::read_to_string(&output_file).context("Failed to read decompiled file")
+    } else {
+        Err(anyhow!("Decompiled file not found: {:?}", output_file))
+    }
+}
+
+/// Extract block particle emissions for a Minecraft version
+pub async fn extract_block_emissions(
+    jar_path: &Path,
+    version: &str,
+) -> Result<ExtractedBlockEmissions> {
+    // Check cache first
+    if let Some(cached) = load_cached_block_emissions(version)? {
+        println!(
+            "[block_emissions] Using cached emissions for {} ({} blocks)",
+            version,
+            cached.blocks.len()
+        );
+        return Ok(cached);
+    }
+
+    println!(
+        "[block_emissions] Extracting block emissions for {}...",
+        version
+    );
+
+    // Download mappings
+    let mappings_path = download_mojang_mappings(version).await?;
+    let class_mappings = parse_class_mappings(&mappings_path)?;
+
+    // Ensure CFR is available
+    let cfr_path = ensure_cfr_available().await?;
+
+    // Create directory for decompiled output
+    let decompile_dir = get_emissions_cache_dir()?.join("decompiled").join(version);
+    fs::create_dir_all(&decompile_dir).context("Failed to create decompile directory")?;
+
+    let block_classes = get_particle_emitting_block_classes();
+
+    // Collect all obfuscated names that need decompilation
+    let mut classes_to_decompile: Vec<(&str, &str, String)> = Vec::new(); // (deobf, block_id, obf)
+
+    for (deobf_class_name, block_id) in &block_classes {
+        // Check if already decompiled
+        let class_path = deobf_class_name.replace('.', "/") + ".java";
+        let output_file = decompile_dir.join(&class_path);
+
+        if output_file.exists() {
+            continue; // Already decompiled
+        }
+
+        // Find the obfuscated name
+        if let Some((obf, _)) = class_mappings.iter().find(|(_, v)| *v == *deobf_class_name) {
+            classes_to_decompile.push((deobf_class_name, block_id, obf.clone()));
+        } else {
+            println!(
+                "[block_emissions] No mapping found for {}",
+                deobf_class_name
+            );
+        }
+    }
+
+    // Ensure particle option classes needed by emitters are also decompiled (for constant lookup).
+    // These are not blocks, but block animateTick() methods can emit ParticleOptions directly.
+    let extra_classes = ["net.minecraft.core.particles.DustParticleOptions"];
+    for deobf_class_name in extra_classes {
+        let class_path = deobf_class_name.replace('.', "/") + ".java";
+        let output_file = decompile_dir.join(&class_path);
+        if output_file.exists() {
+            continue;
+        }
+        if let Some((obf, _)) = class_mappings.iter().find(|(_, v)| *v == deobf_class_name) {
+            classes_to_decompile.push((deobf_class_name, "__extra__", obf.clone()));
+        }
+    }
+
+    // Batch decompile all classes at once (much faster than one-by-one)
+    if !classes_to_decompile.is_empty() {
+        let obf_names: Vec<&str> = classes_to_decompile
+            .iter()
+            .map(|(_, _, obf)| obf.as_str())
+            .collect();
+
+        batch_decompile_classes(
+            &cfr_path,
+            jar_path,
+            &obf_names,
+            &decompile_dir,
+            &mappings_path,
+        )?;
+    }
+
+    // Now parse all decompiled files
+    let mut extracted_blocks = HashMap::new();
+    let mut extracted_entities = HashMap::new();
+    let dust_options = load_dust_particle_option_constants(&decompile_dir);
+
+    // Extract from blocks
+    for (deobf_class_name, block_id) in &block_classes {
+        match read_decompiled_class(&decompile_dir, deobf_class_name) {
+            Ok(source) => {
+                let emissions = extract_emissions_from_source(&source, &dust_options);
+                if !emissions.is_empty() {
+                    println!(
+                        "[block_emissions] {} -> {:?}",
+                        block_id,
+                        emissions.iter().map(|e| &e.particle_id).collect::<Vec<_>>()
+                    );
+                    extracted_blocks.insert(
+                        block_id.to_string(),
+                        BlockEmissionData {
+                            class_name: deobf_class_name.to_string(),
+                            emissions,
+                        },
+                    );
+                }
+            }
+            Err(e) => {
+                println!("[block_emissions] Failed to read {}: {}", block_id, e);
+            }
+        }
+    }
+
+    // Extract from entities
+    let entity_classes = get_particle_emitting_entity_classes(&decompile_dir)?;
+    for (deobf_class_name, entity_id) in &entity_classes {
+        match read_decompiled_class(&decompile_dir, deobf_class_name) {
+            Ok(source) => {
+                let emissions = extract_emissions_from_source(&source, &dust_options);
+                if !emissions.is_empty() {
+                    println!(
+                        "[entity_emissions] {} -> {:?}",
+                        entity_id,
+                        emissions.iter().map(|e| &e.particle_id).collect::<Vec<_>>()
+                    );
+                    extracted_entities.insert(
+                        entity_id.to_string(),
+                        BlockEmissionData {
+                            class_name: deobf_class_name.to_string(),
+                            emissions,
+                        },
+                    );
+                }
+            }
+            Err(e) => {
+                println!("[entity_emissions] Failed to read {}: {}", entity_id, e);
+            }
+        }
+    }
+
+    let data = ExtractedBlockEmissions {
+        schema_version: 4,
+        version: version.to_string(),
+        blocks: extracted_blocks,
+        entities: extracted_entities,
+    };
+
+    // Cache the results
+    save_emissions_to_cache(&data)?;
+
+    println!(
+        "[emissions] Extraction complete: {} blocks, {} entities",
+        data.blocks.len(),
+        data.entities.len()
+    );
+
+    Ok(data)
+}
+
+/// Get block emissions, preferring extracted data
+pub async fn get_block_emissions_for_version(
+    jar_path: &Path,
+    version: &str,
+) -> Result<ExtractedBlockEmissions> {
+    // Check cache first
+    if let Some(cached) = load_cached_block_emissions(version)? {
+        return Ok(cached);
+    }
+
+    // Try to extract
+    extract_block_emissions(jar_path, version).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_emissions_from_source() {
+        let source = r#"
+            public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+                if (state.getValue(LIT)) {
+                    level.addParticle(ParticleTypes.FLAME, pos.getX() + 0.5, pos.getY() + 0.7, pos.getZ() + 0.5, 0.0, 0.0, 0.0);
+                    level.addParticle(ParticleTypes.SMOKE, pos.getX() + 0.5, pos.getY() + 0.7, pos.getZ() + 0.5, 0.0, 0.01, 0.0);
+                }
+            }
+        "#;
+
+        let dust_options = HashMap::new();
+        let emissions = extract_emissions_from_source(source, &dust_options);
+        assert_eq!(emissions.len(), 2);
+        assert_eq!(emissions[0].particle_id, "flame");
+        assert_eq!(emissions[0].condition, Some("LIT".to_string()));
+        assert_eq!(emissions[1].particle_id, "smoke");
+    }
+
+    #[test]
+    fn test_extract_emissions_with_dust_particle_options() {
+        let source = r#"
+            public void animateTick(BlockState $$0, Level $$1, BlockPos $$2, RandomSource $$3) {
+                $$1.addParticle(DustParticleOptions.REDSTONE, (double)$$2.getX() + 0.5, (double)$$2.getY() + 0.7, (double)$$2.getZ() + 0.5, 0.0, 0.0, 0.0);
+            }
+        "#;
+
+        let mut dust_options = HashMap::new();
+        dust_options.insert(
+            "REDSTONE".to_string(),
+            ExtractedParticleOptions {
+                kind: "dust".to_string(),
+                color: Some([1.0, 0.0, 0.0]),
+                scale: Some(1.0),
+            },
+        );
+
+        let emissions = extract_emissions_from_source(source, &dust_options);
+        assert_eq!(emissions.len(), 1);
+        assert_eq!(emissions[0].particle_id, "dust");
+        assert_eq!(emissions[0].options.as_ref().unwrap().kind, "dust");
+    }
+
+    #[test]
+    fn test_particle_emitting_blocks() {
+        let blocks = get_particle_emitting_block_classes();
+        assert!(blocks.contains_key("net.minecraft.world.level.block.TorchBlock"));
+        assert_eq!(
+            blocks.get("net.minecraft.world.level.block.TorchBlock"),
+            Some(&"torch")
+        );
+    }
+
+    #[test]
+    fn test_extract_emissions_inlines_cfr_locals() {
+        // Mirrors CFR-style output for TorchBlock.animateTick (locals like $$4/$$5/$$6).
+        let source = r#"
+            public void animateTick(BlockState $$0, Level $$1, BlockPos $$2, RandomSource $$3) {
+                double $$4 = (double)$$2.getX() + 0.5;
+                double $$5 = (double)$$2.getY() + 0.7;
+                double $$6 = (double)$$2.getZ() + 0.5;
+                double $$11 = (double)$$3.nextDouble() * 0.1;
+                $$1.addParticle(ParticleTypes.SMOKE, $$4 + $$11, $$5, $$6, 0.0, 0.0, 0.0);
+            }
+        "#;
+
+        let dust_options = HashMap::new();
+        let emissions = extract_emissions_from_source(source, &dust_options);
+        assert_eq!(emissions.len(), 1);
+
+        let pos = emissions[0].position_offset.as_ref().unwrap();
+        assert!(pos[0].contains("$$2.getX()"));
+        assert!(pos[0].contains("$$3.nextDouble()"));
+        assert!(!pos[0].contains("$$4"));
+        assert!(!pos[0].contains("$$11"));
+    }
+}

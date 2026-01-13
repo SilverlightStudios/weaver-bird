@@ -1,0 +1,28 @@
+.selectRow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+}
+
+.selectLabel {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+}
+
+.selectControl {
+    width: 100%;
+    justify-content: space-between;
+}
+
+.description {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+    line-height: 1.4;
+}
+
+.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}

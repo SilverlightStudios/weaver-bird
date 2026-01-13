@@ -94,9 +94,6 @@ async function getImageDimensions(
     img.crossOrigin = "anonymous";
 
     img.onload = () => {
-      console.log(
-        `[animationTexture] Image loaded: ${url} - ${img.naturalWidth}x${img.naturalHeight}`,
-      );
       resolve({
         width: img.naturalWidth,
         height: img.naturalHeight,
@@ -137,9 +134,6 @@ async function tryLoadMcmeta(
 
     // Validate structure
     if (!json.animation || typeof json.animation !== "object") {
-      console.warn(
-        `[animationTexture] Invalid .mcmeta format for ${textureUrl}`,
-      );
       return null;
     }
 
@@ -151,14 +145,19 @@ async function tryLoadMcmeta(
         typeof anim.interpolate === "boolean" ? anim.interpolate : false,
       frames: Array.isArray(anim.frames) ? anim.frames : undefined,
     };
-  } catch (error) {
+  } catch {
     // Failed to load/parse .mcmeta - use defaults
-    console.debug(
-      `[animationTexture] Could not load .mcmeta for ${textureUrl}:`,
-      error,
-    );
     return null;
   }
+}
+
+/**
+ * Load animation metadata from a .mcmeta file if available
+ */
+export async function loadAnimationMetadata(
+  textureUrl: string,
+): Promise<AnimationMetadata | null> {
+  return tryLoadMcmeta(textureUrl);
 }
 
 /**
@@ -321,6 +320,68 @@ export function getFrameCount(width: number, height: number): number {
     return 1;
   }
   return height / width;
+}
+
+/**
+ * Build a frame timeline from animation metadata
+ */
+export function buildAnimationTimeline(
+  frameCount: number,
+  metadata: AnimationMetadata | null,
+  defaultFrametimeTicks: number = 8,
+): { frames: number[]; frameTimesMs: number[] } {
+  if (frameCount <= 1) {
+    return { frames: [0], frameTimesMs: [defaultFrametimeTicks * 50] };
+  }
+
+  const baseFrametime =
+    metadata?.frametime && metadata.frametime > 0
+      ? metadata.frametime
+      : defaultFrametimeTicks;
+  const framesSource =
+    metadata?.frames && metadata.frames.length > 0
+      ? metadata.frames
+      : Array.from({ length: frameCount }, (_, index) => index);
+
+  const frames: number[] = [];
+  const frameTimesMs: number[] = [];
+
+  const isFrameObject = (
+    entry: typeof framesSource[number],
+  ): entry is { index: number; time?: number } =>
+    typeof entry === "object" &&
+    entry !== null &&
+    "index" in entry &&
+    typeof entry.index === "number";
+
+  framesSource.forEach((entry) => {
+    const frameObject = isFrameObject(entry);
+    const rawIndex = frameObject ? entry.index : entry;
+    const index =
+      typeof rawIndex === "number" && Number.isFinite(rawIndex)
+        ? Math.max(0, Math.min(rawIndex, frameCount - 1))
+        : 0;
+
+    const rawTime =
+      frameObject && typeof entry.time === "number" && entry.time > 0
+        ? entry.time
+        : baseFrametime;
+
+    frames.push(index);
+    frameTimesMs.push(Math.max(1, rawTime) * 50);
+  });
+
+  if (frames.length === 0) {
+    return {
+      frames: Array.from({ length: frameCount }, (_, index) => index),
+      frameTimesMs: Array.from(
+        { length: frameCount },
+        () => baseFrametime * 50,
+      ),
+    };
+  }
+
+  return { frames, frameTimesMs };
 }
 
 /**

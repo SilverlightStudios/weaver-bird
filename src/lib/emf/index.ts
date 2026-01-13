@@ -5,6 +5,7 @@ export {
   addDebugVisualization,
   logHierarchy,
   mergeVariantTextures,
+  applyVariantPartMask,
 } from "./jemLoader";
 export type {
   JEMFile,
@@ -27,6 +28,7 @@ import {
   parseJEM as parseJEMImpl,
   parseJEMPart,
   mergeVariantTextures,
+  applyVariantPartMask,
 } from "./jemLoader";
 
 function indexPartsByName(parts: ParsedPart[]): Map<string, ParsedPart> {
@@ -124,6 +126,32 @@ const entityModelCache = new Map<
   (ParsedEntityModel & { jemSource: string; usedLegacyJem: boolean }) | null
 >();
 
+function getShulkerBoxBlockColor(path: string): string | null {
+  const normalizedPath = path.replace(/\.png$/i, "");
+  if (normalizedPath === "block/shulker_box") return "";
+  const match = normalizedPath.match(/^block\/(.+)_shulker_box$/);
+  return match ? match[1] ?? "" : null;
+}
+
+export function getEntityTextureAssetId(assetId: string): string {
+  const normalized = (assetId.includes(":") ? assetId : `minecraft:${assetId}`)
+    .replace(/\.png$/i, "");
+  const [namespace, rawPath] = normalized.split(":");
+  const path = rawPath ?? "";
+
+  if (path.startsWith("entity/") || path.startsWith("chest/")) {
+    return normalized;
+  }
+
+  const shulkerColor = getShulkerBoxBlockColor(path);
+  if (shulkerColor !== null) {
+    const suffix = shulkerColor ? `_${shulkerColor}` : "";
+    return `${namespace}:entity/shulker/shulker${suffix}`;
+  }
+
+  return normalized;
+}
+
 export function isEntityTexture(assetId: string): boolean {
   if (assetId.includes("entity/")) {
     const match = assetId.match(/entity\/(.+)/);
@@ -151,7 +179,8 @@ export function isEntityTexture(assetId: string): boolean {
     return true;
   }
 
-  return false;
+  const path = assetId.replace(/^minecraft:/, "");
+  return getShulkerBoxBlockColor(path) !== null;
 }
 
 export function getEntityInfoFromAssetId(assetId: string): {
@@ -171,6 +200,10 @@ export function getEntityInfoFromAssetId(assetId: string): {
     }
 
     if (path.includes("shulker_box/")) {
+      return { variant: "shulker_box", parent: null };
+    }
+
+    if (getShulkerBoxBlockColor(path) !== null) {
       return { variant: "shulker_box", parent: null };
     }
 
@@ -385,6 +418,7 @@ export async function loadEntityModel(
     jemPath: string,
     jemNameForVanillaPivot: string,
     source: string,
+    fallbackBaseName?: string,
   ): Promise<(ParsedEntityModel & { jemSource: string; usedLegacyJem: boolean }) | null> => {
     try {
       console.log(`[EMF] Trying ${source} JEM:`, jemPath);
@@ -578,11 +612,31 @@ export async function loadEntityModel(
       };
 
       const hasValidBoxes = parsed.parts.some(subtreeHasBoxes);
-        if (!hasValidBoxes) {
-          console.log(
-            `[EMF] ✗ ${source} JEM has no valid boxes (likely texture-only variant):`,
-            jemNameForVanillaPivot,
+      if (!hasValidBoxes) {
+        console.log(
+          `[EMF] ✗ ${source} JEM has no valid boxes (likely texture-only variant):`,
+          jemNameForVanillaPivot,
+        );
+
+        if (
+          fallbackBaseName &&
+          fallbackBaseName !== jemNameForVanillaPivot
+        ) {
+          const baseModel = await tryLoadJemByName(
+            fallbackBaseName,
+            "fallback for empty variant",
           );
+          if (baseModel) {
+            const merged = mergeVariantTextures(baseModel, jemData);
+            const masked = applyVariantPartMask(merged, jemData);
+            return {
+              ...masked,
+              texturePath: masked.texturePath || `entity/${entityType}`,
+              jemSource: `${jemNameForVanillaPivot} (masked ${fallbackBaseName})`,
+              usedLegacyJem: baseModel.usedLegacyJem,
+            };
+          }
+        }
 
         // Prevent infinite loop: don't try to merge an entity with itself
         if (
@@ -637,6 +691,7 @@ export async function loadEntityModel(
   const tryLoadJemByName = async (
     jemName: string,
     source: string,
+    options?: { fallbackBaseName?: string },
   ): Promise<(ParsedEntityModel & { jemSource: string; usedLegacyJem: boolean }) | null> => {
     const baseName = normalizeEntityName(jemName);
     const known = entityVersionVariants?.[baseName];
@@ -654,7 +709,12 @@ export async function loadEntityModel(
     add(`assets/minecraft/optifine/cem/${baseName}.jem`);
 
     for (const jemPath of candidates) {
-      const result = await tryLoadJemPath(jemPath, baseName, source);
+      const result = await tryLoadJemPath(
+        jemPath,
+        baseName,
+        source,
+        options?.fallbackBaseName,
+      );
       if (result) return result;
     }
     return null;
@@ -662,6 +722,7 @@ export async function loadEntityModel(
 
   const tryLoadVanillaJem = async (
     jemName: string,
+    fallbackBaseName?: string,
   ): Promise<
     (ParsedEntityModel & { jemSource: string; usedLegacyJem: boolean }) | null
   > => {
@@ -679,6 +740,19 @@ export async function loadEntityModel(
       const hasValidBoxes = parsed.parts.some((part) => part.boxes.length > 0);
       if (!hasValidBoxes) {
         console.log("[EMF] ✗ Vanilla JEM has no valid boxes:", jemName);
+        if (fallbackBaseName && fallbackBaseName !== jemName) {
+          const baseModel = await tryLoadVanillaJem(fallbackBaseName);
+          if (baseModel) {
+            const merged = mergeVariantTextures(baseModel, jemData);
+            const masked = applyVariantPartMask(merged, jemData);
+            return {
+              ...masked,
+              texturePath: masked.texturePath || `entity/${entityType}`,
+              jemSource: `${jemName} (masked ${fallbackBaseName})`,
+              usedLegacyJem: baseModel.usedLegacyJem,
+            };
+          }
+        }
         return null;
       }
 
@@ -695,17 +769,17 @@ export async function loadEntityModel(
   };
 
   if (packPath) {
-    if (selectedVariant) {
-      if (entityType.includes("_hanging_sign")) {
-        const woodType = entityType.replace("_hanging_sign", "");
-        const result = await tryLoadJemByName(
-          `${woodType}/${selectedVariant}_hanging_sign`,
-          `selected variant (${selectedVariant})`,
-        );
-        if (result) {
-          entityModelCache.set(cacheKey, result);
-          return result;
-        }
+    if (entityType.includes("_hanging_sign")) {
+      const woodType = entityType.replace("_hanging_sign", "");
+      const hangingVariant = selectedVariant ?? "wall";
+      const result = await tryLoadJemByName(
+        `${woodType}/${hangingVariant}_hanging_sign`,
+        `selected variant (${hangingVariant})`,
+        { fallbackBaseName: normalizedEntityType },
+      );
+      if (result) {
+        entityModelCache.set(cacheKey, result);
+        return result;
       }
     }
 
@@ -746,16 +820,16 @@ export async function loadEntityModel(
     }
   }
 
-  if (selectedVariant) {
-    if (normalizedEntityType.includes("_hanging_sign")) {
-      const woodType = normalizedEntityType.replace("_hanging_sign", "");
-      const result = await tryLoadVanillaJem(
-        `${woodType}/${selectedVariant}_hanging_sign`,
-      );
-      if (result) {
-        entityModelCache.set(cacheKey, result);
-        return result;
-      }
+  if (normalizedEntityType.includes("_hanging_sign")) {
+    const woodType = normalizedEntityType.replace("_hanging_sign", "");
+    const hangingVariant = selectedVariant ?? "wall";
+    const result = await tryLoadVanillaJem(
+      `${woodType}/${hangingVariant}_hanging_sign`,
+      normalizedEntityType,
+    );
+    if (result) {
+      entityModelCache.set(cacheKey, result);
+      return result;
     }
   }
 

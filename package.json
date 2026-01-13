@@ -13,7 +13,10 @@
     "build-storybook": "storybook build",
     "test": "vitest",
     "generate:colors": "tsx scripts/scrapeMinecraftColors.ts",
-    "generate:cem-mocks": "tsx scripts/extract-cem-templates.ts"
+    "generate:cem-mocks": "tsx scripts/extract-cem-templates.ts",
+    "generate:particles": "cd src-tauri && cargo run --bin generate_particles",
+    "rebuild:particles": "cd src-tauri && cargo run --bin rebuild_particle_cache",
+    "rebuild:vanilla-cache": "tsx scripts/rebuildVanillaCache.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

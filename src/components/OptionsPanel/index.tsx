@@ -24,7 +24,9 @@ import {
   isHangingSign,
   isEntityTexture,
 } from "@lib/assetUtils";
+import { groupAssetsForCards } from "@lib/utils/assetGrouping";
 import { getEntityVariants } from "@lib/emf";
+import { resolveBlockEntityRenderSpec } from "@lib/blockEntityResolver";
 import {
   getBlockStateSchema,
   type BlockStateSchema,
@@ -46,7 +48,12 @@ import { SignOptionsTab } from "./components/tabs/SignOptionsTab";
 import { TextureVariantTab } from "./components/tabs/TextureVariantTab";
 import { PackVariantsTab } from "./components/tabs/PackVariantsTab";
 import { AdvancedTab } from "./components/tabs/AdvancedTab";
+import { ParticlePropertiesTab } from "./components/tabs/ParticlePropertiesTab";
 import { resolveEntityCompositeSchema } from "@lib/entityComposite";
+import {
+  getBlockEmissions,
+  getEntityEmissions,
+} from "@constants/particles";
 import {
   isPainting,
   isPotteryShard,
@@ -63,12 +70,13 @@ export const OptionsPanel = ({
   onSelectProvider,
   onBlockPropsChange,
   onSeedChange,
+  onParticleConditionOverridesChange,
   allAssets = [],
   onSelectVariant,
   onViewingVariantChange,
   itemDisplayMode = "ground",
 }: OptionsPanelProps) => {
-  const showPot = useStore((state) => state.showPot ?? true);
+  const showPot = useStore((state) => state.showPot ?? false);
   const setShowPot = useStore((state) => state.setShowPot);
   const providersByAsset = useStore((state) => state.providersByAsset);
 
@@ -158,10 +166,30 @@ export const OptionsPanel = ({
   const isHangingSignAsset = assetId ? isHangingSign(assetId) : false;
 
   const allAssetIds = useMemo(() => allAssets.map((a) => a.id), [allAssets]);
-  const entityFeatureSchema = useMemo(() => {
-    if (!assetId) return null;
-    return resolveEntityCompositeSchema(assetId, allAssetIds);
+  const blockEntitySpec = useMemo(
+    () => (assetId ? resolveBlockEntityRenderSpec(assetId, allAssetIds) : null),
+    [assetId, allAssetIds],
+  );
+  const entityAssetId = blockEntitySpec?.assetId ?? assetId;
+  const combinedAssetIds = useMemo(() => {
+    if (!assetId || allAssetIds.length === 0) return assetId ? [assetId] : [];
+    const groups = groupAssetsForCards(allAssetIds);
+    const group = groups.find((g) => g.variantIds.includes(assetId));
+    return group ? group.variantIds : [assetId];
   }, [assetId, allAssetIds]);
+  const entityFeatureSchema = useMemo(() => {
+    if (!entityAssetId) return null;
+    console.log(
+      `[OptionsPanel.entityFeatureSchema] Resolving schema for assetId="${entityAssetId}"`,
+    );
+    const schema = resolveEntityCompositeSchema(entityAssetId, allAssetIds);
+    if (schema) {
+      console.log(
+        `[OptionsPanel.entityFeatureSchema] Schema resolved: baseAssetId="${schema.baseAssetId}" controls=${schema.controls.length}`,
+      );
+    }
+    return schema;
+  }, [entityAssetId, allAssetIds]);
 
   const packsDir = useSelectPacksDir();
   const blockStateAssetId =
@@ -173,6 +201,7 @@ export const OptionsPanel = ({
     // Skip schema loading for GUI textures and entity textures (they don't have blockstates)
     const isGUITexture = assetId?.includes("gui/");
     const isEntityTexture = assetId?.includes("entity/");
+
     if (
       !assetId ||
       isColormapSelection ||
@@ -187,6 +216,7 @@ export const OptionsPanel = ({
 
     const targetPackId =
       winnerPackId ?? (isMinecraftNamespace ? "minecraft:vanilla" : null);
+
     if (!targetPackId) {
       setSchema(null);
       return;
@@ -232,8 +262,9 @@ export const OptionsPanel = ({
       setBlockProps({});
       setSeed(0);
       setViewingVariantId(undefined);
+      onBlockPropsChange?.({});
     }
-  }, [assetId]);
+  }, [assetId, onBlockPropsChange]);
 
   // Determine which tabs to show
   const hasVariantsTab = useMemo(() => {
@@ -274,13 +305,15 @@ export const OptionsPanel = ({
     !isColormapSelection && (isPlantPotted || canBePotted);
   const shouldShowBlockStateTab =
     !isColormapSelection && !isItem && (schema?.properties.length ?? 0) > 0;
-  const shouldShowEntityVariantTab = assetId
-    ? getEntityVariants(assetId).length > 0
+  const shouldShowEntityVariantTab = entityAssetId
+    ? getEntityVariants(entityAssetId).length > 0
     : false;
-  const shouldShowAnimationsTab = assetId ? isEntityTexture(assetId) : false;
+  const shouldShowAnimationsTab = entityAssetId
+    ? isEntityTexture(entityAssetId)
+    : false;
   const shouldShowEntityFeaturesTab =
-    assetId != null &&
-    assetId.includes("entity/") &&
+    entityAssetId != null &&
+    entityAssetId.includes("entity/") &&
     entityFeatureSchema != null &&
     entityFeatureSchema.controls.length > 0;
   const shouldShowItemTab =
@@ -290,6 +323,28 @@ export const OptionsPanel = ({
   const shouldShowDecoratedPotTab = isDecoratedPotAsset && allAssets.length > 0;
   const shouldShowEntityDecoratedPotTab = isEntityDecoratedPotAsset;
   const shouldShowSignTab = isSign;
+
+  // Check if asset has particle emissions
+  const particleDataReady = useStore((state) => state.particleDataReady);
+  const shouldShowParticlePropertiesTab = useMemo(() => {
+    if (!assetId || !particleDataReady) return false;
+
+    // Check if it's an entity
+    const isEntityAsset = assetId.includes("entity/");
+
+    if (isEntityAsset) {
+      // "minecraft:entity/zombie" -> "minecraft:zombie"
+      const entityId = assetId.replace(/^minecraft:entity\//, "minecraft:");
+      const emissions = getEntityEmissions(entityId);
+      return emissions !== null && emissions.emissions.length > 0;
+    } else {
+      // "minecraft:block/campfire" -> "minecraft:campfire"
+      const blockStateId = getBlockStateIdFromAssetId(assetId);
+      const blockId = blockStateId.replace(/:block\//, ":");
+      const emissions = getBlockEmissions(blockId);
+      return emissions !== null && emissions.emissions.length > 0;
+    }
+  }, [assetId, particleDataReady]);
 
   const defaultTab = getDefaultTab({
     shouldShowPotteryShardTab,
@@ -349,6 +404,9 @@ export const OptionsPanel = ({
             <TabIcon icon="🧩" label="Features" value="entity-features" />
           )}
           {shouldShowPotTab && <TabIcon icon="🌱" label="Pot" value="pot" />}
+          {shouldShowParticlePropertiesTab && (
+            <TabIcon icon="✨" label="Particles" value="particle-properties" />
+          )}
           {hasTextureVariants && onSelectVariant && (
             <TabIcon
               icon="🖼"
@@ -408,7 +466,9 @@ export const OptionsPanel = ({
           />
         )}
 
-        {shouldShowEntityVariantTab && <EntityVariantTab assetId={assetId} />}
+        {shouldShowEntityVariantTab && entityAssetId && (
+          <EntityVariantTab assetId={entityAssetId} />
+        )}
 
         {shouldShowAnimationsTab && <AnimationsTab />}
 
@@ -418,6 +478,15 @@ export const OptionsPanel = ({
 
         {shouldShowPotTab && (
           <PotTab showPot={showPot} onShowPotChange={setShowPot} />
+        )}
+
+        {shouldShowParticlePropertiesTab && (
+          <ParticlePropertiesTab
+            assetId={assetId}
+            isEntity={assetId?.includes("entity/") ?? false}
+            stateProps={blockProps}
+            onConditionOverride={onParticleConditionOverridesChange}
+          />
         )}
 
         {hasTextureVariants && onSelectVariant && (
@@ -439,6 +508,7 @@ export const OptionsPanel = ({
 
         <AdvancedTab
           assetId={assetId}
+          combinedAssetIds={combinedAssetIds}
           seed={seed}
           blockProps={blockProps}
           schema={schema}

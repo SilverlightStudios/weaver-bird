@@ -105,59 +105,40 @@ pub struct ElementFace {
 /// # Returns
 /// The parsed BlockModel JSON
 pub fn read_block_model(pack: &PackMeta, model_id: &str) -> AppResult<BlockModel> {
-    println!("[read_block_model] Reading model: {}", model_id);
-    println!(
-        "[read_block_model] From pack: {} at {}",
-        pack.name, pack.path
-    );
-
     // Normalize the model ID
     let normalized = normalize_model_id(model_id);
-    println!("[read_block_model] Normalized ID: {}", normalized);
 
     // Convert to file path: "minecraft:block/dirt" -> "assets/minecraft/models/block/dirt.json"
     let relative_path = model_id_to_path(&normalized);
-    println!("[read_block_model] Relative path: {}", relative_path);
 
     let pack_path = Path::new(&pack.path);
 
     let contents = if pack.is_zip {
         // Read from ZIP archive
-        println!("[read_block_model] Pack is ZIP, extracting from archive");
         let zip_path_str = pack_path
             .to_str()
             .ok_or_else(|| AppError::validation("Invalid pack path"))?;
 
         let bytes =
             crate::util::zip::extract_zip_entry(zip_path_str, &relative_path).map_err(|e| {
-                println!("[read_block_model] ✗ ZIP extraction failed: {}", e);
                 AppError::validation(format!("Model not found in ZIP: {}", e))
             })?;
 
-        println!("[read_block_model] ✓ Successfully extracted from ZIP");
         String::from_utf8(bytes)
             .map_err(|e| AppError::validation(format!("Invalid UTF-8 in model: {}", e)))?
     } else {
         // Directory pack - just read the file
         let full_path = pack_path.join(&relative_path);
-        println!(
-            "[read_block_model] Pack is directory, reading from: {}",
-            full_path.display()
-        );
 
         if !full_path.exists() {
-            println!("[read_block_model] ✗ File does not exist");
             return Err(AppError::validation(format!(
                 "Model not found: {}",
                 relative_path
             )));
         }
 
-        println!("[read_block_model] ✓ File exists, reading...");
-        fs::read_to_string(&full_path).map_err(|e| {
-            println!("[read_block_model] ✗ Failed to read file: {}", e);
-            AppError::io(format!("Failed to read model file: {}", e))
-        })?
+        fs::read_to_string(&full_path)
+            .map_err(|e| AppError::io(format!("Failed to read model file: {}", e)))?
     };
 
     let model: BlockModel = serde_json::from_str(&contents)
@@ -174,37 +155,13 @@ pub fn read_block_model_with_fallback(
     model_id: &str,
     vanilla_pack: &PackMeta,
 ) -> AppResult<BlockModel> {
-    println!(
-        "[read_block_model_with_fallback] Trying pack: {} ({})",
-        pack.name, pack.path
-    );
     match read_block_model(pack, model_id) {
-        Ok(model) => {
-            println!("[read_block_model_with_fallback] ✓ Found in pack");
-            Ok(model)
-        }
-        Err(pack_err) => {
-            println!(
-                "[read_block_model_with_fallback] ✗ Not in pack: {}",
-                pack_err
-            );
-            println!(
-                "[read_block_model_with_fallback] Trying vanilla: {} ({})",
-                vanilla_pack.name, vanilla_pack.path
-            );
+        Ok(model) => Ok(model),
+        Err(_pack_err) => {
             // Try vanilla as fallback
             match read_block_model(vanilla_pack, model_id) {
-                Ok(model) => {
-                    println!("[read_block_model_with_fallback] ✓ Found in vanilla");
-                    Ok(model)
-                }
-                Err(vanilla_err) => {
-                    println!(
-                        "[read_block_model_with_fallback] ✗ Not in vanilla: {}",
-                        vanilla_err
-                    );
-                    Err(vanilla_err)
-                }
+                Ok(model) => Ok(model),
+                Err(vanilla_err) => Err(vanilla_err),
             }
         }
     }
@@ -237,28 +194,15 @@ fn resolve_block_model_with_depth(
         )));
     }
 
-    println!(
-        "[resolve_block_model] Depth {}: Loading model {}",
-        depth, model_id
-    );
     let mut model = read_block_model_with_fallback(pack, model_id, vanilla_pack)?;
 
     // If there's a parent, recursively resolve it
     if let Some(parent_id) = &model.parent.clone() {
-        println!(
-            "[resolve_block_model] Depth {}: Found parent: {}",
-            depth, parent_id
-        );
         let parent_model =
             resolve_block_model_with_depth(pack, parent_id, vanilla_pack, depth + 1)?;
 
         // Merge parent into current model
         model = merge_models(parent_model, model);
-    } else {
-        println!(
-            "[resolve_block_model] Depth {}: No parent (base model)",
-            depth
-        );
     }
 
     Ok(model)

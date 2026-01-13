@@ -78,9 +78,13 @@ interface StoreActions {
   setCanvas3DShowGrid: (show: boolean) => void;
   setCanvas2DShowPixelGrid: (show: boolean) => void;
   setCanvas2DShowUVWrap: (show: boolean) => void;
+  setCanvas2DTextureSource: (source: AppState["canvas2DTextureSource"]) => void;
   setCanvasItemShowGrid: (show: boolean) => void;
   setCanvasItemRotate: (rotate: boolean) => void;
   setCanvasItemHover: (hover: boolean) => void;
+  setCanvasItemAnimate: (animate: boolean) => void;
+  setCanvasItemAnimationFrame: (frame: number) => void;
+  setCanvasItemAnimationFrameCount: (count: number) => void;
 
   // 3D block display settings
   setShowPot: (show: boolean) => void;
@@ -129,6 +133,12 @@ interface StoreActions {
   // Debug mode
   setJemDebugMode: (enabled: boolean) => void;
 
+  // Particle settings
+  setShowBlockParticles: (show: boolean) => void;
+  setShowEmissionPoints: (show: boolean) => void;
+  setParticleQuality: (quality: "low" | "medium" | "high") => void;
+  setParticleDataReady: (ready: boolean) => void;
+
   // Reset
   reset: () => void;
 }
@@ -176,12 +186,16 @@ const initialState: AppState = {
   canvas3DShowGrid: true, // Show floor grid by default in 3D
   canvas2DShowPixelGrid: false, // Hide pixel grid by default in 2D
   canvas2DShowUVWrap: false, // Hide UV wrap overlay by default in 2D
+  canvas2DTextureSource: "block", // Default to block texture
   canvasItemShowGrid: true, // Show grid by default in item canvas
   canvasItemRotate: true, // Enable rotation by default
   canvasItemHover: true, // Enable hover by default
+  canvasItemAnimate: true, // Animate item textures by default
+  canvasItemAnimationFrame: -1, // Default to auto
+  canvasItemAnimationFrameCount: 0,
 
   // 3D block display settings
-  showPot: true, // Show pot by default for potted plants
+  showPot: false, // Hide pot by default for potted plants
 
   // Sign text settings
   signText: ["", "", "", ""], // Default empty sign text
@@ -215,6 +229,12 @@ const initialState: AppState = {
 
   // Debug mode
   jemDebugMode: false, // Debug mode disabled by default
+
+  // Particle settings
+  showBlockParticles: true, // Show block particles by default
+  showEmissionPoints: false, // Hide emission point markers by default
+  particleQuality: "medium", // Medium quality by default
+  particleDataReady: false, // Will be set true when physics/emissions caches load
 };
 
 export const useStore = create<WeaverbirdStore>()(
@@ -489,6 +509,11 @@ export const useStore = create<WeaverbirdStore>()(
         state.canvas2DShowUVWrap = show;
       });
     },
+    setCanvas2DTextureSource: (source: AppState["canvas2DTextureSource"]) => {
+      set((state) => {
+        state.canvas2DTextureSource = source;
+      });
+    },
 
     setCanvasItemShowGrid: (show: boolean) => {
       set((state) => {
@@ -505,6 +530,21 @@ export const useStore = create<WeaverbirdStore>()(
     setCanvasItemHover: (hover: boolean) => {
       set((state) => {
         state.canvasItemHover = hover;
+      });
+    },
+    setCanvasItemAnimate: (animate: boolean) => {
+      set((state) => {
+        state.canvasItemAnimate = animate;
+      });
+    },
+    setCanvasItemAnimationFrame: (frame: number) => {
+      set((state) => {
+        state.canvasItemAnimationFrame = frame;
+      });
+    },
+    setCanvasItemAnimationFrameCount: (count: number) => {
+      set((state) => {
+        state.canvasItemAnimationFrameCount = count;
       });
     },
 
@@ -673,6 +713,31 @@ export const useStore = create<WeaverbirdStore>()(
     setJemDebugMode: (enabled: boolean) => {
       set((state) => {
         state.jemDebugMode = enabled;
+      });
+    },
+
+    // Particle settings
+    setShowBlockParticles: (show: boolean) => {
+      set((state) => {
+        state.showBlockParticles = show;
+      });
+    },
+
+    setShowEmissionPoints: (show: boolean) => {
+      set((state) => {
+        state.showEmissionPoints = show;
+      });
+    },
+
+    setParticleQuality: (quality: "low" | "medium" | "high") => {
+      set((state) => {
+        state.particleQuality = quality;
+      });
+    },
+
+    setParticleDataReady: (ready: boolean) => {
+      set((state) => {
+        state.particleDataReady = ready;
       });
     },
 

@@ -432,6 +432,15 @@ export function extractBlockStateProperties(
     }
   }
 
+  // Pattern-based: wall-mounted blocks in asset ID set wall=true and facing=south
+  // Examples: wall_torch, redstone_wall_torch, oak_wall_sign, oak_wall_banner, etc.
+  // We default to south so the block faces forward at the default camera angle
+  // Note: This only applies to actual wall_ asset IDs
+  if (name.includes("wall_")) {
+    props.wall = "true";
+    props.facing = "south";
+  }
+
   return props;
 }
 
@@ -497,7 +506,6 @@ export function applyNaturalBlockStateDefaults(
         "candle",
         "torch", // wall torch has facing, normal doesn't, but safe to check name
         "lantern",
-        "campfire",
       ];
 
       // Case 2: Blocks that typically face DOWN by default
@@ -513,6 +521,8 @@ export function applyNaturalBlockStateDefaults(
         name.includes("loom") ||
         name.includes("stonecutter") ||
         name.includes("gate") || // fence gates
+        name.includes("campfire") ||
+        name.includes("stem") ||
         name.includes("repeater") ||
         name.includes("comparator") ||
         name.includes("bed") ||
@@ -564,6 +574,11 @@ export function applyNaturalBlockStateDefaults(
     result.half = "bottom";
   }
 
+  // shape: Default to "straight" for stairs
+  if (!result.shape && name.includes("stairs")) {
+    result.shape = "straight";
+  }
+
   // open: Default to "false"
   const hasOpen =
     name.includes("door") ||
@@ -596,18 +611,34 @@ export function applyNaturalBlockStateDefaults(
     result.powered = "false";
   }
 
-  // lit: Default to "false"
-  const hasLit =
-    name.includes("furnace") ||
-    name.includes("smoker") ||
-    name.includes("campfire") ||
-    name.includes("redstone_ore") ||
-    name.includes("redstone_torch") ||
-    name.includes("redstone_lamp") ||
-    name.includes("candle");
+  // lit: Context-aware defaults
+  // Campfires default to "true" (lit is the normal state)
+  // Furnaces, lamps, torches, candles default to "false" (unlit is the normal state)
+  if (!result.lit) {
+    if (name.includes("campfire")) {
+      result.lit = "true";
+    } else if (
+      name.includes("furnace") ||
+      name.includes("smoker") ||
+      name.includes("redstone_ore") ||
+      name.includes("redstone_torch") ||
+      name.includes("redstone_lamp") ||
+      name.includes("candle")
+    ) {
+      result.lit = "false";
+    }
+  }
 
-  if (!result.lit && hasLit) {
-    result.lit = "false";
+  // signal_fire: Default to "false" for campfires (true only when hay bale below)
+  if (!result.signal_fire && name.includes("campfire")) {
+    result.signal_fire = "false";
+  }
+
+  // power: Default to "15" (fully powered) for redstone_wire
+  // Redstone wire has power levels 0-15, where 0 = no particles/dark, 15 = full particles/bright red
+  // Default to 15 to show the active/powered state in previews
+  if (!result.power && name.includes("redstone_wire")) {
+    result.power = "15";
   }
 
   return result;
@@ -763,6 +794,33 @@ export function getBaseName(assetId: string): string {
 
   // Fix fungi -> fungus (warped_fungi -> warped_fungus, crimson_fungi -> crimson_fungus)
   name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
+
+  // Pattern-based: wall-mounted blocks use the same blockstate as floor/standing variants
+  // This is pattern-based, not name-based - works for any block with "_wall_" in the name
+  // Examples: wall_torch -> torch, redstone_wall_torch -> redstone_torch, oak_wall_sign -> oak_sign
+  if (name.startsWith("wall_")) {
+    // Remove "wall_" prefix
+    name = name.replace(/^wall_/, "");
+  } else if (name.includes("_wall_")) {
+    // Remove "_wall_" infix
+    name = name.replace(/_wall_/, "_");
+  }
+
+  // Campfire textures map to the base campfire blockstate
+  if (
+    name === "campfire_log" ||
+    name === "campfire_log_lit" ||
+    name === "campfire_fire"
+  ) {
+    return "campfire";
+  }
+  if (
+    name === "soul_campfire_log" ||
+    name === "soul_campfire_log_lit" ||
+    name === "soul_campfire_fire"
+  ) {
+    return "soul_campfire";
+  }
 
   // Handle pitcherbot/pitchertop -> pitcher_crop (custom pack abbreviations)
   if (name.startsWith("pitcherbot") || name.startsWith("pitchertop")) {
@@ -960,6 +1018,16 @@ export function getBaseName(assetId: string): string {
   }
   if (name === "warped_roots_pot") {
     return "potted_warped_roots";
+  }
+
+  // Preserve stem blockstate names that include "_stem"
+  if (
+    name === "pumpkin_stem" ||
+    name === "melon_stem" ||
+    name === "attached_pumpkin_stem" ||
+    name === "attached_melon_stem"
+  ) {
+    return name;
   }
 
   // Handle chiseled_bookshelf_book_ends -> chiseled_bookshelf
@@ -1167,11 +1235,47 @@ export function getVariantGroupKey(assetId: string): string {
   const pathMatch = normalized.match(/^[^:]*:(.+)$/);
   let path = pathMatch ? pathMatch[1] : normalized;
 
+  // Pattern-based grouping: wall-mounted variants group with floor/standing variants
+  // This handles torches, buttons, banners, signs, etc. without hardcoding specific blocks
+  // Examples:
+  //   - wall_torch -> torch, redstone_wall_torch -> redstone_torch
+  //   - oak_wall_sign -> oak_sign, birch_wall_banner -> birch_banner
+  //   - stone_wall_button -> stone_button (if it existed)
+  if (path.includes("/wall_")) {
+    // Remove "wall_" prefix: "block/wall_torch" -> "block/torch"
+    path = path.replace(/\/wall_/, "/");
+  } else if (path.includes("_wall_")) {
+    // Remove "_wall_" infix: "block/redstone_wall_torch" -> "block/redstone_torch"
+    path = path.replace(/_wall_/, "_");
+  }
+
+  // Special case: item/redstone groups with block/redstone_wire
+  // Similar to how campfire item groups with campfire block
+  if (path === "item/redstone") {
+    return "block/redstone_wire";
+  }
+
+  // Special case: GUI redstone_dust sprite groups with block/redstone_wire
+  if (path.startsWith("gui/sprites/container/slot/redstone_dust")) {
+    return "block/redstone_wire";
+  }
+
   if (path.startsWith("colormap/")) {
     const parts = path.split("/");
     if (parts.length > 1) {
       return `colormap/${parts[parts.length - 1]}`;
     }
+  }
+
+  // Group campfire fire/log textures with their base campfire (any path depth)
+  if (
+    path.includes("campfire_fire") ||
+    path.includes("campfire_log")
+  ) {
+    if (path.includes("soul_campfire")) {
+      return "block/soul_campfire";
+    }
+    return "block/campfire";
   }
 
   // Strip potted prefix/suffix to group with base plant
@@ -1185,6 +1289,16 @@ export function getVariantGroupKey(assetId: string): string {
     path = path.replace("/flowering_azalea_bush", "/flowering_azalea");
   } else if (path.endsWith("_potted")) {
     path = path.replace(/_potted$/, "");
+  }
+
+  // Keep stem blockstate names intact (avoid grouping with pumpkin/melon blocks)
+  if (
+    /(^|\/)pumpkin_stem$/.test(path) ||
+    /(^|\/)melon_stem$/.test(path) ||
+    /(^|\/)attached_pumpkin_stem$/.test(path) ||
+    /(^|\/)attached_melon_stem$/.test(path)
+  ) {
+    return path;
   }
 
   // Handle variated/ texture paths FIRST before other processing
@@ -1209,7 +1323,35 @@ export function getVariantGroupKey(assetId: string): string {
   // Extract the block name from the path for suffix processing
   const pathParts = path.split("/");
   let blockName = pathParts[pathParts.length - 1];
-  const pathPrefix = pathParts.slice(0, -1).join("/");
+  let pathPrefix = pathParts.slice(0, -1).join("/");
+
+  // Group wall hanging signs with their base hanging sign
+  if (blockName.endsWith("_wall_hanging_sign")) {
+    blockName = blockName.replace(/_wall_hanging_sign$/, "_hanging_sign");
+  }
+  // Group wall signs with their standing sign base
+  if (blockName.endsWith("_wall_sign")) {
+    blockName = blockName.replace(/_wall_sign$/, "_sign");
+  }
+
+  // Group redstone_dust textures with redstone_wire block
+  // (dot, line0, line1, overlay are all parts of the multipart redstone_wire model)
+  if (blockName.startsWith("redstone_dust")) {
+    blockName = "redstone_wire";
+    pathPrefix = "block";
+  }
+
+  // Group campfire fire/log textures with their base campfire
+  if (blockName === "campfire_fire" || blockName === "campfire_log") {
+    blockName = "campfire";
+    pathPrefix = "block";
+  } else if (
+    blockName === "soul_campfire_fire" ||
+    blockName === "soul_campfire_log"
+  ) {
+    blockName = "soul_campfire";
+    pathPrefix = "block";
+  }
 
   // Remove comprehensive structural and texture-specific suffixes
   // Loop to handle compound suffixes like "_front_honey" -> strip "_honey" then "_front"
@@ -1226,7 +1368,7 @@ export function getVariantGroupKey(assetId: string): string {
     // If no structural suffix matched, try state suffixes
     if (blockName === before) {
       blockName = blockName.replace(
-        /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|honey|partial_tilt|full_tilt|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+)$/,
+      /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|honey|partial_tilt|full_tilt|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+|not_cracked|slightly_cracked|very_cracked)$/,
         "",
       );
     }
@@ -1285,7 +1427,13 @@ export function categorizeVariants(variantIds: string[]): {
  * Example: "minecraft:block/acacia_leaves1" -> true
  */
 export function isNumberedVariant(assetId: string): boolean {
-  return /\d+$/.test(assetId);
+  const name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
+  const blockStateNumericSuffix =
+    /_(stage|age|level|distance|power|moisture|rotation|charges|candles|bites|layers|delay|note|pickles|eggs|hatch|dusted)_?\d+$/;
+  if (blockStateNumericSuffix.test(name)) {
+    return false;
+  }
+  return /\d+$/.test(name);
 }
 
 /**
@@ -1295,8 +1443,104 @@ export function isNumberedVariant(assetId: string): boolean {
  * Example: "minecraft:block/oak_planks" -> null
  */
 export function getVariantNumber(assetId: string): string | null {
-  const match = assetId.match(/(\d+)$/);
+  const name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
+  const blockStateNumericSuffix =
+    /_(stage|age|level|distance|power|moisture|rotation|charges|candles|bites|layers|delay|note|pickles|eggs|hatch|dusted)_?\d+$/;
+  if (blockStateNumericSuffix.test(name)) {
+    return null;
+  }
+  const match = name.match(/(\d+)$/);
   return match ? match[1] : null;
+}
+
+export function getBlockItemPair(
+  assetId: string,
+  allAssetIds: string[],
+): { blockId?: string; itemId?: string } {
+  const normalizedAssetId = normalizeAssetId(assetId);
+  const namespace = normalizedAssetId.includes(":")
+    ? normalizedAssetId.split(":")[0]!
+    : "minecraft";
+  const assetPath = normalizedAssetId.includes(":")
+    ? normalizedAssetId.split(":")[1]!
+    : normalizedAssetId;
+
+  const findByPath = (path: string): string | undefined => {
+    const exactMatch = allAssetIds.find((id) => {
+      const normalized = normalizeAssetId(id);
+      return (
+        normalized.startsWith(`${namespace}:`) &&
+        normalized.split(":")[1] === path
+      );
+    });
+    if (exactMatch) return exactMatch;
+
+    return allAssetIds.find((id) => {
+      const normalized = normalizeAssetId(id);
+      return normalized.split(":")[1] === path;
+    });
+  };
+
+  const findBlockVariantByGroupKey = (groupKey: string): string | undefined => {
+    const candidates = allAssetIds.filter((id) => {
+      if (!id.includes(":block/")) return false;
+      return getVariantGroupKey(id) === groupKey;
+    });
+    if (candidates.length === 0) return undefined;
+
+    const inNamespace = candidates.filter((id) =>
+      normalizeAssetId(id).startsWith(`${namespace}:`),
+    );
+    const ordered = inNamespace.length > 0 ? inNamespace : candidates;
+    return ordered.find((id) => !isInventoryVariant(id)) ?? ordered[0];
+  };
+
+  if (assetPath.startsWith("item/")) {
+    const baseName = assetPath.slice("item/".length);
+
+    // Special case: redstone item -> redstone_wire block
+    // Similar to how campfire item -> campfire block, sniffer_egg item -> sniffer_egg block
+    if (baseName === "redstone") {
+      return {
+        blockId: findByPath("block/redstone_dust_dot") ??
+                 findByPath("block/redstone_dust_line0") ??
+                 findBlockVariantByGroupKey("block/redstone_wire"),
+        itemId: findByPath(`item/${baseName}`),
+      };
+    }
+
+    return {
+      blockId:
+        findByPath(`block/${baseName}`) ??
+        findBlockVariantByGroupKey(`block/${baseName}`),
+      itemId: findByPath(`item/${baseName}`),
+    };
+  }
+
+  if (assetPath.startsWith("block/")) {
+    const groupKey = getVariantGroupKey(normalizedAssetId);
+    const baseName = groupKey.startsWith("block/")
+      ? groupKey.slice("block/".length)
+      : assetPath.slice("block/".length);
+
+    // Special case: redstone_wire block -> redstone item
+    // The block is called "redstone_wire" but the item is "redstone"
+    if (baseName === "redstone_wire") {
+      return {
+        blockId: findByPath(`block/${baseName}`) ??
+                 findByPath("block/redstone_dust_dot") ??
+                 findByPath("block/redstone_dust_line0"),
+        itemId: findByPath("item/redstone"),
+      };
+    }
+
+    return {
+      blockId: findByPath(`block/${baseName}`),
+      itemId: findByPath(`item/${baseName}`),
+    };
+  }
+
+  return {};
 }
 
 /**
@@ -1319,10 +1563,15 @@ export function getPottedAssetId(assetId: string): string {
   const namespaceMatch = assetId.match(/^([^:]*:)/);
   const namespace = namespaceMatch ? namespaceMatch[1] : "minecraft:";
 
-  // Get the block name without namespace and block/ prefix
-  const blockName = assetId.replace(/^[^:]*:/, "").replace(/^block\//, "");
+  const baseName = getBaseName(assetId);
+  const pottedName =
+    baseName === "azalea"
+      ? "azalea_bush"
+      : baseName === "flowering_azalea"
+        ? "flowering_azalea_bush"
+        : baseName;
 
-  return `${namespace}block/potted_${blockName}`;
+  return `${namespace}block/potted_${pottedName}`;
 }
 
 /**
@@ -1348,6 +1597,12 @@ export function getPlantNameFromPotted(assetId: string): string | null {
   // Handle "potted_plant" format
   else if (blockPath.startsWith("potted_")) {
     plantName = blockPath.replace(/^potted_/, "");
+  }
+
+  if (plantName === "azalea_bush") {
+    plantName = "azalea";
+  } else if (plantName === "flowering_azalea_bush") {
+    plantName = "flowering_azalea";
   }
 
   // Return full asset ID with namespace and block/ prefix
@@ -1407,4 +1662,47 @@ export function groupAssetsByVariant(assetIds: string[]): AssetGroup[] {
   }
 
   return result;
+}
+
+// ============================================================================
+// PARTICLE UTILITIES
+// ============================================================================
+
+/**
+ * Check if an asset is a particle texture
+ * Example: "minecraft:particle/flame" -> true
+ */
+export function isParticleTexture(assetId: string): boolean {
+  const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+  return path.startsWith("particle/");
+}
+
+/**
+ * Extract particle type from asset ID
+ * Example: "minecraft:particle/flame" -> "flame"
+ * Example: "minecraft:particle/campfire_cosy_smoke" -> "campfire_cosy_smoke"
+ */
+export function getParticleTypeFromAssetId(assetId: string): string | null {
+  if (!isParticleTexture(assetId)) return null;
+  const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+  return path.replace("particle/", "");
+}
+
+/**
+ * Get the asset ID for a particle type
+ * Example: "flame" -> "minecraft:particle/flame"
+ */
+export function getParticleAssetId(particleType: string): string {
+  return `minecraft:particle/${particleType}`;
+}
+
+/**
+ * Get a display name for a particle type
+ * Example: "campfire_cosy_smoke" -> "Campfire Cosy Smoke"
+ */
+export function getParticleDisplayName(particleType: string): string {
+  return particleType
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }

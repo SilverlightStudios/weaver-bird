@@ -338,10 +338,13 @@ function TextureSprite({ texturePath, onTextureLoaded }: TextureSpriteProps) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
     texture.magFilter = THREE.NearestFilter; // Pixelated look (Minecraft style)
-
     texture.minFilter = THREE.NearestFilter;
-
     texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.repeat.set(1, 1);
+    texture.offset.set(0, 0);
+    texture.needsUpdate = true;
   }, [texture]);
 
   // Calculate aspect ratio and notify parent

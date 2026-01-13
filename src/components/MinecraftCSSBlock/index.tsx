@@ -30,7 +30,12 @@ import {
   loadModelJson,
   type ModelElement,
 } from "@lib/tauri/blockModels";
-import { getBlockStateIdFromAssetId, normalizeAssetId } from "@lib/assetUtils";
+import {
+  applyNaturalBlockStateDefaults,
+  extractBlockStateProperties,
+  getBlockStateIdFromAssetId,
+  normalizeAssetId,
+} from "@lib/assetUtils";
 import { useStore } from "@state/store";
 import { transitionQueue } from "@lib/transitionQueue";
 import { blockGeometryWorker } from "@lib/blockGeometryWorker";
@@ -108,9 +113,6 @@ export const MinecraftCSSBlock = ({
   // QUEUE: Use global transition queue to ensure only 1-2 transitions per frame
   // This is especially important for Safari/WebKit which struggles with many 3D transforms at once
   useEffect(() => {
-    console.log(
-      `[MinecraftCSSBlock] useEffect: assetId=${assetId}, staggerIndex=${staggerIndex}`,
-    );
     const idleCallback =
       window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
 
@@ -143,9 +145,6 @@ export const MinecraftCSSBlock = ({
   // Effect 1: Load 2D fallback on mount (runs once per assetId change)
   // OPTIMIZATION: Also start processing 3D geometry eagerly in the background
   useEffect(() => {
-    console.log(
-      `[MinecraftCSSBlock] useEffect: assetId=${assetId}, staggerIndex=${staggerIndex}`,
-    );
     // If in entity mode, skip 2D fallback loading but ensure geometry is marked ready
     // so that Effect 2 can proceed with loading the 3D entity model
     if (renderMode === "entity") {
@@ -173,6 +172,19 @@ export const MinecraftCSSBlock = ({
       return convertFileSrc(texturePath);
     };
 
+    const scheduleGeometryReady = () => {
+      const idleCallback =
+        window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+      idleCallback(
+        () => {
+          if (mounted) {
+            setGeometryReady(true);
+          }
+        },
+        { timeout: 100 },
+      );
+    };
+
     const load2DFallback = async () => {
       try {
         const normalizedAssetId = normalizeAssetId(assetId);
@@ -184,16 +196,7 @@ export const MinecraftCSSBlock = ({
 
           // EAGER PRELOADING: Start processing 3D geometry in background immediately
           // This happens while showing 2D fallback, so geometry is ready when user switches tabs
-          const idleCallback =
-            window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
-          idleCallback(
-            () => {
-              if (mounted) {
-                setGeometryReady(true);
-              }
-            },
-            { timeout: 100 },
-          ); // Short timeout to start processing quickly
+          scheduleGeometryReady(); // Short timeout to start processing quickly
         }
       } catch (err) {
         console.warn(
@@ -201,8 +204,11 @@ export const MinecraftCSSBlock = ({
           err,
         );
         if (mounted) {
-          setError(true);
-          onError?.();
+          // Missing base textures (e.g., stairs/slabs) should still attempt 3D loading.
+          setFallbackTextureUrl(null);
+          setRenderedElements([]);
+          setError(false);
+          scheduleGeometryReady();
         }
       }
     };
@@ -226,9 +232,6 @@ export const MinecraftCSSBlock = ({
   // Effect 2: Load 3D model when geometryReady becomes true (eager preloading)
   // This processes geometry in the background, even before use3DModel is set
   useEffect(() => {
-    console.log(
-      `[MinecraftCSSBlock] useEffect: assetId=${assetId}, staggerIndex=${staggerIndex}`,
-    );
     if (!geometryReady) return;
 
     let mounted = true;
@@ -248,10 +251,6 @@ export const MinecraftCSSBlock = ({
               jemModel,
               entityTextureUrl,
               scale,
-            );
-
-            console.log(
-              `[MinecraftCSSBlock] Entity converted: ${renderedElements.length} elements`,
             );
 
             if (mounted) {
@@ -353,10 +352,18 @@ export const MinecraftCSSBlock = ({
         if (packsDir && packId) {
           try {
             const blockStateId = getBlockStateIdFromAssetId(normalizedAssetId);
+            const inferredProps = extractBlockStateProperties(normalizedAssetId);
+            const mergedProps = applyNaturalBlockStateDefaults(
+              inferredProps,
+              normalizedAssetId,
+            );
+            const stateProps =
+              Object.keys(mergedProps).length > 0 ? mergedProps : undefined;
             const resolution = await resolveBlockState(
               packId,
               blockStateId,
               packsDir,
+              stateProps,
             );
 
             if (resolution.models.length > 0) {
@@ -505,12 +512,6 @@ export const MinecraftCSSBlock = ({
 
   // Render 2D fallback if 3D model is not ready or failed
   if (!use3DModel || error || !renderedElements.length) {
-    if (renderMode === "entity" && jemModel) {
-      console.log(
-        `[MinecraftCSSBlock] Fallback render: use3D=${use3DModel}, error=${error}, elements=${renderedElements.length}`,
-      );
-    }
-
     if (fallbackTextureUrl) {
       return (
         <Block2D

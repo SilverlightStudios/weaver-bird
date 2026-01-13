@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { TabsContent } from "@/ui/components/tabs";
 import { Separator } from "@/ui/components/Separator/Separator";
 import { useStore } from "@state/store";
@@ -9,11 +9,55 @@ export function EntityFeaturesTab({
 }: {
   schema: EntityCompositeSchema;
 }) {
+  const selectedAssetId = useStore((state) => state.selectedAssetId);
   const featureState = useStore(
     (state) => state.entityFeatureStateByAssetId[schema.baseAssetId],
   );
   const setToggle = useStore((state) => state.setEntityFeatureToggle);
   const setSelect = useStore((state) => state.setEntityFeatureSelect);
+
+  // Track the previous selectedAssetId to detect when it changes
+  const prevSelectedAssetIdRef = useRef(selectedAssetId);
+
+  // Clear entity feature state when switching to a different variant of the same entity
+  // This allows smart selection to work when clicking different boat variants
+  useEffect(() => {
+    if (selectedAssetId !== prevSelectedAssetIdRef.current) {
+      // Extract entity paths from both asset IDs
+      const extractEntityPath = (assetId: string | undefined) => {
+        if (!assetId) return null;
+        const path = assetId.includes(":") ? assetId.split(":")[1] : assetId;
+        if (!path?.startsWith("entity/")) return null;
+        return path.slice("entity/".length);
+      };
+
+      const currentPath = extractEntityPath(selectedAssetId);
+      const prevPath = extractEntityPath(prevSelectedAssetIdRef.current);
+
+      // Check if we're switching between variants of the same entity type
+      // e.g., "boat/jungle" -> "boat/cherry"
+      if (currentPath && prevPath) {
+        const currentParts = currentPath.split("/");
+        const prevParts = prevPath.split("/");
+
+        // Same entity type (e.g., both are "boat/*") but different variants
+        if (
+          currentParts.length === 2 &&
+          prevParts.length === 2 &&
+          currentParts[0] === prevParts[0] &&
+          currentParts[1] !== prevParts[1]
+        ) {
+          console.log(
+            `[EntityFeaturesTab] Clearing stored state - switching from "${prevPath}" to "${currentPath}"`,
+          );
+          // Clear the stored variant selection so smart selection can apply
+          setSelect(schema.baseAssetId, "entity.variant", "");
+        }
+      }
+
+      prevSelectedAssetIdRef.current = selectedAssetId;
+    }
+  }, [selectedAssetId, schema.baseAssetId, setSelect]);
 
   const stateView = useMemo(
     () => ({
@@ -25,8 +69,42 @@ export function EntityFeaturesTab({
 
   const getToggleValue = (c: Extract<EntityFeatureControl, { kind: "toggle" }>) =>
     stateView.toggles[c.id] ?? c.defaultValue;
-  const getSelectValue = (c: Extract<EntityFeatureControl, { kind: "select" }>) =>
-    stateView.selects[c.id] ?? c.defaultValue;
+  const getSelectValue = (c: Extract<EntityFeatureControl, { kind: "select" }>) => {
+    const storedValue = stateView.selects[c.id];
+
+    // SMART SELECTION: Only use variant from selectedAssetId if there's NO stored value
+    // This provides a smart initial default but respects user's manual changes
+    if (c.id === "entity.variant" && !storedValue && selectedAssetId) {
+      // Extract the variant from the selectedAssetId
+      // e.g., "minecraft:entity/boat/jungle" -> "jungle"
+      const path = selectedAssetId.includes(":")
+        ? selectedAssetId.split(":")[1]
+        : selectedAssetId;
+      if (path && path.startsWith("entity/")) {
+        const entityPath = path.slice("entity/".length);
+        const parts = entityPath.split("/");
+        if (parts.length === 2) {
+          const [_dir, leaf] = parts;
+          // Check if this leaf is a valid option for this control
+          const isValidOption = c.options.some((opt) => opt.value === leaf);
+          if (isValidOption && leaf !== c.defaultValue) {
+            // Only use smart selection if it differs from the default
+            // This ensures we're actually applying smart selection, not just the default
+            console.log(
+              `[EntityFeaturesTab.getSelectValue] Smart initial default from selectedAssetId: "${leaf}" (no stored value)`,
+            );
+            return leaf!;
+          }
+        }
+      }
+    }
+
+    const finalValue = storedValue ?? c.defaultValue;
+    console.log(
+      `[EntityFeaturesTab.getSelectValue] control="${c.id}" stored="${storedValue}" default="${c.defaultValue}" final="${finalValue}"`,
+    );
+    return finalValue;
+  };
 
   const toggles = schema.controls.filter(
     (c): c is Extract<EntityFeatureControl, { kind: "toggle" }> => c.kind === "toggle",

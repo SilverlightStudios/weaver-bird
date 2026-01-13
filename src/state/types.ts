@@ -119,12 +119,16 @@ export interface UIState {
   canvas3DShowGrid: boolean; // Show floor grid in 3D canvas
   canvas2DShowPixelGrid: boolean; // Show pixel grid in 2D canvas
   canvas2DShowUVWrap: boolean; // Show UV wrap overlay for entity textures in 2D canvas
+  canvas2DTextureSource: "block" | "item"; // 2D texture source when both exist
   canvasItemShowGrid: boolean; // Show grid in item canvas
   canvasItemRotate: boolean; // Enable rotation animation in item canvas
   canvasItemHover: boolean; // Enable hover animation in item canvas
+  canvasItemAnimate: boolean; // Animate item textures in item canvas
+  canvasItemAnimationFrame: number; // Selected animation frame (-1 = auto)
+  canvasItemAnimationFrameCount: number; // Available animation frame count
 
   // 3D block display settings
-  showPot?: boolean; // Show pot for potted plants (default: true)
+  showPot?: boolean; // Show pot for potted plants (default: false)
 
   // Sign text settings
   signText?: string[]; // Array of 4 lines of text for signs (default: ["", "", "", ""])
@@ -168,6 +172,12 @@ export interface UIState {
 
   // Debug mode
   jemDebugMode: boolean; // Enable JEM model inspector for debugging entity models
+
+  // Particle settings
+  showBlockParticles: boolean; // Show particles emitted by blocks in 3D preview
+  showEmissionPoints: boolean; // Show visual markers for particle emission points
+  particleQuality: "low" | "medium" | "high"; // Particle quality preset (affects max particle count)
+  particleDataReady: boolean; // True when particle physics and emissions caches are loaded
 }
 
 /**

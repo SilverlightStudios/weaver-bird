@@ -1624,6 +1624,42 @@ export function mergeVariantTextures(
   return { ...baseModel, parts: baseModel.parts.map(mergePart) };
 }
 
+export function applyVariantPartMask(
+  baseModel: ParsedEntityModel,
+  variantJemData: JEMFile,
+): ParsedEntityModel {
+  const variantPartBoxes = new Map<string, number>();
+
+  for (const modelPart of variantJemData.models ?? []) {
+    const name = modelPart.id || modelPart.part;
+    if (!name) continue;
+    const count = Array.isArray(modelPart.boxes) ? modelPart.boxes.length : 0;
+    variantPartBoxes.set(name, count);
+  }
+
+  const maskPart = (part: ParsedPart): ParsedPart | null => {
+    const count = variantPartBoxes.get(part.name);
+    const keepSelf = count != null && count > 0;
+    const keptChildren = part.children
+      .map(maskPart)
+      .filter((child): child is ParsedPart => child != null);
+
+    if (!keepSelf && keptChildren.length === 0) return null;
+
+    return {
+      ...part,
+      boxes: keepSelf ? part.boxes : [],
+      children: keptChildren,
+    };
+  };
+
+  const maskedParts = baseModel.parts
+    .map(maskPart)
+    .filter((part): part is ParsedPart => part != null);
+
+  return { ...baseModel, parts: maskedParts };
+}
+
 export function loadJEM(
   jemData: JEMFile,
   texture: THREE.Texture | null = null,

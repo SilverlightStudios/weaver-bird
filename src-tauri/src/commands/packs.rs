@@ -7,12 +7,12 @@
 /// - Reduces boilerplate with validation module
 use crate::model::{OverrideSelection, ScanResult};
 use crate::util::{
-    asset_indexer, launcher_detection, mc_paths, pack_scanner, texture_index, vanilla_textures,
-    weaver_nest,
+    asset_indexer, launcher_detection, mc_paths, pack_scanner, particle_cache, particle_data,
+    texture_index, vanilla_textures, weaver_nest,
 };
 use crate::{validation, AppError};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -374,19 +374,9 @@ pub fn get_pack_texture_path_impl(
     version_folders: Option<Vec<String>>,
     app_handle: &tauri::AppHandle,
 ) -> Result<String, AppError> {
-    println!(
-        "[get_pack_texture_path] Loading texture: {} from pack: {} (is_zip: {})",
-        asset_id, pack_path, is_zip
-    );
-
     // Parse asset ID: "minecraft:block/stone" -> "assets/minecraft/textures/block/stone.png"
     let texture_path = asset_id.strip_prefix("minecraft:").unwrap_or(&asset_id);
-
     let relative_path = format!("assets/minecraft/textures/{}.png", texture_path);
-    println!(
-        "[get_pack_texture_path] Looking for file: {}",
-        relative_path
-    );
 
     let mut candidate_paths: Vec<String> = Vec::new();
     candidate_paths.push(relative_path.clone());
@@ -405,7 +395,6 @@ pub fn get_pack_texture_path_impl(
         let zip_path_str = &pack_path;
 
         // Extract the texture bytes from ZIP (try version-folder candidates too).
-        println!("[get_pack_texture_path] Extracting from ZIP: {}", zip_path_str);
         let mut chosen_rel: Option<String> = None;
         let mut bytes: Option<Vec<u8>> = None;
         for cand in &candidate_paths {
@@ -422,10 +411,6 @@ pub fn get_pack_texture_path_impl(
             AppError::validation(format!("Texture not found in ZIP: {}", relative_path))
         })?;
         let chosen_rel = chosen_rel.unwrap_or(relative_path.clone());
-        println!(
-            "[get_pack_texture_path] Successfully extracted {} bytes",
-            bytes.len()
-        );
 
         // Create a cache directory for this ZIP using Tauri's cache directory
         use tauri::Manager;
@@ -435,7 +420,6 @@ pub fn get_pack_texture_path_impl(
             .map_err(|e| AppError::io(format!("Failed to get cache dir: {}", e)))?
             .join("weaverbird_textures");
 
-        println!("[get_pack_texture_path] Cache directory: {:?}", cache_dir);
         std::fs::create_dir_all(&cache_dir)
             .map_err(|e| AppError::io(format!("Failed to create cache dir: {}", e)))?;
 
@@ -450,21 +434,29 @@ pub fn get_pack_texture_path_impl(
         let safe_texture_path = chosen_rel.replace("/", "_").replace("\\", "_");
         let cache_file = cache_dir.join(format!("{}_{}", zip_name, safe_texture_path));
 
-        // Write the texture to cache if it doesn't exist or is outdated
+        // Write the texture to cache if it doesn't exist
         if !cache_file.exists() {
-            println!("[get_pack_texture_path] Writing to cache: {:?}", cache_file);
             std::fs::write(&cache_file, &bytes)
                 .map_err(|e| AppError::io(format!("Failed to write cached texture: {}", e)))?;
-        } else {
-            println!(
-                "[get_pack_texture_path] Using cached file: {:?}",
-                cache_file
-            );
         }
 
-        let result_path = cache_file.to_string_lossy().to_string();
-        println!("[get_pack_texture_path] Returning path: {}", result_path);
-        Ok(result_path)
+        // Try to extract matching .mcmeta file for animated textures (non-fatal)
+        let mcmeta_cache_file = cache_file.with_extension("png.mcmeta");
+        if !mcmeta_cache_file.exists() {
+            let mcmeta_rel = format!("{}.mcmeta", chosen_rel);
+            if let Ok(mcmeta_bytes) =
+                crate::util::zip::extract_zip_entry(zip_path_str, &mcmeta_rel)
+            {
+                if let Err(err) = std::fs::write(&mcmeta_cache_file, &mcmeta_bytes) {
+                    eprintln!(
+                        "[packs] Failed to write cached mcmeta for {}: {}",
+                        mcmeta_rel, err
+                    );
+                }
+            }
+        }
+
+        Ok(cache_file.to_string_lossy().to_string())
     } else {
         // For directory packs, just combine the paths
         let pack_base = PathBuf::from(&pack_path);
@@ -499,11 +491,6 @@ pub fn load_model_json_impl(
     model_id: String,
     packs_dir: String,
 ) -> Result<crate::util::block_models::BlockModel, AppError> {
-    println!(
-        "[load_model_json] pack_id: {}, model_id: {}",
-        pack_id, model_id
-    );
-
     // Validate inputs
     validation::validate_directory(&packs_dir, "Packs directory")?;
 
@@ -522,8 +509,6 @@ pub fn load_model_json_impl(
             .ok_or_else(|| AppError::validation(format!("Pack not found: {}", pack_id)))?
             .clone()
     };
-
-    println!("[load_model_json] Loading from pack: {}", target_pack.name);
 
     // Load model with parent inheritance and vanilla fallback
     crate::util::block_models::resolve_block_model(&target_pack, &model_id, &vanilla_pack)
@@ -546,29 +531,19 @@ pub fn read_block_model_impl(
     texture_id: String,
     packs_dir: String,
 ) -> Result<crate::util::block_models::BlockModel, AppError> {
-    println!(
-        "[read_block_model] Starting - pack_id: {}, texture_id: {}",
-        pack_id, texture_id
-    );
-
     // Validate inputs
     validation::validate_directory(&packs_dir, "Packs directory")?;
-    println!("[read_block_model] Validated packs_dir: {}", packs_dir);
 
     // Create vanilla pack first
     let vanilla_pack = create_vanilla_pack()?;
-    println!("[read_block_model] Created vanilla pack");
 
     // If requesting vanilla directly, use it
     let target_pack = if pack_id == "minecraft:vanilla" {
-        println!("[read_block_model] Using vanilla pack directly");
         vanilla_pack.clone()
     } else {
         // Scan packs to find the requested pack
-        println!("[read_block_model] Scanning packs...");
         let packs = pack_scanner::scan_packs(&packs_dir)
             .map_err(|e| AppError::scan(format!("Failed to scan packs: {}", e)))?;
-        println!("[read_block_model] Found {} packs", packs.len());
 
         // Find the target pack
         packs
@@ -578,19 +553,9 @@ pub fn read_block_model_impl(
             .clone()
     };
 
-    println!(
-        "[read_block_model] Found target pack: {}, is_zip: {}",
-        target_pack.name, target_pack.is_zip
-    );
-
     // Try to build texture index for accurate lookup
-    println!("[read_block_model] Building texture index...");
     let texture_index = texture_index::TextureIndex::build(&target_pack, &vanilla_pack)
-        .unwrap_or_else(|e| {
-            println!(
-                "[read_block_model] Failed to build index: {}, using fallback",
-                e
-            );
+        .unwrap_or_else(|_e| {
             texture_index::TextureIndex {
                 texture_to_blocks: HashMap::new(),
             }
@@ -602,19 +567,12 @@ pub fn read_block_model_impl(
 
     // Try to look up block ID from texture index first
     let block_id = if let Some(primary_block) = texture_index.get_primary_block(texture_path) {
-        println!(
-            "[read_block_model] ✓ Found block from texture index: {}",
-            primary_block
-        );
         primary_block.to_string()
     } else {
-        println!("[read_block_model] Texture not in index, using heuristic fallback");
         // Fall back to heuristic method
         crate::util::blockstates::texture_id_to_block_id(&texture_id)
             .ok_or_else(|| AppError::validation(format!("Not a block texture: {}", texture_id)))?
     };
-
-    println!("[read_block_model] Block ID: {}", block_id);
 
     // Generate alternative block IDs to try (common naming variations)
     let mut block_id_candidates = vec![block_id.clone()];
@@ -642,36 +600,24 @@ pub fn read_block_model_impl(
         }
     }
 
-    println!(
-        "[read_block_model] Trying block IDs: {:?}",
-        block_id_candidates
-    );
-
     // Try to read blockstate from target pack, fall back to vanilla
     // Try all candidate block IDs until one works
-    println!("[read_block_model] Reading blockstate from pack...");
     let (blockstate, _used_block_id) = {
         let mut found_blockstate = None;
         let mut found_block_id = block_id.clone();
 
         for candidate in &block_id_candidates {
-            println!("[read_block_model] Trying candidate: {}", candidate);
             match crate::util::blockstates::read_blockstate(
                 &PathBuf::from(&target_pack.path),
                 candidate,
                 target_pack.is_zip,
             ) {
                 Ok(bs) => {
-                    println!(
-                        "[read_block_model] ✓ Blockstate found in pack for: {}",
-                        candidate
-                    );
                     found_blockstate = Some(bs);
                     found_block_id = candidate.clone();
                     break;
                 }
                 Err(_) => {
-                    println!("[read_block_model] ✗ Not in pack: {}", candidate);
                 }
             }
         }
@@ -680,7 +626,6 @@ pub fn read_block_model_impl(
             (bs, found_block_id)
         } else {
             // Try vanilla blockstate with all candidates
-            println!("[read_block_model] Not in pack, trying vanilla...");
             let mut found_vanilla = None;
             for candidate in &block_id_candidates {
                 match crate::util::blockstates::read_blockstate(
@@ -689,15 +634,10 @@ pub fn read_block_model_impl(
                     vanilla_pack.is_zip,
                 ) {
                     Ok(bs) => {
-                        println!(
-                            "[read_block_model] ✓ Blockstate found in vanilla for: {}",
-                            candidate
-                        );
                         found_vanilla = Some((bs, candidate.clone()));
                         break;
                     }
                     Err(_) => {
-                        println!("[read_block_model] ✗ Not in vanilla: {}", candidate);
                     }
                 }
             }
@@ -712,22 +652,18 @@ pub fn read_block_model_impl(
     };
 
     // Get the default model from the blockstate
-    println!("[read_block_model] Getting default model from blockstate...");
     let model_id = crate::util::blockstates::get_default_model(&blockstate).ok_or_else(|| {
         AppError::validation(format!(
             "No default model found in blockstate for {}",
             block_id
         ))
     })?;
-    println!("[read_block_model] Model ID: {}", model_id);
 
     // Resolve the model with parent inheritance
-    println!("[read_block_model] Resolving model with parent inheritance...");
     let result =
         crate::util::block_models::resolve_block_model(&target_pack, &model_id, &vanilla_pack)
             .map_err(|e| AppError::io(format!("Failed to read block model: {}", e)));
 
-    println!("[read_block_model] Complete!");
     result
 }
 
@@ -748,31 +684,16 @@ pub fn get_block_state_schema_impl(
     block_id: String,
     packs_dir: String,
 ) -> Result<crate::util::blockstates::BlockStateSchema, AppError> {
-    println!("=== [get_block_state_schema] START ===");
-    println!(
-        "[get_block_state_schema] pack_id: {}, block_id: {}",
-        pack_id, block_id
-    );
-
-    // CRITICAL: Normalize block_id to strip texture path prefixes
+    // Normalize block_id to strip texture path prefixes
     let normalized_block_id = if let Some(stripped) = block_id.strip_prefix("minecraft:block/") {
-        println!("[get_block_state_schema] Stripped 'minecraft:block/' prefix");
         stripped.to_string()
     } else if let Some(stripped) = block_id.strip_prefix("block/") {
-        println!("[get_block_state_schema] Stripped 'block/' prefix");
         stripped.to_string()
     } else if let Some(stripped) = block_id.strip_prefix("minecraft:") {
-        println!("[get_block_state_schema] Stripped 'minecraft:' prefix");
         stripped.to_string()
     } else {
-        println!("[get_block_state_schema] No prefix found, using as-is");
         block_id.clone()
     };
-
-    println!(
-        "[get_block_state_schema] Normalized block_id: {} -> {}",
-        block_id, normalized_block_id
-    );
 
     // Validate inputs
     validation::validate_directory(&packs_dir, "Packs directory")?;
@@ -793,14 +714,7 @@ pub fn get_block_state_schema_impl(
             .clone()
     };
 
-    println!(
-        "[get_block_state_schema] Reading blockstate from pack: {}",
-        target_pack.name
-    );
-
     // Use universal blockstate finder to locate the file
-    // This scans the directory and matches by normalizing names (removing underscores)
-    // Works with any block type without needing a hardcoded list
     let (blockstate, used_block_id) = {
         // Try target pack first
         if let Some(actual_block_id) = crate::util::blockstates::find_blockstate_file(
@@ -808,10 +722,6 @@ pub fn get_block_state_schema_impl(
             &normalized_block_id,
             target_pack.is_zip,
         ) {
-            println!(
-                "[get_block_state_schema] Found blockstate in pack: {} -> {}",
-                normalized_block_id, actual_block_id
-            );
             let bs = crate::util::blockstates::read_blockstate(
                 &PathBuf::from(&target_pack.path),
                 &actual_block_id,
@@ -825,10 +735,6 @@ pub fn get_block_state_schema_impl(
             &normalized_block_id,
             vanilla_pack.is_zip,
         ) {
-            println!(
-                "[get_block_state_schema] Found blockstate in vanilla: {} -> {}",
-                normalized_block_id, actual_block_id
-            );
             let bs = crate::util::blockstates::read_blockstate(
                 &PathBuf::from(&vanilla_pack.path),
                 &actual_block_id,
@@ -870,32 +776,17 @@ pub fn resolve_block_state_impl(
     state_props: Option<HashMap<String, String>>,
     seed: Option<u64>,
 ) -> Result<crate::util::blockstates::ResolutionResult, AppError> {
-    println!("=== [resolve_block_state] START ===");
-    println!(
-        "[resolve_block_state] pack_id: {}, block_id: {}, props: {:?}, seed: {:?}",
-        pack_id, block_id, state_props, seed
-    );
-
     // CRITICAL: Normalize block_id to strip texture path prefixes
     // Input might be "minecraft:block/dark_oak_planks" but we need just "dark_oak_planks"
     let normalized_block_id = if let Some(stripped) = block_id.strip_prefix("minecraft:block/") {
-        println!("[resolve_block_state] Stripped 'minecraft:block/' prefix");
         stripped.to_string()
     } else if let Some(stripped) = block_id.strip_prefix("block/") {
-        println!("[resolve_block_state] Stripped 'block/' prefix");
         stripped.to_string()
     } else if let Some(stripped) = block_id.strip_prefix("minecraft:") {
-        println!("[resolve_block_state] Stripped 'minecraft:' prefix");
         stripped.to_string()
     } else {
-        println!("[resolve_block_state] No prefix found, using as-is");
         block_id.clone()
     };
-
-    println!(
-        "[resolve_block_state] Normalized block_id: {} -> {}",
-        block_id, normalized_block_id
-    );
 
     // Validate inputs
     validation::validate_directory(&packs_dir, "Packs directory")?;
@@ -916,15 +807,6 @@ pub fn resolve_block_state_impl(
             .clone()
     };
 
-    println!(
-        "[resolve_block_state] Reading blockstate from pack: {}",
-        target_pack.name
-    );
-    println!(
-        "[resolve_block_state] Using normalized block_id: {}",
-        normalized_block_id
-    );
-
     // Use universal blockstate finder to locate the file
     // This scans the directory and matches by normalizing names (removing underscores)
     // Works with any block type without needing a hardcoded list
@@ -935,10 +817,6 @@ pub fn resolve_block_state_impl(
             &normalized_block_id,
             target_pack.is_zip,
         ) {
-            println!(
-                "[resolve_block_state] Found blockstate in pack: {} -> {}",
-                normalized_block_id, actual_block_id
-            );
             let bs = crate::util::blockstates::read_blockstate(
                 &PathBuf::from(&target_pack.path),
                 &actual_block_id,
@@ -952,10 +830,6 @@ pub fn resolve_block_state_impl(
             &normalized_block_id,
             vanilla_pack.is_zip,
         ) {
-            println!(
-                "[resolve_block_state] Found blockstate in vanilla: {} -> {}",
-                normalized_block_id, actual_block_id
-            );
             let bs = crate::util::blockstates::read_blockstate(
                 &PathBuf::from(&vanilla_pack.path),
                 &actual_block_id,
@@ -970,22 +844,23 @@ pub fn resolve_block_state_impl(
         }
     };
 
-    println!(
-        "[resolve_block_state] Successfully loaded blockstate for: {}",
-        used_block_id
-    );
-
     // Build schema to get valid properties for this block
     let schema = crate::util::blockstates::build_block_state_schema(&blockstate, &used_block_id);
 
     // Get the set of valid property names for this block
-    let valid_props: std::collections::HashSet<String> =
-        schema.properties.iter().map(|p| p.name.clone()).collect();
-
-    println!(
-        "[resolve_block_state] Valid properties for this block: {:?}",
-        valid_props
-    );
+    let valid_props: HashSet<String> = schema.properties.iter().map(|p| p.name.clone()).collect();
+    let allowed_values: HashMap<String, HashSet<String>> = schema
+        .properties
+        .iter()
+        .filter_map(|prop| {
+            prop.values.as_ref().map(|values| {
+                (
+                    prop.name.clone(),
+                    values.iter().cloned().collect::<HashSet<String>>(),
+                )
+            })
+        })
+        .collect();
 
     // CRITICAL: Merge provided state props with defaults, but ONLY include properties
     // that are actually defined in the blockstate schema. This filters out invalid
@@ -993,51 +868,30 @@ pub fn resolve_block_state_impl(
     let final_props = match state_props {
         Some(map) if !map.is_empty() => {
             let mut merged = schema.default_state.clone();
-            let mut filtered_count = 0;
             for (key, value) in map {
-                if valid_props.contains(&key) {
-                    merged.insert(key, value);
-                } else {
-                    filtered_count += 1;
-                    println!(
-                        "[resolve_block_state] Filtered out invalid property: {}={}",
-                        key, value
-                    );
+                if !valid_props.contains(&key) {
+                    continue;
                 }
-            }
-            if filtered_count > 0 {
-                println!(
-                    "[resolve_block_state] Filtered out {} invalid properties",
-                    filtered_count
-                );
+                if let Some(values) = allowed_values.get(&key) {
+                    if values.contains(&value) {
+                        merged.insert(key, value);
+                    }
+                } else {
+                    merged.insert(key, value);
+                }
             }
             Some(merged)
         }
-        _ => {
-            println!(
-                "[resolve_block_state] Using default state: {:?}",
-                schema.default_state
-            );
-            Some(schema.default_state.clone())
-        }
+        _ => Some(schema.default_state.clone()),
     };
 
-    println!("[resolve_block_state] Final properties: {:?}", final_props);
-
     // Resolve blockstate
-    let resolution = crate::util::blockstates::resolve_blockstate(
+    crate::util::blockstates::resolve_blockstate(
         &blockstate,
         &used_block_id,
         final_props,
         seed,
-    )?;
-
-    println!(
-        "[resolve_block_state] Resolved {} models",
-        resolution.models.len()
-    );
-
-    Ok(resolution)
+    )
 }
 
 /// Read a file from a resource pack (directory or ZIP)
@@ -1109,6 +963,25 @@ pub fn read_vanilla_jem_impl(entity_type: String) -> Result<String, AppError> {
     use std::fs;
     use std::path::PathBuf;
 
+    if let Ok(cache_dir) = vanilla_textures::get_vanilla_cache_dir() {
+        let cache_path = cache_dir
+            .join("assets/minecraft/optifine/cem")
+            .join(format!("{}.jem", entity_type));
+        if cache_path.exists() {
+            println!(
+                "[read_vanilla_jem] Reading vanilla JEM from cache: {}",
+                cache_path.display()
+            );
+            return fs::read_to_string(&cache_path).map_err(|e| {
+                AppError::io(format!(
+                    "Failed to read vanilla JEM at {}: {}",
+                    cache_path.display(),
+                    e
+                ))
+            });
+        }
+    }
+
     // Use the manifest directory as the base (src-tauri's parent directory)
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let base_path = PathBuf::from(manifest_dir);
@@ -1156,6 +1029,192 @@ pub fn get_entity_version_variants_impl(
         .map_err(|e| AppError::scan(format!("Failed to scan entity version variants: {}", e)))?;
 
     Ok(variants)
+}
+
+/// Get particle texture mappings for the currently cached Minecraft version
+pub fn get_particle_data_impl() -> Result<Option<particle_data::ParticleData>, AppError> {
+    particle_data::get_particle_data()
+        .map(Some)
+        .or_else(|e| {
+            // Return None instead of error if data doesn't exist yet
+            eprintln!("Particle data not available: {}", e);
+            Ok(None)
+        })
+}
+
+/// Get particle texture mappings for a specific Minecraft version
+pub fn get_particle_data_for_version_impl(
+    version: String,
+) -> Result<particle_data::ParticleData, AppError> {
+    particle_data::get_particle_data_for_version(&version)
+        .map_err(|e| AppError::io(format!("Failed to get particle data for {}: {}", version, e)))
+}
+
+/// Get cached particle physics data for the current Minecraft version
+///
+/// Returns physics data if already cached, otherwise returns None.
+/// Use `extract_particle_physics` to extract and cache physics data.
+///
+/// # Returns
+/// Optional ExtractedPhysicsData if cached
+pub fn get_particle_physics_impl(
+) -> Result<Option<crate::util::particle_physics_extractor::ExtractedPhysicsData>, AppError> {
+    // Get the currently cached vanilla version
+    let version = match vanilla_textures::get_cached_version() {
+        Ok(Some(v)) => v,
+        Ok(None) => return Ok(None),
+        Err(e) => return Err(AppError::io(format!("Failed to get cached version: {}", e))),
+    };
+
+    crate::util::particle_physics_extractor::load_cached_physics_data(&version)
+        .map_err(|e| AppError::io(format!("Failed to load cached physics: {}", e)))
+}
+
+/// Check if particle physics data is cached for a version
+///
+/// # Arguments
+/// * `version` - Minecraft version string
+///
+/// # Returns
+/// true if physics data is cached
+pub fn is_particle_physics_cached_impl(version: String) -> Result<bool, AppError> {
+    crate::util::particle_physics_extractor::is_physics_data_cached(&version)
+        .map_err(|e| AppError::io(format!("Failed to check physics cache: {}", e)))
+}
+
+/// Extract particle physics from Minecraft source code (async, expensive)
+///
+/// Downloads Mojang mappings, sets up CFR decompiler, and extracts physics
+/// values from decompiled particle classes. Results are cached per-version.
+///
+/// This is an expensive operation - call sparingly and show a loading indicator.
+///
+/// # Arguments
+/// * `version` - Minecraft version string (e.g., "1.21.4")
+///
+/// # Returns
+/// ExtractedPhysicsData with particle physics values
+pub async fn extract_particle_physics_impl(
+    version: String,
+) -> Result<crate::util::particle_physics_extractor::ExtractedPhysicsData, AppError> {
+    // Get the JAR path for this version
+    let versions = vanilla_textures::list_all_available_versions()
+        .map_err(|e| AppError::io(format!("Failed to list versions: {}", e)))?;
+
+    let version_info = versions
+        .iter()
+        .find(|v| v.version == version)
+        .ok_or_else(|| AppError::validation(format!("Version not found: {}", version)))?;
+
+    let jar_path = std::path::PathBuf::from(&version_info.jar_path);
+
+    crate::util::particle_physics_extractor::extract_particle_physics(&jar_path, &version)
+        .await
+        .map_err(|e| AppError::io(format!("Failed to extract particle physics: {}", e)))
+}
+
+// ============================================================================
+// BLOCK PARTICLE EMISSIONS
+// ============================================================================
+
+/// Get cached block particle emissions for the current Minecraft version
+///
+/// Returns emissions data if already cached, otherwise returns None.
+/// Use `extract_block_emissions` to extract and cache emissions data.
+///
+/// # Returns
+/// Optional ExtractedBlockEmissions if cached
+pub fn get_block_emissions_impl(
+) -> Result<Option<crate::util::block_particle_extractor::ExtractedBlockEmissions>, AppError> {
+    // Get the currently cached vanilla version
+    let version = match vanilla_textures::get_cached_version() {
+        Ok(Some(v)) => v,
+        Ok(None) => return Ok(None),
+        Err(e) => return Err(AppError::io(format!("Failed to get cached version: {}", e))),
+    };
+
+    crate::util::block_particle_extractor::load_cached_block_emissions(&version)
+        .map_err(|e| AppError::io(format!("Failed to load cached emissions: {}", e)))
+}
+
+/// Check if block emissions data is cached for a version
+///
+/// # Arguments
+/// * `version` - Minecraft version string
+///
+/// # Returns
+/// true if emissions data is cached
+pub fn is_block_emissions_cached_impl(version: String) -> Result<bool, AppError> {
+    crate::util::block_particle_extractor::is_block_emissions_cached(&version)
+        .map_err(|e| AppError::io(format!("Failed to check emissions cache: {}", e)))
+}
+
+/// Extract block particle emissions from Minecraft source code (async, expensive)
+///
+/// Downloads Mojang mappings, sets up CFR decompiler, and extracts particle
+/// emissions from decompiled block classes. Results are cached per-version.
+///
+/// This is an expensive operation - call sparingly and show a loading indicator.
+///
+/// # Arguments
+/// * `version` - Minecraft version string (e.g., "1.21.4")
+///
+/// # Returns
+/// ExtractedBlockEmissions with block -> particle mappings
+pub async fn extract_block_emissions_impl(
+    version: String,
+) -> Result<crate::util::block_particle_extractor::ExtractedBlockEmissions, AppError> {
+    // Get the JAR path for this version
+    let versions = vanilla_textures::list_all_available_versions()
+        .map_err(|e| AppError::io(format!("Failed to list versions: {}", e)))?;
+
+    let version_info = versions
+        .iter()
+        .find(|v| v.version == version)
+        .ok_or_else(|| AppError::validation(format!("Version not found: {}", version)))?;
+
+    let jar_path = std::path::PathBuf::from(&version_info.jar_path);
+
+    crate::util::block_particle_extractor::extract_block_emissions(&jar_path, &version)
+        .await
+        .map_err(|e| AppError::io(format!("Failed to extract block emissions: {}", e)))
+}
+
+/// Generate TypeScript particle data file from cached extractions
+///
+/// This reads the cached particle physics and block emissions data and generates
+/// a TypeScript file that the frontend can import directly.
+///
+/// # Returns
+/// Success message if generation succeeded
+pub fn generate_particle_typescript_impl() -> Result<String, AppError> {
+    let version = particle_cache::resolve_cached_version()
+        .map_err(|e| AppError::validation(e.to_string()))?;
+
+    let cache = particle_cache::load_cached_particle_cache(&version)
+        .map_err(|e| AppError::io(format!("Failed to load particle caches: {}", e)))?
+        .ok_or_else(|| {
+            AppError::validation(
+                "Missing cached particle data. Extract physics, emissions, and textures first."
+                    .to_string(),
+            )
+        })?;
+
+    let ts_output = particle_cache::resolve_generated_ts_path()
+        .map_err(|e| AppError::io(format!("Failed to resolve output path: {}", e)))?;
+
+    crate::util::particle_typescript_gen::generate_particle_data_typescript(
+        &cache.physics,
+        &cache.emissions,
+        &cache.textures,
+        &ts_output,
+    )
+    .map_err(|e| AppError::io(format!("Failed to generate TypeScript: {}", e)))?;
+
+    Ok(format!(
+        "Generated particle data for {} at {:?}",
+        cache.version, ts_output
+    ))
 }
 
 #[cfg(test)]

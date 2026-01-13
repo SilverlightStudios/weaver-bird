@@ -4,7 +4,10 @@ import {
   type BlockStateSchema,
   type BlockPropertySchema,
 } from "@lib/tauri/blockModels";
-import { getBlockStateIdFromAssetId } from "@lib/assetUtils";
+import {
+  applyNaturalBlockStateDefaults,
+  getBlockStateIdFromAssetId,
+} from "@lib/assetUtils";
 import { useSelectWinner, useSelectPacksDir } from "@state/selectors";
 import { Select, type SelectOption } from "@/ui/components/Select/Select";
 import { NumberInput } from "@/ui/components/NumberInput";
@@ -32,6 +35,7 @@ const PROPERTY_DESCRIPTIONS: Record<string, string> = {
   pickles: "Number of sea pickles in this block (1-4).",
   eggs: "Number of turtle eggs in this nest (1-4).",
   layers: "Number of snow layers (1-8).",
+  wall: "Mount this block on a wall (torches, signs, banners, etc.).",
 };
 
 interface Props {
@@ -107,12 +111,19 @@ export default function BlockStatePanel({
 
         // Initialize with default state synchronously when schema loads
         // This ensures blockProps are set BEFORE BlockModel tries to render
-        if (Object.keys(schemaData.defaultState).length > 0) {
+        if (
+          Object.keys(schemaData.defaultState).length > 0 &&
+          Object.keys(blockProps).length === 0
+        ) {
           console.log(
             "[BlockStatePanel.loadSchema] Setting default state:",
             schemaData.defaultState,
           );
-          onBlockPropsChange(schemaData.defaultState);
+          const naturalDefaults = applyNaturalBlockStateDefaults(
+            schemaData.defaultState,
+            assetId,
+          );
+          onBlockPropsChange(naturalDefaults);
         }
         setLoading(false);
       } catch (err) {
@@ -142,6 +153,7 @@ export default function BlockStatePanel({
     // We call onBlockPropsChange inside but it's intentionally not in deps
   ]);
 
+
   // Render property control based on type
   const renderPropertyControl = (prop: BlockPropertySchema) => {
     // Safety check: ensure blockProps is defined
@@ -164,20 +176,29 @@ export default function BlockStatePanel({
         return;
       }
 
-      onBlockPropsChange({
+      const updatedProps = {
         ...blockProps,
         [prop.name]: newValue,
-      });
+      };
+      console.log(`[BlockStatePanel] Updating ${prop.name} from ${blockProps[prop.name]} to ${newValue}`);
+      console.log(`[BlockStatePanel] New blockProps:`, updatedProps);
+      onBlockPropsChange(updatedProps);
     };
 
     switch (prop.type) {
-      case "boolean":
+      case "boolean": {
+        const ripeDisabled =
+          prop.name === "ripe" &&
+          maxAge !== undefined &&
+          Number.isFinite(currentAge) &&
+          currentAge < maxAge;
         return (
           <label key={prop.name} className={s.property}>
             <span className={s.propertyName}>{prop.name}</span>
             <input
               type="checkbox"
               checked={currentValue === "true"}
+              disabled={ripeDisabled}
               onChange={(e) =>
                 handleChange(e.target.checked ? "true" : "false")
               }
@@ -185,12 +206,19 @@ export default function BlockStatePanel({
             />
           </label>
         );
+      }
 
       case "enum": {
         const options: SelectOption[] = (prop.values || []).map((value) => ({
           value,
           label: value,
         }));
+
+        // Conditional: disable "facing" property when "wall" is false
+        // This handles wall-mounted blocks (torches, signs, banners, etc.)
+        const isFacingDisabled =
+          prop.name === "facing" && blockProps?.wall === "false";
+
         return (
           <div key={prop.name} className={s.property}>
             <span className={s.propertyName}>{prop.name}</span>
@@ -201,7 +229,13 @@ export default function BlockStatePanel({
               placeholder="Select..."
               emptyMessage="No options"
               className={s.select}
+              disabled={isFacingDisabled}
             />
+            {isFacingDisabled && (
+              <div className={s.disabledHint}>
+                Enable "wall" to set facing direction
+              </div>
+            )}
           </div>
         );
       }
@@ -286,6 +320,13 @@ export default function BlockStatePanel({
     // No properties to configure
     return null;
   }
+
+  const ageProp = schema.properties.find((prop) => prop.name === "age");
+  const maxAge = ageProp?.max;
+  const currentAge = parseInt(
+    blockProps?.age ?? ageProp?.default ?? "0",
+    10,
+  );
 
   return (
     <div className={s.root}>

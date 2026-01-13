@@ -1,0 +1,31 @@
+        "campfire_signal_smoke": {
+            "lifetime": [
+                4,
+                40
+            ],
+            "gravity": 0.0,
+            "size": null,
+            "scale": null,
+            "has_physics": true,
+            "alpha": null,
+            "friction": 0.98,
+            "velocity_multiplier": null,
+            "velocity_add": null,
+            "velocity_jitter": null,
+            "color": null,
+            "color_scale": null,
+            "lifetime_base": null,
+            "lifetime_animation": null,
+            "behavior": "particle",
+            "tick_velocity_delta": null,
+            "skips_friction": false
+        },
+        "scrape": {
+            "lifetime": [
+                4,
+                40
+            ],
+            "gravity": 0.0,
+            "size": null,
+            "scale": null,
+            "has_physics": true,

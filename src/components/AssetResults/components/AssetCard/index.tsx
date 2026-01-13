@@ -1,4 +1,11 @@
-import { useEffect, useState, useRef, useMemo, memo } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  memo,
+  type CSSProperties,
+} from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getVanillaTexturePath, getPackTexturePath } from "@lib/tauri";
 import {
@@ -11,6 +18,7 @@ import {
 import {
   isEntityTexture,
   getEntityInfoFromAssetId,
+  getEntityTextureAssetId,
   loadEntityModel,
 } from "@lib/emf";
 import {
@@ -20,6 +28,11 @@ import {
 } from "@state/selectors";
 import { useStore } from "@state/store";
 import { MinecraftCSSBlock } from "@components/MinecraftCSSBlock";
+import {
+  buildAnimationTimeline,
+  loadAnimationMetadata,
+  parseAnimationTexture,
+} from "@lib/utils/animationTexture";
 import {
   needsGrassTint,
   needsFoliageTint,
@@ -69,6 +82,9 @@ export const AssetCard = memo(
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [imageError, setImageError] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
+    const [itemFrameCount, setItemFrameCount] = useState(1);
+    const [itemFrameIndex, setItemFrameIndex] = useState(0);
+    const itemAnimationTimeoutRef = useRef<number | null>(null);
     const cardRef = useRef<HTMLDivElement>(null);
     const isColormap = isBiomeColormapAsset(asset.id);
     const is2DTexture = is2DOnlyTexture(asset.id);
@@ -263,6 +279,99 @@ export const AssetCard = memo(
       winnerPack,
     ]);
 
+    useEffect(() => {
+      setItemFrameCount(1);
+      setItemFrameIndex(0);
+    }, [imageSrc]);
+
+    useEffect(() => {
+      if (
+        !isVisible ||
+        !imageSrc ||
+        (!isItem && !useItemTextureForCard)
+      ) {
+        return;
+      }
+
+      let mounted = true;
+
+      void (async () => {
+        const info = await parseAnimationTexture(imageSrc);
+        if (!mounted) return;
+        if (info.frameCount > 1) {
+          setItemFrameCount(info.frameCount);
+          setItemFrameIndex(0);
+        }
+      })();
+
+      return () => {
+        mounted = false;
+      };
+    }, [imageSrc, isItem, isVisible, useItemTextureForCard]);
+
+    useEffect(() => {
+      if (itemAnimationTimeoutRef.current) {
+        window.clearTimeout(itemAnimationTimeoutRef.current);
+        itemAnimationTimeoutRef.current = null;
+      }
+
+      if (
+        !isVisible ||
+        !imageSrc ||
+        (!isItem && !useItemTextureForCard) ||
+        itemFrameCount <= 1
+      ) {
+        return;
+      }
+
+      let mounted = true;
+      let sequenceIndex = 0;
+      let frames: number[] = Array.from(
+        { length: itemFrameCount },
+        (_, index) => index,
+      );
+      let frameTimesMs: number[] = Array.from(
+        { length: itemFrameCount },
+        () => 50,
+      );
+
+      const scheduleNext = () => {
+        if (!mounted) return;
+        const durationMs = frameTimesMs[sequenceIndex] ?? 50;
+        itemAnimationTimeoutRef.current = window.setTimeout(() => {
+          if (!mounted) return;
+          sequenceIndex = (sequenceIndex + 1) % frames.length;
+          setItemFrameIndex(frames[sequenceIndex] ?? 0);
+          scheduleNext();
+        }, durationMs);
+      };
+
+      void (async () => {
+        const metadata = await loadAnimationMetadata(imageSrc);
+        if (!mounted) return;
+        const timeline = buildAnimationTimeline(itemFrameCount, metadata);
+        frames = timeline.frames;
+        frameTimesMs = timeline.frameTimesMs;
+        sequenceIndex = 0;
+        setItemFrameIndex(frames[sequenceIndex] ?? 0);
+        scheduleNext();
+      })();
+
+      return () => {
+        mounted = false;
+        if (itemAnimationTimeoutRef.current) {
+          window.clearTimeout(itemAnimationTimeoutRef.current);
+          itemAnimationTimeoutRef.current = null;
+        }
+      };
+    }, [
+      imageSrc,
+      isItem,
+      isVisible,
+      itemFrameCount,
+      useItemTextureForCard,
+    ]);
+
     // Load entity model and texture when visible
     useEffect(() => {
       if (!isVisible || !isEntity) return;
@@ -274,6 +383,7 @@ export const AssetCard = memo(
         try {
           const normalizedAssetId = normalizeAssetId(asset.id);
           const entityInfo = getEntityInfoFromAssetId(normalizedAssetId);
+          const textureAssetId = getEntityTextureAssetId(normalizedAssetId);
           const path = normalizedAssetId.includes(":")
             ? normalizedAssetId.split(":")[1]!
             : normalizedAssetId;
@@ -361,7 +471,7 @@ export const AssetCard = memo(
               extra![sidePotAssetId] = null;
             }
           } else {
-            texturePath = await resolveTexturePath(normalizedAssetId);
+            texturePath = await resolveTexturePath(textureAssetId);
           }
 
           if (mounted) {
@@ -398,6 +508,17 @@ export const AssetCard = memo(
     // Generate display name
     const displayName = useMemo(() => generateDisplayName(asset), [asset]);
 
+    const isItemSpriteAnimated =
+      (isItem || useItemTextureForCard) && itemFrameCount > 1;
+
+    const itemSpriteStyle = useMemo(() => {
+      const safeCount = Math.max(1, itemFrameCount);
+      const translate = (itemFrameIndex * 100) / safeCount;
+      return {
+        transform: `translateY(-${translate}%)`,
+      } as CSSProperties;
+    }, [itemFrameCount, itemFrameIndex]);
+
     return (
       <div
         ref={cardRef}
@@ -408,18 +529,59 @@ export const AssetCard = memo(
           {isColormap || is2DTexture || isItem || useItemTextureForCard ? (
             // Colormaps, 2D textures, items, and cross-shaped plants display as flat images
             imageSrc && !imageError ? (
-              <img
-                src={imageSrc}
-                alt={displayName}
-                className={
-                  isItem || useItemTextureForCard
-                    ? s.itemTexture
-                    : is2DTexture
-                      ? s.texture2D
-                      : s.colormapTexture
-                }
-                onError={() => setImageError(true)}
-              />
+              isItemSpriteAnimated ? (
+                <div
+                  className={s.itemSprite}
+                  style={
+                    {
+                      "--frame-count": itemFrameCount,
+                    } as CSSProperties
+                  }
+                >
+                  <img
+                    src={imageSrc}
+                    alt={displayName}
+                    className={s.itemSpriteImage}
+                    style={itemSpriteStyle}
+                    onLoad={(event) => {
+                      const target = event.currentTarget;
+                      const width = target.naturalWidth;
+                      const height = target.naturalHeight;
+                      if (height > width && height % width === 0) {
+                        setItemFrameCount(height / width);
+                      } else {
+                        setItemFrameCount(1);
+                      }
+                    }}
+                    onError={() => setImageError(true)}
+                  />
+                </div>
+              ) : (
+                <img
+                  src={imageSrc}
+                  alt={displayName}
+                  className={
+                    isItem || useItemTextureForCard
+                      ? s.itemTexture
+                      : is2DTexture
+                        ? s.texture2D
+                        : s.colormapTexture
+                  }
+                  onLoad={(event) => {
+                    if (isItem || useItemTextureForCard) {
+                      const target = event.currentTarget;
+                      const width = target.naturalWidth;
+                      const height = target.naturalHeight;
+                      if (height > width && height % width === 0) {
+                        setItemFrameCount(height / width);
+                      } else {
+                        setItemFrameCount(1);
+                      }
+                    }
+                  }}
+                  onError={() => setImageError(true)}
+                />
+              )
             ) : imageError ? (
               <div className={s.placeholder}>
                 <span className={s.placeholderIcon}>

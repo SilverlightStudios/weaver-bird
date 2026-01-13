@@ -7,6 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use walkdir::WalkDir;
 use zip::ZipArchive;
 
 use crate::util::mc_paths;
@@ -289,15 +290,120 @@ pub fn find_latest_version_jar() -> Result<PathBuf> {
 
 /// Get the currently cached version info (if any)
 pub fn get_cached_version() -> Result<Option<String>> {
-    let cache_dir = get_vanilla_cache_dir()?;
-    let marker_file = cache_dir.join(".extracted_version");
+  let cache_dir = get_vanilla_cache_dir()?;
+  let marker_file = cache_dir.join(".extracted_version");
 
     if marker_file.exists() {
         let version = fs::read_to_string(marker_file).context("Failed to read version marker")?;
         Ok(Some(version.trim().to_string()))
     } else {
         Ok(None)
+  }
+}
+
+fn has_any_file_with_suffix(dir: &Path, suffix: &str) -> bool {
+    if !dir.exists() {
+        return false;
     }
+    WalkDir::new(dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .any(|entry| {
+            entry.file_type().is_file()
+                && entry
+                    .path()
+                    .to_string_lossy()
+                    .ends_with(suffix)
+        })
+}
+
+fn jar_contains_mcmeta(jar_path: &Path) -> Result<bool> {
+    let jar_file = fs::File::open(jar_path).context("Failed to open Minecraft JAR file")?;
+    let mut archive = ZipArchive::new(jar_file).context("Failed to read JAR archive")?;
+
+    for i in 0..archive.len() {
+        let file = archive
+            .by_index(i)
+            .context("Failed to read archive entry")?;
+        let file_path = file.name();
+
+        if file_path.starts_with("assets/minecraft/textures/")
+            && file_path.ends_with(".png.mcmeta")
+        {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn jar_contains_cem(jar_path: &Path) -> Result<bool> {
+    let jar_file = fs::File::open(jar_path).context("Failed to open Minecraft JAR file")?;
+    let mut archive = ZipArchive::new(jar_file).context("Failed to read JAR archive")?;
+
+    for i in 0..archive.len() {
+        let file = archive
+            .by_index(i)
+            .context("Failed to read archive entry")?;
+        let file_path = file.name();
+
+        if file_path.starts_with("assets/minecraft/optifine/cem/")
+            && (file_path.ends_with(".jem") || file_path.ends_with(".jpm"))
+        {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn is_cache_complete(cache_dir: &Path, jar_path: &Path) -> Result<bool> {
+    let textures_dir = cache_dir.join("assets/minecraft/textures");
+    let models_dir = cache_dir.join("assets/minecraft/models");
+    let blockstates_dir = cache_dir.join("assets/minecraft/blockstates");
+    let particles_dir = cache_dir.join("assets/minecraft/particles");
+    let cem_dir = cache_dir.join("assets/minecraft/optifine/cem");
+
+    if !textures_dir.exists()
+        || !models_dir.exists()
+        || !blockstates_dir.exists()
+        || !particles_dir.exists()
+    {
+        return Ok(false);
+    }
+
+    let has_textures = has_any_file_with_suffix(&textures_dir, ".png");
+    let has_models = has_any_file_with_suffix(&models_dir, ".json");
+    let has_blockstates = has_any_file_with_suffix(&blockstates_dir, ".json");
+    let has_particles = has_any_file_with_suffix(&particles_dir, ".json");
+
+    if !(has_textures && has_models && has_blockstates && has_particles) {
+        return Ok(false);
+    }
+
+    let has_mcmeta = has_any_file_with_suffix(&textures_dir, ".png.mcmeta");
+    if has_mcmeta {
+        return Ok(true);
+    }
+
+    let jar_has_mcmeta = jar_contains_mcmeta(jar_path)?;
+    if jar_has_mcmeta {
+        println!("[vanilla_textures] Cache missing .png.mcmeta files");
+        return Ok(false);
+    }
+
+    let jar_has_cem = jar_contains_cem(jar_path)?;
+    if jar_has_cem {
+        let has_cem =
+            has_any_file_with_suffix(&cem_dir, ".jem") || has_any_file_with_suffix(&cem_dir, ".jpm");
+        if !has_cem {
+            println!("[vanilla_textures] Cache missing CEM files");
+            return Ok(false);
+        }
+    }
+
+    println!("[vanilla_textures] No .png.mcmeta files found in jar");
+    Ok(true)
 }
 
 /// Extract vanilla textures from the Minecraft JAR to cache
@@ -324,8 +430,14 @@ pub fn extract_vanilla_textures_with_progress(
     if marker_file.exists() {
         if let Ok(cached_version) = fs::read_to_string(&marker_file) {
             if cached_version.trim() == version_name {
-                println!("[vanilla_textures] Version {} already cached", version_name);
-                return Ok(cache_dir);
+                if is_cache_complete(&cache_dir, jar_path)? {
+                    println!("[vanilla_textures] Version {} already cached", version_name);
+                    return Ok(cache_dir);
+                }
+                println!(
+                    "[vanilla_textures] Cache missing required assets for {}, re-extracting",
+                    version_name
+                );
             }
         }
     }
@@ -353,12 +465,16 @@ pub fn extract_vanilla_textures_with_progress(
 
         let file_path = file.name().to_string();
 
-        // Extract textures (PNG), animation metadata (PNG.MCMETA), models (JSON), and blockstates (JSON)
+        // Extract textures (PNG), animation metadata (PNG.MCMETA), models (JSON), blockstates (JSON), and particles (JSON)
         let should_extract = (file_path.starts_with("assets/minecraft/textures/")
             && (file_path.ends_with(".png") || file_path.ends_with(".png.mcmeta")))
             || (file_path.starts_with("assets/minecraft/models/") && file_path.ends_with(".json"))
             || (file_path.starts_with("assets/minecraft/blockstates/")
-                && file_path.ends_with(".json"));
+                && file_path.ends_with(".json"))
+            || (file_path.starts_with("assets/minecraft/particles/")
+                && file_path.ends_with(".json"))
+            || (file_path.starts_with("assets/minecraft/optifine/cem/")
+                && (file_path.ends_with(".jem") || file_path.ends_with(".jpm")));
 
         if should_extract {
             files_to_extract.push((i, file_path));
@@ -449,7 +565,7 @@ pub fn extract_vanilla_textures_with_progress(
     );
 
     println!(
-        "[vanilla_textures] Successfully extracted vanilla assets for version {} (textures, models, blockstates) in PARALLEL",
+        "[vanilla_textures] Successfully extracted vanilla assets for version {} (textures, .mcmeta, models, blockstates, particles) in PARALLEL",
         version_name
     );
     Ok(cache_dir)

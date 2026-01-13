@@ -4,6 +4,10 @@
 import * as THREE from "three";
 import { invoke } from "@tauri-apps/api/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import {
+  buildAnimationTimeline,
+  loadAnimationMetadata,
+} from "@lib/utils/animationTexture";
 
 // Cache textures to avoid reloading
 const textureCache = new Map<string, THREE.Texture>();
@@ -12,40 +16,15 @@ const textureCache = new Map<string, THREE.Texture>();
 interface AnimatedTextureInfo {
   texture: THREE.Texture;
   frameCount: number;
-  frametime: number; // Minecraft ticks per frame (1 tick = 50ms)
-  currentFrame: number;
+  frames: number[];
+  frameTimesMs: number[];
+  sequenceIndex: number;
   lastUpdateTime: number;
   interpolate: boolean; // Whether to smoothly fade between frames
   material?: THREE.ShaderMaterial; // Custom shader material for interpolation
 }
 
 const animatedTextures = new Map<THREE.Texture, AnimatedTextureInfo>();
-
-/**
- * List of textures that should NOT use interpolation
- * These textures don't have "interpolate": true in their .mcmeta files
- */
-const NON_INTERPOLATING_TEXTURES = new Set([
-  "seagrass",
-  "tall_seagrass_top",
-  "tall_seagrass_bottom",
-  "kelp",
-  "kelp_plant",
-  // Add more as discovered
-]);
-
-/**
- * Check if a texture should use interpolation based on its name
- */
-function shouldInterpolate(textureId: string): boolean {
-  // Extract the base texture name (without path and namespace)
-  const textureName =
-    textureId
-      .split("/")
-      .pop()
-      ?.replace(/\.png$/i, "") || "";
-  return !NON_INTERPOLATING_TEXTURES.has(textureName);
-}
 
 /**
  * Create a custom shader material for animated texture interpolation
@@ -70,7 +49,7 @@ function createAnimatedTextureMaterial(
     alphaTest: 0.1,
     roughness: 0.8,
     metalness: 0.2,
-    side: THREE.DoubleSide,
+    side: THREE.FrontSide,
   });
 
   // Inject custom animation shader code into the standard material
@@ -78,6 +57,7 @@ function createAnimatedTextureMaterial(
     // Add custom uniforms for animation
     shader.uniforms.frameCount = { value: frameCount };
     shader.uniforms.currentFrame = { value: 0 };
+    shader.uniforms.nextFrame = { value: 0 };
     shader.uniforms.blendFactor = { value: 0.0 };
 
     // Store reference to shader uniforms for updates
@@ -87,6 +67,7 @@ function createAnimatedTextureMaterial(
     shader.fragmentShader = `
       uniform float frameCount;
       uniform float currentFrame;
+      uniform float nextFrame;
       uniform float blendFactor;
       ${shader.fragmentShader}
     `;
@@ -98,7 +79,7 @@ function createAnimatedTextureMaterial(
         // Custom animated texture sampling with frame blending
         float frameHeight = 1.0 / frameCount;
         float currentFrameV = (frameCount - 1.0 - currentFrame) / frameCount;
-        float nextFrameIndex = mod(currentFrame + 1.0, frameCount);
+        float nextFrameIndex = mod(nextFrame, frameCount);
         float nextFrameV = (frameCount - 1.0 - nextFrameIndex) / frameCount;
 
         // Sample current frame
@@ -132,40 +113,53 @@ function createAnimatedTextureMaterial(
  */
 export function updateAnimatedTextures(currentTime: number): void {
   animatedTextures.forEach((info) => {
-    const elapsedMs = currentTime - info.lastUpdateTime;
-    const frameTimeMs = info.frametime * 50; // Minecraft tick = 50ms
+    if (info.frames.length === 0) {
+      return;
+    }
+
+    let sequenceIndex = info.sequenceIndex;
+    let frameStartTime = info.lastUpdateTime;
+    let elapsedMs = currentTime - frameStartTime;
+    let frameTimeMs = info.frameTimesMs[sequenceIndex] ?? 50;
+    let advanced = false;
+
+    while (elapsedMs >= frameTimeMs && info.frames.length > 0) {
+      elapsedMs -= frameTimeMs;
+      sequenceIndex = (sequenceIndex + 1) % info.frames.length;
+      frameTimeMs = info.frameTimesMs[sequenceIndex] ?? 50;
+      frameStartTime = currentTime - elapsedMs;
+      advanced = true;
+    }
+
+    if (advanced) {
+      info.sequenceIndex = sequenceIndex;
+      info.lastUpdateTime = frameStartTime;
+    }
+
+    const currentFrame = info.frames[sequenceIndex] ?? 0;
+    const nextSequenceIndex =
+      info.frames.length > 0
+        ? (sequenceIndex + 1) % info.frames.length
+        : sequenceIndex;
+    const nextFrame = info.frames[nextSequenceIndex] ?? currentFrame;
 
     if (info.interpolate && info.material) {
-      // Shader-based interpolation: blend between frames
+      // Shader-based interpolation: blend between frames in the sequence.
       const progress = Math.min(elapsedMs / frameTimeMs, 1.0);
-
-      if (progress >= 1.0) {
-        // Advance to next frame
-        info.currentFrame = (info.currentFrame + 1) % info.frameCount;
-        info.lastUpdateTime = currentTime;
-      }
 
       // Update shader uniforms (stored in userData by onBeforeCompile)
       const animUniforms = (info.material as any).userData?.animUniforms;
       if (animUniforms) {
-        const actualProgress =
-          (currentTime - info.lastUpdateTime) / frameTimeMs;
-        animUniforms.currentFrame.value = info.currentFrame;
-        animUniforms.blendFactor.value = Math.min(actualProgress, 1.0);
+        animUniforms.currentFrame.value = currentFrame;
+        animUniforms.nextFrame.value = nextFrame;
+        animUniforms.blendFactor.value = progress;
       }
-    } else {
+    } else if (advanced) {
       // Instant frame switching (no interpolation)
-      if (elapsedMs >= frameTimeMs) {
-        // Advance to next frame
-        info.currentFrame = (info.currentFrame + 1) % info.frameCount;
-        info.lastUpdateTime = currentTime;
-
-        // Update texture offset to show current frame
-        const offset =
-          (info.frameCount - 1 - info.currentFrame) / info.frameCount;
-        info.texture.offset.set(0, offset);
-        info.texture.needsUpdate = true;
-      }
+      const offset =
+        (info.frameCount - 1 - currentFrame) / info.frameCount;
+      info.texture.offset.set(0, offset);
+      info.texture.needsUpdate = true;
     }
   });
 }
@@ -218,7 +212,7 @@ export async function loadPackTexture(
       const loader = new THREE.TextureLoader();
       loader.load(
         textureUrl,
-        (tex) => {
+        async (tex) => {
           console.log(
             `[textureLoader] ✓ Texture loaded successfully: ${textureId}`,
           );
@@ -244,15 +238,18 @@ export async function loadPackTexture(
               );
 
               // Apply animation frame cropping
-              // V coordinates need to be scaled: repeat by 1/frameCount, offset to top frame
+              // V coordinates need to be scaled: repeat by 1/frameCount
               tex.repeat.set(1, 1 / frameCount);
-              tex.offset.set(0, (frameCount - 1) / frameCount);
 
-              // Register for animation updates
-              // Default: 8 ticks per frame (most vanilla animated blocks use 2-10)
-              // Magma uses 8 with interpolation, lava_still uses 20, water_still uses 2
-              // Without .mcmeta files, we use reasonable defaults
-              const interpolate = shouldInterpolate(textureId);
+              // Load animation metadata (frametime, frames, interpolate) when available
+              const metadata = await loadAnimationMetadata(textureUrl);
+              const timeline = buildAnimationTimeline(frameCount, metadata);
+              const initialFrame = timeline.frames[0] ?? 0;
+              const offset =
+                (frameCount - 1 - initialFrame) / frameCount;
+              tex.offset.set(0, offset);
+
+              const interpolate = metadata?.interpolate ?? false;
               const material = interpolate
                 ? createAnimatedTextureMaterial(tex, frameCount)
                 : undefined;
@@ -260,15 +257,16 @@ export async function loadPackTexture(
               animatedTextures.set(tex, {
                 texture: tex,
                 frameCount,
-                frametime: 8, // TODO: Load from .mcmeta file for accurate timing
-                currentFrame: 0,
+                frames: timeline.frames,
+                frameTimesMs: timeline.frameTimesMs,
+                sequenceIndex: 0,
                 lastUpdateTime: performance.now(),
                 interpolate,
                 material,
               });
 
               console.log(
-                `[textureLoader] → Registered animated texture: ${frameCount} frames @ 1 tick/frame`,
+                `[textureLoader] → Registered animated texture: ${frameCount} frames @ ${timeline.frameTimesMs[0] ?? 50}ms/frame`,
               );
             }
           }
@@ -330,7 +328,7 @@ export async function loadVanillaTexture(
       const loader = new THREE.TextureLoader();
       loader.load(
         textureUrl,
-        (tex) => {
+        async (tex) => {
           // Configure texture for Minecraft-style rendering
           tex.magFilter = THREE.NearestFilter;
           tex.minFilter = THREE.NearestFilter;
@@ -354,11 +352,15 @@ export async function loadVanillaTexture(
 
               // Apply animation frame cropping
               tex.repeat.set(1, 1 / frameCount);
-              tex.offset.set(0, (frameCount - 1) / frameCount);
 
-              // Register for animation updates
-              // Default: 8 ticks per frame (reasonable default for most blocks)
-              const interpolate = shouldInterpolate(textureId);
+              const metadata = await loadAnimationMetadata(textureUrl);
+              const timeline = buildAnimationTimeline(frameCount, metadata);
+              const initialFrame = timeline.frames[0] ?? 0;
+              const offset =
+                (frameCount - 1 - initialFrame) / frameCount;
+              tex.offset.set(0, offset);
+
+              const interpolate = metadata?.interpolate ?? false;
               const material = interpolate
                 ? createAnimatedTextureMaterial(tex, frameCount)
                 : undefined;
@@ -366,8 +368,9 @@ export async function loadVanillaTexture(
               animatedTextures.set(tex, {
                 texture: tex,
                 frameCount,
-                frametime: 8,
-                currentFrame: 0,
+                frames: timeline.frames,
+                frameTimesMs: timeline.frameTimesMs,
+                sequenceIndex: 0,
                 lastUpdateTime: performance.now(),
                 interpolate,
                 material,

@@ -1,3 +1,5 @@
+import type { AssetRecord } from "@state/types";
+
 export interface AssetItem {
   id: string;
   name: string;
@@ -10,7 +12,7 @@ export interface PaginationInfo {
 }
 
 export interface Props {
-  assets: AssetItem[];
+  assets: AssetRecord[];
   selectedId?: string;
   onSelect: (id: string) => void;
   onPaginationChange?: (info: PaginationInfo) => void; // Callback to report pagination state

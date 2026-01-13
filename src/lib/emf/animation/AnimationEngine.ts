@@ -326,11 +326,9 @@ export class AnimationEngine {
         | undefined;
       const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
       if (!hasLocalBoxes && base) {
-        // Root pivot-only bones are often placeholders for vanilla-driven inputs
-        // (e.g. blaze `stick*`), and we don't have vanilla runtime values here.
-        // Default them to 0 rather than baking in their authored rest position.
         const isRoot = bone.parent === this.modelGroup;
-        if (isRoot) continue;
+        const reads = selfReads.get(name);
+        const pivots = pivotSeeds.get(name) ?? new Set<"tx" | "ty" | "tz">();
 
         const invertAxis =
           typeof (bone as any)?.userData?.invertAxis === "string"
@@ -339,6 +337,39 @@ export class AnimationEngine {
         const localPxX = base.position.x * 16;
         const localPxY = base.position.y * 16;
         const localPxZ = base.position.z * 16;
+
+        if (isRoot) {
+          // Root pivot-only bones are often placeholders for vanilla-driven inputs.
+          // Only seed channels when expressions explicitly read them.
+          if (!reads || reads.size === 0) continue;
+
+          if (reads.has("tx")) {
+            rest[name].tx = pivots.has("tx")
+              ? invertAxis.includes("x")
+                ? -localPxX
+                : localPxX
+              : 0;
+          }
+          if (reads.has("tz")) {
+            rest[name].tz = pivots.has("tz")
+              ? invertAxis.includes("z")
+                ? -localPxZ
+                : localPxZ
+              : 0;
+          }
+          if (reads.has("ty")) {
+            const shouldSeedPivot =
+              pivots.has("ty") || Math.abs(localPxY) >= 10;
+            if (!shouldSeedPivot) {
+              rest[name].ty = 0;
+            } else if (invertAxis.includes("y")) {
+              rest[name].ty = CEM_Y_ORIGIN_PX - localPxY;
+            } else {
+              rest[name].ty = localPxY + CEM_Y_ORIGIN_PX;
+            }
+          }
+          continue;
+        }
 
         rest[name].tx = invertAxis.includes("x") ? -localPxX : localPxX;
         rest[name].tz = invertAxis.includes("z") ? -localPxZ : localPxZ;
@@ -419,8 +450,10 @@ export class AnimationEngine {
         const parsedProp = parseBoneProperty(propertyPath);
         if (!parsedProp) continue;
         const targetBone = parsedProp.target;
-        if (targetBone === "var" || targetBone === "render" || targetBone === "varb")
-          continue;
+        const targetIsBone =
+          targetBone !== "var" &&
+          targetBone !== "render" &&
+          targetBone !== "varb";
 
         try {
           const parsed = compileExpression(exprSource);
@@ -523,7 +556,9 @@ export class AnimationEngine {
                 const rot = getRotationVar(node);
                 if (rot) {
                   markRotationInput(rot.bone, rot.prop);
-                  if (rot.bone === targetBone) markSelfRotationRead(rot.prop);
+                  if (targetIsBone && rot.bone === targetBone) {
+                    markSelfRotationRead(rot.prop);
+                  }
                 }
                 return;
               }

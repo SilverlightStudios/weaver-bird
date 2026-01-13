@@ -43,6 +43,36 @@ function readTexturePixels(texture: THREE.Texture): PixelData {
 }
 
 /**
+ * Reads pixel data from an image source (optionally cropped)
+ */
+function readImagePixels(
+  image: CanvasImageSource & { width: number; height: number },
+  sx: number,
+  sy: number,
+  width: number,
+  height: number,
+): PixelData {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("Failed to get 2D context");
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  ctx.drawImage(image, sx, sy, width, height, 0, 0, width, height);
+  const imageData = ctx.getImageData(0, 0, width, height);
+
+  return {
+    width,
+    height,
+    data: imageData.data,
+  };
+}
+
+/**
  * Checks if a pixel is opaque (alpha > threshold)
  */
 function isPixelOpaque(
@@ -64,12 +94,10 @@ function isPixelOpaque(
 /**
  * Generates custom BufferGeometry for a Minecraft-style item with pixel-perfect edges
  */
-export function generateItemGeometry(
-  texture: THREE.Texture,
-  thickness: number = 0.0625, // 1/16 block (1 pixel in Minecraft scale)
+function buildItemGeometry(
+  pixelData: PixelData,
+  thickness: number = 0.0625,
 ): THREE.BufferGeometry {
-  const pixelData = readTexturePixels(texture);
-
   const {width} = pixelData;
   const {height} = pixelData;
   const halfThickness = thickness / 2;
@@ -309,6 +337,42 @@ export function generateItemGeometry(
   geometry.setIndex(indices);
 
   return geometry;
+}
+
+/**
+ * Generates custom BufferGeometry for a Minecraft-style item with pixel-perfect edges
+ */
+export function generateItemGeometry(
+  texture: THREE.Texture,
+  thickness: number = 0.0625, // 1/16 block (1 pixel in Minecraft scale)
+): THREE.BufferGeometry {
+  const pixelData = readTexturePixels(texture);
+  return buildItemGeometry(pixelData, thickness);
+}
+
+/**
+ * Generates geometry for a specific animation frame from a stacked texture
+ */
+export function generateItemGeometryFromImageFrame(
+  image: CanvasImageSource & { width: number; height: number },
+  frameIndex: number,
+  thickness: number = 0.0625,
+): THREE.BufferGeometry {
+  const width = image.width;
+  const height = image.height;
+  const hasAnimation = height > width && height % width === 0;
+  const frameCount = hasAnimation ? height / width : 1;
+  const frameHeight = hasAnimation ? width : height;
+  const clampedFrame = Math.max(0, Math.min(frameIndex, frameCount - 1));
+  const pixelData = readImagePixels(
+    image,
+    0,
+    clampedFrame * frameHeight,
+    width,
+    frameHeight,
+  );
+
+  return buildItemGeometry(pixelData, thickness);
 }
 
 /**

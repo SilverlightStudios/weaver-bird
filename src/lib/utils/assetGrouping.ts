@@ -64,6 +64,26 @@ function getEntityAliasGroupKey(path: string): string | null {
     return null;
 }
 
+function buildItemToBlockGroupKeyMap(assetIds: string[]): Map<string, string> {
+    const map = new Map<string, string>();
+
+    for (const assetId of assetIds) {
+        const path = stripNamespace(assetId).replace(/\.png$/i, "");
+        if (!path.startsWith("block/")) continue;
+
+        const blockGroupKey = getVariantGroupKey(assetId);
+        if (!blockGroupKey.startsWith("block/")) continue;
+
+        const baseName = blockGroupKey.slice("block/".length);
+        if (!baseName) continue;
+
+        const itemPath = `item/${baseName}`;
+        map.set(itemPath, blockGroupKey);
+    }
+
+    return map;
+}
+
 function isEntityVariantLeaf(dir: string, leaf: string): boolean {
     return (
         leaf === dir ||
@@ -174,6 +194,85 @@ export function groupAssetsByVariant(assetIds: string[]): AssetGroup[] {
         });
 
         // Pre-compute the display name for the base ID
+        const displayName = beautifyAssetName(baseId);
+
+        result.push({ baseId, variantIds: sorted, displayName });
+    }
+
+    return result;
+}
+
+/**
+ * Group assets for resource cards (merge block + item when a block counterpart exists)
+ */
+export function groupAssetsForCards(assetIds: string[]): AssetGroup[] {
+    const groups = new Map<string, string[]>();
+
+    const itemToBlockGroupKey = buildItemToBlockGroupKeyMap(assetIds);
+
+    const entityDirToLeaves = new Map<string, string[]>();
+    for (const assetId of assetIds) {
+        const path = stripNamespace(assetId).replace(/\.png$/i, "");
+        const entity = getEntityDirAndLeaf(path);
+        if (!entity) continue;
+        const list = entityDirToLeaves.get(entity.dir) ?? [];
+        list.push(entity.leaf);
+        entityDirToLeaves.set(entity.dir, list);
+    }
+
+    const entityVariantDirs = new Set<string>();
+    for (const [dir, leaves] of entityDirToLeaves.entries()) {
+        if (isEntityVariantDirectory(dir, leaves)) {
+            entityVariantDirs.add(dir);
+        }
+    }
+
+    for (const assetId of assetIds) {
+        const path = stripNamespace(assetId).replace(/\.png$/i, "");
+        const entity = getEntityDirAndLeaf(path);
+        const entityAliasGroupKey = getEntityAliasGroupKey(path);
+        const itemBlockGroupKey = itemToBlockGroupKey.get(path);
+
+        const groupKey =
+            itemBlockGroupKey ??
+            entityAliasGroupKey ??
+            ((entity && entityVariantDirs.has(entity.dir))
+                ? `entity/${entity.dir}`
+                : getVariantGroupKey(assetId));
+
+        const existing = groups.get(groupKey) || [];
+        existing.push(assetId);
+        groups.set(groupKey, existing);
+    }
+
+    const result: AssetGroup[] = [];
+    for (const [baseId, variantIds] of groups.entries()) {
+        const sorted = variantIds.sort((a, b) => {
+            const structuralPriority = (id: string) => {
+                if (/_bottom|_lower|_foot/.test(id)) return 0;
+                if (/_top|_upper|_head/.test(id)) return 1;
+                return 0;
+            };
+
+            const aStructural = structuralPriority(a);
+            const bStructural = structuralPriority(b);
+            if (aStructural !== bStructural) {
+                return aStructural - bStructural;
+            }
+
+            const aIsNumbered = isNumberedVariant(a);
+            const bIsNumbered = isNumberedVariant(b);
+
+            if (!aIsNumbered && bIsNumbered) return -1;
+            if (aIsNumbered && !bIsNumbered) return 1;
+
+            const aNum = parseInt(a.match(/(\d+)$/)?.[1] || "0");
+            const bNum = parseInt(b.match(/(\d+)$/)?.[1] || "0");
+            if (aNum !== bNum) return aNum - bNum;
+
+            return a.localeCompare(b);
+        });
+
         const displayName = beautifyAssetName(baseId);
 
         result.push({ baseId, variantIds: sorted, displayName });

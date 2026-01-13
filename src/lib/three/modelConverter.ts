@@ -16,6 +16,11 @@ import type {
   ElementFace,
   ElementRotation,
 } from "@lib/tauri/blockModels";
+import {
+  getBlockLightLevel,
+  calculateEmissiveIntensity,
+  shouldHaveVisualEmissive,
+} from "@/constants/blockLightEmission";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
 
@@ -26,6 +31,8 @@ const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
  * @param textureLoader - Function to load textures (returns THREE.Texture or null)
  * @param biomeColor - Optional biome color for tinting
  * @param resolvedModel - Optional resolved model with rotations and uvlock
+ * @param blockId - Optional block ID for light emission calculation
+ * @param blockProps - Optional blockstate properties for conditional light emission
  * @returns Three.js Group containing all model elements
  */
 export async function blockModelToThreeJs(
@@ -33,6 +40,8 @@ export async function blockModelToThreeJs(
   textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
   biomeColor?: { r: number; g: number; b: number } | null,
   resolvedModel?: ResolvedModel,
+  blockId?: string,
+  blockProps?: Record<string, string>,
 ): Promise<THREE.Group> {
   console.log("=== [modelConverter] Converting Model to Three.js ===");
   const startTime = performance.now();
@@ -125,6 +134,8 @@ export async function blockModelToThreeJs(
         resolvedTextures,
         textureLoader,
         biomeColor,
+        blockId,
+        blockProps,
       );
       if (mesh) {
         group.add(mesh);
@@ -230,6 +241,8 @@ async function createElementMesh(
   textureVariables: Record<string, string>,
   textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
   biomeColor?: { r: number; g: number; b: number } | null,
+  blockId?: string,
+  blockProps?: Record<string, string>,
 ): Promise<THREE.Mesh | null> {
   const [x1, y1, z1] = element.from;
   const [x2, y2, z2] = element.to;
@@ -270,6 +283,8 @@ async function createElementMesh(
     element.from,
     element.to,
     biomeColor,
+    blockId,
+    blockProps,
   );
 
   const mesh = new THREE.Mesh(geometry, materials);
@@ -408,6 +423,8 @@ async function createFaceMaterials(
   _from: [number, number, number],
   _to: [number, number, number],
   biomeColor?: { r: number; g: number; b: number } | null,
+  blockId?: string,
+  blockProps?: Record<string, string>,
 ): Promise<THREE.Material[]> {
   // Map Minecraft face names to Three.js box face indices
   const faceMapping: Record<string, number> = {
@@ -438,6 +455,7 @@ async function createFaceMaterials(
         opacity: 0, // Invisible for undefined faces
         roughness: 0.8,
         metalness: 0.2,
+        side: THREE.FrontSide, // Avoid double-rendering on crossed planes
       }),
     );
   }
@@ -497,15 +515,20 @@ async function createFaceMaterials(
           faceData.tintindex !== null &&
           biomeColor
         ) {
-          // Convert RGB (0-255) to Three.js color (0-1)
-          materialColor = new THREE.Color(
+          // Convert RGB (0-255) to Three.js color
+          // Important: Minecraft colors are in sRGB space, so we need to convert to linear
+          // for proper rendering since Three.js materials work in linear space
+          materialColor = new THREE.Color();
+          materialColor.setRGB(
             biomeColor.r / 255,
             biomeColor.g / 255,
             biomeColor.b / 255,
+            THREE.SRGBColorSpace
           );
           console.log(
             `[modelConverter] Applying biome tint to ${faceName}:`,
             materialColor,
+            `(sRGB input: rgb(${biomeColor.r}, ${biomeColor.g}, ${biomeColor.b}))`
           );
         }
 
@@ -526,16 +549,117 @@ async function createFaceMaterials(
           }
           materials[faceIndex] = animMaterial;
         } else {
-          // Use MeshStandardMaterial to support shadows while keeping flat look
-          materials[faceIndex] = new THREE.MeshStandardMaterial({
-            map: texture,
-            color: materialColor ?? 0xffffff, // Tint color (default to white if no tint)
-            transparent: true,
-            alphaTest: 0.1, // Discard transparent pixels (including magenta if it has alpha)
-            roughness: 0.8,
-            metalness: 0.2,
-            flatShading: false, // Keep smooth for correct texture appearance
-          });
+          // Check if this block should have visual emissive based on blockstate properties
+          // (e.g., redstone_wire when power > 0)
+          const hasVisualEmissive = blockId
+            ? shouldHaveVisualEmissive(blockId, blockProps ?? {})
+            : false;
+
+          // Calculate block light emission level (0-15 in Minecraft)
+          let emitsLight = false;
+          if (blockId) {
+            const lightLevel = getBlockLightLevel(blockId, blockProps ?? {});
+            console.log(
+              `[modelConverter] Checking light for block=${blockId}, props=`,
+              blockProps,
+              `lightLevel=${lightLevel}`,
+            );
+            if (lightLevel !== null && lightLevel > 0) {
+              emitsLight = true;
+              console.log(
+                `[modelConverter] Block ${blockId} emits light level ${lightLevel}`,
+              );
+            }
+          }
+
+          // Try loading emissive overlay texture (_e) for resource pack support
+          // This enables partial emissive effects (e.g., only ore veins glow in redstone ore)
+          //
+          // Note: We only try loading _e for light-emitting blocks, not visual emissive blocks.
+          // Visual emissive (redstone wire when powered) should always be fullbright without _e
+          // because _e textures are masks (white = glow, black = no glow) and Three.js emissiveMap
+          // adds white glow on top, washing out colors. For now, visual emissive = fullbright.
+          let emissiveMap: THREE.Texture | undefined = undefined;
+          const shouldTryEmissiveMap = emitsLight; // Only for light-emitting blocks
+
+          if (shouldTryEmissiveMap) {
+            try {
+              const emissiveTextureId = textureId.replace(/\.png$/, "_e");
+              const emissiveTexture = await textureLoader(emissiveTextureId);
+              if (emissiveTexture) {
+                emissiveMap = emissiveTexture;
+                emissiveMap.magFilter = THREE.NearestFilter;
+                emissiveMap.minFilter = THREE.NearestFilter;
+                console.log(`[modelConverter] ✓ Loaded emissive overlay: ${emissiveTextureId}`);
+              }
+            } catch {
+              // No _e texture found - this is normal for vanilla Minecraft
+              console.log(`[modelConverter] No emissive overlay found for ${blockId} (will use fullbright fallback)`);
+            }
+          }
+
+          // Material selection strategy:
+          // 1. Emissive overlay texture exists (_e): Use MeshStandardMaterial with emissiveMap
+          //    - Resource packs can define which pixels glow (e.g., ore veins in redstone ore)
+          //    - LIMITATION: Three.js emissiveMap adds glow color, not perfect for Minecraft's
+          //      mask-based approach. Works best for partial emissive (mixed black/white in _e).
+          //      Future: Custom shader to properly handle _e as fullbright mask.
+          // 2. Should be emissive but no _e texture: Use MeshBasicMaterial (fullbright)
+          //    - Vanilla behavior: torches, lanterns, powered redstone are fully bright
+          //    - Entire texture glows, unaffected by darkness
+          // 3. Normal blocks: Use MeshStandardMaterial with regular lighting
+
+          if (emissiveMap) {
+            console.log(
+              `[modelConverter] Using MeshStandardMaterial with emissiveMap for ${blockId}`,
+            );
+            // Has emissive overlay - use it with Standard material for partial glow
+            // The _e texture defines which pixels glow (white = glow, black = no glow)
+            const standardMaterialProps: THREE.MeshStandardMaterialParameters = {
+              map: texture,
+              color: materialColor ?? 0xffffff,
+              transparent: true,
+              alphaTest: 0.1,
+              roughness: 0.8,
+              metalness: 0.2,
+              flatShading: false,
+              side: THREE.FrontSide,
+              emissiveMap: emissiveMap,
+              emissive: 0xffffff, // White multiplies with emissiveMap colors
+              emissiveIntensity: 1.0, // Standard glow intensity
+            };
+            materials[faceIndex] = new THREE.MeshStandardMaterial(standardMaterialProps);
+          } else if (hasVisualEmissive || emitsLight) {
+            console.log(
+              `[modelConverter] Using MeshBasicMaterial (fullbright) for ${blockId} (visualEmissive=${hasVisualEmissive}, emitsLight=${emitsLight})`,
+            );
+            // No _e texture but should be emissive - use fullbright rendering
+            // This preserves texture colors while making the block unaffected by lighting
+            const basicMaterialProps: THREE.MeshBasicMaterialParameters = {
+              map: texture,
+              color: materialColor ?? 0xffffff,
+              transparent: true,
+              alphaTest: 0.1,
+              side: THREE.FrontSide,
+            };
+            materials[faceIndex] = new THREE.MeshBasicMaterial(basicMaterialProps);
+          } else {
+            console.log(
+              `[modelConverter] Using MeshStandardMaterial (normal lighting) for ${blockId}`,
+            );
+            // Normal block - use Standard material with lighting
+            const standardMaterialProps: THREE.MeshStandardMaterialParameters = {
+              map: texture,
+              color: materialColor ?? 0xffffff,
+              transparent: true,
+              alphaTest: 0.1,
+              roughness: 0.8,
+              metalness: 0.2,
+              flatShading: false,
+              side: THREE.FrontSide,
+            };
+            materials[faceIndex] = new THREE.MeshStandardMaterial(standardMaterialProps);
+          }
         }
       } else {
         console.warn(
@@ -547,6 +671,7 @@ async function createFaceMaterials(
           opacity: 0,
           roughness: 0.8,
           metalness: 0.2,
+          side: THREE.FrontSide,
         });
       }
     } catch (err) {
@@ -560,6 +685,7 @@ async function createFaceMaterials(
         opacity: 0,
         roughness: 0.8,
         metalness: 0.2,
+        side: THREE.FrontSide,
       });
     }
   }

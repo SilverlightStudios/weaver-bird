@@ -8,7 +8,7 @@
  */
 
 import {
-  groupAssetsByVariant,
+  groupAssetsForCards,
   type AssetGroup,
 } from "@/lib/utils/assetGrouping";
 
@@ -31,7 +31,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
 
   try {
     // Do the heavy work - group assets and compute display names
-    const groups = groupAssetsByVariant(assetIds);
+    const groups = groupAssetsForCards(assetIds);
 
     // Send result back to main thread
     const response: WorkerResponse = { id, groups };

@@ -10,12 +10,14 @@ import { useStore } from "@state/store";
 import BlockModel from "./BlockModel";
 import EntityModel, { isEntityAsset } from "./EntityModel";
 import GridFloor from "./GridFloor";
+import { ParticleWrapper } from "./ParticleWrapper";
 import {
   isBiomeColormapAsset,
   isPottedPlant,
   getVariantGroupKey,
   groupAssetsByVariant,
 } from "@lib/assetUtils";
+import { resolveBlockEntityRenderSpec } from "@lib/blockEntityResolver";
 import { getMultiBlockParts, type MultiBlockPart } from "@lib/multiBlockConfig";
 import { updateAnimatedTextures } from "@lib/three/textureLoader";
 import s from "./styles.module.scss";
@@ -39,6 +41,7 @@ interface Props {
   }) => void;
   showPot: boolean;
   blockProps?: Record<string, string>;
+  particleConditionOverrides?: Record<string, string>;
   seed?: number;
   allAssetIds?: string[];
 }
@@ -49,11 +52,13 @@ export default function Preview3D({
   onTintDetected,
   showPot,
   blockProps = {},
+  particleConditionOverrides = {},
   seed = 0,
   allAssetIds = [],
 }: Props) {
   // Read grid visibility from global state
   const showGrid = useStore((state) => state.canvas3DShowGrid);
+  const showBlockParticles = useStore((state) => state.showBlockParticles);
 
   const [tintInfo, setTintInfo] = useState<{
     hasTint: boolean;
@@ -61,6 +66,43 @@ export default function Preview3D({
   }>({ hasTint: false });
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
   const isColormapAsset = assetId ? isBiomeColormapAsset(assetId) : false;
+
+  // Calculate redstone wire color based on power level
+  // Overrides biomeColor when this is a redstone wire block
+  const effectiveBiomeColor = useMemo(() => {
+    if (!assetId) return biomeColor;
+
+    // Check if this is redstone wire by looking for redstone_dust in the asset ID
+    const isRedstoneWire =
+      assetId.includes("redstone_dust") || assetId.includes("redstone_wire");
+
+    if (isRedstoneWire) {
+      // Extract power level from blockProps (defaults to 15 if not set)
+      const powerStr = blockProps.power ?? "15";
+      const power = parseInt(powerStr, 10);
+
+      if (!isNaN(power) && power >= 0 && power <= 15) {
+        // Apply the exact Minecraft redstone color formula
+        // From RedStoneWireBlock.java (Minecraft 1.21.11)
+        const powerRatio = power / 15.0;
+        const r = powerRatio * 0.6 + (powerRatio > 0.0 ? 0.4 : 0.3);
+        const g = Math.max(0.0, Math.min(1.0, powerRatio * powerRatio * 0.7 - 0.5));
+        const b = Math.max(0.0, Math.min(1.0, powerRatio * powerRatio * 0.6 - 0.7));
+
+        // Convert to RGB (0-255) format expected by BlockModel
+        const rgb = {
+          r: Math.round(r * 255),
+          g: Math.round(g * 255),
+          b: Math.round(b * 255),
+        };
+        console.log(`[Preview3D] Redstone wire power=${power}, color=RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`);
+        return rgb;
+      }
+    }
+
+    // For non-redstone blocks, use the provided biomeColor
+    return biomeColor;
+  }, [assetId, biomeColor, blockProps.power]);
 
   // Check if this asset can be potted (a potted version exists in the same variant group)
   const canBePotted = useMemo(() => {
@@ -83,12 +125,73 @@ export default function Preview3D({
   const multiBlockParts: MultiBlockPart[] | null = previewAssetId
     ? getMultiBlockParts(previewAssetId, blockProps)
     : null;
+  const blockEntitySpec = useMemo(
+    () =>
+      previewAssetId
+        ? resolveBlockEntityRenderSpec(previewAssetId, allAssetIds)
+        : null,
+    [previewAssetId, allAssetIds],
+  );
+  const directEntityAssetId =
+    previewAssetId && isEntityAsset(previewAssetId) ? previewAssetId : undefined;
+  const entityAssetId = blockEntitySpec?.assetId ?? directEntityAssetId;
+  const particleStateProps = useMemo(
+    () => ({ ...blockProps, ...particleConditionOverrides }),
+    [blockProps, particleConditionOverrides],
+  );
+
+  // Determine if block should have contact shadows
+  // Transparent/flat blocks like redstone wire, glass, etc. shouldn't cast shadows
+  const shouldHaveShadow = useMemo(() => {
+    if (!previewAssetId) return true;
+
+    const transparentBlocks = [
+      'redstone_wire',
+      'redstone_dust', // Alternative name
+      'glass',
+      'tinted_glass',
+      'white_stained_glass',
+      'orange_stained_glass',
+      'magenta_stained_glass',
+      'light_blue_stained_glass',
+      'yellow_stained_glass',
+      'lime_stained_glass',
+      'pink_stained_glass',
+      'gray_stained_glass',
+      'light_gray_stained_glass',
+      'cyan_stained_glass',
+      'purple_stained_glass',
+      'blue_stained_glass',
+      'brown_stained_glass',
+      'green_stained_glass',
+      'red_stained_glass',
+      'black_stained_glass',
+      'glass_pane',
+      'torch',
+      'wall_torch',
+      'soul_torch',
+      'soul_wall_torch',
+      'redstone_torch',
+      'redstone_wall_torch',
+      'tripwire',
+      'string',
+      'scaffolding',
+      'ladder',
+      'vine',
+      'glow_lichen',
+      'sculk_vein',
+    ];
+
+    // Check if asset ID contains any of the transparent block names
+    const normalizedId = previewAssetId.toLowerCase();
+    return !transparentBlocks.some((blockName) => normalizedId.includes(blockName));
+  }, [previewAssetId]);
 
   useEffect(() => {
     console.log(
-      `[Preview3D.useEffect] asset=${assetId} biomeColor=${biomeColor ? "set" : "none"}`,
+      `[Preview3D.useEffect] asset=${assetId} effectiveBiomeColor=${effectiveBiomeColor ? "set" : "none"}`,
     );
-  }, [assetId, biomeColor]);
+  }, [assetId, effectiveBiomeColor]);
 
   // Forward tint detection to parent if callback provided
   useEffect(() => {
@@ -157,16 +260,20 @@ export default function Preview3D({
 
           {/* Model rendering - use EntityModel for entities, BlockModel for blocks */}
           {previewAssetId &&
-            (isEntityAsset(previewAssetId) ? (
+            (entityAssetId ? (
               // Entity model (chests, shulker boxes, etc.)
-              <EntityModel assetId={previewAssetId} />
+              <EntityModel
+                assetId={entityAssetId}
+                entityTypeOverride={blockEntitySpec?.entityTypeOverride}
+                parentEntityOverride={blockEntitySpec?.parentEntityOverride}
+              />
             ) : multiBlockParts ? (
               // Multi-part block model
               multiBlockParts.map((part, index) => (
                 <BlockModel
-                  key={`${previewAssetId}-${index}`}
-                  assetId={previewAssetId}
-                  biomeColor={biomeColor}
+                  key={`${part.assetId ?? previewAssetId}-${index}`}
+                  assetId={part.assetId ?? previewAssetId}
+                  biomeColor={effectiveBiomeColor}
                   onTintDetected={index === 0 ? handleTintDetected : undefined}
                   showPot={showPot && !isColormapAsset}
                   isPotted={(isPlantPotted || canBePotted) && !isColormapAsset}
@@ -182,7 +289,7 @@ export default function Preview3D({
               // Standard block model
               <BlockModel
                 assetId={previewAssetId}
-                biomeColor={biomeColor}
+                biomeColor={effectiveBiomeColor}
                 onTintDetected={handleTintDetected}
                 showPot={showPot && !isColormapAsset}
                 isPotted={(isPlantPotted || canBePotted) && !isColormapAsset}
@@ -190,6 +297,15 @@ export default function Preview3D({
                 seed={seed}
               />
             ))}
+
+          {/* Particle emissions (blocks and entities) */}
+          {previewAssetId && showBlockParticles && (
+            <ParticleWrapper
+              assetId={previewAssetId}
+              stateProps={particleStateProps}
+              enabled={showBlockParticles}
+            />
+          )}
 
           {/* Grid floor with dashed lines - 1 Minecraft block spacing */}
           {/* Grid offset by 0.5 units so lines pass through block centers, not edges */}
@@ -208,16 +324,19 @@ export default function Preview3D({
           )}
 
           {/* Soft contact shadow - tight under the block */}
-          <ContactShadows
-            position={[0, 0, 0]}
-            opacity={0.7}
-            scale={12.0}
-            blur={1.5}
-            far={0.5}
-            resolution={256}
-            frames={1}
-            color="#000000"
-          />
+          {/* Don't render shadows for transparent blocks like redstone wire, glass, etc. */}
+          {shouldHaveShadow && (
+            <ContactShadows
+              position={[0, 0, 0]}
+              opacity={0.7}
+              scale={12.0}
+              blur={1.5}
+              far={0.5}
+              resolution={256}
+              frames={1}
+              color="#000000"
+            />
+          )}
         </Canvas>
       </div>
     </div>
