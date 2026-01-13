@@ -648,10 +648,31 @@ export function applyNaturalBlockStateDefaults(
  * Check if an asset should be excluded from the asset list
  * Filters out non-texture assets, metadata files, and special debug textures
  */
-export function shouldExcludeAsset(assetId: string): boolean {
+export function shouldExcludeAsset(assetId: string, allAssetIds?: Set<string>): boolean {
   // Exclude empty/malformed asset IDs
   if (!assetId || assetId === "minecraft:" || assetId === "minecraft:block/") {
     return true;
+  }
+
+  // Data-driven exclusion: Hide entity models that are already rendered as part of blocks
+  // Example: Hide "minecraft:entity/bell/bell_body" because "minecraft:block/bell" renders both
+  if (assetId.includes("entity/") && allAssetIds) {
+    const match = assetId.match(/entity\/([^/]+)/);
+    if (match && match[1]) {
+      const entityName = match[1];
+      const normalized = normalizeAssetId(assetId);
+
+      // Extract namespace (e.g., "minecraft:entity/bell" → "minecraft")
+      const parts = normalized.split(":");
+      const namespace = parts.length === 2 ? parts[0] : "minecraft";
+
+      // Check if a corresponding block exists
+      const blockId = normalizeAssetId(`${namespace}:block/${entityName}`);
+      if (allAssetIds.has(blockId)) {
+        // Entity is already rendered as part of the block - exclude this card
+        return true;
+      }
+    }
   }
 
   // Exclude invalid entity paths (e.g., "minecraft:entity/" with no entity name)

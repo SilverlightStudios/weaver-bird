@@ -4,6 +4,8 @@ export interface BlockEntityRenderSpec {
   assetId: string;
   entityTypeOverride?: string;
   parentEntityOverride?: string | null;
+  /** If true, render both the block model AND the entity model (e.g., bells) */
+  renderBoth?: boolean;
 }
 
 const ENTITY_PREFIX = "entity/";
@@ -164,6 +166,22 @@ export function resolveBlockEntityRenderSpec(
     if (entityAssetId) {
       return { assetId: entityAssetId, entityTypeOverride: "decorated_pot" };
     }
+  }
+
+  // Universal pattern: check if entity/{blockName}/* exists
+  // This handles bells and any future blocks with entity models
+  // The renderer will decide whether to show both based on block model geometry
+  const genericEntityAssetId = findAnyEntityAssetIdByPrefix(
+    namespace,
+    normalizedAll,
+    `entity/${blockName}/`,
+  );
+  if (genericEntityAssetId) {
+    return {
+      assetId: genericEntityAssetId,
+      entityTypeOverride: blockName,
+      renderBoth: true, // Let renderer decide based on block model geometry
+    };
   }
 
   return null;
