@@ -4,15 +4,638 @@
  * Auto-generated from Minecraft 1.21.11-0.18.3 by Rust extraction.
  * Do not edit manually - changes will be overwritten.
  *
- * Generated at: 2026-01-15T21:02:10+00:00
+ * Generated at: 2026-01-15T22:05:25+00:00
  */
 import type { ParticleData } from "../types";
 
 export const particleData: ParticleData = {
   version: "1.21.11-0.18.3",
-  extractedAt: "2026-01-15T21:02:10+00:00",
+  extractedAt: "2026-01-15T22:05:25+00:00",
   physics: {
-  "__particle_class_net.minecraft.client.particle.SuspendedTownParticle": {
+  "landing_lava": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "__particle_class_net.minecraft.client.particle.WhiteSmokeParticle": {
+    "lifetime": [
+      8,
+      40
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      0.7294118,
+      0.69411767,
+      0.7607843
+    ],
+    "color_scale": 0.3,
+    "lifetime_base": 8,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "dripping_obsidian_tear": {
+    "lifetime": [
+      100,
+      100
+    ],
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "__particle_class_net.minecraft.client.particle.WakeParticle": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": 0.0,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.3,
+      0.0,
+      0.3
+    ],
+    "velocity_add": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "velocity_jitter": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "campfire_signal_smoke": {
+    "lifetime": [
+      280,
+      330
+    ],
+    "gravity": 0.000003,
+    "size": 0.1,
+    "scale": 3.0,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "tick_velocity_jitter": [
+      0.0002,
+      0.0,
+      0.0002
+    ],
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "dripping_lava": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "__particle_class_net.minecraft.client.particle.WaterDropParticle": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": 0.06,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.3,
+      0.0,
+      0.3
+    ],
+    "velocity_add": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "velocity_jitter": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "crimson_spore": {
+    "lifetime": [
+      16,
+      40
+    ],
+    "gravity": 0.0,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "raid_omen": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.2,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "trail": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.26,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.GustParticle": {
+    "lifetime": [
+      12,
+      16
+    ],
+    "gravity": null,
+    "size": 1.0,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "heart": {
+    "lifetime": [
+      16,
+      16
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.86,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": [
+      0.0,
+      0.1,
+      0.0
+    ],
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "reverse_portal": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "ease_in_quad"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.SquidInkParticle": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.5,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.92,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.LargeSmokeParticle": {
+    "lifetime": [
+      8,
+      40
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.3,
+    "lifetime_base": 8,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "current_down": {
+    "lifetime": null,
+    "gravity": 0.002,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.07,
+      1.0,
+      0.07
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "end_rod": {
+    "lifetime": [
+      60,
+      72
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.91,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "ominous_spawning": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.AshParticle": {
+    "lifetime": [
+      20,
+      100
+    ],
+    "gravity": 0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      -0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.5,
+    "lifetime_base": 20,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "campfire_cosy_smoke": {
+    "lifetime": [
+      280,
+      330
+    ],
+    "gravity": 0.000003,
+    "size": 0.1,
+    "scale": 3.0,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "tick_velocity_jitter": [
+      0.0002,
+      0.0,
+      0.0002
+    ],
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.BubbleColumnUpParticle": {
+    "lifetime": [
+      40,
+      100
+    ],
+    "gravity": -0.125,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.85,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "composter": {
     "lifetime": [
       20,
       50
@@ -37,9 +660,570 @@ export const particleData: ParticleData = {
     "lifetime_animation": false,
     "tick_velocity_delta": null,
     "skips_friction": true,
+    "uses_static_texture": true,
     "quad_size_curve": {
       "type": "constant"
     }
+  },
+  "small_gust": {
+    "lifetime": [
+      12,
+      16
+    ],
+    "gravity": null,
+    "size": 1.0,
+    "scale": 0.15,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.SoulParticle": {
+    "lifetime": [
+      12,
+      24
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": 1.5,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "cherry_leaves": {
+    "lifetime": [
+      300,
+      300
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "flash": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "squid_ink": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.5,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.92,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.FlyStraightTowardsParticle": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.SpitParticle": {
+    "lifetime": [
+      18,
+      42
+    ],
+    "gravity": 0.5,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.9,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "dolphin": {
+    "lifetime": [
+      20,
+      50
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.02,
+      0.02,
+      0.02
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "dust": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "angry_villager": {
+    "lifetime": [
+      16,
+      16
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.86,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": [
+      0.0,
+      0.1,
+      0.0
+    ],
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "copper_fire_flame": {
+    "lifetime": [
+      12,
+      24
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "quadratic_shrink",
+      "factor": 0.5
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.DustPlumeParticle": {
+    "lifetime": [
+      7,
+      35
+    ],
+    "gravity": 0.88,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.92,
+    "velocity_multiplier": [
+      0.7,
+      0.6,
+      0.7
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.5,
+    "lifetime_base": 7,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "sculk_soul": {
+    "lifetime": [
+      12,
+      24
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": 1.5,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "witch": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.2,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "bubble_column_up": {
+    "lifetime": [
+      40,
+      100
+    ],
+    "gravity": -0.125,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.85,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "effect": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.2,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.PortalParticle": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "ease_in_quad"
+    }
+  },
+  "small_flame": {
+    "lifetime": [
+      12,
+      24
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": 0.5,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "quadratic_shrink",
+      "factor": 0.5
+    }
+  },
+  "falling_dripstone_lava": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
   },
   "__particle_class_net.minecraft.client.particle.SmokeParticle": {
     "lifetime": [
@@ -75,127 +1259,15 @@ export const particleData: ParticleData = {
       "multiplier": 32.0
     }
   },
-  "falling_dust": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "reverse_portal": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "ease_in_quad"
-    }
-  },
-  "raid_omen": {
+  "warped_spore": {
     "lifetime": [
-      8,
-      20
+      16,
+      40
     ],
-    "gravity": -0.1,
+    "gravity": 0.0,
     "size": 0.1,
     "scale": null,
     "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.2,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.FallingDustParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "pale_oak_leaves": {
-    "lifetime": [
-      300,
-      300
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
     "alpha": null,
     "friction": 1.0,
     "velocity_multiplier": [
@@ -209,279 +1281,10 @@ export const particleData: ParticleData = {
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "happy_villager": {
-    "lifetime": [
-      20,
-      50
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.02,
-      0.02,
-      0.02
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "trial_omen": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.2,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "note": {
-    "lifetime": [
-      6,
-      6
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.66,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
     "lifetime_animation": null,
     "tick_velocity_delta": null,
     "skips_friction": false,
     "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "portal": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "ease_in_quad"
-    }
-  },
-  "rain": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": 0.06,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.3,
-      0.0,
-      0.3
-    ],
-    "velocity_add": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "velocity_jitter": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "crit": {
-    "lifetime": null,
-    "gravity": 0.5,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.7,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "sneeze": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "nautilus": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.FireflyParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.8,
-      0.8,
-      0.8
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
     "quad_size_curve": {
       "type": "constant"
     }
@@ -530,159 +1333,6 @@ export const particleData: ParticleData = {
       "factor": 1.0
     }
   },
-  "__particle_class_net.minecraft.client.particle.SquidInkParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.5,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.92,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "dripping_lava": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "flash": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "trail": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.26,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "large_smoke": {
-    "lifetime": [
-      8,
-      40
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.3,
-    "lifetime_base": 8,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.TrialSpawnerDetectionParticle": {
-    "lifetime": null,
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.0,
-      0.9,
-      0.0
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
   "wax_on": {
     "lifetime": null,
     "gravity": null,
@@ -705,1445 +1355,6 @@ export const particleData: ParticleData = {
     "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "squid_ink": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.5,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.92,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "dust_color_transition": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": false
-  },
-  "copper_fire_flame": {
-    "lifetime": [
-      12,
-      24
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": [
-      0.05,
-      0.05,
-      0.05
-    ],
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "quadratic_shrink",
-      "factor": 0.5
-    }
-  },
-  "sculk_soul": {
-    "lifetime": [
-      12,
-      24
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": 1.5,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": [
-      0.05,
-      0.05,
-      0.05
-    ],
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "dolphin": {
-    "lifetime": [
-      20,
-      50
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.02,
-      0.02,
-      0.02
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.BubbleParticle": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.85,
-      0.85,
-      0.85
-    ],
-    "velocity_add": [
-      0.0,
-      0.002,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.SculkChargePopParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": 1.0,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.HeartParticle": {
-    "lifetime": [
-      16,
-      16
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.86,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": [
-      0.0,
-      0.1,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.ExplodeParticle": {
-    "lifetime": [
-      18,
-      42
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.9,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "campfire_cosy_smoke": {
-    "lifetime": [
-      280,
-      330
-    ],
-    "gravity": 0.000003,
-    "size": 0.1,
-    "scale": 3.0,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "tick_velocity_jitter": [
-      0.0002,
-      0.0,
-      0.0002
-    ],
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "composter": {
-    "lifetime": [
-      20,
-      50
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.02,
-      0.02,
-      0.02
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "landing_honey": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "falling_honey": {
-    "lifetime": null,
-    "gravity": 0.01,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "firework": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": false
-  },
-  "trial_spawner_detected_player_ominous": {
-    "lifetime": null,
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": 1.5,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.0,
-      0.9,
-      0.0
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.DragonBreathParticle": {
-    "lifetime": [
-      20,
-      50
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": [
-      0.0,
-      0.002,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "dragon_breath": {
-    "lifetime": [
-      20,
-      50
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": [
-      0.0,
-      0.002,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.CritParticle": {
-    "lifetime": null,
-    "gravity": 0.5,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.7,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "dripping_honey": {
-    "lifetime": [
-      100,
-      100
-    ],
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "glow": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "cherry_leaves": {
-    "lifetime": [
-      300,
-      300
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 1.0,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.WhiteSmokeParticle": {
-    "lifetime": [
-      8,
-      40
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      0.7294118,
-      0.69411767,
-      0.7607843
-    ],
-    "color_scale": 0.3,
-    "lifetime_base": 8,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.SoulParticle": {
-    "lifetime": [
-      12,
-      24
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": 1.5,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": [
-      0.05,
-      0.05,
-      0.05
-    ],
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "soul": {
-    "lifetime": [
-      12,
-      24
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": 1.5,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": [
-      0.05,
-      0.05,
-      0.05
-    ],
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "white_ash": {
-    "lifetime": [
-      20,
-      100
-    ],
-    "gravity": 0.0125,
-    "size": 0.1,
-    "scale": 1.0,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      -0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.0,
-    "lifetime_base": 20,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "trial_spawner_detected_player": {
-    "lifetime": null,
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": 1.5,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.0,
-      0.9,
-      0.0
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "dust": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.FallingLeavesParticle": {
-    "lifetime": [
-      300,
-      300
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 1.0,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "falling_dripstone_lava": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "__particle_class_net.minecraft.client.particle.LargeSmokeParticle": {
-    "lifetime": [
-      8,
-      40
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.3,
-    "lifetime_base": 8,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "white_smoke": {
-    "lifetime": [
-      8,
-      40
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": 1.0,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      0.7294118,
-      0.69411767,
-      0.7607843
-    ],
-    "color_scale": 0.3,
-    "lifetime_base": 8,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "flame": {
-    "lifetime": [
-      12,
-      24
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": [
-      0.05,
-      0.05,
-      0.05
-    ],
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "quadratic_shrink",
-      "factor": 0.5
-    }
-  },
-  "mycelium": {
-    "lifetime": [
-      20,
-      50
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.02,
-      0.02,
-      0.02
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.AttackSweepParticle": {
-    "lifetime": [
-      4,
-      4
-    ],
-    "gravity": null,
-    "size": 1.0,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.WakeParticle": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": 0.0,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.3,
-      0.0,
-      0.3
-    ],
-    "velocity_add": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "velocity_jitter": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "dripping_water": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "vibration": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "__particle_class_net.minecraft.client.particle.FlyStraightTowardsParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.AshParticle": {
-    "lifetime": [
-      20,
-      100
-    ],
-    "gravity": 0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      -0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.5,
-    "lifetime_base": 20,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "smoke": {
-    "lifetime": [
-      8,
-      40
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": 1.0,
-    "has_physics": true,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.3,
-    "lifetime_base": 8,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "effect": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.2,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "snowflake": {
-    "lifetime": [
-      18,
-      42
-    ],
-    "gravity": 0.225,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 1.0,
-    "velocity_multiplier": [
-      0.95,
-      0.9,
-      0.95
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.HugeExplosionParticle": {
-    "lifetime": [
-      6,
-      10
-    ],
-    "gravity": null,
-    "size": 2.0,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "soul_fire_flame": {
-    "lifetime": [
-      12,
-      24
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": [
-      0.05,
-      0.05,
-      0.05
-    ],
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "quadratic_shrink",
-      "factor": 0.5
-    }
-  },
-  "scrape": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": 0.0,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.TrailParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.26,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "sonic_boom": {
-    "lifetime": [
-      16,
-      16
-    ],
-    "gravity": null,
-    "size": 1.5,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.SplashParticle": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": 0.04,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.3,
-      0.0,
-      0.3
-    ],
-    "velocity_add": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "velocity_jitter": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "bubble_pop": {
-    "lifetime": [
-      4,
-      4
-    ],
-    "gravity": 0.008,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
     "uses_static_texture": false,
     "quad_size_curve": {
       "type": "constant"
@@ -2179,242 +1390,14 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "dripping_dripstone_lava": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "infested": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.2,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "dripping_obsidian_tear": {
-    "lifetime": [
-      100,
-      100
-    ],
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "sweep_attack": {
-    "lifetime": [
-      4,
-      4
-    ],
-    "gravity": null,
-    "size": 1.0,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "enchant": {
+  "electric_spark": {
     "lifetime": null,
     "gravity": null,
     "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "damage_indicator": {
-    "lifetime": null,
-    "gravity": 0.5,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.7,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.WhiteAshParticle": {
-    "lifetime": [
-      20,
-      100
-    ],
-    "gravity": 0.0125,
-    "size": 0.1,
-    "scale": null,
+    "scale": 0.0,
     "has_physics": false,
     "alpha": null,
     "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      -0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.0,
-    "lifetime_base": 20,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "ash": {
-    "lifetime": [
-      20,
-      100
-    ],
-    "gravity": 0.1,
-    "size": 0.1,
-    "scale": 1.0,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      -0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.5,
-    "lifetime_base": 20,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.SonicBoomParticle": {
-    "lifetime": [
-      16,
-      16
-    ],
-    "gravity": null,
-    "size": 1.5,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
     "velocity_multiplier": [
       1.1,
       1.0,
@@ -2429,35 +1412,9 @@ export const particleData: ParticleData = {
     "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": false,
+    "uses_static_texture": false,
     "quad_size_curve": {
       "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.PlayerCloudParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
     }
   },
   "__particle_class_net.minecraft.client.particle.TotemParticle": {
@@ -2489,13 +1446,13 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "gust": {
+  "__particle_class_net.minecraft.client.particle.BubblePopParticle": {
     "lifetime": [
-      12,
-      16
+      4,
+      4
     ],
-    "gravity": null,
-    "size": 1.0,
+    "gravity": 0.008,
+    "size": 0.1,
     "scale": null,
     "has_physics": null,
     "alpha": null,
@@ -2514,209 +1471,66 @@ export const particleData: ParticleData = {
     "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": true,
-    "uses_static_texture": false,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "cloud": {
-    "lifetime": null,
+  "mycelium": {
+    "lifetime": [
+      20,
+      50
+    ],
     "gravity": null,
     "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.DustPlumeParticle": {
-    "lifetime": [
-      7,
-      35
-    ],
-    "gravity": 0.88,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.92,
-    "velocity_multiplier": [
-      0.7,
-      0.6,
-      0.7
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.5,
-    "lifetime_base": 7,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "underwater": {
-    "lifetime": [
-      16,
-      40
-    ],
-    "gravity": 0.0,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 1.0,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "poof": {
-    "lifetime": [
-      18,
-      42
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.9,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "warped_spore": {
-    "lifetime": [
-      16,
-      40
-    ],
-    "gravity": 0.0,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 1.0,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "enchanted_hit": {
-    "lifetime": null,
-    "gravity": 0.5,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.7,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "landing_lava": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
     "scale": null,
     "has_physics": null,
     "alpha": null,
     "friction": null,
-    "velocity_multiplier": null,
+    "velocity_multiplier": [
+      0.02,
+      0.02,
+      0.02
+    ],
     "velocity_add": null,
     "velocity_jitter": null,
     "position_jitter": null,
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": null,
+    "lifetime_animation": false,
     "tick_velocity_delta": null,
-    "uses_static_texture": true
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "wax_off": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": 0.0,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
   },
   "__particle_class_net.minecraft.client.particle.SuspendedParticle": {
     "lifetime": [
@@ -2745,32 +1559,6 @@ export const particleData: ParticleData = {
     "skips_friction": false,
     "quad_size_curve": {
       "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.ReversePortalParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "ease_in_quad"
     }
   },
   "fishing": {
@@ -2811,135 +1599,7 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "__particle_class_net.minecraft.client.particle.FlyTowardsPositionParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "falling_obsidian_tear": {
-    "lifetime": null,
-    "gravity": 0.01,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "landing_obsidian_tear": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "uses_static_texture": true
-  },
-  "angry_villager": {
-    "lifetime": [
-      16,
-      16
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.86,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": [
-      0.0,
-      0.1,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.SnowflakeParticle": {
-    "lifetime": [
-      18,
-      42
-    ],
-    "gravity": 0.225,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 1.0,
-    "velocity_multiplier": [
-      0.95,
-      0.9,
-      0.95
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.GlowParticle": {
+  "__particle_class_net.minecraft.client.particle.PlayerCloudParticle": {
     "lifetime": null,
     "gravity": null,
     "size": 0.1,
@@ -2948,6 +1608,61 @@ export const particleData: ParticleData = {
     "alpha": null,
     "friction": 0.96,
     "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "trial_spawner_detected_player": {
+    "lifetime": null,
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": 1.5,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.0,
+      0.9,
+      0.0
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "falling_dust": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
       1.1,
       1.0,
       1.1
@@ -2960,9 +1675,11 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": true,
     "tick_velocity_delta": null,
-    "skips_friction": false,
+    "skips_friction": true,
+    "uses_static_texture": false,
     "quad_size_curve": {
-      "type": "constant"
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
     }
   },
   "falling_dripstone_water": {
@@ -2983,181 +1700,6 @@ export const particleData: ParticleData = {
     "lifetime_animation": null,
     "tick_velocity_delta": null,
     "uses_static_texture": true
-  },
-  "spore_blossom_air": {
-    "lifetime": [
-      16,
-      40
-    ],
-    "gravity": 0.0,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 1.0,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "dust_plume": {
-    "lifetime": [
-      7,
-      35
-    ],
-    "gravity": 0.88,
-    "size": 0.1,
-    "scale": 1.0,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.92,
-    "velocity_multiplier": [
-      0.7,
-      0.6,
-      0.7
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": [
-      -1.0,
-      -1.0,
-      -1.0
-    ],
-    "color_scale": 0.5,
-    "lifetime_base": 7,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "firefly": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": 1.5,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.8,
-      0.8,
-      0.8
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "ominous_spawning": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "vault_connection": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": 1.5,
-    "has_physics": false,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.SpellParticle": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": -0.1,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.2,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
   },
   "__particle_class_net.minecraft.client.particle.CampfireSmokeParticle": {
     "lifetime": [
@@ -3193,46 +1735,11 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "small_flame": {
-    "lifetime": [
-      12,
-      24
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": 0.5,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": [
-      0.05,
-      0.05,
-      0.05
-    ],
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "quadratic_shrink",
-      "factor": 0.5
-    }
-  },
-  "sculk_charge": {
+  "scrape": {
     "lifetime": null,
     "gravity": null,
     "size": 0.1,
-    "scale": 1.5,
+    "scale": 0.0,
     "has_physics": false,
     "alpha": null,
     "friction": 0.96,
@@ -3254,6 +1761,110 @@ export const particleData: ParticleData = {
     "quad_size_curve": {
       "type": "constant"
     }
+  },
+  "falling_lava": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "falling_honey": {
+    "lifetime": null,
+    "gravity": 0.01,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "crit": {
+    "lifetime": null,
+    "gravity": 0.5,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.7,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "falling_nectar": {
+    "lifetime": null,
+    "gravity": 0.007,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "landing_obsidian_tear": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
   },
   "falling_water": {
     "lifetime": null,
@@ -3274,91 +1885,12 @@ export const particleData: ParticleData = {
     "tick_velocity_delta": null,
     "uses_static_texture": true
   },
-  "__particle_class_net.minecraft.client.particle.WaterCurrentDownParticle": {
-    "lifetime": null,
-    "gravity": 0.002,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.07,
-      1.0,
-      0.07
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.PortalParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "quad_size_curve": {
-      "type": "ease_in_quad"
-    }
-  },
-  "sculk_charge_pop": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": 1.0,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "spit": {
+  "poof": {
     "lifetime": [
       18,
       42
     ],
-    "gravity": 0.5,
+    "gravity": -0.1,
     "size": 0.1,
     "scale": null,
     "has_physics": null,
@@ -3383,42 +1915,11 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "__particle_class_net.minecraft.client.particle.NoteParticle": {
+  "dripping_honey": {
     "lifetime": [
-      6,
-      6
+      100,
+      100
     ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.66,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "shriek": {
-    "lifetime": null,
     "gravity": null,
     "size": null,
     "scale": null,
@@ -3436,82 +1937,21 @@ export const particleData: ParticleData = {
     "tick_velocity_delta": null,
     "uses_static_texture": true
   },
-  "campfire_signal_smoke": {
+  "entity_effect": {
     "lifetime": [
-      280,
-      330
+      8,
+      20
     ],
-    "gravity": 0.000003,
+    "gravity": -0.1,
     "size": 0.1,
-    "scale": 3.0,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "tick_velocity_jitter": [
-      0.0002,
-      0.0,
-      0.0002
-    ],
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.EndRodParticle": {
-    "lifetime": [
-      60,
-      72
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.91,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "glow_squid_ink": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.5,
     "scale": null,
     "has_physics": false,
     "alpha": null,
-    "friction": 0.92,
+    "friction": 0.96,
     "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
+      0.1,
+      0.2,
+      0.1
     ],
     "velocity_add": null,
     "velocity_jitter": null,
@@ -3527,21 +1967,21 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "__particle_class_net.minecraft.client.particle.BubbleColumnUpParticle": {
+  "__particle_class_net.minecraft.client.particle.SuspendedTownParticle": {
     "lifetime": [
-      40,
-      100
+      20,
+      50
     ],
-    "gravity": -0.125,
+    "gravity": null,
     "size": 0.1,
     "scale": null,
     "has_physics": null,
     "alpha": null,
-    "friction": 0.85,
+    "friction": null,
     "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
+      0.02,
+      0.02,
+      0.02
     ],
     "velocity_add": null,
     "velocity_jitter": null,
@@ -3551,18 +1991,15 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": false,
     "tick_velocity_delta": null,
-    "skips_friction": false,
+    "skips_friction": true,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "explosion": {
-    "lifetime": [
-      6,
-      10
-    ],
+  "__particle_class_net.minecraft.client.particle.TrailParticle": {
+    "lifetime": null,
     "gravity": null,
-    "size": 2.0,
+    "size": 0.26,
     "scale": null,
     "has_physics": null,
     "alpha": null,
@@ -3578,22 +2015,21 @@ export const particleData: ParticleData = {
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": true,
+    "lifetime_animation": false,
     "tick_velocity_delta": null,
     "skips_friction": true,
-    "uses_static_texture": false,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "__particle_class_net.minecraft.client.particle.FlameParticle": {
+  "soul": {
     "lifetime": [
       12,
       24
     ],
     "gravity": null,
     "size": 0.1,
-    "scale": null,
+    "scale": 1.5,
     "has_physics": null,
     "alpha": null,
     "friction": 0.96,
@@ -3612,26 +2048,93 @@ export const particleData: ParticleData = {
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": null,
+    "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": false,
+    "uses_static_texture": false,
     "quad_size_curve": {
-      "type": "quadratic_shrink",
-      "factor": 0.5
+      "type": "constant"
     }
   },
-  "electric_spark": {
+  "__particle_class_net.minecraft.client.particle.FireflyParticle": {
     "lifetime": null,
     "gravity": null,
     "size": 0.1,
-    "scale": 0.0,
-    "has_physics": false,
+    "scale": null,
+    "has_physics": null,
     "alpha": null,
     "friction": 0.96,
     "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
+      0.8,
+      0.8,
+      0.8
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "splash": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": 0.04,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.3,
+      0.0,
+      0.3
+    ],
+    "velocity_add": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "velocity_jitter": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "snowflake": {
+    "lifetime": [
+      18,
+      42
+    ],
+    "gravity": 0.225,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      0.95,
+      0.9,
+      0.95
     ],
     "velocity_add": null,
     "velocity_jitter": null,
@@ -3673,21 +2176,88 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "crimson_spore": {
+  "smoke": {
     "lifetime": [
-      16,
+      8,
       40
     ],
-    "gravity": 0.0,
+    "gravity": -0.1,
     "size": 0.1,
-    "scale": null,
+    "scale": 1.0,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.3,
+    "lifetime_base": 8,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "ash": {
+    "lifetime": [
+      20,
+      100
+    ],
+    "gravity": 0.1,
+    "size": 0.1,
+    "scale": 1.0,
     "has_physics": false,
     "alpha": null,
-    "friction": 1.0,
+    "friction": 0.96,
     "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
+      0.1,
+      -0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.5,
+    "lifetime_base": 20,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.DustParticle": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
     ],
     "velocity_add": null,
     "velocity_jitter": null,
@@ -3695,12 +2265,12 @@ export const particleData: ParticleData = {
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": null,
+    "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": false,
-    "uses_static_texture": true,
     "quad_size_curve": {
-      "type": "constant"
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
     }
   },
   "bubble": {
@@ -3737,74 +2307,17 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "__particle_class_net.minecraft.client.particle.DustParticle": {
-    "lifetime": null,
-    "gravity": null,
-    "size": null,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      0.1,
-      0.1,
-      0.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
-    }
-  },
-  "egg_crack": {
+  "__particle_class_net.minecraft.client.particle.EndRodParticle": {
     "lifetime": [
-      20,
-      50
+      60,
+      72
     ],
     "gravity": null,
     "size": 0.1,
     "scale": null,
     "has_physics": null,
     "alpha": null,
-    "friction": null,
-    "velocity_multiplier": [
-      0.02,
-      0.02,
-      0.02
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": false,
-    "tick_velocity_delta": null,
-    "skips_friction": true,
-    "uses_static_texture": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "__particle_class_net.minecraft.client.particle.GustParticle": {
-    "lifetime": [
-      12,
-      16
-    ],
-    "gravity": null,
-    "size": 1.0,
-    "scale": null,
-    "has_physics": null,
-    "alpha": null,
-    "friction": null,
+    "friction": 0.91,
     "velocity_multiplier": [
       1.1,
       1.0,
@@ -3818,12 +2331,81 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": true,
     "tick_velocity_delta": null,
-    "skips_friction": true,
+    "skips_friction": false,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "__particle_class_net.minecraft.client.particle.WaterDropParticle": {
+  "__particle_class_net.minecraft.client.particle.FlameParticle": {
+    "lifetime": [
+      12,
+      24
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "quadratic_shrink",
+      "factor": 0.5
+    }
+  },
+  "white_smoke": {
+    "lifetime": [
+      8,
+      40
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": 1.0,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      0.7294118,
+      0.69411767,
+      0.7607843
+    ],
+    "color_scale": 0.3,
+    "lifetime_base": 8,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "rain": {
     "lifetime": [
       8,
       20
@@ -3856,81 +2438,20 @@ export const particleData: ParticleData = {
     "lifetime_animation": false,
     "tick_velocity_delta": null,
     "skips_friction": true,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "wax_off": {
-    "lifetime": null,
-    "gravity": null,
-    "size": 0.1,
-    "scale": 0.0,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.96,
-    "velocity_multiplier": [
-      1.1,
-      1.0,
-      1.1
-    ],
-    "velocity_add": null,
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": true,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
-    "quad_size_curve": {
-      "type": "constant"
-    }
-  },
-  "heart": {
-    "lifetime": [
-      16,
-      16
-    ],
-    "gravity": null,
-    "size": 0.1,
-    "scale": null,
-    "has_physics": false,
-    "alpha": null,
-    "friction": 0.86,
-    "velocity_multiplier": [
-      0.01,
-      0.01,
-      0.01
-    ],
-    "velocity_add": [
-      0.0,
-      0.1,
-      0.0
-    ],
-    "velocity_jitter": null,
-    "position_jitter": null,
-    "color": null,
-    "color_scale": null,
-    "lifetime_base": null,
-    "lifetime_animation": null,
-    "tick_velocity_delta": null,
-    "skips_friction": false,
     "uses_static_texture": true,
     "quad_size_curve": {
-      "type": "linear_grow_clamped",
-      "multiplier": 32.0
+      "type": "constant"
     }
   },
-  "tinted_leaves": {
+  "underwater": {
     "lifetime": [
-      300,
-      300
+      16,
+      40
     ],
-    "gravity": null,
+    "gravity": 0.0,
     "size": 0.1,
     "scale": null,
-    "has_physics": null,
+    "has_physics": false,
     "alpha": null,
     "friction": 1.0,
     "velocity_multiplier": [
@@ -3944,29 +2465,26 @@ export const particleData: ParticleData = {
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": false,
+    "lifetime_animation": null,
     "tick_velocity_delta": null,
-    "skips_friction": true,
+    "skips_friction": false,
     "uses_static_texture": true,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "witch": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": -0.1,
+  "__particle_class_net.minecraft.client.particle.FallingDustParticle": {
+    "lifetime": null,
+    "gravity": null,
     "size": 0.1,
     "scale": null,
-    "has_physics": false,
+    "has_physics": null,
     "alpha": null,
-    "friction": 0.96,
+    "friction": null,
     "velocity_multiplier": [
-      0.1,
-      0.2,
-      0.1
+      1.1,
+      1.0,
+      1.1
     ],
     "velocity_add": null,
     "velocity_jitter": null,
@@ -3976,10 +2494,10 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": true,
     "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": false,
+    "skips_friction": true,
     "quad_size_curve": {
-      "type": "constant"
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
     }
   },
   "instant_effect": {
@@ -4012,37 +2530,135 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "falling_spore_blossom": {
+  "glow_squid_ink": {
     "lifetime": null,
-    "gravity": 0.005,
-    "size": null,
+    "gravity": null,
+    "size": 0.5,
     "scale": null,
-    "has_physics": null,
+    "has_physics": false,
     "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
+    "friction": 0.92,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
     "velocity_add": null,
     "velocity_jitter": null,
     "position_jitter": null,
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": null,
+    "lifetime_animation": true,
     "tick_velocity_delta": null,
-    "uses_static_texture": true
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
   },
-  "current_down": {
+  "cloud": {
     "lifetime": null,
-    "gravity": 0.002,
+    "gravity": null,
     "size": 0.1,
     "scale": null,
     "has_physics": false,
     "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.ExplodeParticle": {
+    "lifetime": [
+      18,
+      42
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.9,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.BubbleParticle": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
     "friction": null,
     "velocity_multiplier": [
-      0.07,
-      1.0,
-      0.07
+      0.85,
+      0.85,
+      0.85
+    ],
+    "velocity_add": [
+      0.0,
+      0.002,
+      0.0
+    ],
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "firefly": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": 1.5,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.8,
+      0.8,
+      0.8
     ],
     "velocity_add": null,
     "velocity_jitter": null,
@@ -4052,13 +2668,39 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": false,
     "tick_velocity_delta": null,
-    "skips_friction": true,
+    "skips_friction": false,
     "uses_static_texture": true,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "__particle_class_net.minecraft.client.particle.BubblePopParticle": {
+  "__particle_class_net.minecraft.client.particle.GlowParticle": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "bubble_pop": {
     "lifetime": [
       4,
       4
@@ -4083,11 +2725,152 @@ export const particleData: ParticleData = {
     "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": true,
+    "uses_static_texture": false,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "entity_effect": {
+  "soul_fire_flame": {
+    "lifetime": [
+      12,
+      24
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "quadratic_shrink",
+      "factor": 0.5
+    }
+  },
+  "firework": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": false
+  },
+  "__particle_class_net.minecraft.client.particle.SplashParticle": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": 0.04,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.3,
+      0.0,
+      0.3
+    ],
+    "velocity_add": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "velocity_jitter": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "spore_blossom_air": {
+    "lifetime": [
+      16,
+      40
+    ],
+    "gravity": 0.0,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "falling_spore_blossom": {
+    "lifetime": null,
+    "gravity": 0.005,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "trial_omen": {
     "lifetime": [
       8,
       20
@@ -4117,35 +2900,112 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "falling_nectar": {
-    "lifetime": null,
-    "gravity": 0.007,
-    "size": null,
+  "egg_crack": {
+    "lifetime": [
+      20,
+      50
+    ],
+    "gravity": null,
+    "size": 0.1,
     "scale": null,
     "has_physics": null,
     "alpha": null,
     "friction": null,
-    "velocity_multiplier": null,
+    "velocity_multiplier": [
+      0.02,
+      0.02,
+      0.02
+    ],
     "velocity_add": null,
     "velocity_jitter": null,
     "position_jitter": null,
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": null,
+    "lifetime_animation": false,
     "tick_velocity_delta": null,
-    "uses_static_texture": true
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
   },
-  "dripping_dripstone_water": {
+  "__particle_class_net.minecraft.client.particle.FallingLeavesParticle": {
+    "lifetime": [
+      300,
+      300
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.FlyTowardsPositionParticle": {
     "lifetime": null,
     "gravity": null,
-    "size": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "note": {
+    "lifetime": [
+      6,
+      6
+    ],
+    "gravity": null,
+    "size": 0.1,
     "scale": null,
     "has_physics": null,
     "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
+    "friction": 0.66,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": [
+      0.0,
+      0.2,
+      0.0
+    ],
     "velocity_jitter": null,
     "position_jitter": null,
     "color": null,
@@ -4153,16 +3013,234 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": null,
     "tick_velocity_delta": null,
-    "uses_static_texture": true
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
   },
-  "small_gust": {
+  "sculk_charge": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": 1.5,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.SonicBoomParticle": {
     "lifetime": [
-      12,
+      16,
       16
     ],
     "gravity": null,
+    "size": 1.5,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.CritParticle": {
+    "lifetime": null,
+    "gravity": 0.5,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.7,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "nautilus": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "enchant": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "landing_honey": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "sneeze": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.HugeExplosionParticle": {
+    "lifetime": [
+      6,
+      10
+    ],
+    "gravity": null,
+    "size": 2.0,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "sweep_attack": {
+    "lifetime": [
+      4,
+      4
+    ],
+    "gravity": null,
     "size": 1.0,
-    "scale": 0.15,
+    "scale": null,
     "has_physics": null,
     "alpha": null,
     "friction": null,
@@ -4185,17 +3263,82 @@ export const particleData: ParticleData = {
       "type": "constant"
     }
   },
-  "end_rod": {
-    "lifetime": [
-      60,
-      72
-    ],
-    "gravity": null,
-    "size": 0.1,
+  "falling_obsidian_tear": {
+    "lifetime": null,
+    "gravity": 0.01,
+    "size": null,
     "scale": null,
     "has_physics": null,
     "alpha": null,
-    "friction": 0.91,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "__particle_class_net.minecraft.client.particle.TrialSpawnerDetectionParticle": {
+    "lifetime": null,
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.0,
+      0.9,
+      0.0
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "dripping_water": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "explosion": {
+    "lifetime": [
+      6,
+      10
+    ],
+    "gravity": null,
+    "size": 2.0,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
     "velocity_multiplier": [
       1.1,
       1.0,
@@ -4209,8 +3352,232 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": true,
     "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.SpellParticle": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.2,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "tinted_leaves": {
+    "lifetime": [
+      300,
+      300
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "dragon_breath": {
+    "lifetime": [
+      20,
+      50
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": [
+      0.0,
+      0.002,
+      0.0
+    ],
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "dripping_dripstone_lava": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "vault_connection": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": 1.5,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "dust_plume": {
+    "lifetime": [
+      7,
+      35
+    ],
+    "gravity": 0.88,
+    "size": 0.1,
+    "scale": 1.0,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.92,
+    "velocity_multiplier": [
+      0.7,
+      0.6,
+      0.7
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.5,
+    "lifetime_base": 7,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
     "skips_friction": false,
     "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "shriek": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "pale_oak_leaves": {
+    "lifetime": [
+      300,
+      300
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
     "quad_size_curve": {
       "type": "constant"
     }
@@ -4260,7 +3627,549 @@ export const particleData: ParticleData = {
       "factor": 1.0
     }
   },
-  "__particle_class_net.minecraft.client.particle.SpitParticle": {
+  "__particle_class_net.minecraft.client.particle.DragonBreathParticle": {
+    "lifetime": [
+      20,
+      50
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": [
+      0.0,
+      0.002,
+      0.0
+    ],
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.WhiteAshParticle": {
+    "lifetime": [
+      20,
+      100
+    ],
+    "gravity": 0.0125,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      -0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.0,
+    "lifetime_base": 20,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "white_ash": {
+    "lifetime": [
+      20,
+      100
+    ],
+    "gravity": 0.0125,
+    "size": 0.1,
+    "scale": 1.0,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      -0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.0,
+    "lifetime_base": 20,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "dripping_dripstone_water": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "portal": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "ease_in_quad"
+    }
+  },
+  "flame": {
+    "lifetime": [
+      12,
+      24
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "quadratic_shrink",
+      "factor": 0.5
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.ReversePortalParticle": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "ease_in_quad"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.SnowflakeParticle": {
+    "lifetime": [
+      18,
+      42
+    ],
+    "gravity": 0.225,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 1.0,
+    "velocity_multiplier": [
+      0.95,
+      0.9,
+      0.95
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.NoteParticle": {
+    "lifetime": [
+      6,
+      6
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": 0.66,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": [
+      0.0,
+      0.2,
+      0.0
+    ],
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "enchanted_hit": {
+    "lifetime": null,
+    "gravity": 0.5,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.7,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "damage_indicator": {
+    "lifetime": null,
+    "gravity": 0.5,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.7,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "vibration": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": true
+  },
+  "trial_spawner_detected_player_ominous": {
+    "lifetime": null,
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": 1.5,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.0,
+      0.9,
+      0.0
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.WaterCurrentDownParticle": {
+    "lifetime": null,
+    "gravity": 0.002,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.07,
+      1.0,
+      0.07
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "dust_color_transition": {
+    "lifetime": null,
+    "gravity": null,
+    "size": null,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": null,
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": null,
+    "tick_velocity_delta": null,
+    "uses_static_texture": false
+  },
+  "infested": {
+    "lifetime": [
+      8,
+      20
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.2,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "large_smoke": {
+    "lifetime": [
+      8,
+      40
+    ],
+    "gravity": -0.1,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": true,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "color_scale": 0.3,
+    "lifetime_base": 8,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "__particle_class_net.minecraft.client.particle.SculkChargePopParticle": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": 1.0,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "gust": {
+    "lifetime": [
+      12,
+      16
+    ],
+    "gravity": null,
+    "size": 1.0,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "spit": {
     "lifetime": [
       18,
       42
@@ -4285,21 +4194,22 @@ export const particleData: ParticleData = {
     "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": false,
+    "uses_static_texture": false,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "bubble_column_up": {
+  "__particle_class_net.minecraft.client.particle.AttackSweepParticle": {
     "lifetime": [
-      40,
-      100
+      4,
+      4
     ],
-    "gravity": -0.125,
-    "size": 0.1,
+    "gravity": null,
+    "size": 1.0,
     "scale": null,
     "has_physics": null,
     "alpha": null,
-    "friction": 0.85,
+    "friction": null,
     "velocity_multiplier": [
       1.1,
       1.0,
@@ -4311,62 +4221,61 @@ export const particleData: ParticleData = {
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": false,
+    "lifetime_animation": true,
     "tick_velocity_delta": null,
-    "skips_friction": false,
-    "uses_static_texture": true,
+    "skips_friction": true,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "splash": {
-    "lifetime": [
-      8,
-      20
-    ],
-    "gravity": 0.04,
+  "sculk_charge_pop": {
+    "lifetime": null,
+    "gravity": null,
     "size": 0.1,
-    "scale": null,
-    "has_physics": null,
+    "scale": 1.0,
+    "has_physics": false,
     "alpha": null,
-    "friction": null,
+    "friction": 0.96,
     "velocity_multiplier": [
-      0.3,
-      0.0,
-      0.3
+      1.1,
+      1.0,
+      1.1
     ],
-    "velocity_add": [
-      0.0,
-      0.2,
-      0.0
-    ],
-    "velocity_jitter": [
-      0.0,
-      0.2,
-      0.0
-    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
     "position_jitter": null,
     "color": null,
     "color_scale": null,
     "lifetime_base": null,
-    "lifetime_animation": false,
+    "lifetime_animation": true,
     "tick_velocity_delta": null,
     "skips_friction": false,
-    "uses_static_texture": true,
+    "uses_static_texture": false,
     "quad_size_curve": {
       "type": "constant"
     }
   },
-  "falling_lava": {
-    "lifetime": null,
+  "__particle_class_net.minecraft.client.particle.HeartParticle": {
+    "lifetime": [
+      16,
+      16
+    ],
     "gravity": null,
-    "size": null,
+    "size": 0.1,
     "scale": null,
-    "has_physics": null,
+    "has_physics": false,
     "alpha": null,
-    "friction": null,
-    "velocity_multiplier": null,
-    "velocity_add": null,
+    "friction": 0.86,
+    "velocity_multiplier": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "velocity_add": [
+      0.0,
+      0.1,
+      0.0
+    ],
     "velocity_jitter": null,
     "position_jitter": null,
     "color": null,
@@ -4374,3389 +4283,101 @@ export const particleData: ParticleData = {
     "lifetime_base": null,
     "lifetime_animation": null,
     "tick_velocity_delta": null,
-    "uses_static_texture": true
+    "skips_friction": false,
+    "quad_size_curve": {
+      "type": "linear_grow_clamped",
+      "multiplier": 32.0
+    }
+  },
+  "happy_villager": {
+    "lifetime": [
+      20,
+      50
+    ],
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      0.02,
+      0.02,
+      0.02
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": false,
+    "tick_velocity_delta": null,
+    "skips_friction": true,
+    "uses_static_texture": true,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "sonic_boom": {
+    "lifetime": [
+      16,
+      16
+    ],
+    "gravity": null,
+    "size": 1.5,
+    "scale": null,
+    "has_physics": null,
+    "alpha": null,
+    "friction": null,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
+  },
+  "glow": {
+    "lifetime": null,
+    "gravity": null,
+    "size": 0.1,
+    "scale": null,
+    "has_physics": false,
+    "alpha": null,
+    "friction": 0.96,
+    "velocity_multiplier": [
+      1.1,
+      1.0,
+      1.1
+    ],
+    "velocity_add": null,
+    "velocity_jitter": null,
+    "position_jitter": null,
+    "color": null,
+    "color_scale": null,
+    "lifetime_base": null,
+    "lifetime_animation": true,
+    "tick_velocity_delta": null,
+    "skips_friction": false,
+    "uses_static_texture": false,
+    "quad_size_curve": {
+      "type": "constant"
+    }
   }
 },
   blocks: {
-  "yellow_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "soul_fire": {
-    "className": "net.minecraft.world.level.block.BaseFireBlock",
-    "emissions": [
-      {
-        "particleId": "large_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random())",
-          "($2.getY() + Math.random() * 0.5 + 0.5)",
-          "($2.getZ() + Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "large_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random() * 0.1)",
-          "($2.getY() + Math.random())",
-          "($2.getZ() + Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "large_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "(($2.getX() + 1) - Math.random() * 0.1)",
-          "($2.getY() + Math.random())",
-          "($2.getZ() + Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "large_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random())",
-          "($2.getY() + Math.random())",
-          "($2.getZ() + Math.random() * 0.1)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "large_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random())",
-          "($2.getY() + Math.random())",
-          "(($2.getZ() + 1) - Math.random() * 0.1)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "large_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random())",
-          "(($2.getY() + 1) - Math.random() * 0.1)",
-          "($2.getZ() + Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "cyan_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "beehive": {
-    "className": "net.minecraft.world.level.block.BeehiveBlock",
-    "emissions": [
-      {
-        "particleId": "dripping_honey",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "Mth.lerp($0.Math.random(), $1, $2)",
-          "$5",
-          "Mth.lerp($0.Math.random(), $3, $4)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "spawnFluidParticle"
-      }
-    ]
-  },
-  "purple_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "blue_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "magenta_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "orange_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "enchanting_table": {
-    "className": "net.minecraft.world.level.block.EnchantingTableBlock",
-    "emissions": [
-      {
-        "particleId": "enchant",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 2.0",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "($4.getX() + Math.random()) - 0.5",
-          "($4.getY() - Math.random() - 1.0)",
-          "($4.getZ() + Math.random()) - 0.5"
-        ],
-        "probabilityExpr": "$3.nextInt(16) == 0",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "bee_nest": {
-    "className": "net.minecraft.world.level.block.BeehiveBlock",
-    "emissions": [
-      {
-        "particleId": "dripping_honey",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "Mth.lerp($0.Math.random(), $1, $2)",
-          "$5",
-          "Mth.lerp($0.Math.random(), $3, $4)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "spawnFluidParticle"
-      }
-    ]
-  },
-  "soul_torch": {
-    "className": "net.minecraft.world.level.block.TorchBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5)",
-          "($2.getY() + 0.7)",
-          "($2.getZ() + 0.5)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "soul_fire_flame",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5)",
-          "($2.getY() + 0.7)",
-          "($2.getZ() + 0.5)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "black_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "copper_wall_torch": {
-    "className": "net.minecraft.world.level.block.WallTorchBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
-          "($2.getY() + 0.7) + 0.22",
-          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "copper_fire_flame",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
-          "($2.getY() + 0.7) + 0.22",
-          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "soul_wall_torch": {
-    "className": "net.minecraft.world.level.block.WallTorchBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
-          "($2.getY() + 0.7) + 0.22",
-          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "soul_fire_flame",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
-          "($2.getY() + 0.7) + 0.22",
-          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "redstone_wire": {
-    "className": "net.minecraft.world.level.block.RedStoneWireBlock",
-    "emissions": [
-      {
-        "particleId": "dust",
-        "options": {
-          "kind": "dust",
-          "color": null,
-          "scale": 1.0
-        },
-        "condition": null,
-        "positionExpr": [
-          "$2.getX() + (0.5 + (0.4375 * $4.getStepX()) + (($6 + ($7 - $6) * Math.random()) * $5.getStepX()))",
-          "$2.getY() + (0.5 + (0.4375 * $4.getStepY()) + (($6 + ($7 - $6) * Math.random()) * $5.getStepY()))",
-          "$2.getZ() + (0.5 + (0.4375 * $4.getStepZ()) + (($6 + ($7 - $6) * Math.random()) * $5.getStepZ()))"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "spawnParticlesAlongLine"
-      }
-    ]
-  },
-  "redstone_wall_torch": {
-    "className": "net.minecraft.world.level.block.RedstoneWallTorchBlock",
-    "emissions": [
-      {
-        "particleId": "dust",
-        "options": {
-          "kind": "dust",
-          "color": [
-            1.0,
-            0.0,
-            0.0
-          ],
-          "scale": 1.0
-        },
-        "condition": "LIT",
-        "positionExpr": [
-          "($2.getX() + 0.5 + (Math.random() - 0.5) * 0.2 + 0.27 * ($0.getValue(FACING).getOpposite()).getStepX())",
-          "($2.getY() + 0.7 + (Math.random() - 0.5) * 0.2 + 0.22)",
-          "($2.getZ() + 0.5 + (Math.random() - 0.5) * 0.2 + 0.27 * ($0.getValue(FACING).getOpposite()).getStepZ())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "light_gray_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "lime_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "red_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "pink_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "brown_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "end_rod": {
-    "className": "net.minecraft.world.level.block.EndRodBlock",
-    "emissions": [
-      {
-        "particleId": "end_rod",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.55 - (Math.random() * 0.1)) + ((Direction)$0.getValue(FACING)).getStepX() * (0.4 - (Math.random() + Math.random()) * 0.4)",
-          "($2.getY() + 0.55 - (Math.random() * 0.1)) + ((Direction)$0.getValue(FACING)).getStepY() * (0.4 - (Math.random() + Math.random()) * 0.4)",
-          "($2.getZ() + 0.55 - (Math.random() * 0.1)) + ((Direction)$0.getValue(FACING)).getStepZ() * (0.4 - (Math.random() + Math.random()) * 0.4)"
-        ],
-        "velocityExpr": [
-          "(Math.random() * 2 - 1) * 0.005",
-          "(Math.random() * 2 - 1) * 0.005",
-          "(Math.random() * 2 - 1) * 0.005"
-        ],
-        "probabilityExpr": "$3.nextInt(5) == 0",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "dried_ghast": {
-    "className": "net.minecraft.world.level.block.DriedGhastBlock",
-    "emissions": [
-      {
-        "particleId": "white_smoke",
-        "options": null,
-        "condition": "WATERLOGGED",
-        "positionExpr": [
-          "($2.getX() + 0.5)",
-          "($2.getY() + 0.5)",
-          "($2.getZ() + 0.5)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.02",
-          "0.0"
-        ],
-        "probabilityExpr": "$3.nextInt(6) == 0",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "happy_villager",
-        "options": null,
-        "condition": "WATERLOGGED",
-        "positionExpr": [
-          "($2.getX() + 0.5) + ((Math.random() * 2.0 - 1.0) / 3.0)",
-          "($2.getY() + 0.5) + 0.4",
-          "($2.getZ() + 0.5) + ((Math.random() * 2.0 - 1.0) / 3.0)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "Math.random()",
-          "0.0"
-        ],
-        "probabilityExpr": "$3.nextInt(6) == 0",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "respawn_anchor": {
-    "className": "net.minecraft.world.level.block.RespawnAnchorBlock",
-    "emissions": [
-      {
-        "particleId": "reverse_portal",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5 + (0.5 - Math.random()))",
-          "($2.getY() + 1.0)",
-          "($2.getZ() + 0.5 + (0.5 - Math.random()))"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "(Math.random() * 0.04)",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "lime_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
   "ender_chest": {
     "className": "net.minecraft.world.level.block.EnderChestBlock",
     "emissions": [
@@ -7775,1998 +4396,6 @@ export const particleData: ParticleData = {
           "(Math.random() * ($3.nextInt(2) * 2 - 1))"
         ],
         "countExpr": "3",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "deepslate_redstone_ore": {
-    "className": "net.minecraft.world.level.block.RedStoneOreBlock",
-    "emissions": [
-      {
-        "particleId": "dust",
-        "options": {
-          "kind": "dust",
-          "color": [
-            1.0,
-            0.0,
-            0.0
-          ],
-          "scale": 1.0
-        },
-        "condition": null,
-        "positionExpr": [
-          "$1.getX() + ($6 == Direction.Axis.X ? 0.5 + 0.5625 * $4.getStepX() : Math.random())",
-          "$1.getY() + ($6 == Direction.Axis.Y ? 0.5 + 0.5625 * $4.getStepY() : Math.random())",
-          "$1.getZ() + ($6 == Direction.Axis.Z ? 0.5 + 0.5625 * $4.getStepZ() : Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "spawnParticles"
-      }
-    ]
-  },
-  "torch": {
-    "className": "net.minecraft.world.level.block.TorchBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5)",
-          "($2.getY() + 0.7)",
-          "($2.getZ() + 0.5)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "flame",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.5)",
-          "($2.getY() + 0.7)",
-          "($2.getZ() + 0.5)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "mycelium": {
-    "className": "net.minecraft.world.level.block.MyceliumBlock",
-    "emissions": [
-      {
-        "particleId": "mycelium",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$2.getX() + Math.random()",
-          "$2.getY() + 1.1",
-          "$2.getZ() + Math.random()"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "$3.nextInt(10) == 0",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "white_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "spore_blossom": {
-    "className": "net.minecraft.world.level.block.SporeBlossomBlock",
-    "emissions": [
-      {
-        "particleId": "falling_spore_blossom",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "(($2.getX()) + Math.random())",
-          "(($2.getY()) + 0.7)",
-          "(($2.getZ()) + Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "spore_blossom_air",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$10.getX() + Math.random()",
-          "$10.getY() + Math.random()",
-          "$10.getZ() + Math.random()"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "14",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "crying_obsidian": {
-    "className": "net.minecraft.world.level.block.CryingObsidianBlock",
-    "emissions": [
-      {
-        "particleId": "dripping_obsidian_tear",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$2.getX() + ((Direction.getRandom($3)).getStepX() == 0 ? Math.random() : 0.5 + (Direction.getRandom($3)).getStepX() * 0.6)",
-          "$2.getY() + ((Direction.getRandom($3)).getStepY() == 0 ? Math.random() : 0.5 + (Direction.getRandom($3)).getStepY() * 0.6)",
-          "$2.getZ() + ((Direction.getRandom($3)).getStepZ() == 0 ? Math.random() : 0.5 + (Direction.getRandom($3)).getStepZ() * 0.6)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "repeater": {
-    "className": "net.minecraft.world.level.block.RepeaterBlock",
-    "emissions": [
-      {
-        "particleId": "dust",
-        "options": {
-          "kind": "dust",
-          "color": [
-            1.0,
-            0.0,
-            0.0
-          ],
-          "scale": 1.0
-        },
-        "condition": "POWERED",
-        "positionExpr": [
-          "($2.getX() + 0.5 + (Math.random() - 0.5) * 0.2) + (((-5.0) /= 16.0) * ((Direction)$0.getValue(FACING)).getStepX())",
-          "($2.getY() + 0.4 + (Math.random() - 0.5) * 0.2)",
-          "($2.getZ() + 0.5 + (Math.random() - 0.5) * 0.2) + ((-5.0) * ((Direction)$0.getValue(FACING)).getStepZ())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "green_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "soul_campfire": {
-    "className": "net.minecraft.world.level.block.CampfireBlock",
-    "emissions": [
-      {
-        "particleId": "lava",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "(Math.random() / 2.0)",
-          "5.0E-5",
-          "Math.random() / 2.0"
-        ],
-        "probabilityExpr": "$3.nextInt(5) == 0",
-        "countExpr": "$3.nextInt(1) + 1",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "campfire_signal_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
-          "$1.getY() + Math.random() + Math.random()",
-          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.07",
-          "0.0"
-        ],
-        "alwaysVisible": true,
-        "emissionSource": "makeParticles"
-      },
-      {
-        "particleId": "campfire_cosy_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
-          "$1.getY() + Math.random() + Math.random()",
-          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.07",
-          "0.0"
-        ],
-        "alwaysVisible": true,
-        "emissionSource": "makeParticles"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$1.getX() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)",
-          "$1.getY() + 0.4",
-          "$1.getZ() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.005",
-          "0.0"
-        ],
-        "emissionSource": "makeParticles"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($1.getX() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepX() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepX() * 0.3125))",
-          "($1.getY() + 0.5)",
-          "($1.getZ() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepZ() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepZ() * 0.3125))"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "5.0E-4",
-          "0.0"
-        ],
-        "probabilityExpr": "Math.random() < 0.2",
-        "countExpr": "4",
-        "loopCountExpr": "$3.items.size()",
-        "loopIndexVar": "$7",
-        "emissionSource": "particleTick"
-      }
-    ]
-  },
-  "gray_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "pink_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "blue_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "light_gray_candle": {
-    "className": "net.minecraft.world.level.block.CandleBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=1",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=2",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=3",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.4375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.4375",
-          "$2.getY() + 0.3125",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.625",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.375",
-          "$2.getY() + 0.4375",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$2.getX() + 0.5625",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.4375",
-          "$3.getY() + 0.3125",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.625",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.5625"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.375",
-          "$3.getY() + 0.4375",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT && CANDLES=4",
-        "positionExpr": [
-          "$3.getX() + 0.5625",
-          "$3.getY() + 0.5",
-          "$3.getZ() + 0.375"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "gray_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "end_gateway": {
-    "className": "net.minecraft.world.level.block.EndGatewayBlock",
-    "emissions": [
-      {
-        "particleId": "portal",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random())",
-          "($2.getY() + Math.random())",
-          "($2.getZ() + Math.random())"
-        ],
-        "velocityExpr": [
-          "((Math.random() - 0.5) * 0.5)",
-          "((Math.random() - 0.5) * 0.5)",
-          "((Math.random() - 0.5) * 0.5)"
-        ],
-        "countExpr": "(((TheEndGatewayBlockEntity)$4).getParticleAmount())",
         "emissionSource": "animateTick"
       }
     ]
@@ -10266,6 +4895,1773 @@ export const particleData: ParticleData = {
       }
     ]
   },
+  "blue_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "magenta_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "pink_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "bee_nest": {
+    "className": "net.minecraft.world.level.block.BeehiveBlock",
+    "emissions": [
+      {
+        "particleId": "dripping_honey",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "Mth.lerp($0.Math.random(), $1, $2)",
+          "$5",
+          "Mth.lerp($0.Math.random(), $3, $4)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "spawnFluidParticle"
+      }
+    ]
+  },
+  "wet_sponge": {
+    "className": "net.minecraft.world.level.block.WetSpongeBlock",
+    "emissions": [
+      {
+        "particleId": "dripping_water",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX())",
+          "($2.getY())",
+          "($2.getZ())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "light_blue_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "crying_obsidian": {
+    "className": "net.minecraft.world.level.block.CryingObsidianBlock",
+    "emissions": [
+      {
+        "particleId": "dripping_obsidian_tear",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$2.getX() + ((Direction.getRandom($3)).getStepX() == 0 ? Math.random() : 0.5 + (Direction.getRandom($3)).getStepX() * 0.6)",
+          "$2.getY() + ((Direction.getRandom($3)).getStepY() == 0 ? Math.random() : 0.5 + (Direction.getRandom($3)).getStepY() * 0.6)",
+          "$2.getZ() + ((Direction.getRandom($3)).getStepZ() == 0 ? Math.random() : 0.5 + (Direction.getRandom($3)).getStepZ() * 0.6)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "cyan_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "end_rod": {
+    "className": "net.minecraft.world.level.block.EndRodBlock",
+    "emissions": [
+      {
+        "particleId": "end_rod",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.55 - (Math.random() * 0.1)) + ((Direction)$0.getValue(FACING)).getStepX() * (0.4 - (Math.random() + Math.random()) * 0.4)",
+          "($2.getY() + 0.55 - (Math.random() * 0.1)) + ((Direction)$0.getValue(FACING)).getStepY() * (0.4 - (Math.random() + Math.random()) * 0.4)",
+          "($2.getZ() + 0.55 - (Math.random() * 0.1)) + ((Direction)$0.getValue(FACING)).getStepZ() * (0.4 - (Math.random() + Math.random()) * 0.4)"
+        ],
+        "velocityExpr": [
+          "(Math.random() * 2 - 1) * 0.005",
+          "(Math.random() * 2 - 1) * 0.005",
+          "(Math.random() * 2 - 1) * 0.005"
+        ],
+        "probabilityExpr": "$3.nextInt(5) == 0",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "yellow_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "white_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "mycelium": {
+    "className": "net.minecraft.world.level.block.MyceliumBlock",
+    "emissions": [
+      {
+        "particleId": "mycelium",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$2.getX() + Math.random()",
+          "$2.getY() + 1.1",
+          "$2.getZ() + Math.random()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "$3.nextInt(10) == 0",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "lime_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "cyan_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "purple_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "campfire": {
+    "className": "net.minecraft.world.level.block.CampfireBlock",
+    "emissions": [
+      {
+        "particleId": "lava",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "(Math.random() / 2.0)",
+          "5.0E-5",
+          "Math.random() / 2.0"
+        ],
+        "probabilityExpr": "$3.nextInt(5) == 0",
+        "countExpr": "$3.nextInt(1) + 1",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "campfire_signal_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
+          "$1.getY() + Math.random() + Math.random()",
+          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.07",
+          "0.0"
+        ],
+        "alwaysVisible": true,
+        "emissionSource": "makeParticles"
+      },
+      {
+        "particleId": "campfire_cosy_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
+          "$1.getY() + Math.random() + Math.random()",
+          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.07",
+          "0.0"
+        ],
+        "alwaysVisible": true,
+        "emissionSource": "makeParticles"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)",
+          "$1.getY() + 0.4",
+          "$1.getZ() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.005",
+          "0.0"
+        ],
+        "emissionSource": "makeParticles"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($1.getX() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepX() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepX() * 0.3125))",
+          "($1.getY() + 0.5)",
+          "($1.getZ() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepZ() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepZ() * 0.3125))"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "5.0E-4",
+          "0.0"
+        ],
+        "probabilityExpr": "Math.random() < 0.2",
+        "countExpr": "4",
+        "loopCountExpr": "$3.items.size()",
+        "loopIndexVar": "$7",
+        "emissionSource": "particleTick"
+      }
+    ]
+  },
+  "candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "soul_wall_torch": {
+    "className": "net.minecraft.world.level.block.WallTorchBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
+          "($2.getY() + 0.7) + 0.22",
+          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "soul_fire_flame",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
+          "($2.getY() + 0.7) + 0.22",
+          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "light_gray_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
   "fire": {
     "className": "net.minecraft.world.level.block.BaseFireBlock",
     "emissions": [
@@ -10373,8 +6769,8 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "furnace": {
-    "className": "net.minecraft.world.level.block.FurnaceBlock",
+  "blast_furnace": {
+    "className": "net.minecraft.world.level.block.BlastFurnaceBlock",
     "emissions": [
       {
         "particleId": "smoke",
@@ -10382,23 +6778,7 @@ export const particleData: ParticleData = {
         "condition": "LIT",
         "positionExpr": [
           "($2.getX() + 0.5) + ($8 == Direction.Axis.X ? ((Direction)$0.getValue(FACING)).getStepX() * 0.52 : (Math.random() * 0.6 - 0.3))",
-          "($2.getY()) + (Math.random() * 6.0 / 16.0)",
-          "($2.getZ() + 0.5) + ($8 == Direction.Axis.Z ? ((Direction)$0.getValue(FACING)).getStepZ() * 0.52 : (Math.random() * 0.6 - 0.3))"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "($2.getX() + 0.5) + ($8 == Direction.Axis.X ? ((Direction)$0.getValue(FACING)).getStepX() * 0.52 : (Math.random() * 0.6 - 0.3))",
-          "($2.getY()) + (Math.random() * 6.0 / 16.0)",
+          "($2.getY()) + (Math.random() * 9.0 / 16.0)",
           "($2.getZ() + 0.5) + ($8 == Direction.Axis.Z ? ((Direction)$0.getValue(FACING)).getStepZ() * 0.52 : (Math.random() * 0.6 - 0.3))"
         ],
         "velocityExpr": [
@@ -10410,7 +6790,1095 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "wall_torch": {
+  "lime_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "redstone_torch": {
+    "className": "net.minecraft.world.level.block.RedstoneTorchBlock",
+    "emissions": [
+      {
+        "particleId": "dust",
+        "options": {
+          "kind": "dust",
+          "color": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "scale": 1.0
+        },
+        "condition": "LIT",
+        "positionExpr": [
+          "($2.getX() + 0.5 + (Math.random() - 0.5) * 0.2)",
+          "($2.getY() + 0.7 + (Math.random() - 0.5) * 0.2)",
+          "($2.getZ() + 0.5 + (Math.random() - 0.5) * 0.2)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "firefly_bush": {
+    "className": "net.minecraft.world.level.block.FireflyBushBlock",
+    "emissions": [
+      {
+        "particleId": "firefly",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random() * 10.0 - 5.0)",
+          "($2.getY() + Math.random() * 5.0)",
+          "($2.getZ() + Math.random() * 10.0 - 5.0)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "Math.random() <= 0.7",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "light_gray_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "redstone_wire": {
+    "className": "net.minecraft.world.level.block.RedStoneWireBlock",
+    "emissions": [
+      {
+        "particleId": "dust",
+        "options": {
+          "kind": "dust",
+          "color": null,
+          "scale": 1.0
+        },
+        "condition": null,
+        "positionExpr": [
+          "$2.getX() + (0.5 + (0.4375 * $4.getStepX()) + (($6 + ($7 - $6) * Math.random()) * $5.getStepX()))",
+          "$2.getY() + (0.5 + (0.4375 * $4.getStepY()) + (($6 + ($7 - $6) * Math.random()) * $5.getStepY()))",
+          "$2.getZ() + (0.5 + (0.4375 * $4.getStepZ()) + (($6 + ($7 - $6) * Math.random()) * $5.getStepZ()))"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "spawnParticlesAlongLine"
+      }
+    ]
+  },
+  "enchanting_table": {
+    "className": "net.minecraft.world.level.block.EnchantingTableBlock",
+    "emissions": [
+      {
+        "particleId": "enchant",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 2.0",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "($4.getX() + Math.random()) - 0.5",
+          "($4.getY() - Math.random() - 1.0)",
+          "($4.getZ() + Math.random()) - 0.5"
+        ],
+        "probabilityExpr": "$3.nextInt(16) == 0",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "copper_wall_torch": {
     "className": "net.minecraft.world.level.block.WallTorchBlock",
     "emissions": [
       {
@@ -10430,7 +7898,7 @@ export const particleData: ParticleData = {
         "emissionSource": "animateTick"
       },
       {
-        "particleId": "flame",
+        "particleId": "copper_fire_flame",
         "options": null,
         "condition": null,
         "positionExpr": [
@@ -10447,7 +7915,133 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "candle": {
+  "smoker": {
+    "className": "net.minecraft.world.level.block.SmokerBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "($2.getX() + 0.5)",
+          "($2.getY()) + 1.1",
+          "($2.getZ() + 0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "redstone_ore": {
+    "className": "net.minecraft.world.level.block.RedStoneOreBlock",
+    "emissions": [
+      {
+        "particleId": "dust",
+        "options": {
+          "kind": "dust",
+          "color": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "scale": 1.0
+        },
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + ($6 == Direction.Axis.X ? 0.5 + 0.5625 * $4.getStepX() : Math.random())",
+          "$1.getY() + ($6 == Direction.Axis.Y ? 0.5 + 0.5625 * $4.getStepY() : Math.random())",
+          "$1.getZ() + ($6 == Direction.Axis.Z ? 0.5 + 0.5625 * $4.getStepZ() : Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "spawnParticles"
+      }
+    ]
+  },
+  "wither_rose": {
+    "className": "net.minecraft.world.level.block.WitherRoseBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + $5.x) + Math.random() / 5.0",
+          "$2.getY() + (0.5 - Math.random())",
+          "($2.getZ() + $5.z) + Math.random() / 5.0"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "3",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "gray_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "gray_candle": {
     "className": "net.minecraft.world.level.block.CandleBlock",
     "emissions": [
       {
@@ -11437,7 +9031,137 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "white_candle": {
+  "nether_portal": {
+    "className": "net.minecraft.world.level.block.NetherPortalBlock",
+    "emissions": [
+      {
+        "particleId": "portal",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random())",
+          "($2.getY() + Math.random())",
+          "($2.getZ() + Math.random())"
+        ],
+        "velocityExpr": [
+          "((Math.random() - 0.5) * 0.5)",
+          "((Math.random() - 0.5) * 0.5)",
+          "((Math.random() - 0.5) * 0.5)"
+        ],
+        "countExpr": "4",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "yellow_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "brown_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "pink_candle": {
     "className": "net.minecraft.world.level.block.CandleBlock",
     "emissions": [
       {
@@ -11932,7 +9656,162 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "black_candle": {
+  "end_portal": {
+    "className": "net.minecraft.world.level.block.EndPortalBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random())",
+          "($2.getY() + 0.8)",
+          "($2.getZ() + Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "deepslate_redstone_ore": {
+    "className": "net.minecraft.world.level.block.RedStoneOreBlock",
+    "emissions": [
+      {
+        "particleId": "dust",
+        "options": {
+          "kind": "dust",
+          "color": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "scale": 1.0
+        },
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + ($6 == Direction.Axis.X ? 0.5 + 0.5625 * $4.getStepX() : Math.random())",
+          "$1.getY() + ($6 == Direction.Axis.Y ? 0.5 + 0.5625 * $4.getStepY() : Math.random())",
+          "$1.getZ() + ($6 == Direction.Axis.Z ? 0.5 + 0.5625 * $4.getStepZ() : Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "spawnParticles"
+      }
+    ]
+  },
+  "soul_torch": {
+    "className": "net.minecraft.world.level.block.TorchBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5)",
+          "($2.getY() + 0.7)",
+          "($2.getZ() + 0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "soul_fire_flame",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5)",
+          "($2.getY() + 0.7)",
+          "($2.getZ() + 0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "dried_ghast": {
+    "className": "net.minecraft.world.level.block.DriedGhastBlock",
+    "emissions": [
+      {
+        "particleId": "white_smoke",
+        "options": null,
+        "condition": "WATERLOGGED",
+        "positionExpr": [
+          "($2.getX() + 0.5)",
+          "($2.getY() + 0.5)",
+          "($2.getZ() + 0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.02",
+          "0.0"
+        ],
+        "probabilityExpr": "$3.nextInt(6) == 0",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "happy_villager",
+        "options": null,
+        "condition": "WATERLOGGED",
+        "positionExpr": [
+          "($2.getX() + 0.5) + ((Math.random() * 2.0 - 1.0) / 3.0)",
+          "($2.getY() + 0.5) + 0.4",
+          "($2.getZ() + 0.5) + ((Math.random() * 2.0 - 1.0) / 3.0)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "Math.random()",
+          "0.0"
+        ],
+        "probabilityExpr": "$3.nextInt(6) == 0",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "repeater": {
+    "className": "net.minecraft.world.level.block.RepeaterBlock",
+    "emissions": [
+      {
+        "particleId": "dust",
+        "options": {
+          "kind": "dust",
+          "color": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "scale": 1.0
+        },
+        "condition": "POWERED",
+        "positionExpr": [
+          "($2.getX() + 0.5 + (Math.random() - 0.5) * 0.2) + (((-5.0) /= 16.0) * ((Direction)$0.getValue(FACING)).getStepX())",
+          "($2.getY() + 0.4 + (Math.random() - 0.5) * 0.2)",
+          "($2.getZ() + 0.5 + (Math.random() - 0.5) * 0.2) + ((-5.0) * ((Direction)$0.getValue(FACING)).getStepZ())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "candle": {
     "className": "net.minecraft.world.level.block.CandleBlock",
     "emissions": [
       {
@@ -12427,7 +10306,44 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "cyan_candle": {
+  "furnace": {
+    "className": "net.minecraft.world.level.block.FurnaceBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "($2.getX() + 0.5) + ($8 == Direction.Axis.X ? ((Direction)$0.getValue(FACING)).getStepX() * 0.52 : (Math.random() * 0.6 - 0.3))",
+          "($2.getY()) + (Math.random() * 6.0 / 16.0)",
+          "($2.getZ() + 0.5) + ($8 == Direction.Axis.Z ? ((Direction)$0.getValue(FACING)).getStepZ() * 0.52 : (Math.random() * 0.6 - 0.3))"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "($2.getX() + 0.5) + ($8 == Direction.Axis.X ? ((Direction)$0.getValue(FACING)).getStepX() * 0.52 : (Math.random() * 0.6 - 0.3))",
+          "($2.getY()) + (Math.random() * 6.0 / 16.0)",
+          "($2.getZ() + 0.5) + ($8 == Direction.Axis.Z ? ((Direction)$0.getValue(FACING)).getStepZ() * 0.52 : (Math.random() * 0.6 - 0.3))"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "purple_candle": {
     "className": "net.minecraft.world.level.block.CandleBlock",
     "emissions": [
       {
@@ -12912,6 +10828,81 @@ export const particleData: ParticleData = {
           "$3.getX() + 0.5625",
           "$3.getY() + 0.5",
           "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "respawn_anchor": {
+    "className": "net.minecraft.world.level.block.RespawnAnchorBlock",
+    "emissions": [
+      {
+        "particleId": "reverse_portal",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5 + (0.5 - Math.random()))",
+          "($2.getY() + 1.0)",
+          "($2.getZ() + 0.5 + (0.5 - Math.random()))"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "(Math.random() * 0.04)",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "orange_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
         ],
         "velocityExpr": [
           "0.0",
@@ -13454,6 +11445,2456 @@ export const particleData: ParticleData = {
       }
     ]
   },
+  "red_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "black_candle_cake": {
+    "className": "net.minecraft.world.level.block.CandleCakeBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 1",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 1",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "wall_torch": {
+    "className": "net.minecraft.world.level.block.WallTorchBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
+          "($2.getY() + 0.7) + 0.22",
+          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "flame",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepX()",
+          "($2.getY() + 0.7) + 0.22",
+          "($2.getZ() + 0.5) + 0.27 * (($0.getValue(FACING)).getOpposite()).getStepZ()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "black_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "redstone_wall_torch": {
+    "className": "net.minecraft.world.level.block.RedstoneWallTorchBlock",
+    "emissions": [
+      {
+        "particleId": "dust",
+        "options": {
+          "kind": "dust",
+          "color": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "scale": 1.0
+        },
+        "condition": "LIT",
+        "positionExpr": [
+          "($2.getX() + 0.5 + (Math.random() - 0.5) * 0.2 + 0.27 * ($0.getValue(FACING).getOpposite()).getStepX())",
+          "($2.getY() + 0.7 + (Math.random() - 0.5) * 0.2 + 0.22)",
+          "($2.getZ() + 0.5 + (Math.random() - 0.5) * 0.2 + 0.27 * ($0.getValue(FACING).getOpposite()).getStepZ())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "spore_blossom": {
+    "className": "net.minecraft.world.level.block.SporeBlossomBlock",
+    "emissions": [
+      {
+        "particleId": "falling_spore_blossom",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "(($2.getX()) + Math.random())",
+          "(($2.getY()) + 0.7)",
+          "(($2.getZ()) + Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "spore_blossom_air",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$10.getX() + Math.random()",
+          "$10.getY() + Math.random()",
+          "$10.getZ() + Math.random()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "14",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "blue_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "soul_fire": {
+    "className": "net.minecraft.world.level.block.BaseFireBlock",
+    "emissions": [
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random())",
+          "($2.getY() + Math.random() * 0.5 + 0.5)",
+          "($2.getZ() + Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random() * 0.1)",
+          "($2.getY() + Math.random())",
+          "($2.getZ() + Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "(($2.getX() + 1) - Math.random() * 0.1)",
+          "($2.getY() + Math.random())",
+          "($2.getZ() + Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random())",
+          "($2.getY() + Math.random())",
+          "($2.getZ() + Math.random() * 0.1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random())",
+          "($2.getY() + Math.random())",
+          "(($2.getZ() + 1) - Math.random() * 0.1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + Math.random())",
+          "(($2.getY() + 1) - Math.random() * 0.1)",
+          "($2.getZ() + Math.random())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "brewing_stand": {
+    "className": "net.minecraft.world.level.block.BrewingStandBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.4 + Math.random() * 0.2)",
+          "($2.getY() + 0.7 + Math.random() * 0.3)",
+          "($2.getZ() + 0.4 + Math.random() * 0.2)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "magenta_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
+  "torch": {
+    "className": "net.minecraft.world.level.block.TorchBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5)",
+          "($2.getY() + 0.7)",
+          "($2.getZ() + 0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "flame",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($2.getX() + 0.5)",
+          "($2.getY() + 0.7)",
+          "($2.getZ() + 0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      }
+    ]
+  },
+  "soul_campfire": {
+    "className": "net.minecraft.world.level.block.CampfireBlock",
+    "emissions": [
+      {
+        "particleId": "lava",
+        "options": null,
+        "condition": "LIT",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "(Math.random() / 2.0)",
+          "5.0E-5",
+          "Math.random() / 2.0"
+        ],
+        "probabilityExpr": "$3.nextInt(5) == 0",
+        "countExpr": "$3.nextInt(1) + 1",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "campfire_signal_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
+          "$1.getY() + Math.random() + Math.random()",
+          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.07",
+          "0.0"
+        ],
+        "alwaysVisible": true,
+        "emissionSource": "makeParticles"
+      },
+      {
+        "particleId": "campfire_cosy_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
+          "$1.getY() + Math.random() + Math.random()",
+          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.07",
+          "0.0"
+        ],
+        "alwaysVisible": true,
+        "emissionSource": "makeParticles"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.getX() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)",
+          "$1.getY() + 0.4",
+          "$1.getZ() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.005",
+          "0.0"
+        ],
+        "emissionSource": "makeParticles"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "($1.getX() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepX() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepX() * 0.3125))",
+          "($1.getY() + 0.5)",
+          "($1.getZ() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepZ() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepZ() * 0.3125))"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "5.0E-4",
+          "0.0"
+        ],
+        "probabilityExpr": "Math.random() < 0.2",
+        "countExpr": "4",
+        "loopCountExpr": "$3.items.size()",
+        "loopIndexVar": "$7",
+        "emissionSource": "particleTick"
+      }
+    ]
+  },
+  "green_candle": {
+    "className": "net.minecraft.world.level.block.CandleBlock",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=1",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=2",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=3",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.4375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.4375",
+          "$2.getY() + 0.3125",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.625",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.375",
+          "$2.getY() + 0.4375",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "nextFloat() < 0.3",
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "small_flame",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$2.getX() + 0.5625",
+          "$2.getY() + 0.5",
+          "$2.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "animateTick"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.4375",
+          "$3.getY() + 0.3125",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.625",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.5625"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.375",
+          "$3.getY() + 0.4375",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      },
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": "LIT && CANDLES=4",
+        "positionExpr": [
+          "$3.getX() + 0.5625",
+          "$3.getY() + 0.5",
+          "$3.getZ() + 0.375"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.1",
+          "0.0"
+        ],
+        "emissionSource": "extinguish"
+      }
+    ]
+  },
   "red_candle": {
     "className": "net.minecraft.world.level.block.CandleBlock",
     "emissions": [
@@ -13949,116 +14390,8 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "light_blue_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "magenta_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "nether_portal": {
-    "className": "net.minecraft.world.level.block.NetherPortalBlock",
+  "end_gateway": {
+    "className": "net.minecraft.world.level.block.EndGatewayBlock",
     "emissions": [
       {
         "particleId": "portal",
@@ -14074,171 +14407,7 @@ export const particleData: ParticleData = {
           "((Math.random() - 0.5) * 0.5)",
           "((Math.random() - 0.5) * 0.5)"
         ],
-        "countExpr": "4",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "wither_rose": {
-    "className": "net.minecraft.world.level.block.WitherRoseBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + $5.x) + Math.random() / 5.0",
-          "$2.getY() + (0.5 - Math.random())",
-          "($2.getZ() + $5.z) + Math.random() / 5.0"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "3",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "redstone_ore": {
-    "className": "net.minecraft.world.level.block.RedStoneOreBlock",
-    "emissions": [
-      {
-        "particleId": "dust",
-        "options": {
-          "kind": "dust",
-          "color": [
-            1.0,
-            0.0,
-            0.0
-          ],
-          "scale": 1.0
-        },
-        "condition": null,
-        "positionExpr": [
-          "$1.getX() + ($6 == Direction.Axis.X ? 0.5 + 0.5625 * $4.getStepX() : Math.random())",
-          "$1.getY() + ($6 == Direction.Axis.Y ? 0.5 + 0.5625 * $4.getStepY() : Math.random())",
-          "$1.getZ() + ($6 == Direction.Axis.Z ? 0.5 + 0.5625 * $4.getStepZ() : Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "spawnParticles"
-      }
-    ]
-  },
-  "wet_sponge": {
-    "className": "net.minecraft.world.level.block.WetSpongeBlock",
-    "emissions": [
-      {
-        "particleId": "dripping_water",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX())",
-          "($2.getY())",
-          "($2.getZ())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "smoker": {
-    "className": "net.minecraft.world.level.block.SmokerBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "($2.getX() + 0.5)",
-          "($2.getY()) + 1.1",
-          "($2.getZ() + 0.5)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "redstone_torch": {
-    "className": "net.minecraft.world.level.block.RedstoneTorchBlock",
-    "emissions": [
-      {
-        "particleId": "dust",
-        "options": {
-          "kind": "dust",
-          "color": [
-            1.0,
-            0.0,
-            0.0
-          ],
-          "scale": 1.0
-        },
-        "condition": "LIT",
-        "positionExpr": [
-          "($2.getX() + 0.5 + (Math.random() - 0.5) * 0.2)",
-          "($2.getY() + 0.7 + (Math.random() - 0.5) * 0.2)",
-          "($2.getZ() + 0.5 + (Math.random() - 0.5) * 0.2)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "brewing_stand": {
-    "className": "net.minecraft.world.level.block.BrewingStandBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + 0.4 + Math.random() * 0.2)",
-          "($2.getY() + 0.7 + Math.random() * 0.3)",
-          "($2.getZ() + 0.4 + Math.random() * 0.2)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "blast_furnace": {
-    "className": "net.minecraft.world.level.block.BlastFurnaceBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "($2.getX() + 0.5) + ($8 == Direction.Axis.X ? ((Direction)$0.getValue(FACING)).getStepX() * 0.52 : (Math.random() * 0.6 - 0.3))",
-          "($2.getY()) + (Math.random() * 9.0 / 16.0)",
-          "($2.getZ() + 0.5) + ($8 == Direction.Axis.Z ? ((Direction)$0.getValue(FACING)).getStepZ() * 0.52 : (Math.random() * 0.6 - 0.3))"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
+        "countExpr": "(((TheEndGatewayBlockEntity)$4).getParticleAmount())",
         "emissionSource": "animateTick"
       }
     ]
@@ -14297,197 +14466,28 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "campfire": {
-    "className": "net.minecraft.world.level.block.CampfireBlock",
+  "beehive": {
+    "className": "net.minecraft.world.level.block.BeehiveBlock",
     "emissions": [
       {
-        "particleId": "lava",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 0.5",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "(Math.random() / 2.0)",
-          "5.0E-5",
-          "Math.random() / 2.0"
-        ],
-        "probabilityExpr": "$3.nextInt(5) == 0",
-        "countExpr": "$3.nextInt(1) + 1",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "campfire_signal_smoke",
+        "particleId": "dripping_honey",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
-          "$1.getY() + Math.random() + Math.random()",
-          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
+          "Mth.lerp($0.Math.random(), $1, $2)",
+          "$5",
+          "Mth.lerp($0.Math.random(), $3, $4)"
         ],
         "velocityExpr": [
           "0.0",
-          "0.07",
-          "0.0"
-        ],
-        "alwaysVisible": true,
-        "emissionSource": "makeParticles"
-      },
-      {
-        "particleId": "campfire_cosy_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$1.getX() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)",
-          "$1.getY() + Math.random() + Math.random()",
-          "$1.getZ() + 0.5 + Math.random() / 3.0 * ($4.nextBoolean() ? 1 : -1)"
-        ],
-        "velocityExpr": [
           "0.0",
-          "0.07",
           "0.0"
         ],
-        "alwaysVisible": true,
-        "emissionSource": "makeParticles"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$1.getX() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)",
-          "$1.getY() + 0.4",
-          "$1.getZ() + 0.5 + Math.random() / 4.0 * ($4.nextBoolean() ? 1 : -1)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.005",
-          "0.0"
-        ],
-        "emissionSource": "makeParticles"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($1.getX() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepX() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepX() * 0.3125))",
-          "($1.getY() + 0.5)",
-          "($1.getZ() + 0.5 - ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getStepZ() * 0.3125) + ((Direction.from2DDataValue(Math.floorMod($7 + ($2.getValue(CampfireBlock.FACING).get2DDataValue()), 4))).getClockWise().getStepZ() * 0.3125))"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "5.0E-4",
-          "0.0"
-        ],
-        "probabilityExpr": "Math.random() < 0.2",
-        "countExpr": "4",
-        "loopCountExpr": "$3.items.size()",
-        "loopIndexVar": "$7",
-        "emissionSource": "particleTick"
+        "emissionSource": "spawnFluidParticle"
       }
     ]
   },
-  "firefly_bush": {
-    "className": "net.minecraft.world.level.block.FireflyBushBlock",
-    "emissions": [
-      {
-        "particleId": "firefly",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random() * 10.0 - 5.0)",
-          "($2.getY() + Math.random() * 5.0)",
-          "($2.getZ() + Math.random() * 10.0 - 5.0)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "Math.random() <= 0.7",
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "end_portal": {
-    "className": "net.minecraft.world.level.block.EndPortalBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "($2.getX() + Math.random())",
-          "($2.getY() + 0.8)",
-          "($2.getZ() + Math.random())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      }
-    ]
-  },
-  "yellow_candle_cake": {
-    "className": "net.minecraft.world.level.block.CandleCakeBlock",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "nextFloat() < 0.3",
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "small_flame",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$2.getX() + 0.5",
-          "$2.getY() + 1",
-          "$2.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "animateTick"
-      },
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": "LIT",
-        "positionExpr": [
-          "$3.getX() + 0.5",
-          "$3.getY() + 1",
-          "$3.getZ() + 0.5"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.1",
-          "0.0"
-        ],
-        "emissionSource": "extinguish"
-      }
-    ]
-  },
-  "purple_candle": {
+  "white_candle": {
     "className": "net.minecraft.world.level.block.CandleBlock",
     "emissions": [
       {
@@ -14984,50 +14984,6 @@ export const particleData: ParticleData = {
   }
 },
   entities: {
-  "witch": {
-    "className": "net.minecraft.world.entity.monster.Witch",
-    "emissions": [
-      {
-        "particleId": "witch",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() + (Math.random() * 2 - 1) * 0.13",
-          "this.getBoundingBox().maxY + 0.5 + (Math.random() * 2 - 1) * 0.13",
-          "this.getZ() + (Math.random() * 2 - 1) * 0.13"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "this.random.nextInt(35) + 10",
-        "emissionSource": "handleEntityEvent"
-      }
-    ]
-  },
-  "ender_man": {
-    "className": "net.minecraft.world.entity.monster.EnderMan",
-    "emissions": [
-      {
-        "particleId": "portal",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(0.5)",
-          "this.getRandomY() - 0.25",
-          "this.getRandomZ(0.5)"
-        ],
-        "velocityExpr": [
-          "(Math.random() - 0.5) * 2.0",
-          "-Math.random()",
-          "(Math.random() - 0.5) * 2.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "aiStep"
-      }
-    ]
-  },
   "eye_of_ender": {
     "className": "net.minecraft.world.entity.projectile.EyeOfEnder",
     "emissions": [
@@ -15066,69 +15022,150 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "ravager": {
-    "className": "net.minecraft.world.entity.monster.Ravager",
+  "llama": {
+    "className": "net.minecraft.world.entity.animal.equine.Llama",
     "emissions": [
       {
-        "particleId": "poof",
+        "particleId": "happy_villager",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "$0.x",
-          "$0.y",
-          "$0.z"
-        ],
-        "velocityExpr": [
-          "((Math.random() * 2 - 1) * 0.2)",
-          "((Math.random() * 2 - 1) * 0.2)",
-          "((Math.random() * 2 - 1) * 0.2)"
-        ],
-        "countExpr": "40",
-        "emissionSource": "addRoarParticleEffects"
-      }
-    ]
-  },
-  "mushroom_cow": {
-    "className": "net.minecraft.world.entity.animal.cow.MushroomCow",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() + Math.random() / 2.0",
-          "this.getY(0.5)",
-          "this.getZ() + Math.random() / 2.0"
+          "this.getRandomX(1.0)",
+          "this.getRandomY() + 0.5",
+          "this.getRandomZ(1.0)"
         ],
         "velocityExpr": [
           "0.0",
-          "Math.random() / 5.0",
+          "0.0",
           "0.0"
         ],
-        "countExpr": "2",
-        "emissionSource": "mobInteract"
+        "emissionSource": "handleEating"
       }
     ]
   },
-  "throwable_projectile": {
-    "className": "net.minecraft.world.entity.projectile.ThrowableProjectile",
+  "llama_spit": {
+    "className": "net.minecraft.world.entity.projectile.LlamaSpit",
+    "emissions": [
+      {
+        "particleId": "spit",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX()",
+          "this.getY()",
+          "this.getZ()"
+        ],
+        "velocityExpr": [
+          "$1.x * (0.4 + 0.1 * $2)",
+          "$1.y",
+          "$1.z * (0.4 + 0.1 * $2)"
+        ],
+        "loopCountExpr": "7",
+        "loopIndexVar": "$2",
+        "emissionSource": "recreateFromPacket"
+      }
+    ]
+  },
+  "abstract_nautilus": {
+    "className": "net.minecraft.world.entity.animal.nautilus.AbstractNautilus",
     "emissions": [
       {
         "particleId": "bubble",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "$1.x - $0.x * 0.25",
-          "$1.y - $0.y * 0.25",
-          "$1.z - $0.z * 0.25"
+          "this.getX() - $4.x * 1.1",
+          "this.getY() - $4.y + 0.25",
+          "this.getZ() - $4.z * 1.1"
         ],
         "velocityExpr": [
-          "$0.x",
-          "$0.y",
-          "$0.z"
+          "((Math.random() - 0.5) * (Math.random() * 0.8 * (1.0 + (this.getDeltaMovement().length()))))",
+          "((Math.random() - 0.5) * (Math.random() * 0.8 * (1.0 + (this.getDeltaMovement().length()))))",
+          "((Math.random() - 0.5) * (Math.random() * 0.8 * (1.0 + (this.getDeltaMovement().length()))))"
         ],
-        "countExpr": "4",
-        "emissionSource": "applyInertia"
+        "probabilityExpr": "Math.random() < $1",
+        "emissionSource": "spawnBubbles"
+      }
+    ]
+  },
+  "animal": {
+    "className": "net.minecraft.world.entity.animal.Animal",
+    "emissions": [
+      {
+        "particleId": "heart",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getRandomX(1.0)",
+          "this.getRandomY() + 0.5",
+          "this.getRandomZ(1.0)"
+        ],
+        "velocityExpr": [
+          "((Math.random() * 2 - 1) * 0.02)",
+          "((Math.random() * 2 - 1) * 0.02)",
+          "((Math.random() * 2 - 1) * 0.02)"
+        ],
+        "emissionSource": "aiStep"
+      },
+      {
+        "particleId": "heart",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getRandomX(1.0)",
+          "this.getRandomY() + 0.5",
+          "this.getRandomZ(1.0)"
+        ],
+        "velocityExpr": [
+          "((Math.random() * 2 - 1) * 0.02)",
+          "((Math.random() * 2 - 1) * 0.02)",
+          "((Math.random() * 2 - 1) * 0.02)"
+        ],
+        "countExpr": "7",
+        "emissionSource": "handleEntityEvent"
+      }
+    ]
+  },
+  "primed_tnt": {
+    "className": "net.minecraft.world.entity.item.PrimedTnt",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX()",
+          "this.getY() + 0.5",
+          "this.getZ()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "tick"
+      }
+    ]
+  },
+  "ender_man": {
+    "className": "net.minecraft.world.entity.monster.EnderMan",
+    "emissions": [
+      {
+        "particleId": "portal",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getRandomX(0.5)",
+          "this.getRandomY() - 0.25",
+          "this.getRandomZ(0.5)"
+        ],
+        "velocityExpr": [
+          "(Math.random() - 0.5) * 2.0",
+          "-Math.random()",
+          "(Math.random() - 0.5) * 2.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "aiStep"
       }
     ]
   },
@@ -15153,24 +15190,67 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "minecart_furnace": {
-    "className": "net.minecraft.world.entity.vehicle.minecart.MinecartFurnace",
+  "camel": {
+    "className": "net.minecraft.world.entity.animal.camel.Camel",
     "emissions": [
       {
-        "particleId": "large_smoke",
+        "particleId": "happy_villager",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "this.getX()",
-          "this.getY() + 0.8",
-          "this.getZ()"
+          "this.getRandomX(1.0)",
+          "this.getRandomY() + 0.5",
+          "this.getRandomZ(1.0)"
         ],
         "velocityExpr": [
           "0.0",
           "0.0",
           "0.0"
         ],
-        "probabilityExpr": "this.random.nextInt(4) == 0",
+        "emissionSource": "handleEating"
+      }
+    ]
+  },
+  "illusioner": {
+    "className": "net.minecraft.world.entity.monster.illager.Illusioner",
+    "emissions": [
+      {
+        "particleId": "cloud",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getRandomX(0.5)",
+          "this.getRandomY()",
+          "this.getZ(0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "16",
+        "emissionSource": "aiStep"
+      }
+    ]
+  },
+  "wolf": {
+    "className": "net.minecraft.world.entity.animal.wolf.Wolf",
+    "emissions": [
+      {
+        "particleId": "splash",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX() + ((Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)",
+          "((this.getY()) + 0.8)",
+          "this.getZ() + ((Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)"
+        ],
+        "velocityExpr": [
+          "$2.x",
+          "$2.y",
+          "$2.z"
+        ],
+        "countExpr": "((Mth.sin(((this.shakeAnim - 0.4) * Math.PI)) * 7.0))",
         "emissionSource": "tick"
       }
     ]
@@ -15218,100 +15298,68 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "ender_dragon": {
-    "className": "net.minecraft.world.entity.boss.enderdragon.EnderDragon",
+  "witch": {
+    "className": "net.minecraft.world.entity.monster.Witch",
     "emissions": [
       {
-        "particleId": "explosion",
+        "particleId": "witch",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "this.getX() + ((Math.random() - 0.5) * 8.0)",
-          "this.getY() + 2.0 + ((Math.random() - 0.5) * 4.0)",
-          "this.getZ() + ((Math.random() - 0.5) * 8.0)"
+          "this.getX() + (Math.random() * 2 - 1) * 0.13",
+          "this.getBoundingBox().maxY + 0.5 + (Math.random() * 2 - 1) * 0.13",
+          "this.getZ() + (Math.random() * 2 - 1) * 0.13"
         ],
         "velocityExpr": [
           "0.0",
           "0.0",
           "0.0"
         ],
-        "emissionSource": "aiStep"
-      },
-      {
-        "particleId": "explosion_emitter",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() + ((Math.random() - 0.5) * 8.0)",
-          "this.getY() + 2.0 + ((Math.random() - 0.5) * 4.0)",
-          "this.getZ() + ((Math.random() - 0.5) * 8.0)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "tickDeath"
-      }
-    ]
-  },
-  "thrown_enderpearl": {
-    "className": "net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl",
-    "emissions": [
-      {
-        "particleId": "portal",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX()",
-          "this.getY() + Math.random() * 2.0",
-          "this.getZ()"
-        ],
-        "velocityExpr": [
-          "(Math.random() * 2 - 1)",
-          "0.0",
-          "(Math.random() * 2 - 1)"
-        ],
-        "countExpr": "32",
-        "emissionSource": "onHit"
-      }
-    ]
-  },
-  "animal": {
-    "className": "net.minecraft.world.entity.animal.Animal",
-    "emissions": [
-      {
-        "particleId": "heart",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(1.0)",
-          "this.getRandomY() + 0.5",
-          "this.getRandomZ(1.0)"
-        ],
-        "velocityExpr": [
-          "((Math.random() * 2 - 1) * 0.02)",
-          "((Math.random() * 2 - 1) * 0.02)",
-          "((Math.random() * 2 - 1) * 0.02)"
-        ],
-        "emissionSource": "aiStep"
-      },
-      {
-        "particleId": "heart",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(1.0)",
-          "this.getRandomY() + 0.5",
-          "this.getRandomZ(1.0)"
-        ],
-        "velocityExpr": [
-          "((Math.random() * 2 - 1) * 0.02)",
-          "((Math.random() * 2 - 1) * 0.02)",
-          "((Math.random() * 2 - 1) * 0.02)"
-        ],
-        "countExpr": "7",
+        "countExpr": "this.random.nextInt(35) + 10",
         "emissionSource": "handleEntityEvent"
+      }
+    ]
+  },
+  "evoker_fangs": {
+    "className": "net.minecraft.world.entity.projectile.EvokerFangs",
+    "emissions": [
+      {
+        "particleId": "crit",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "(this.getX() + (Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)",
+          "(this.getY() + 0.05 + Math.random()) + 1.0",
+          "(this.getZ() + (Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)"
+        ],
+        "velocityExpr": [
+          "((Math.random() * 2.0 - 1.0) * 0.3)",
+          "(0.3 + Math.random() * 0.3)",
+          "((Math.random() * 2.0 - 1.0) * 0.3)"
+        ],
+        "countExpr": "12",
+        "emissionSource": "tick"
+      }
+    ]
+  },
+  "glow_squid": {
+    "className": "net.minecraft.world.entity.animal.squid.GlowSquid",
+    "emissions": [
+      {
+        "particleId": "glow",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getRandomX(0.6)",
+          "this.getRandomY()",
+          "this.getRandomZ(0.6)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "aiStep"
       }
     ]
   },
@@ -15352,209 +15400,25 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "dolphin": {
-    "className": "net.minecraft.world.entity.animal.dolphin.Dolphin",
-    "emissions": [
-      {
-        "particleId": "dolphin",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() - $0.x * (1.2 - Math.random() * 0.7) + (Mth.cos((this.getYRot() * (Math.PI / 180))) * 0.3)",
-          "this.getY() - $0.y",
-          "this.getZ() - $0.z * (1.2 - Math.random() * 0.7) + (Mth.sin((this.getYRot() * (Math.PI / 180))) * 0.3)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "tick"
-      },
-      {
-        "particleId": "dolphin",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() - $0.x * (1.2 - Math.random() * 0.7) - (Mth.cos((this.getYRot() * (Math.PI / 180))) * 0.3)",
-          "this.getY() - $0.y",
-          "this.getZ() - $0.z * (1.2 - Math.random() * 0.7) - (Mth.sin((this.getYRot() * (Math.PI / 180))) * 0.3)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "tick"
-      }
-    ]
-  },
-  "firework_rocket_entity": {
-    "className": "net.minecraft.world.entity.projectile.FireworkRocketEntity",
-    "emissions": [
-      {
-        "particleId": "firework",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX()",
-          "this.getY()",
-          "this.getZ()"
-        ],
-        "velocityExpr": [
-          "(Math.random() * 2 - 1) * 0.05",
-          "-this.getDeltaMovement().y * 0.5",
-          "(Math.random() * 2 - 1) * 0.05"
-        ],
-        "emissionSource": "tick"
-      }
-    ]
-  },
-  "tadpole": {
-    "className": "net.minecraft.world.entity.animal.frog.Tadpole",
-    "emissions": [
-      {
-        "particleId": "happy_villager",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(1.0)",
-          "this.getRandomY() + 0.5",
-          "this.getRandomZ(1.0)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "feed"
-      }
-    ]
-  },
-  "primed_tnt": {
-    "className": "net.minecraft.world.entity.item.PrimedTnt",
+  "mushroom_cow": {
+    "className": "net.minecraft.world.entity.animal.cow.MushroomCow",
     "emissions": [
       {
         "particleId": "smoke",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "this.getX()",
-          "this.getY() + 0.5",
-          "this.getZ()"
+          "this.getX() + Math.random() / 2.0",
+          "this.getY(0.5)",
+          "this.getZ() + Math.random() / 2.0"
         ],
         "velocityExpr": [
           "0.0",
-          "0.0",
+          "Math.random() / 5.0",
           "0.0"
         ],
-        "emissionSource": "tick"
-      }
-    ]
-  },
-  "allay": {
-    "className": "net.minecraft.world.entity.animal.allay.Allay",
-    "emissions": [
-      {
-        "particleId": "heart",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(1.0)",
-          "this.getRandomY() + 0.5",
-          "this.getRandomZ(1.0)"
-        ],
-        "velocityExpr": [
-          "((Math.random() * 2 - 1) * 0.02)",
-          "((Math.random() * 2 - 1) * 0.02)",
-          "((Math.random() * 2 - 1) * 0.02)"
-        ],
-        "emissionSource": "spawnHeartParticle"
-      }
-    ]
-  },
-  "camel": {
-    "className": "net.minecraft.world.entity.animal.camel.Camel",
-    "emissions": [
-      {
-        "particleId": "happy_villager",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(1.0)",
-          "this.getRandomY() + 0.5",
-          "this.getRandomZ(1.0)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "handleEating"
-      }
-    ]
-  },
-  "abstract_boat": {
-    "className": "net.minecraft.world.entity.vehicle.boat.AbstractBoat",
-    "emissions": [
-      {
-        "particleId": "splash",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() + Math.random()",
-          "this.getY() + 0.7",
-          "this.getZ() + Math.random()"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "probabilityExpr": "this.random.nextInt(100) == 0",
-        "emissionSource": "onAboveBubbleColumn"
-      }
-    ]
-  },
-  "abstract_arrow": {
-    "className": "net.minecraft.world.entity.projectile.arrow.AbstractArrow",
-    "emissions": [
-      {
-        "particleId": "crit",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$7.x + $1.x * $8 / 4.0",
-          "$7.y + $1.y * $8 / 4.0",
-          "$7.z + $1.z * $8 / 4.0"
-        ],
-        "velocityExpr": [
-          "-$1.x",
-          "-$1.y + 0.2",
-          "-$1.z"
-        ],
-        "loopCountExpr": "4",
-        "loopIndexVar": "$8",
-        "emissionSource": "tick"
-      },
-      {
-        "particleId": "bubble",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "$0.x - $1.x * 0.25",
-          "$0.y - $1.y * 0.25",
-          "$0.z - $1.z * 0.25"
-        ],
-        "velocityExpr": [
-          "$1.x",
-          "$1.y",
-          "$1.z"
-        ],
-        "countExpr": "4",
-        "emissionSource": "addBubbleParticles"
+        "countExpr": "2",
+        "emissionSource": "mobInteract"
       }
     ]
   },
@@ -15633,25 +15497,24 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "abstract_hurting_projectile": {
-    "className": "net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingProjectile",
+  "allay": {
+    "className": "net.minecraft.world.entity.animal.allay.Allay",
     "emissions": [
       {
-        "particleId": "bubble",
+        "particleId": "heart",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "$1.x - $0.x * 0.25",
-          "$1.y - $0.y * 0.25",
-          "$1.z - $0.z * 0.25"
+          "this.getRandomX(1.0)",
+          "this.getRandomY() + 0.5",
+          "this.getRandomZ(1.0)"
         ],
         "velocityExpr": [
-          "$0.x",
-          "$0.y",
-          "$0.z"
+          "((Math.random() * 2 - 1) * 0.02)",
+          "((Math.random() * 2 - 1) * 0.02)",
+          "((Math.random() * 2 - 1) * 0.02)"
         ],
-        "countExpr": "4",
-        "emissionSource": "applyInertia"
+        "emissionSource": "spawnHeartParticle"
       }
     ]
   },
@@ -15676,24 +15539,166 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "evoker_fangs": {
-    "className": "net.minecraft.world.entity.projectile.EvokerFangs",
+  "ravager": {
+    "className": "net.minecraft.world.entity.monster.Ravager",
+    "emissions": [
+      {
+        "particleId": "poof",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$0.x",
+          "$0.y",
+          "$0.z"
+        ],
+        "velocityExpr": [
+          "((Math.random() * 2 - 1) * 0.2)",
+          "((Math.random() * 2 - 1) * 0.2)",
+          "((Math.random() * 2 - 1) * 0.2)"
+        ],
+        "countExpr": "40",
+        "emissionSource": "addRoarParticleEffects"
+      }
+    ]
+  },
+  "abstract_boat": {
+    "className": "net.minecraft.world.entity.vehicle.boat.AbstractBoat",
+    "emissions": [
+      {
+        "particleId": "splash",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX() + Math.random()",
+          "this.getY() + 0.7",
+          "this.getZ() + Math.random()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "this.random.nextInt(100) == 0",
+        "emissionSource": "onAboveBubbleColumn"
+      }
+    ]
+  },
+  "abstract_arrow": {
+    "className": "net.minecraft.world.entity.projectile.arrow.AbstractArrow",
     "emissions": [
       {
         "particleId": "crit",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "(this.getX() + (Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)",
-          "(this.getY() + 0.05 + Math.random()) + 1.0",
-          "(this.getZ() + (Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)"
+          "$7.x + $1.x * $8 / 4.0",
+          "$7.y + $1.y * $8 / 4.0",
+          "$7.z + $1.z * $8 / 4.0"
         ],
         "velocityExpr": [
-          "((Math.random() * 2.0 - 1.0) * 0.3)",
-          "(0.3 + Math.random() * 0.3)",
-          "((Math.random() * 2.0 - 1.0) * 0.3)"
+          "-$1.x",
+          "-$1.y + 0.2",
+          "-$1.z"
         ],
-        "countExpr": "12",
+        "loopCountExpr": "4",
+        "loopIndexVar": "$8",
+        "emissionSource": "tick"
+      },
+      {
+        "particleId": "bubble",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$0.x - $1.x * 0.25",
+          "$0.y - $1.y * 0.25",
+          "$0.z - $1.z * 0.25"
+        ],
+        "velocityExpr": [
+          "$1.x",
+          "$1.y",
+          "$1.z"
+        ],
+        "countExpr": "4",
+        "emissionSource": "addBubbleParticles"
+      }
+    ]
+  },
+  "blaze": {
+    "className": "net.minecraft.world.entity.monster.Blaze",
+    "emissions": [
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getRandomX(0.5)",
+          "this.getRandomY()",
+          "this.getRandomZ(0.5)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "aiStep"
+      }
+    ]
+  },
+  "ender_dragon": {
+    "className": "net.minecraft.world.entity.boss.enderdragon.EnderDragon",
+    "emissions": [
+      {
+        "particleId": "explosion",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX() + ((Math.random() - 0.5) * 8.0)",
+          "this.getY() + 2.0 + ((Math.random() - 0.5) * 4.0)",
+          "this.getZ() + ((Math.random() - 0.5) * 8.0)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "aiStep"
+      },
+      {
+        "particleId": "explosion_emitter",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX() + ((Math.random() - 0.5) * 8.0)",
+          "this.getY() + 2.0 + ((Math.random() - 0.5) * 4.0)",
+          "this.getZ() + ((Math.random() - 0.5) * 8.0)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "tickDeath"
+      }
+    ]
+  },
+  "firework_rocket_entity": {
+    "className": "net.minecraft.world.entity.projectile.FireworkRocketEntity",
+    "emissions": [
+      {
+        "particleId": "firework",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX()",
+          "this.getY()",
+          "this.getZ()"
+        ],
+        "velocityExpr": [
+          "(Math.random() * 2 - 1) * 0.05",
+          "-this.getDeltaMovement().y * 0.5",
+          "(Math.random() * 2 - 1) * 0.05"
+        ],
         "emissionSource": "tick"
       }
     ]
@@ -15719,6 +15724,51 @@ export const particleData: ParticleData = {
       }
     ]
   },
+  "wither_boss": {
+    "className": "net.minecraft.world.entity.boss.wither.WitherBoss",
+    "emissions": [
+      {
+        "particleId": "smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "(this.getHeadX($19)) + (Math.random() * 2 - 1) * (0.3 * this.getScale())",
+          "(this.getHeadY($19)) + (Math.random() * 2 - 1) * (0.3 * this.getScale())",
+          "(this.getHeadZ($19)) + (Math.random() * 2 - 1) * (0.3 * this.getScale())"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "loopCountExpr": "3",
+        "loopIndexVar": "$19",
+        "emissionSource": "aiStep"
+      }
+    ]
+  },
+  "thrown_enderpearl": {
+    "className": "net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl",
+    "emissions": [
+      {
+        "particleId": "portal",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX()",
+          "this.getY() + Math.random() * 2.0",
+          "this.getZ()"
+        ],
+        "velocityExpr": [
+          "(Math.random() * 2 - 1)",
+          "0.0",
+          "(Math.random() * 2 - 1)"
+        ],
+        "countExpr": "32",
+        "emissionSource": "onHit"
+      }
+    ]
+  },
   "squid": {
     "className": "net.minecraft.world.entity.animal.squid.Squid",
     "emissions": [
@@ -15740,8 +15790,69 @@ export const particleData: ParticleData = {
       }
     ]
   },
-  "llama": {
-    "className": "net.minecraft.world.entity.animal.equine.Llama",
+  "dolphin": {
+    "className": "net.minecraft.world.entity.animal.dolphin.Dolphin",
+    "emissions": [
+      {
+        "particleId": "dolphin",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX() - $0.x * (1.2 - Math.random() * 0.7) + (Mth.cos((this.getYRot() * (Math.PI / 180))) * 0.3)",
+          "this.getY() - $0.y",
+          "this.getZ() - $0.z * (1.2 - Math.random() * 0.7) + (Mth.sin((this.getYRot() * (Math.PI / 180))) * 0.3)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "tick"
+      },
+      {
+        "particleId": "dolphin",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX() - $0.x * (1.2 - Math.random() * 0.7) - (Mth.cos((this.getYRot() * (Math.PI / 180))) * 0.3)",
+          "this.getY() - $0.y",
+          "this.getZ() - $0.z * (1.2 - Math.random() * 0.7) - (Mth.sin((this.getYRot() * (Math.PI / 180))) * 0.3)"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "tick"
+      }
+    ]
+  },
+  "abstract_hurting_projectile": {
+    "className": "net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingProjectile",
+    "emissions": [
+      {
+        "particleId": "bubble",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.x - $0.x * 0.25",
+          "$1.y - $0.y * 0.25",
+          "$1.z - $0.z * 0.25"
+        ],
+        "velocityExpr": [
+          "$0.x",
+          "$0.y",
+          "$0.z"
+        ],
+        "countExpr": "4",
+        "emissionSource": "applyInertia"
+      }
+    ]
+  },
+  "tadpole": {
+    "className": "net.minecraft.world.entity.animal.frog.Tadpole",
     "emissions": [
       {
         "particleId": "happy_villager",
@@ -15757,51 +15868,115 @@ export const particleData: ParticleData = {
           "0.0",
           "0.0"
         ],
-        "emissionSource": "handleEating"
+        "emissionSource": "feed"
       }
     ]
   },
-  "abstract_nautilus": {
-    "className": "net.minecraft.world.entity.animal.nautilus.AbstractNautilus",
+  "ageable_mob": {
+    "className": "net.minecraft.world.entity.AgeableMob",
     "emissions": [
       {
-        "particleId": "bubble",
+        "particleId": "happy_villager",
         "options": null,
         "condition": null,
         "positionExpr": [
-          "this.getX() - $4.x * 1.1",
-          "this.getY() - $4.y + 0.25",
-          "this.getZ() - $4.z * 1.1"
-        ],
-        "velocityExpr": [
-          "((Math.random() - 0.5) * (Math.random() * 0.8 * (1.0 + (this.getDeltaMovement().length()))))",
-          "((Math.random() - 0.5) * (Math.random() * 0.8 * (1.0 + (this.getDeltaMovement().length()))))",
-          "((Math.random() - 0.5) * (Math.random() * 0.8 * (1.0 + (this.getDeltaMovement().length()))))"
-        ],
-        "probabilityExpr": "Math.random() < $1",
-        "emissionSource": "spawnBubbles"
-      }
-    ]
-  },
-  "illusioner": {
-    "className": "net.minecraft.world.entity.monster.illager.Illusioner",
-    "emissions": [
-      {
-        "particleId": "cloud",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(0.5)",
-          "this.getRandomY()",
-          "this.getZ(0.5)"
+          "this.getRandomX(1.0)",
+          "this.getRandomY() + 0.5",
+          "this.getRandomZ(1.0)"
         ],
         "velocityExpr": [
           "0.0",
           "0.0",
           "0.0"
         ],
-        "countExpr": "16",
         "emissionSource": "aiStep"
+      }
+    ]
+  },
+  "endermite": {
+    "className": "net.minecraft.world.entity.monster.Endermite",
+    "emissions": [
+      {
+        "particleId": "portal",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getRandomX(0.5)",
+          "this.getRandomY()",
+          "this.getRandomZ(0.5)"
+        ],
+        "velocityExpr": [
+          "(Math.random() - 0.5) * 2.0",
+          "-Math.random()",
+          "(Math.random() - 0.5) * 2.0"
+        ],
+        "countExpr": "2",
+        "emissionSource": "aiStep"
+      }
+    ]
+  },
+  "throwable_projectile": {
+    "className": "net.minecraft.world.entity.projectile.ThrowableProjectile",
+    "emissions": [
+      {
+        "particleId": "bubble",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "$1.x - $0.x * 0.25",
+          "$1.y - $0.y * 0.25",
+          "$1.z - $0.z * 0.25"
+        ],
+        "velocityExpr": [
+          "$0.x",
+          "$0.y",
+          "$0.z"
+        ],
+        "countExpr": "4",
+        "emissionSource": "applyInertia"
+      }
+    ]
+  },
+  "shulker_bullet": {
+    "className": "net.minecraft.world.entity.projectile.ShulkerBullet",
+    "emissions": [
+      {
+        "particleId": "end_rod",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX() - $3.x",
+          "this.getY() - $3.y + 0.15",
+          "this.getZ() - $3.z"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "emissionSource": "tick"
+      }
+    ]
+  },
+  "minecart_furnace": {
+    "className": "net.minecraft.world.entity.vehicle.minecart.MinecartFurnace",
+    "emissions": [
+      {
+        "particleId": "large_smoke",
+        "options": null,
+        "condition": null,
+        "positionExpr": [
+          "this.getX()",
+          "this.getY() + 0.8",
+          "this.getZ()"
+        ],
+        "velocityExpr": [
+          "0.0",
+          "0.0",
+          "0.0"
+        ],
+        "probabilityExpr": "this.random.nextInt(4) == 0",
+        "emissionSource": "tick"
       }
     ]
   },
@@ -15861,181 +16036,6 @@ export const particleData: ParticleData = {
         "emissionSource": "makeDrownParticles"
       }
     ]
-  },
-  "glow_squid": {
-    "className": "net.minecraft.world.entity.animal.squid.GlowSquid",
-    "emissions": [
-      {
-        "particleId": "glow",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(0.6)",
-          "this.getRandomY()",
-          "this.getRandomZ(0.6)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "aiStep"
-      }
-    ]
-  },
-  "endermite": {
-    "className": "net.minecraft.world.entity.monster.Endermite",
-    "emissions": [
-      {
-        "particleId": "portal",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(0.5)",
-          "this.getRandomY()",
-          "this.getRandomZ(0.5)"
-        ],
-        "velocityExpr": [
-          "(Math.random() - 0.5) * 2.0",
-          "-Math.random()",
-          "(Math.random() - 0.5) * 2.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "aiStep"
-      }
-    ]
-  },
-  "blaze": {
-    "className": "net.minecraft.world.entity.monster.Blaze",
-    "emissions": [
-      {
-        "particleId": "large_smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(0.5)",
-          "this.getRandomY()",
-          "this.getRandomZ(0.5)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "countExpr": "2",
-        "emissionSource": "aiStep"
-      }
-    ]
-  },
-  "llama_spit": {
-    "className": "net.minecraft.world.entity.projectile.LlamaSpit",
-    "emissions": [
-      {
-        "particleId": "spit",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX()",
-          "this.getY()",
-          "this.getZ()"
-        ],
-        "velocityExpr": [
-          "$1.x * (0.4 + 0.1 * $2)",
-          "$1.y",
-          "$1.z * (0.4 + 0.1 * $2)"
-        ],
-        "loopCountExpr": "7",
-        "loopIndexVar": "$2",
-        "emissionSource": "recreateFromPacket"
-      }
-    ]
-  },
-  "wolf": {
-    "className": "net.minecraft.world.entity.animal.wolf.Wolf",
-    "emissions": [
-      {
-        "particleId": "splash",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() + ((Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)",
-          "((this.getY()) + 0.8)",
-          "this.getZ() + ((Math.random() * 2.0 - 1.0) * this.getBbWidth() * 0.5)"
-        ],
-        "velocityExpr": [
-          "$2.x",
-          "$2.y",
-          "$2.z"
-        ],
-        "countExpr": "((Mth.sin(((this.shakeAnim - 0.4) * Math.PI)) * 7.0))",
-        "emissionSource": "tick"
-      }
-    ]
-  },
-  "ageable_mob": {
-    "className": "net.minecraft.world.entity.AgeableMob",
-    "emissions": [
-      {
-        "particleId": "happy_villager",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getRandomX(1.0)",
-          "this.getRandomY() + 0.5",
-          "this.getRandomZ(1.0)"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "aiStep"
-      }
-    ]
-  },
-  "wither_boss": {
-    "className": "net.minecraft.world.entity.boss.wither.WitherBoss",
-    "emissions": [
-      {
-        "particleId": "smoke",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "(this.getHeadX($19)) + (Math.random() * 2 - 1) * (0.3 * this.getScale())",
-          "(this.getHeadY($19)) + (Math.random() * 2 - 1) * (0.3 * this.getScale())",
-          "(this.getHeadZ($19)) + (Math.random() * 2 - 1) * (0.3 * this.getScale())"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "loopCountExpr": "3",
-        "loopIndexVar": "$19",
-        "emissionSource": "aiStep"
-      }
-    ]
-  },
-  "shulker_bullet": {
-    "className": "net.minecraft.world.entity.projectile.ShulkerBullet",
-    "emissions": [
-      {
-        "particleId": "end_rod",
-        "options": null,
-        "condition": null,
-        "positionExpr": [
-          "this.getX() - $3.x",
-          "this.getY() - $3.y + 0.15",
-          "this.getZ() - $3.z"
-        ],
-        "velocityExpr": [
-          "0.0",
-          "0.0",
-          "0.0"
-        ],
-        "emissionSource": "tick"
-      }
-    ]
   }
 },
   particles: {
@@ -16051,30 +16051,7 @@ export const particleData: ParticleData = {
       "generic_7"
     ]
   },
-  "small_gust": {
-    "textures": [
-      "small_gust_0",
-      "small_gust_1",
-      "small_gust_2",
-      "small_gust_3",
-      "small_gust_4",
-      "small_gust_5",
-      "small_gust_6"
-    ]
-  },
-  "instant_effect": {
-    "textures": [
-      "spell_7",
-      "spell_6",
-      "spell_5",
-      "spell_4",
-      "spell_3",
-      "spell_2",
-      "spell_1",
-      "spell_0"
-    ]
-  },
-  "smoke": {
+  "poof": {
     "textures": [
       "generic_7",
       "generic_6",
@@ -16086,118 +16063,66 @@ export const particleData: ParticleData = {
       "generic_0"
     ]
   },
-  "landing_lava": {
-    "textures": [
-      "drip_land"
-    ]
-  },
-  "entity_effect": {
-    "textures": [
-      "effect_7",
-      "effect_6",
-      "effect_5",
-      "effect_4",
-      "effect_3",
-      "effect_2",
-      "effect_1",
-      "effect_0"
-    ]
-  },
-  "underwater": {
-    "textures": [
-      "generic_0"
-    ]
-  },
-  "tinted_leaves": {
-    "textures": [
-      "leaf_0",
-      "leaf_1",
-      "leaf_2",
-      "leaf_3",
-      "leaf_4",
-      "leaf_5",
-      "leaf_6",
-      "leaf_7",
-      "leaf_8",
-      "leaf_9",
-      "leaf_10",
-      "leaf_11"
-    ]
-  },
-  "end_rod": {
-    "textures": [
-      "glitter_7",
-      "glitter_6",
-      "glitter_5",
-      "glitter_4",
-      "glitter_3",
-      "glitter_2",
-      "glitter_1",
-      "glitter_0"
-    ]
-  },
-  "falling_water": {
+  "falling_spore_blossom": {
     "textures": [
       "drip_fall"
     ]
   },
-  "sweep_attack": {
-    "textures": [
-      "sweep_0",
-      "sweep_1",
-      "sweep_2",
-      "sweep_3",
-      "sweep_4",
-      "sweep_5",
-      "sweep_6",
-      "sweep_7"
-    ]
-  },
-  "warped_spore": {
+  "ash": {
     "textures": [
       "generic_0"
     ]
   },
-  "dripping_obsidian_tear": {
+  "flame": {
     "textures": [
-      "drip_hang"
+      "flame"
     ]
   },
-  "firework": {
+  "white_smoke": {
     "textures": [
-      "spark_7",
-      "spark_6",
-      "spark_5",
-      "spark_4",
-      "spark_3",
-      "spark_2",
-      "spark_1",
-      "spark_0"
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
     ]
   },
-  "flash": {
+  "nautilus": {
     "textures": [
-      "flash"
+      "nautilus"
     ]
   },
-  "sonic_boom": {
+  "dolphin": {
     "textures": [
-      "sonic_boom_0",
-      "sonic_boom_1",
-      "sonic_boom_2",
-      "sonic_boom_3",
-      "sonic_boom_4",
-      "sonic_boom_5",
-      "sonic_boom_6",
-      "sonic_boom_7",
-      "sonic_boom_8",
-      "sonic_boom_9",
-      "sonic_boom_10",
-      "sonic_boom_11",
-      "sonic_boom_12",
-      "sonic_boom_13",
-      "sonic_boom_14",
-      "sonic_boom_15"
+      "generic_0"
+    ]
+  },
+  "fishing": {
+    "textures": [
+      "splash_0",
+      "splash_1",
+      "splash_2",
+      "splash_3"
+    ]
+  },
+  "soul_fire_flame": {
+    "textures": [
+      "soul_fire_flame"
+    ]
+  },
+  "sneeze": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
     ]
   },
   "glow_squid_ink": {
@@ -16212,51 +16137,96 @@ export const particleData: ParticleData = {
       "generic_0"
     ]
   },
-  "effect": {
+  "sculk_charge": {
     "textures": [
-      "effect_7",
-      "effect_6",
-      "effect_5",
-      "effect_4",
-      "effect_3",
-      "effect_2",
-      "effect_1",
-      "effect_0"
+      "sculk_charge_0",
+      "sculk_charge_1",
+      "sculk_charge_2",
+      "sculk_charge_3",
+      "sculk_charge_4",
+      "sculk_charge_5",
+      "sculk_charge_6"
     ]
   },
-  "trial_spawner_detection": {
-    "textures": [
-      "trial_spawner_detection_0",
-      "trial_spawner_detection_1",
-      "trial_spawner_detection_2",
-      "trial_spawner_detection_3",
-      "trial_spawner_detection_4"
-    ]
-  },
-  "note": {
-    "textures": [
-      "note"
-    ]
-  },
-  "gust": {
-    "textures": [
-      "gust_0",
-      "gust_1",
-      "gust_2",
-      "gust_3",
-      "gust_4",
-      "gust_5",
-      "gust_6",
-      "gust_7",
-      "gust_8",
-      "gust_9",
-      "gust_10",
-      "gust_11"
-    ]
-  },
-  "composter": {
+  "egg_crack": {
     "textures": [
       "glint"
+    ]
+  },
+  "trial_spawner_detection_ominous": {
+    "textures": [
+      "trial_spawner_detection_ominous_0",
+      "trial_spawner_detection_ominous_1",
+      "trial_spawner_detection_ominous_2",
+      "trial_spawner_detection_ominous_3",
+      "trial_spawner_detection_ominous_4"
+    ]
+  },
+  "dripping_water": {
+    "textures": [
+      "drip_hang"
+    ]
+  },
+  "crit": {
+    "textures": [
+      "critical_hit"
+    ]
+  },
+  "dust": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "squid_ink": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "dripping_dripstone_lava": {
+    "textures": [
+      "drip_hang"
+    ]
+  },
+  "small_flame": {
+    "textures": [
+      "flame"
+    ]
+  },
+  "electric_spark": {
+    "textures": [
+      "glow"
+    ]
+  },
+  "bubble": {
+    "textures": [
+      "bubble"
+    ]
+  },
+  "rain": {
+    "textures": [
+      "splash_0",
+      "splash_1",
+      "splash_2",
+      "splash_3"
+    ]
+  },
+  "warped_spore": {
+    "textures": [
+      "generic_0"
     ]
   },
   "enchant": {
@@ -16289,45 +16259,16 @@ export const particleData: ParticleData = {
       "sga_z"
     ]
   },
-  "cloud": {
+  "end_rod": {
     "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
-    ]
-  },
-  "glow": {
-    "textures": [
-      "glow"
-    ]
-  },
-  "witch": {
-    "textures": [
-      "spell_7",
-      "spell_6",
-      "spell_5",
-      "spell_4",
-      "spell_3",
-      "spell_2",
-      "spell_1",
-      "spell_0"
-    ]
-  },
-  "dust": {
-    "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
+      "glitter_7",
+      "glitter_6",
+      "glitter_5",
+      "glitter_4",
+      "glitter_3",
+      "glitter_2",
+      "glitter_1",
+      "glitter_0"
     ]
   },
   "dripping_dripstone_water": {
@@ -16335,191 +16276,39 @@ export const particleData: ParticleData = {
       "drip_hang"
     ]
   },
-  "spit": {
+  "white_ash": {
     "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
       "generic_0"
     ]
   },
-  "sneeze": {
+  "raid_omen": {
     "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
+      "raid_omen"
     ]
   },
-  "rain": {
+  "sonic_boom": {
     "textures": [
-      "splash_0",
-      "splash_1",
-      "splash_2",
-      "splash_3"
+      "sonic_boom_0",
+      "sonic_boom_1",
+      "sonic_boom_2",
+      "sonic_boom_3",
+      "sonic_boom_4",
+      "sonic_boom_5",
+      "sonic_boom_6",
+      "sonic_boom_7",
+      "sonic_boom_8",
+      "sonic_boom_9",
+      "sonic_boom_10",
+      "sonic_boom_11",
+      "sonic_boom_12",
+      "sonic_boom_13",
+      "sonic_boom_14",
+      "sonic_boom_15"
     ]
   },
-  "falling_obsidian_tear": {
-    "textures": [
-      "drip_fall"
-    ]
-  },
-  "bubble": {
-    "textures": [
-      "bubble"
-    ]
-  },
-  "ambient_entity_effect": {
-    "textures": [
-      "effect_7",
-      "effect_6",
-      "effect_5",
-      "effect_4",
-      "effect_3",
-      "effect_2",
-      "effect_1",
-      "effect_0"
-    ]
-  },
-  "angry_villager": {
-    "textures": [
-      "angry"
-    ]
-  },
-  "soul": {
-    "textures": [
-      "soul_0",
-      "soul_1",
-      "soul_2",
-      "soul_3",
-      "soul_4",
-      "soul_5",
-      "soul_6",
-      "soul_7",
-      "soul_8",
-      "soul_9",
-      "soul_10"
-    ]
-  },
-  "cherry_leaves": {
-    "textures": [
-      "cherry_0",
-      "cherry_1",
-      "cherry_2",
-      "cherry_3",
-      "cherry_4",
-      "cherry_5",
-      "cherry_6",
-      "cherry_7",
-      "cherry_8",
-      "cherry_9",
-      "cherry_10",
-      "cherry_11"
-    ]
-  },
-  "ominous_spawning": {
-    "textures": [
-      "ominous_spawning"
-    ]
-  },
-  "wax_off": {
-    "textures": [
-      "glow"
-    ]
-  },
-  "dripping_honey": {
-    "textures": [
-      "drip_hang"
-    ]
-  },
-  "trial_spawner_detection_ominous": {
-    "textures": [
-      "trial_spawner_detection_ominous_0",
-      "trial_spawner_detection_ominous_1",
-      "trial_spawner_detection_ominous_2",
-      "trial_spawner_detection_ominous_3",
-      "trial_spawner_detection_ominous_4"
-    ]
-  },
-  "splash": {
-    "textures": [
-      "splash_0",
-      "splash_1",
-      "splash_2",
-      "splash_3"
-    ]
-  },
-  "happy_villager": {
+  "composter": {
     "textures": [
       "glint"
-    ]
-  },
-  "lava": {
-    "textures": [
-      "lava"
-    ]
-  },
-  "large_smoke": {
-    "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
-    ]
-  },
-  "egg_crack": {
-    "textures": [
-      "glint"
-    ]
-  },
-  "falling_honey": {
-    "textures": [
-      "drip_fall"
-    ]
-  },
-  "bubble_pop": {
-    "textures": [
-      "bubble_pop_0",
-      "bubble_pop_1",
-      "bubble_pop_2",
-      "bubble_pop_3",
-      "bubble_pop_4"
-    ]
-  },
-  "dragon_breath": {
-    "textures": [
-      "generic_5",
-      "generic_6",
-      "generic_7"
-    ]
-  },
-  "poof": {
-    "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
-    ]
-  },
-  "mycelium": {
-    "textures": [
-      "generic_0"
     ]
   },
   "explosion": {
@@ -16542,14 +16331,12 @@ export const particleData: ParticleData = {
       "explosion_15"
     ]
   },
-  "vibration": {
+  "sculk_charge_pop": {
     "textures": [
-      "vibration"
-    ]
-  },
-  "white_ash": {
-    "textures": [
-      "generic_0"
+      "sculk_charge_pop_0",
+      "sculk_charge_pop_1",
+      "sculk_charge_pop_2",
+      "sculk_charge_pop_3"
     ]
   },
   "snowflake": {
@@ -16562,6 +16349,141 @@ export const particleData: ParticleData = {
       "generic_2",
       "generic_1",
       "generic_0"
+    ]
+  },
+  "dust_color_transition": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "bubble_pop": {
+    "textures": [
+      "bubble_pop_0",
+      "bubble_pop_1",
+      "bubble_pop_2",
+      "bubble_pop_3",
+      "bubble_pop_4"
+    ]
+  },
+  "large_smoke": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "totem_of_undying": {
+    "textures": [
+      "glitter_7",
+      "glitter_6",
+      "glitter_5",
+      "glitter_4",
+      "glitter_3",
+      "glitter_2",
+      "glitter_1",
+      "glitter_0"
+    ]
+  },
+  "ambient_entity_effect": {
+    "textures": [
+      "effect_7",
+      "effect_6",
+      "effect_5",
+      "effect_4",
+      "effect_3",
+      "effect_2",
+      "effect_1",
+      "effect_0"
+    ]
+  },
+  "angry_villager": {
+    "textures": [
+      "angry"
+    ]
+  },
+  "shriek": {
+    "textures": [
+      "shriek"
+    ]
+  },
+  "scrape": {
+    "textures": [
+      "glow"
+    ]
+  },
+  "underwater": {
+    "textures": [
+      "generic_0"
+    ]
+  },
+  "effect": {
+    "textures": [
+      "effect_7",
+      "effect_6",
+      "effect_5",
+      "effect_4",
+      "effect_3",
+      "effect_2",
+      "effect_1",
+      "effect_0"
+    ]
+  },
+  "dust_plume": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "heart": {
+    "textures": [
+      "heart"
+    ]
+  },
+  "falling_dust": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "falling_lava": {
+    "textures": [
+      "drip_fall"
+    ]
+  },
+  "entity_effect": {
+    "textures": [
+      "effect_7",
+      "effect_6",
+      "effect_5",
+      "effect_4",
+      "effect_3",
+      "effect_2",
+      "effect_1",
+      "effect_0"
     ]
   },
   "campfire_cosy_smoke": {
@@ -16580,37 +16502,12 @@ export const particleData: ParticleData = {
       "big_smoke_11"
     ]
   },
-  "bubble_column_up": {
-    "textures": [
-      "bubble"
-    ]
-  },
-  "sculk_soul": {
-    "textures": [
-      "sculk_soul_0",
-      "sculk_soul_1",
-      "sculk_soul_2",
-      "sculk_soul_3",
-      "sculk_soul_4",
-      "sculk_soul_5",
-      "sculk_soul_6",
-      "sculk_soul_7",
-      "sculk_soul_8",
-      "sculk_soul_9",
-      "sculk_soul_10"
-    ]
-  },
-  "wax_on": {
-    "textures": [
-      "glow"
-    ]
-  },
-  "landing_obsidian_tear": {
+  "landing_honey": {
     "textures": [
       "drip_land"
     ]
   },
-  "falling_dust": {
+  "smoke": {
     "textures": [
       "generic_7",
       "generic_6",
@@ -16622,52 +16519,179 @@ export const particleData: ParticleData = {
       "generic_0"
     ]
   },
-  "landing_honey": {
+  "small_gust": {
     "textures": [
-      "drip_land"
+      "small_gust_0",
+      "small_gust_1",
+      "small_gust_2",
+      "small_gust_3",
+      "small_gust_4",
+      "small_gust_5",
+      "small_gust_6"
     ]
   },
-  "soul_fire_flame": {
+  "infested": {
     "textures": [
-      "soul_fire_flame"
+      "infested"
     ]
   },
-  "falling_nectar": {
+  "falling_water": {
     "textures": [
       "drip_fall"
     ]
   },
-  "falling_lava": {
-    "textures": [
-      "drip_fall"
-    ]
-  },
-  "current_down": {
-    "textures": [
-      "bubble"
-    ]
-  },
-  "sculk_charge_pop": {
-    "textures": [
-      "sculk_charge_pop_0",
-      "sculk_charge_pop_1",
-      "sculk_charge_pop_2",
-      "sculk_charge_pop_3"
-    ]
-  },
-  "ash": {
+  "crimson_spore": {
     "textures": [
       "generic_0"
     ]
   },
-  "spore_blossom_air": {
+  "dripping_lava": {
+    "textures": [
+      "drip_hang"
+    ]
+  },
+  "mycelium": {
+    "textures": [
+      "generic_0"
+    ]
+  },
+  "spit": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "falling_honey": {
     "textures": [
       "drip_fall"
     ]
   },
-  "shriek": {
+  "dripping_honey": {
     "textures": [
-      "shriek"
+      "drip_hang"
+    ]
+  },
+  "falling_dripstone_water": {
+    "textures": [
+      "drip_fall"
+    ]
+  },
+  "wax_on": {
+    "textures": [
+      "glow"
+    ]
+  },
+  "gust": {
+    "textures": [
+      "gust_0",
+      "gust_1",
+      "gust_2",
+      "gust_3",
+      "gust_4",
+      "gust_5",
+      "gust_6",
+      "gust_7",
+      "gust_8",
+      "gust_9",
+      "gust_10",
+      "gust_11"
+    ]
+  },
+  "landing_obsidian_tear": {
+    "textures": [
+      "drip_land"
+    ]
+  },
+  "portal": {
+    "textures": [
+      "generic_0",
+      "generic_1",
+      "generic_2",
+      "generic_3",
+      "generic_4",
+      "generic_5",
+      "generic_6",
+      "generic_7"
+    ]
+  },
+  "note": {
+    "textures": [
+      "note"
+    ]
+  },
+  "soul": {
+    "textures": [
+      "soul_0",
+      "soul_1",
+      "soul_2",
+      "soul_3",
+      "soul_4",
+      "soul_5",
+      "soul_6",
+      "soul_7",
+      "soul_8",
+      "soul_9",
+      "soul_10"
+    ]
+  },
+  "tinted_leaves": {
+    "textures": [
+      "leaf_0",
+      "leaf_1",
+      "leaf_2",
+      "leaf_3",
+      "leaf_4",
+      "leaf_5",
+      "leaf_6",
+      "leaf_7",
+      "leaf_8",
+      "leaf_9",
+      "leaf_10",
+      "leaf_11"
+    ]
+  },
+  "splash": {
+    "textures": [
+      "splash_0",
+      "splash_1",
+      "splash_2",
+      "splash_3"
+    ]
+  },
+  "vault_connection": {
+    "textures": [
+      "vault_connection"
+    ]
+  },
+  "falling_dripstone_lava": {
+    "textures": [
+      "drip_fall"
+    ]
+  },
+  "ominous_spawning": {
+    "textures": [
+      "ominous_spawning"
+    ]
+  },
+  "lava": {
+    "textures": [
+      "lava"
+    ]
+  },
+  "dripping_obsidian_tear": {
+    "textures": [
+      "drip_hang"
+    ]
+  },
+  "landing_lava": {
+    "textures": [
+      "drip_land"
     ]
   },
   "pale_oak_leaves": {
@@ -16686,107 +16710,21 @@ export const particleData: ParticleData = {
       "pale_oak_11"
     ]
   },
-  "dust_color_transition": {
+  "wax_off": {
     "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
+      "glow"
     ]
   },
-  "white_smoke": {
+  "firework": {
     "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
-    ]
-  },
-  "portal": {
-    "textures": [
-      "generic_0",
-      "generic_1",
-      "generic_2",
-      "generic_3",
-      "generic_4",
-      "generic_5",
-      "generic_6",
-      "generic_7"
-    ]
-  },
-  "raid_omen": {
-    "textures": [
-      "raid_omen"
-    ]
-  },
-  "firefly": {
-    "textures": [
-      "firefly"
-    ]
-  },
-  "dolphin": {
-    "textures": [
-      "generic_0"
-    ]
-  },
-  "dripping_lava": {
-    "textures": [
-      "drip_hang"
-    ]
-  },
-  "infested": {
-    "textures": [
-      "infested"
-    ]
-  },
-  "dripping_dripstone_lava": {
-    "textures": [
-      "drip_hang"
-    ]
-  },
-  "crit": {
-    "textures": [
-      "critical_hit"
-    ]
-  },
-  "squid_ink": {
-    "textures": [
-      "generic_7",
-      "generic_6",
-      "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
-    ]
-  },
-  "heart": {
-    "textures": [
-      "heart"
-    ]
-  },
-  "crimson_spore": {
-    "textures": [
-      "generic_0"
-    ]
-  },
-  "damage_indicator": {
-    "textures": [
-      "damage"
-    ]
-  },
-  "nautilus": {
-    "textures": [
-      "nautilus"
+      "spark_7",
+      "spark_6",
+      "spark_5",
+      "spark_4",
+      "spark_3",
+      "spark_2",
+      "spark_1",
+      "spark_0"
     ]
   },
   "enchanted_hit": {
@@ -16794,52 +16732,87 @@ export const particleData: ParticleData = {
       "enchanted_hit"
     ]
   },
-  "falling_spore_blossom": {
+  "cloud": {
+    "textures": [
+      "generic_7",
+      "generic_6",
+      "generic_5",
+      "generic_4",
+      "generic_3",
+      "generic_2",
+      "generic_1",
+      "generic_0"
+    ]
+  },
+  "current_down": {
+    "textures": [
+      "bubble"
+    ]
+  },
+  "witch": {
+    "textures": [
+      "spell_7",
+      "spell_6",
+      "spell_5",
+      "spell_4",
+      "spell_3",
+      "spell_2",
+      "spell_1",
+      "spell_0"
+    ]
+  },
+  "damage_indicator": {
+    "textures": [
+      "damage"
+    ]
+  },
+  "instant_effect": {
+    "textures": [
+      "spell_7",
+      "spell_6",
+      "spell_5",
+      "spell_4",
+      "spell_3",
+      "spell_2",
+      "spell_1",
+      "spell_0"
+    ]
+  },
+  "spore_blossom_air": {
     "textures": [
       "drip_fall"
     ]
   },
-  "flame": {
+  "happy_villager": {
     "textures": [
-      "flame"
+      "glint"
     ]
   },
-  "falling_dripstone_lava": {
+  "sweep_attack": {
+    "textures": [
+      "sweep_0",
+      "sweep_1",
+      "sweep_2",
+      "sweep_3",
+      "sweep_4",
+      "sweep_5",
+      "sweep_6",
+      "sweep_7"
+    ]
+  },
+  "falling_obsidian_tear": {
     "textures": [
       "drip_fall"
     ]
   },
-  "sculk_charge": {
+  "falling_nectar": {
     "textures": [
-      "sculk_charge_0",
-      "sculk_charge_1",
-      "sculk_charge_2",
-      "sculk_charge_3",
-      "sculk_charge_4",
-      "sculk_charge_5",
-      "sculk_charge_6"
+      "drip_fall"
     ]
   },
-  "small_flame": {
+  "bubble_column_up": {
     "textures": [
-      "flame"
-    ]
-  },
-  "totem_of_undying": {
-    "textures": [
-      "glitter_7",
-      "glitter_6",
-      "glitter_5",
-      "glitter_4",
-      "glitter_3",
-      "glitter_2",
-      "glitter_1",
-      "glitter_0"
-    ]
-  },
-  "vault_connection": {
-    "textures": [
-      "vault_connection"
+      "bubble"
     ]
   },
   "campfire_signal_smoke": {
@@ -16858,49 +16831,11 @@ export const particleData: ParticleData = {
       "big_smoke_11"
     ]
   },
-  "falling_dripstone_water": {
+  "dragon_breath": {
     "textures": [
-      "drip_fall"
-    ]
-  },
-  "copper_fire_flame": {
-    "textures": [
-      "copper_fire_flame"
-    ]
-  },
-  "scrape": {
-    "textures": [
-      "glow"
-    ]
-  },
-  "trial_omen": {
-    "textures": [
-      "trial_omen"
-    ]
-  },
-  "dust_plume": {
-    "textures": [
-      "generic_7",
-      "generic_6",
       "generic_5",
-      "generic_4",
-      "generic_3",
-      "generic_2",
-      "generic_1",
-      "generic_0"
-    ]
-  },
-  "dripping_water": {
-    "textures": [
-      "drip_hang"
-    ]
-  },
-  "fishing": {
-    "textures": [
-      "splash_0",
-      "splash_1",
-      "splash_2",
-      "splash_3"
+      "generic_6",
+      "generic_7"
     ]
   },
   "trail": {
@@ -16908,9 +16843,74 @@ export const particleData: ParticleData = {
       "generic_0"
     ]
   },
-  "electric_spark": {
+  "firefly": {
+    "textures": [
+      "firefly"
+    ]
+  },
+  "trial_omen": {
+    "textures": [
+      "trial_omen"
+    ]
+  },
+  "cherry_leaves": {
+    "textures": [
+      "cherry_0",
+      "cherry_1",
+      "cherry_2",
+      "cherry_3",
+      "cherry_4",
+      "cherry_5",
+      "cherry_6",
+      "cherry_7",
+      "cherry_8",
+      "cherry_9",
+      "cherry_10",
+      "cherry_11"
+    ]
+  },
+  "trial_spawner_detection": {
+    "textures": [
+      "trial_spawner_detection_0",
+      "trial_spawner_detection_1",
+      "trial_spawner_detection_2",
+      "trial_spawner_detection_3",
+      "trial_spawner_detection_4"
+    ]
+  },
+  "flash": {
+    "textures": [
+      "flash"
+    ]
+  },
+  "sculk_soul": {
+    "textures": [
+      "sculk_soul_0",
+      "sculk_soul_1",
+      "sculk_soul_2",
+      "sculk_soul_3",
+      "sculk_soul_4",
+      "sculk_soul_5",
+      "sculk_soul_6",
+      "sculk_soul_7",
+      "sculk_soul_8",
+      "sculk_soul_9",
+      "sculk_soul_10"
+    ]
+  },
+  "copper_fire_flame": {
+    "textures": [
+      "copper_fire_flame"
+    ]
+  },
+  "glow": {
     "textures": [
       "glow"
+    ]
+  },
+  "vibration": {
+    "textures": [
+      "vibration"
     ]
   }
 },

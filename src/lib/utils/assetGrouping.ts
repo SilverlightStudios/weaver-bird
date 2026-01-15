@@ -84,6 +84,22 @@ function buildItemToBlockGroupKeyMap(assetIds: string[]): Map<string, string> {
     return map;
 }
 
+function buildItemToEntityGroupKeyMap(assetIds: string[]): Map<string, string> {
+    const map = new Map<string, string>();
+    const entityPaths = new Set<string>();
+
+    for (const assetId of assetIds) {
+        const path = stripNamespace(assetId).replace(/\.png$/i, "");
+        if (path.startsWith("entity/")) entityPaths.add(path);
+    }
+
+    if (entityPaths.has("entity/minecart")) {
+        map.set("item/minecart", "entity/minecart");
+    }
+
+    return map;
+}
+
 function isEntityVariantLeaf(dir: string, leaf: string): boolean {
     return (
         leaf === dir ||
@@ -209,6 +225,7 @@ export function groupAssetsForCards(assetIds: string[]): AssetGroup[] {
     const groups = new Map<string, string[]>();
 
     const itemToBlockGroupKey = buildItemToBlockGroupKeyMap(assetIds);
+    const itemToEntityGroupKey = buildItemToEntityGroupKeyMap(assetIds);
 
     const entityDirToLeaves = new Map<string, string[]>();
     for (const assetId of assetIds) {
@@ -232,8 +249,10 @@ export function groupAssetsForCards(assetIds: string[]): AssetGroup[] {
         const entity = getEntityDirAndLeaf(path);
         const entityAliasGroupKey = getEntityAliasGroupKey(path);
         const itemBlockGroupKey = itemToBlockGroupKey.get(path);
+        const itemEntityGroupKey = itemToEntityGroupKey.get(path);
 
         const groupKey =
+            itemEntityGroupKey ??
             itemBlockGroupKey ??
             entityAliasGroupKey ??
             ((entity && entityVariantDirs.has(entity.dir))

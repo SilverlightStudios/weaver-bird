@@ -497,6 +497,8 @@ async function createFaceMaterials(
       new THREE.MeshStandardMaterial({
         transparent: true,
         opacity: 0, // Invisible for undefined faces
+        depthWrite: false,
+        colorWrite: false,
         roughness: 0.8,
         metalness: 0.2,
         side: THREE.FrontSide, // Avoid double-rendering on crossed planes
@@ -713,6 +715,8 @@ async function createFaceMaterials(
         materials[faceIndex] = new THREE.MeshStandardMaterial({
           transparent: true,
           opacity: 0,
+          depthWrite: false,
+          colorWrite: false,
           roughness: 0.8,
           metalness: 0.2,
           side: THREE.FrontSide,
@@ -727,6 +731,8 @@ async function createFaceMaterials(
       materials[faceIndex] = new THREE.MeshStandardMaterial({
         transparent: true,
         opacity: 0,
+        depthWrite: false,
+        colorWrite: false,
         roughness: 0.8,
         metalness: 0.2,
         side: THREE.FrontSide,

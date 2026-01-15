@@ -1525,6 +1525,20 @@ export function getBlockItemPair(
   if (assetPath.startsWith("item/")) {
     const baseName = assetPath.slice("item/".length);
 
+    // Minecart items render as entity previews (3D) even without a block counterpart.
+    if (baseName === "minecart" || baseName.endsWith("_minecart")) {
+      const entityId =
+        findByPath(`entity/${baseName}`) ??
+        findByPath("entity/minecart") ??
+        normalizeAssetId(`${namespace}:entity/minecart`);
+      return {
+        blockId: entityId,
+        itemId:
+          findByPath(`item/${baseName}`) ??
+          normalizeAssetId(`${namespace}:item/${baseName}`),
+      };
+    }
+
     // Special case: redstone item -> redstone_wire block
     // Similar to how campfire item -> campfire block, sniffer_egg item -> sniffer_egg block
     if (baseName === "redstone") {

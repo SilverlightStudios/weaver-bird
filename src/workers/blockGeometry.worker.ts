@@ -135,6 +135,41 @@ function normalizeUV(
   };
 }
 
+function generateAutoUV(
+  faceName: string,
+  from: [number, number, number],
+  to: [number, number, number],
+): [number, number, number, number] {
+  const [x1, y1, z1] = from;
+  const [x2, y2, z2] = to;
+
+  switch (faceName) {
+    case "up":
+      return [x1, z1, x2, z2];
+    case "down":
+      return [x1, 16 - z2, x2, 16 - z1];
+    case "north":
+      return [16 - x2, 16 - y2, 16 - x1, 16 - y1];
+    case "south":
+      return [x1, 16 - y2, x2, 16 - y1];
+    case "east":
+      return [16 - z2, 16 - y2, 16 - z1, 16 - y1];
+    case "west":
+      return [z1, 16 - y2, z2, 16 - y1];
+    default:
+      return [0, 0, 16, 16];
+  }
+}
+
+function resolveFaceUV(
+  faceName: string,
+  face: { uv?: [number, number, number, number] },
+  from: [number, number, number],
+  to: [number, number, number],
+): [number, number, number, number] {
+  return face.uv ?? generateAutoUV(faceName, from, to);
+}
+
 /**
  * Calculates face positions for true 3D isometric rendering
  */
@@ -324,7 +359,10 @@ function processSimpleCube(
         z: topOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
-        uv: normalizeUV(face.uv, frameCount),
+        uv: normalizeUV(
+          resolveFaceUV("up", face, element.from, element.to),
+          frameCount,
+        ),
         zIndex: 180, // Center Y (8) * 10 + 100
         brightness: 1.0,
         tintType,
@@ -358,7 +396,10 @@ function processSimpleCube(
         z: bottomOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
-        uv: normalizeUV(face.uv, animationInfo?.[textureUrl]?.frameCount ?? 1),
+        uv: normalizeUV(
+          resolveFaceUV("down", face, element.from, element.to),
+          animationInfo?.[textureUrl]?.frameCount ?? 1,
+        ),
         zIndex: -20, // Bottom
         brightness: 0.5,
         tintType,
@@ -392,7 +433,10 @@ function processSimpleCube(
         z: southOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
-        uv: normalizeUV(face.uv, animationInfo?.[textureUrl]?.frameCount ?? 1),
+        uv: normalizeUV(
+          resolveFaceUV("south", face, element.from, element.to),
+          animationInfo?.[textureUrl]?.frameCount ?? 1,
+        ),
         zIndex: 80, // Center Y (8) * 10
         brightness: 0.8,
         tintType,
@@ -426,7 +470,10 @@ function processSimpleCube(
         z: northOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
-        uv: normalizeUV(face.uv, animationInfo?.[textureUrl]?.frameCount ?? 1),
+        uv: normalizeUV(
+          resolveFaceUV("north", face, element.from, element.to),
+          animationInfo?.[textureUrl]?.frameCount ?? 1,
+        ),
         zIndex: 70,
         brightness: 0.8,
         tintType,
@@ -460,7 +507,10 @@ function processSimpleCube(
         z: eastOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
-        uv: normalizeUV(face.uv, animationInfo?.[textureUrl]?.frameCount ?? 1),
+        uv: normalizeUV(
+          resolveFaceUV("east", face, element.from, element.to),
+          animationInfo?.[textureUrl]?.frameCount ?? 1,
+        ),
         zIndex: 81, // Center Y (8) * 10 + 1
         brightness: 0.6,
         tintType,
@@ -494,7 +544,10 @@ function processSimpleCube(
         z: westOffset.z,
         width: UNIT * scale,
         height: UNIT * scale,
-        uv: normalizeUV(face.uv, animationInfo?.[textureUrl]?.frameCount ?? 1),
+        uv: normalizeUV(
+          resolveFaceUV("west", face, element.from, element.to),
+          animationInfo?.[textureUrl]?.frameCount ?? 1,
+        ),
         zIndex: 71,
         brightness: 0.6,
         tintType,
@@ -596,7 +649,7 @@ function processElements(
           width: width * scale,
           height: depth * scale,
           uv: normalizeUV(
-            face.uv,
+            resolveFaceUV("up", face, element.from, element.to),
             animationInfo?.[textureUrl]?.frameCount ?? 1,
           ),
           zIndex: Math.round(centerY * 10 + 100),
@@ -633,7 +686,7 @@ function processElements(
           width: width * scale,
           height: height * scale,
           uv: normalizeUV(
-            face.uv,
+            resolveFaceUV("south", face, element.from, element.to),
             animationInfo?.[textureUrl]?.frameCount ?? 1,
           ),
           zIndex: Math.round(centerY * 10 + 50),
@@ -677,7 +730,7 @@ function processElements(
           width: width * scale,
           height: height * scale,
           uv: normalizeUV(
-            face.uv,
+            resolveFaceUV("north", face, element.from, element.to),
             animationInfo?.[textureUrl]?.frameCount ?? 1,
           ),
           zIndex: Math.round(centerY * 10 + 40),
@@ -709,7 +762,7 @@ function processElements(
           width: depth * scale,
           height: height * scale,
           uv: normalizeUV(
-            face.uv,
+            resolveFaceUV("east", face, element.from, element.to),
             animationInfo?.[textureUrl]?.frameCount ?? 1,
           ),
           zIndex: Math.round(centerY * 10),
@@ -753,7 +806,7 @@ function processElements(
           width: depth * scale,
           height: height * scale,
           uv: normalizeUV(
-            face.uv,
+            resolveFaceUV("west", face, element.from, element.to),
             animationInfo?.[textureUrl]?.frameCount ?? 1,
           ),
           zIndex: Math.round(centerY * 10 - 10),
@@ -804,7 +857,7 @@ function processElements(
           width: width * scale,
           height: depth * scale,
           uv: normalizeUV(
-            face.uv,
+            resolveFaceUV("down", face, element.from, element.to),
             animationInfo?.[textureUrl]?.frameCount ?? 1,
           ),
           zIndex: Math.round((centerY - height / 2) * 10 - 100),
