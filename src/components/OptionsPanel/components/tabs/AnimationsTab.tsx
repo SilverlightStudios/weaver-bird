@@ -2,20 +2,56 @@
  * AnimationsTab Component
  *
  * Provides animation controls for entity models including:
+ * - Vanilla extracted animations (bell ring, chest open, etc.)
+ * - Resource pack animations (JEM/JPM from Fresh Animations, etc.)
  * - Animation preset selection (Walking, Attacking, etc.)
  * - Play/pause controls
  * - Speed adjustment
  * - Manual head orientation control
+ *
+ * PRIORITY ORDER:
+ * 1. Resource pack animations (JEM/JPM files) - shown in Animation Presets
+ * 2. Vanilla extracted animations (from Minecraft code) - shown in Vanilla Animations
+ * 3. Procedural presets (idle, walking, etc.) - shown in Animation Presets
  */
 
 import { TabsContent } from "@/ui/components/tabs";
 import { Separator } from "@/ui/components/Separator/Separator";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useStore } from "@state/store";
 import { ANIMATION_PRESETS } from "@lib/emf/animation/entityState";
 import { ANIMATION_TRIGGERS, POSE_TOGGLES } from "@lib/emf/animation";
+import { getVanillaAnimations, type AnimationTrigger } from "@constants/animations";
+
+// Helper functions for vanilla animations UI
+function getTriggerIcon(trigger: AnimationTrigger): string {
+  switch (trigger) {
+    case 'interact': return '👆';
+    case 'always': return '🔄';
+    case 'redstone': return '⚡';
+    case 'damage': return '💥';
+    case 'walk': return '🚶';
+    default: return '🎬';
+  }
+}
+
+function getTriggerDescription(trigger: AnimationTrigger): string {
+  switch (trigger) {
+    case 'interact': return 'Plays when player interacts';
+    case 'always': return 'Loops continuously';
+    case 'redstone': return 'Plays when redstone powered';
+    case 'damage': return 'Plays when damaged';
+    case 'walk': return 'Plays when moving';
+    default: return `Trigger: ${trigger}`;
+  }
+}
+
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 export const AnimationsTab = () => {
+  const selectedAssetId = useStore((state) => state.selectedAssetId);
   const animationPreset = useStore((state) => state.animationPreset);
   const animationPlaying = useStore((state) => state.animationPlaying);
   const animationSpeed = useStore((state) => state.animationSpeed);
@@ -29,6 +65,7 @@ export const AnimationsTab = () => {
   );
   const availablePoseToggles = useStore((state) => state.availablePoseToggles);
   const activePoseToggles = useStore((state) => state.activePoseToggles);
+  const availableBones = useStore((state) => state.availableBones);
 
   const setAnimationPreset = useStore((state) => state.setAnimationPreset);
   const setAnimationPlaying = useStore((state) => state.setAnimationPlaying);
@@ -37,6 +74,52 @@ export const AnimationsTab = () => {
   const setEntityHeadPitch = useStore((state) => state.setEntityHeadPitch);
   const triggerAnimation = useStore((state) => state.triggerAnimation);
   const setPoseToggleEnabled = useStore((state) => state.setPoseToggleEnabled);
+
+  // Extract entity ID from selected asset for vanilla animations
+  // Examples:
+  // - "minecraft:entity/bell/bell_body" -> "bell"
+  // - "minecraft:block/bell" -> "bell"
+  // - "minecraft:entity/chest/normal" -> "chest"
+  const entityId = useMemo(() => {
+    if (!selectedAssetId) return null;
+
+    const normalized = selectedAssetId.toLowerCase();
+
+    // Extract from entity path: entity/bell/bell_body -> bell
+    const entityMatch = normalized.match(/entity\/([^/]+)/);
+    if (entityMatch) return entityMatch[1];
+
+    // Extract from block path (for block entities): block/bell -> bell
+    const blockMatch = normalized.match(/block\/([^/]+)/);
+    if (blockMatch) return blockMatch[1];
+
+    return null;
+  }, [selectedAssetId]);
+
+  // Load vanilla animations for current entity
+  const vanillaAnimations = useMemo(() => {
+    if (!entityId) return null;
+    return getVanillaAnimations(entityId);
+  }, [entityId]);
+
+  // Phase 5: Resource Pack Priority
+  // Only show vanilla animations if no resource pack animations exist
+  const hasResourcePackAnimations = useMemo(() => {
+    return availableAnimationPresets !== null && availableAnimationPresets.length > 0;
+  }, [availableAnimationPresets]);
+
+  const shouldShowVanillaAnimations = useMemo(() => {
+    // Don't show vanilla animations if resource pack provides animations
+    if (hasResourcePackAnimations) return false;
+    // Show vanilla animations if they exist and no resource pack animations
+    return vanillaAnimations && Object.keys(vanillaAnimations).length > 0;
+  }, [hasResourcePackAnimations, vanillaAnimations]);
+
+  // Check if the model has a "head" bone for head orientation controls
+  const hasHeadBone = useMemo(() => {
+    if (!availableBones) return true; // Show by default if bones unknown
+    return availableBones.includes('head');
+  }, [availableBones]);
 
   const handlePresetClick = (presetId: string) => {
     if (animationPreset === presetId) {
@@ -115,7 +198,50 @@ export const AnimationsTab = () => {
         <h3 className="text-lg font-semibold mb-2">Entity Animations</h3>
         <Separator className="mb-4" />
 
-        {/* Animation Presets Grid */}
+        {/* Vanilla Animations Grid (extracted from Minecraft code) */}
+        {/* Phase 5: Only show when no resource pack animations exist */}
+        {shouldShowVanillaAnimations && vanillaAnimations && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">
+                Vanilla Animations
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(vanillaAnimations).map(([animName, anim]) => {
+                  const isSelected = animationPreset === `vanilla:${animName}`;
+                  const triggerIcon = getTriggerIcon(anim.trigger);
+
+                  return (
+                    <button
+                      key={animName}
+                      onClick={() => handlePresetClick(`vanilla:${animName}`)}
+                      className={`
+                        p-2 rounded-md border text-left transition-colors
+                        ${
+                          isSelected
+                            ? "bg-primary/20 border-primary"
+                            : "bg-background border-border hover:bg-accent"
+                        }
+                      `}
+                      title={`${capitalize(animName)} - ${getTriggerDescription(anim.trigger)}\n${anim.duration} ticks (${(anim.duration / 20).toFixed(1)}s)${anim.looping ? ' - Loops' : ''}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{triggerIcon}</span>
+                        <span className="text-sm truncate">{capitalize(animName)}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Extracted from vanilla Minecraft code (shown as fallback when no resource pack animations exist).
+              </p>
+            </div>
+            <Separator className="mb-4" />
+          </>
+        )}
+
+        {/* Animation Presets Grid (Resource Pack + Procedural) */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">
             Animation Presets
@@ -144,7 +270,7 @@ export const AnimationsTab = () => {
           </div>
           {filteredPresets.length === 0 && (
             <p className="text-xs text-muted-foreground mt-2">
-              No animation presets detected for this model.
+              No resource pack or procedural animations detected.
             </p>
           )}
         </div>
@@ -267,64 +393,73 @@ export const AnimationsTab = () => {
           </p>
         </div>
 
-        {/* Head Control */}
-        <Separator className="mb-4" />
-        <div className="space-y-4">
-          <label className="block text-sm font-medium">
-            Head Orientation
-          </label>
+        {/* Head Control - only show if model has a head bone */}
+        {hasHeadBone && (
+          <>
+            <Separator className="mb-4" />
+            <div className="space-y-4">
+              <label className="block text-sm font-medium">
+                Head Orientation
+              </label>
 
-          {/* Yaw Control */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>Yaw (Left/Right)</span>
-              <span>{entityHeadYaw.toFixed(0)}°</span>
+              {/* Yaw Control */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Yaw (Left/Right)</span>
+                  <span>{entityHeadYaw.toFixed(0)}°</span>
+                </div>
+                <input
+                  type="range"
+                  min="-180"
+                  max="180"
+                  step="1"
+                  value={entityHeadYaw}
+                  onChange={handleHeadYawChange}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Pitch Control */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Pitch (Up/Down)</span>
+                  <span>{entityHeadPitch.toFixed(0)}°</span>
+                </div>
+                <input
+                  type="range"
+                  min="-90"
+                  max="90"
+                  step="1"
+                  value={entityHeadPitch}
+                  onChange={handleHeadPitchChange}
+                  className="w-full"
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  setEntityHeadYaw(0);
+                  setEntityHeadPitch(0);
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground underline"
+              >
+                Reset head orientation
+              </button>
             </div>
-            <input
-              type="range"
-              min="-180"
-              max="180"
-              step="1"
-              value={entityHeadYaw}
-              onChange={handleHeadYawChange}
-              className="w-full"
-            />
-          </div>
-
-          {/* Pitch Control */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>Pitch (Up/Down)</span>
-              <span>{entityHeadPitch.toFixed(0)}°</span>
-            </div>
-            <input
-              type="range"
-              min="-90"
-              max="90"
-              step="1"
-              value={entityHeadPitch}
-              onChange={handleHeadPitchChange}
-              className="w-full"
-            />
-          </div>
-
-          <button
-            onClick={() => {
-              setEntityHeadYaw(0);
-              setEntityHeadPitch(0);
-            }}
-            className="text-sm text-muted-foreground hover:text-foreground underline"
-          >
-            Reset head orientation
-          </button>
-        </div>
+          </>
+        )}
 
         {/* Info */}
         <Separator className="my-4" />
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted-foreground space-y-2">
           <p>
-            Select an animation preset to see the entity in motion.
-            Custom animations from resource packs (EMF/ETF) are automatically applied.
+            <strong>Vanilla Animations:</strong> Extracted from Minecraft's code. Includes block entity animations (bell ring, chest open) and mob animations.
+          </p>
+          <p>
+            <strong>Animation Presets:</strong> Resource pack animations (JEM/JPM) and procedural animations (walking, attacking, etc.).
+          </p>
+          <p className="text-xs">
+            Resource pack animations always take priority over vanilla extracted animations.
           </p>
         </div>
       </div>

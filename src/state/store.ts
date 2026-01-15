@@ -106,9 +106,11 @@ interface StoreActions {
   setAnimationSpeed: (speed: number) => void;
   setEntityHeadYaw: (yaw: number) => void;
   setEntityHeadPitch: (pitch: number) => void;
+  setEntitySwingDirection: (direction: number) => void;
   setAvailableAnimationPresets: (presets: string[] | null) => void;
   setAvailableAnimationTriggers: (triggers: string[] | null) => void;
   setAvailablePoseToggles: (toggles: string[] | null) => void;
+  setAvailableBones: (bones: string[] | null) => void;
   setPoseToggleEnabled: (toggleId: string, enabled: boolean) => void;
   triggerAnimation: (triggerId: string) => void;
 
@@ -214,8 +216,10 @@ const initialState: AppState = {
   animationSpeed: 1.0, // Normal speed
   entityHeadYaw: 0, // Looking forward
   entityHeadPitch: 0, // Looking forward
+  entitySwingDirection: 3, // Default WEST direction (swings on Z axis)
   availableAnimationPresets: null, // Show all presets by default
   availableAnimationTriggers: null, // No triggers by default
+  availableBones: null, // Unknown bones by default
   animationTriggerRequestId: null,
   animationTriggerRequestNonce: 0,
   availablePoseToggles: null, // No pose toggles by default
@@ -623,6 +627,13 @@ export const useStore = create<WeaverbirdStore>()(
       });
     },
 
+    setEntitySwingDirection: (direction: number) => {
+      set((state) => {
+        // Clamp to valid range 0-3 (NORTH, SOUTH, EAST, WEST)
+        state.entitySwingDirection = Math.max(0, Math.min(3, Math.floor(direction)));
+      });
+    },
+
     setAvailableAnimationPresets: (presets: string[] | null) => {
       set((state) => {
         state.availableAnimationPresets = presets;
@@ -644,6 +655,12 @@ export const useStore = create<WeaverbirdStore>()(
           if (allow && allow.has(key)) continue;
           delete state.activePoseToggles[key];
         }
+      });
+    },
+
+    setAvailableBones: (bones: string[] | null) => {
+      set((state) => {
+        state.availableBones = bones;
       });
     },
 

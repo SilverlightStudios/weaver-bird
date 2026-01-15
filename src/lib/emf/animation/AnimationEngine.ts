@@ -37,6 +37,7 @@ import { getPresetById } from "./entityState";
 import { getTriggerDefinition } from "./triggers";
 import { getPoseToggleDefinition } from "./poses";
 import type { ASTNode } from "./types";
+import { VANILLA_DURATIONS } from "@constants/animations/generated";
 
 /**
  * Compiled animation expression with metadata.
@@ -156,17 +157,31 @@ export class AnimationEngine {
   /** Set of bone names that have been warned about (to avoid spam) */
   private warnedMissingBones: Set<string> = new Set();
 
+  /** Entity ID (e.g., "bell", "zombie") for looking up extracted data */
+  private entityId: string | undefined;
+
+  /** Animation duration in game ticks (extracted from Minecraft or default 100) */
+  private animationDurationTicks: number = 100;
+
   /**
    * Create a new animation engine.
    *
    * @param modelGroup The Three.js group containing the entity model
    * @param animationLayers Raw animation layers from JEM file
+   * @param entityId Optional entity ID for looking up extracted animation data
    */
-  constructor(modelGroup: THREE.Group, animationLayers?: AnimationLayer[]) {
+  constructor(modelGroup: THREE.Group, animationLayers?: AnimationLayer[], entityId?: string) {
     // Store reference to model group
     this.modelGroup = modelGroup;
     this.baseRootPosition = modelGroup.position.clone();
     this.baseRootRotation = modelGroup.rotation.clone();
+
+    // Store entity ID and look up animation duration from extracted data
+    this.entityId = entityId;
+    if (this.entityId && this.entityId in VANILLA_DURATIONS) {
+      this.animationDurationTicks = VANILLA_DURATIONS[this.entityId as keyof typeof VANILLA_DURATIONS];
+      console.log(`[AnimationEngine] Using extracted duration for ${this.entityId}: ${this.animationDurationTicks} ticks`);
+    }
 
     // Build bone map from model
     this.bones = buildBoneMap(modelGroup);
@@ -222,6 +237,12 @@ export class AnimationEngine {
     }
 
     switch (def.id) {
+      case "trigger.interact":
+        // Interaction animation (bells, chests, etc.)
+        // In Minecraft, ticks counts UP from 0 (not down) for dampening to work
+        // The expression sin((ticks / pi)) / (4.0 + ticks / 3.0) dampens as ticks increases
+        this.context.entityState.ticks = 1; // Start at 1 to trigger animation
+        break;
       case "trigger.hurt":
         // Hurt time counts down in ticks (0-10).
         this.context.entityState.hurt_time = Math.max(
@@ -242,10 +263,18 @@ export class AnimationEngine {
         break;
     }
 
+    // For interact triggers, use entity-specific duration from extracted data
+    // Otherwise use the trigger's default duration
+    let durationSec = def.durationSec;
+    if (def.id === "trigger.interact") {
+      // Convert ticks to seconds (20 ticks = 1 second)
+      durationSec = this.animationDurationTicks / 20;
+    }
+
     this.activeTriggers.push({
       id: def.id,
       elapsedSec: 0,
-      durationSec: def.durationSec,
+      durationSec,
     });
   }
 
@@ -1825,6 +1854,25 @@ export class AnimationEngine {
   }
 
   /**
+   * Set swing direction for block entity animations (e.g., bell).
+   * Direction determines which axis the entity swings on:
+   * - 0 = NORTH: swings on X axis (negative)
+   * - 1 = SOUTH: swings on X axis (positive)
+   * - 2 = EAST: swings on Z axis (negative)
+   * - 3 = WEST: swings on Z axis (positive)
+   */
+  setSwingDirection(direction: number): void {
+    this.context.entityState.swing_direction = Math.max(0, Math.min(3, Math.floor(direction)));
+  }
+
+  /**
+   * Get current swing direction.
+   */
+  getSwingDirection(): number {
+    return this.context.entityState.swing_direction;
+  }
+
+  /**
    * Get a custom variable value.
    */
   getVariable(name: string): number {
@@ -2435,6 +2483,33 @@ export class AnimationEngine {
       }
     }
 
+    // Apply bell swing direction logic before transforms are applied
+    // Bell swings on ONE axis based on swing_direction:
+    // 0=NORTH: -rx, 1=SOUTH: +rx, 2=EAST: -rz, 3=WEST: +rz
+    if (this.entityId === "bell") {
+      const bodyTransform = boneTransforms.get("body");
+      if (bodyTransform) {
+        const dir = this.context.entityState.swing_direction;
+        const useXAxis = dir === 0 || dir === 1; // NORTH or SOUTH
+        const useZAxis = dir === 2 || dir === 3; // EAST or WEST
+        const negateSign = dir === 0 || dir === 2; // NORTH or EAST use negative
+
+        if (useXAxis) {
+          // Use X rotation, clear Z
+          if (negateSign && bodyTransform.rx !== undefined) {
+            bodyTransform.rx = -bodyTransform.rx;
+          }
+          bodyTransform.rz = undefined;
+        } else if (useZAxis) {
+          // Use Z rotation, clear X
+          if (negateSign && bodyTransform.rz !== undefined) {
+            bodyTransform.rz = -bodyTransform.rz;
+          }
+          bodyTransform.rx = undefined;
+        }
+      }
+    }
+
     // Apply accumulated transforms to bones
     // With nested Three.js hierarchy, parent transforms automatically propagate
     // to children - we just apply each bone's animation offset to its local transform
@@ -2561,6 +2636,14 @@ export class AnimationEngine {
         0,
         this.context.entityState.death_time - dtTicks,
       );
+    }
+    // Interaction ticks count UP (not down) for proper dampening
+    // The bell expression sin((ticks / pi)) / (4.0 + ticks / 3.0) dampens as ticks increases
+    // Duration is data-driven from Minecraft (e.g., bell = 50 ticks = 2.5 seconds)
+    if (this.context.entityState.ticks > 0 && this.context.entityState.ticks < this.animationDurationTicks) {
+      this.context.entityState.ticks += dtTicks;
+    } else if (this.context.entityState.ticks >= this.animationDurationTicks) {
+      this.context.entityState.ticks = 0; // Reset after animation completes
     }
 
     // Build per-frame bone input overrides from active triggers.
@@ -2699,11 +2782,13 @@ export class AnimationEngine {
  *
  * @param modelGroup The Three.js group containing the entity model
  * @param animationLayers Optional animation layers from JEM file
+ * @param entityId Optional entity ID for looking up extracted animation data
  * @returns New AnimationEngine instance
  */
 export function createAnimationEngine(
   modelGroup: THREE.Group,
   animationLayers?: AnimationLayer[],
+  entityId?: string,
 ): AnimationEngine {
-  return new AnimationEngine(modelGroup, animationLayers);
+  return new AnimationEngine(modelGroup, animationLayers, entityId);
 }

@@ -204,6 +204,9 @@ function normalizeParticleEmission(
   if (emissionSource === "makeParticles") {
     emissionSource = ownerIsCampfire ? "particleTick" : "animateTick";
   }
+  if (emissionSource === "addParticlesAndSound") {
+    emissionSource = "animateTick";
+  }
 
   const particleId = raw.particleId ?? (raw as { particle_id?: string }).particle_id ?? "";
   const isCampfireSmoke =
@@ -219,6 +222,10 @@ function normalizeParticleEmission(
       // Smoke from makeParticles only occurs during extinguish events.
       probabilityExpr = "false";
     }
+  }
+
+  if (rawEmissionSource === "extinguish") {
+    probabilityExpr = "false";
   }
 
   if (ownerIsCampfire && isCampfireSmoke) {
@@ -467,8 +474,10 @@ export function isEmissionConditionMet(
     if (trimmed === "true") return true;
     if (trimmed === "false") return false;
     if (trimmed.includes("=")) {
-      const [key, expected] = trimmed.split("=");
-      if (!key || expected === undefined) return true;
+      const [rawKey, expectedRaw] = trimmed.split("=");
+      if (!rawKey || expectedRaw === undefined) return true;
+      const key = rawKey.trim().toLowerCase();
+      const expected = expectedRaw.trim();
       return props[key] === expected;
     }
     const key = trimmed.toLowerCase();

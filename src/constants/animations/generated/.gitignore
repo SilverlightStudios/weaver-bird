@@ -1,0 +1,4 @@
+# Auto-generated animation files
+# These are regenerated from Minecraft JAR extraction
+*.ts
+!.gitignore

@@ -81,6 +81,12 @@ struct ProbabilityGuard {
     depth: usize,
 }
 
+#[derive(Debug, Clone)]
+enum CandleOffsets {
+    ByCount(HashMap<i32, Vec<[f64; 3]>>),
+    Single(Vec<[f64; 3]>),
+}
+
 // Helper for skip_serializing_if
 fn is_false(b: &bool) -> bool {
     !*b
@@ -378,6 +384,180 @@ fn java_to_javascript(expr: &str) -> String {
     result.trim().to_string()
 }
 
+fn format_float(value: f64) -> String {
+    let mut s = format!("{:.4}", value);
+    while s.contains('.') && s.ends_with('0') {
+        s.pop();
+    }
+    if s.ends_with('.') {
+        s.pop();
+    }
+    if s.is_empty() {
+        "0".to_string()
+    } else {
+        s
+    }
+}
+
+fn parse_numeric_token(token: &str, locals: &HashMap<String, f64>) -> Option<f64> {
+    let trimmed = token
+        .trim()
+        .trim_matches(|c| c == '(' || c == ')')
+        .trim_end_matches(|c: char| c == 'f' || c == 'F' || c == 'd' || c == 'D');
+
+    if let Some(value) = locals.get(trimmed) {
+        return Some(*value);
+    }
+
+    trimmed.parse::<f64>().ok()
+}
+
+fn extract_vec3_list(expr: &str, locals: &HashMap<String, f64>) -> Vec<[f64; 3]> {
+    let vec_re = Regex::new(
+        r"new\s+Vec3\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\)\s*(?:\.scale\s*\(\s*([^)]+)\s*\))?",
+    )
+    .unwrap();
+
+    let mut out = Vec::new();
+    for caps in vec_re.captures_iter(expr) {
+        let x_raw = caps.get(1).unwrap().as_str();
+        let y_raw = caps.get(2).unwrap().as_str();
+        let z_raw = caps.get(3).unwrap().as_str();
+        let scale_raw = caps.get(4).map(|m| m.as_str()).unwrap_or("1.0");
+
+        let x = parse_numeric_token(x_raw, locals);
+        let y = parse_numeric_token(y_raw, locals);
+        let z = parse_numeric_token(z_raw, locals);
+        let scale = parse_numeric_token(scale_raw, locals);
+
+        if let (Some(x), Some(y), Some(z), Some(scale)) = (x, y, z, scale) {
+            out.push([x * scale, y * scale, z * scale]);
+        }
+    }
+
+    out
+}
+
+fn extract_candle_offsets(source: &str) -> Option<CandleOffsets> {
+    let mut locals: HashMap<String, f64> = HashMap::new();
+    let local_re = Regex::new(
+        r"^\s*(?:final\s+)?(?:float|double|int|long)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*([^;]+);",
+    )
+    .unwrap();
+
+    for line in source.lines() {
+        if let Some(caps) = local_re.captures(line) {
+            let name = caps.get(1).unwrap().as_str().trim().to_string();
+            let value_raw = caps.get(2).unwrap().as_str();
+            if let Some(value) = parse_numeric_token(value_raw, &locals) {
+                locals.insert(name, value);
+            }
+        }
+    }
+
+    let put_re = Regex::new(r"(?s)\$\$\d+\.put\((\d+)\s*,\s*List\.of\((.*?)\)\);").unwrap();
+    let single_re = Regex::new(r"(?s)PARTICLE_OFFSETS\s*=\s*List\.of\((.*?)\);").unwrap();
+
+    let mut by_count: HashMap<i32, Vec<[f64; 3]>> = HashMap::new();
+    for caps in put_re.captures_iter(source) {
+        let count_raw = caps.get(1).unwrap().as_str();
+        let list_raw = caps.get(2).unwrap().as_str();
+        if let Ok(count) = count_raw.parse::<i32>() {
+            let offsets = extract_vec3_list(list_raw, &locals);
+            if !offsets.is_empty() {
+                by_count.insert(count, offsets);
+            }
+        }
+    }
+
+    if !by_count.is_empty() {
+        return Some(CandleOffsets::ByCount(by_count));
+    }
+
+    if let Some(caps) = single_re.captures(source) {
+        let list_raw = caps.get(1).unwrap().as_str();
+        let offsets = extract_vec3_list(list_raw, &locals);
+        if !offsets.is_empty() {
+            return Some(CandleOffsets::Single(offsets));
+        }
+    }
+
+    None
+}
+
+fn candle_position_expr(pos_var: &str, offset: [f64; 3]) -> [String; 3] {
+    let x = format!("{}.getX() + {}", pos_var, format_float(offset[0]));
+    let y = format!("{}.getY() + {}", pos_var, format_float(offset[1]));
+    let z = format!("{}.getZ() + {}", pos_var, format_float(offset[2]));
+    [x, y, z]
+}
+
+fn build_candle_emissions(
+    offsets: &[[f64; 3]],
+    condition: Option<String>,
+) -> Vec<ExtractedBlockEmission> {
+    let mut emissions = Vec::new();
+
+    for offset in offsets {
+        let position_offset = candle_position_expr("$2", *offset);
+
+        emissions.push(ExtractedBlockEmission {
+            particle_id: "smoke".to_string(),
+            options: None,
+            condition: condition.clone(),
+            position_offset: Some(position_offset.clone()),
+            velocity: Some(["0.0".to_string(), "0.0".to_string(), "0.0".to_string()]),
+            probability_expr: Some("nextFloat() < 0.3".to_string()),
+            count_expr: None,
+            loop_count_expr: None,
+            loop_index_var: None,
+            always_visible: false,
+            emission_source: Some("animateTick".to_string()),
+        });
+
+        emissions.push(ExtractedBlockEmission {
+            particle_id: "small_flame".to_string(),
+            options: None,
+            condition: condition.clone(),
+            position_offset: Some(position_offset),
+            velocity: Some(["0.0".to_string(), "0.0".to_string(), "0.0".to_string()]),
+            probability_expr: None,
+            count_expr: None,
+            loop_count_expr: None,
+            loop_index_var: None,
+            always_visible: false,
+            emission_source: Some("animateTick".to_string()),
+        });
+    }
+
+    emissions
+}
+
+fn build_candle_extinguish_emissions(
+    offsets: &[[f64; 3]],
+    condition: Option<String>,
+) -> Vec<ExtractedBlockEmission> {
+    let mut emissions = Vec::new();
+
+    for offset in offsets {
+        emissions.push(ExtractedBlockEmission {
+            particle_id: "smoke".to_string(),
+            options: None,
+            condition: condition.clone(),
+            position_offset: Some(candle_position_expr("$3", *offset)),
+            velocity: Some(["0.0".to_string(), "0.1".to_string(), "0.0".to_string()]),
+            probability_expr: None,
+            count_expr: None,
+            loop_count_expr: None,
+            loop_index_var: None,
+            always_visible: false,
+            emission_source: Some("extinguish".to_string()),
+        });
+    }
+
+    emissions
+}
+
 fn normalize_cfr_var(name: &str) -> String {
     if let Some(stripped) = name.strip_prefix("$$") {
         return format!("${}", stripped);
@@ -392,6 +572,34 @@ fn contains_random(expr: &str) -> bool {
         || expr.contains("nextGaussian")
         || expr.contains("Math.random")
         || expr.contains("random")
+}
+
+fn contains_random_local(expr: &str, random_locals: &HashSet<String>) -> bool {
+    for name in random_locals {
+        let pattern = format!(
+            r"(^|[^A-Za-z0-9_$]){}($|[^A-Za-z0-9_$])",
+            regex::escape(name)
+        );
+        if Regex::new(&pattern).unwrap().is_match(expr) {
+            return true;
+        }
+    }
+    false
+}
+
+fn replace_random_locals(expr: &str, random_locals: &HashSet<String>) -> String {
+    let mut out = expr.to_string();
+    for name in random_locals {
+        let pattern = format!(
+            r"(^|[^A-Za-z0-9_$]){}($|[^A-Za-z0-9_$])",
+            regex::escape(name)
+        );
+        out = Regex::new(&pattern)
+            .unwrap()
+            .replace_all(&out, "$1Math.random()$2")
+            .to_string();
+    }
+    out
 }
 
 fn extract_random_clause(expr: &str) -> String {
@@ -427,6 +635,24 @@ fn invert_probability_expr(expr: &str) -> String {
     }
 
     format!("!({})", trimmed)
+}
+
+fn simplify_and_convert_prob(
+    guard: &ProbabilityGuard,
+    random_locals: &HashSet<String>,
+    field_values: &HashMap<String, String>,
+) -> String {
+    let raw_expr = replace_random_locals(&guard.expr, random_locals);
+    let mut expr = extract_random_clause(&raw_expr);
+    if guard.invert {
+        expr = invert_probability_expr(&expr);
+    }
+    let simplified = simplify_probability_expression(&expr, field_values);
+    if simplified == "false" || simplified.is_empty() {
+        simplified
+    } else {
+        java_to_javascript(&simplified)
+    }
 }
 
 fn normalize_loop_bound(expr: &str, block_id: Option<&str>) -> String {
@@ -789,22 +1015,7 @@ fn extract_emissions_from_source(
     let mut brace_depth: usize = 0;
     let mut current_method: Option<String> = None;
     let mut locals: HashMap<String, String> = HashMap::new();
-
-    // Helper to simplify and convert probability expressions
-    let simplify_and_convert_prob = |guard: &ProbabilityGuard| -> String {
-        let mut expr = extract_random_clause(&guard.expr);
-        if guard.invert {
-            expr = invert_probability_expr(&expr);
-        }
-        let simplified = simplify_probability_expression(&expr, field_values);
-        // If simplified to "false", don't emit this particle at all (handled by caller)
-        // If simplified to empty string (was "true"), return None (100% spawn rate)
-        if simplified == "false" || simplified.is_empty() {
-            simplified
-        } else {
-            java_to_javascript(&simplified)
-        }
-    };
+    let mut random_locals: HashSet<String> = HashSet::new();
 
     let build_loop_metadata = |loop_stack: &[LoopContext], exprs: &[String]| -> (Option<String>, Option<String>, Option<String>) {
         let mut loop_index_var: Option<String> = None;
@@ -867,6 +1078,7 @@ fn extract_emissions_from_source(
         if let Some(caps) = method_start_re.captures(line) {
             current_method = Some(caps.get(1).unwrap().as_str().to_string());
             locals.clear();
+            random_locals.clear();
             current_condition = None;
             guard_condition = None;
             probability_guard = None;
@@ -878,7 +1090,12 @@ fn extract_emissions_from_source(
         if let Some(caps) = local_assign_re.captures(line) {
             let var = caps.get(1).unwrap().as_str().trim().to_string();
             let expr = caps.get(2).unwrap().as_str().trim().to_string();
-            locals.insert(var, expr);
+            let is_random = contains_random(&expr);
+            locals.insert(var.clone(), expr);
+            if is_random {
+                random_locals.insert(var.clone());
+                random_locals.insert(normalize_cfr_var(&var));
+            }
         }
 
         // Check for conditions
@@ -896,7 +1113,7 @@ fn extract_emissions_from_source(
         if !condition_re.is_match(line) && !guard_re.is_match(line) {
             if let Some(prob_expr) = extract_if_condition(line) {
                 // Only store if it contains random calls
-                if contains_random(&prob_expr) {
+                if contains_random(&prob_expr) || contains_random_local(&prob_expr, &random_locals) {
                     let invert = line.contains("continue")
                         || line.contains("return")
                         || line.contains("break");
@@ -946,7 +1163,9 @@ fn extract_emissions_from_source(
 
                     if params.len() >= 6 {
                         let always_visible = line.contains("addAlwaysVisibleParticle");
-                        let simplified_prob = probability_guard.as_ref().map(|e| simplify_and_convert_prob(e));
+                        let simplified_prob = probability_guard
+                            .as_ref()
+                            .map(|e| simplify_and_convert_prob(e, &random_locals, field_values));
                         // Skip emission if probability simplified to "false"
                         if simplified_prob.as_deref() == Some("false") {
                             continue;
@@ -1019,7 +1238,9 @@ fn extract_emissions_from_source(
             };
 
             let always_visible = line.contains("addAlwaysVisibleParticle");
-            let simplified_prob = probability_guard.as_ref().map(|e| simplify_and_convert_prob(e));
+            let simplified_prob = probability_guard
+                .as_ref()
+                .map(|e| simplify_and_convert_prob(e, &random_locals, field_values));
             if simplified_prob.as_deref() != Some("false") {
                 let position_offset = [
                     java_to_javascript(&expand_locals(caps.get(2).unwrap().as_str().trim(), &locals)),
@@ -1117,7 +1338,7 @@ fn extract_emissions_from_source(
                 velocity: Some(velocity),
                 probability_expr: probability_guard
                     .as_ref()
-                    .map(|e| simplify_and_convert_prob(e))
+                    .map(|e| simplify_and_convert_prob(e, &random_locals, field_values))
                     .filter(|s| !s.is_empty()),
                 count_expr,
                 loop_count_expr,
@@ -1170,7 +1391,7 @@ fn extract_emissions_from_source(
                 velocity: Some(velocity),
                 probability_expr: probability_guard
                     .as_ref()
-                    .map(|e| simplify_and_convert_prob(e))
+                    .map(|e| simplify_and_convert_prob(e, &random_locals, field_values))
                     .filter(|s| !s.is_empty()),
                 count_expr,
                 loop_count_expr,
@@ -1236,7 +1457,10 @@ fn extract_emissions_from_source(
                                 condition: current_condition.clone().or_else(|| guard_condition.clone()),
                                 position_offset: Some(position_offset),
                                 velocity: Some(velocity),
-                                probability_expr: probability_guard.as_ref().map(|e| simplify_and_convert_prob(e)).filter(|s| !s.is_empty()),
+                                probability_expr: probability_guard
+                                    .as_ref()
+                                    .map(|e| simplify_and_convert_prob(e, &random_locals, field_values))
+                                    .filter(|s| !s.is_empty()),
                                 count_expr,
                                 loop_count_expr,
                                 loop_index_var,
@@ -1859,6 +2083,70 @@ pub async fn extract_block_emissions(
         println!(
             "[block_emissions] Inherited emissions for {} blocks from parent classes",
             inherited_blocks
+        );
+    }
+
+    // Override candle emissions with per-candle offsets and proper animateTick behavior
+    let mut candle_offsets_by_class: HashMap<String, CandleOffsets> = HashMap::new();
+    for class_name in [
+        "net.minecraft.world.level.block.CandleBlock",
+        "net.minecraft.world.level.block.CandleCakeBlock",
+    ] {
+        let source = match class_sources.get(class_name) {
+            Some(source) => Some(source.clone()),
+            None => read_decompiled_class(&decompile_dir, class_name).ok(),
+        };
+        if let Some(source) = source {
+            if let Some(offsets) = extract_candle_offsets(&source) {
+                candle_offsets_by_class.insert(class_name.to_string(), offsets);
+            }
+        }
+    }
+
+    let mut candle_overrides = 0usize;
+    for (block_id, class_name) in &block_id_to_class {
+        let offsets = match candle_offsets_by_class.get(class_name) {
+            Some(offsets) => offsets,
+            None => continue,
+        };
+
+        let mut emissions = Vec::new();
+        match offsets {
+            CandleOffsets::ByCount(by_count) => {
+                let mut counts: Vec<(i32, &Vec<[f64; 3]>)> = by_count
+                    .iter()
+                    .map(|(count, offsets)| (*count, offsets))
+                    .collect();
+                counts.sort_by_key(|(count, _)| *count);
+                for (count, offsets) in counts {
+                    let condition = Some(format!("LIT && CANDLES={}", count));
+                    emissions.extend(build_candle_emissions(offsets, condition.clone()));
+                    emissions.extend(build_candle_extinguish_emissions(offsets, condition));
+                }
+            }
+            CandleOffsets::Single(offsets) => {
+                let condition = Some("LIT".to_string());
+                emissions.extend(build_candle_emissions(offsets, condition.clone()));
+                emissions.extend(build_candle_extinguish_emissions(offsets, condition));
+            }
+        }
+
+        if !emissions.is_empty() {
+            extracted_blocks.insert(
+                block_id.clone(),
+                BlockEmissionData {
+                    class_name: class_name.clone(),
+                    emissions,
+                },
+            );
+            candle_overrides += 1;
+        }
+    }
+
+    if candle_overrides > 0 {
+        println!(
+            "[block_emissions] Applied candle offset overrides for {} blocks",
+            candle_overrides
         );
     }
 

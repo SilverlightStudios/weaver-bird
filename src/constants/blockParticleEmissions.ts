@@ -60,7 +60,14 @@ export function clearExtractedEmissionsCache(): void {
 }
 
 function toCondition(condition?: string): string | undefined {
-  return condition ? `${condition.toLowerCase()}=true` : undefined;
+  if (!condition) return undefined;
+  const normalized = condition.trim();
+  if (!normalized) return undefined;
+  const lowered = normalized.toLowerCase();
+  if (lowered.includes("&&") || lowered.includes("||") || /[=<>]/.test(lowered)) {
+    return lowered;
+  }
+  return `${lowered}=true`;
 }
 
 function toEmission(extracted: ExtractedBlockEmission): ParticleEmission {
@@ -114,8 +121,10 @@ export function isEmissionConditionMet(
     if (trimmed === "true") return true;
     if (trimmed === "false") return false;
     if (trimmed.includes("=")) {
-      const [key, expected] = trimmed.split("=");
-      if (!key || expected === undefined) return true;
+      const [rawKey, expectedRaw] = trimmed.split("=");
+      if (!rawKey || expectedRaw === undefined) return true;
+      const key = rawKey.trim().toLowerCase();
+      const expected = expectedRaw.trim();
       return blockProps[key] === expected;
     }
     const key = trimmed.toLowerCase();

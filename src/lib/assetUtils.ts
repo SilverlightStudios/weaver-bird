@@ -1256,6 +1256,12 @@ export function getVariantGroupKey(assetId: string): string {
   const pathMatch = normalized.match(/^[^:]*:(.+)$/);
   let path = pathMatch ? pathMatch[1] : normalized;
 
+  // Group block break overlays with their base block textures
+  // Example: "block/break/black_candle" -> "block/black_candle"
+  if (path.startsWith("block/break/")) {
+    path = `block/${path.slice("block/break/".length)}`;
+  }
+
   // Pattern-based grouping: wall-mounted variants group with floor/standing variants
   // This handles torches, buttons, banners, signs, etc. without hardcoding specific blocks
   // Examples:

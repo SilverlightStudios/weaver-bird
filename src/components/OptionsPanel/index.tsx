@@ -138,6 +138,23 @@ export const OptionsPanel = ({
     if (onBlockPropsChange) {
       onBlockPropsChange(props);
     }
+
+    // For bell blocks, update swing direction based on facing property
+    // The bell swings in the direction it's facing (away from the support pillars)
+    if (assetId?.includes("bell") && props.facing) {
+      const setSwingDirection = useStore.getState().setEntitySwingDirection;
+      // Map facing to swing direction:
+      // Bell facing NORTH/SOUTH -> swing on X axis (NORTH=0, SOUTH=1)
+      // Bell facing EAST/WEST -> swing on Z axis (EAST=2, WEST=3)
+      const directionMap: Record<string, number> = {
+        north: 1, // Swing SOUTH (positive X)
+        south: 0, // Swing NORTH (negative X)
+        east: 3,  // Swing WEST (positive Z)
+        west: 2,  // Swing EAST (negative Z)
+      };
+      const swingDirection = directionMap[props.facing] ?? 3;
+      setSwingDirection(swingDirection);
+    }
   };
 
   const handleSeedChange = (newSeed: number) => {

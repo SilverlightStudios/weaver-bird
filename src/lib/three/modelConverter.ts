@@ -272,8 +272,8 @@ async function createElementMesh(
   // Create box geometry
   const geometry = new THREE.BoxGeometry(width, height, depth);
 
-  // Apply custom UV coordinates if specified in faces
-  applyCustomUVs(geometry, element.faces);
+  // Apply UV coordinates (auto-generate if not specified, per Minecraft spec)
+  applyCustomUVs(geometry, element.faces, element.from, element.to);
 
   // Load textures for each face
   const materials = await createFaceMaterials(
@@ -303,6 +303,47 @@ async function createElementMesh(
 }
 
 /**
+ * Generate auto-UV coordinates for a face based on element dimensions.
+ * This is Minecraft's behavior when UV is not explicitly specified.
+ *
+ * Per Minecraft spec:
+ * - up/down faces: UV from element's X (u) and Z (v) coordinates
+ * - north/south faces: UV from element's X (u) and Y (v) coordinates
+ * - east/west faces: UV from element's Z (u) and Y (v) coordinates
+ */
+function generateAutoUV(
+  faceName: string,
+  from: [number, number, number],
+  to: [number, number, number],
+): [number, number, number, number] {
+  const [x1, y1, z1] = from;
+  const [x2, y2, z2] = to;
+
+  switch (faceName) {
+    case "up":
+      // Top face: X maps to U, Z maps to V
+      return [x1, z1, x2, z2];
+    case "down":
+      // Bottom face: X maps to U, Z maps to V (but V is flipped)
+      return [x1, 16 - z2, x2, 16 - z1];
+    case "north":
+      // North face (-Z): X maps to U (flipped), Y maps to V
+      return [16 - x2, 16 - y2, 16 - x1, 16 - y1];
+    case "south":
+      // South face (+Z): X maps to U, Y maps to V
+      return [x1, 16 - y2, x2, 16 - y1];
+    case "east":
+      // East face (+X): Z maps to U (flipped), Y maps to V
+      return [16 - z2, 16 - y2, 16 - z1, 16 - y1];
+    case "west":
+      // West face (-X): Z maps to U, Y maps to V
+      return [z1, 16 - y2, z2, 16 - y1];
+    default:
+      return [0, 0, 16, 16];
+  }
+}
+
+/**
  * Apply custom UV coordinates to a box geometry
  *
  * Minecraft UV format: [x1, y1, x2, y2] where coords are 0-16
@@ -310,10 +351,14 @@ async function createElementMesh(
  *
  * Three.js BoxGeometry has 6 faces, each face has 2 triangles (4 vertices)
  * Face order: [right, left, top, bottom, front, back]
+ *
+ * When UV is not specified in the model, auto-generate based on element dimensions.
  */
 function applyCustomUVs(
   geometry: THREE.BoxGeometry,
   faces: Record<string, ElementFace>,
+  from: [number, number, number],
+  to: [number, number, number],
 ): void {
   const faceMapping: Record<string, number> = {
     east: 0, // right (+X)
@@ -328,12 +373,11 @@ function applyCustomUVs(
   if (!uvAttr) return;
 
   for (const [faceName, faceData] of Object.entries(faces)) {
-    if (!faceData.uv) continue; // No custom UV for this face
-
     const faceIndex = faceMapping[faceName];
     if (faceIndex === undefined) continue;
 
-    const [x1, y1, x2, y2] = faceData.uv;
+    // Use explicit UV if provided, otherwise auto-generate from element dimensions
+    const [x1, y1, x2, y2] = faceData.uv ?? generateAutoUV(faceName, from, to);
 
     // Convert Minecraft UV (0-16) to Three.js UV (0-1)
     // Minecraft UV coords: (0,0) is top-left, Y increases downward

@@ -1,6 +1,7 @@
 import type { AnimationLayer } from "./types";
 
 export type AnimationTriggerId =
+  | "trigger.interact"
   | "trigger.attack"
   | "trigger.hurt"
   | "trigger.death"

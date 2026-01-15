@@ -29,12 +29,55 @@ import {
 } from "@lib/emf/animation";
 import type { AnimationLayer } from "@lib/emf/jemLoader";
 import { JEMInspectorV2 } from "@lib/emf/JEMInspectorV2";
+import { getVanillaAnimation, type VanillaAnimation, type AnimationKeyframe, VANILLA_ANIMATIONS, getVanillaAnimationTrigger } from "@constants/animations";
 
 interface Props {
   assetId: string;
   positionOffset?: [number, number, number];
   entityTypeOverride?: string;
   parentEntityOverride?: string | null;
+}
+
+/**
+ * Interpolate between keyframes based on normalized time (0-1).
+ * Supports both linear and smooth (cubic) interpolation.
+ */
+function interpolateKeyframes(keyframes: AnimationKeyframe[], normalizedTime: number): number {
+  if (keyframes.length === 0) return 0;
+  if (keyframes.length === 1) return keyframes[0].value;
+
+  // Find the two keyframes that bracket the current time
+  let prevKeyframe = keyframes[0];
+  let nextKeyframe = keyframes[keyframes.length - 1];
+
+  for (let i = 0; i < keyframes.length - 1; i++) {
+    if (normalizedTime >= keyframes[i].time && normalizedTime <= keyframes[i + 1].time) {
+      prevKeyframe = keyframes[i];
+      nextKeyframe = keyframes[i + 1];
+      break;
+    }
+  }
+
+  // If before first keyframe, return first value
+  if (normalizedTime < prevKeyframe.time) return prevKeyframe.value;
+  // If after last keyframe, return last value
+  if (normalizedTime > nextKeyframe.time) return nextKeyframe.value;
+
+  // Calculate interpolation factor (0-1) between the two keyframes
+  const timeDelta = nextKeyframe.time - prevKeyframe.time;
+  const t = timeDelta === 0 ? 0 : (normalizedTime - prevKeyframe.time) / timeDelta;
+
+  // Apply interpolation based on type
+  const interpolationType = nextKeyframe.interpolation || 'linear';
+  let easedT = t;
+
+  if (interpolationType === 'smooth') {
+    // Cubic ease-in-out (smoothstep)
+    easedT = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  // Linear interpolation with eased factor
+  return prevKeyframe.value + (nextKeyframe.value - prevKeyframe.value) * easedT;
 }
 
 const buildVersionFolderCandidates = (
@@ -97,6 +140,8 @@ function EntityModel({
 
   // Animation state
   const animationEngineRef = useRef<AnimationEngineType | null>(null);
+  /** Current entity ID for animation duration lookup (e.g., "bell", "zombie") */
+  const currentEntityIdRef = useRef<string | undefined>(undefined);
   const [animationLayers, setAnimationLayers] = useState<
     AnimationLayer[] | undefined
   >(undefined);
@@ -104,6 +149,11 @@ function EntityModel({
     AnimationLayer[] | undefined
   >(undefined);
   const baseBoneMapRef = useRef<Map<string, THREE.Object3D>>(new Map());
+
+  // Vanilla animation state (Phase 4)
+  const vanillaAnimationRef = useRef<VanillaAnimation | null>(null);
+  const vanillaAnimationTimeRef = useRef<number>(0);
+
   const overlayBoneMapsRef = useRef<Record<string, Map<string, THREE.Object3D>>>(
     {},
   );
@@ -164,7 +214,32 @@ function EntityModel({
   const animationSpeed = useStore((state) => state.animationSpeed);
   const entityHeadYaw = useStore((state) => state.entityHeadYaw);
   const entityHeadPitch = useStore((state) => state.entityHeadPitch);
+  const entitySwingDirection = useStore((state) => state.entitySwingDirection);
   const activePoseToggles = useStore((state) => state.activePoseToggles);
+
+  // Detect and load vanilla animations (Phase 4)
+  const vanillaAnimationData = useMemo(() => {
+    if (!animationPreset?.startsWith('vanilla:')) return null;
+
+    // Extract animation name from preset (e.g., "vanilla:ring" -> "ring")
+    const animName = animationPreset.replace('vanilla:', '');
+
+    // Extract entity ID from asset ID
+    // Examples:
+    // - "minecraft:entity/bell/bell_body" -> "bell"
+    // - "minecraft:block/chest" -> "chest"
+    const normalized = assetId.toLowerCase();
+    const entityMatch = normalized.match(/entity\/([^/]+)/);
+    if (entityMatch) {
+      return getVanillaAnimation(entityMatch[1], animName);
+    }
+    const blockMatch = normalized.match(/block\/([^/]+)/);
+    if (blockMatch) {
+      return getVanillaAnimation(blockMatch[1], animName);
+    }
+
+    return null;
+  }, [animationPreset, assetId]);
   const setAvailableAnimationPresets = useStore(
     (state) => state.setAvailableAnimationPresets,
   );
@@ -173,6 +248,9 @@ function EntityModel({
   );
   const setAvailablePoseToggles = useStore(
     (state) => state.setAvailablePoseToggles,
+  );
+  const setAvailableBones = useStore(
+    (state) => state.setAvailableBones,
   );
 
   const entityAnimationVariant = useStore(
@@ -600,7 +678,10 @@ function EntityModel({
 
         // Convert parsed entity model to Three.js using new loader
         console.log("[EntityModel] Converting model to Three.js...");
-        const group = jemToThreeJS(modelForConversion, texture, textureMap);
+        const group = jemToThreeJS(modelForConversion, texture, textureMap, cemEntityType);
+
+        // Store entity ID for animation duration lookup
+        currentEntityIdRef.current = cemEntityType;
 
         if (cancelled) {
           console.log(
@@ -769,16 +850,70 @@ function EntityModel({
   useEffect(() => {
     const effectiveLayers =
       entityAnimationVariant === "vanilla" ? undefined : packAnimationLayers;
-    setAnimationLayers(effectiveLayers);
+
+    // Extract entity ID from asset ID (always needed for vanilla trigger check)
+    const normalized = assetId.toLowerCase();
+    const entityMatch = normalized.match(/entity\/([^/]+)/);
+    const blockMatch = normalized.match(/block\/([^/]+)/);
+    const entityId = entityMatch?.[1] || blockMatch?.[1];
+
+    // Load vanilla JPM animations - merge with pack animations if both exist
+    let finalLayers = effectiveLayers ? [...effectiveLayers] : [];
+    let usingVanillaAnimations = false;
+
+    // Check if vanilla animations exist for this entity
+    if (entityId) {
+      const vanillaAnims = VANILLA_ANIMATIONS[entityId as keyof typeof VANILLA_ANIMATIONS];
+      if (vanillaAnims && Array.isArray(vanillaAnims)) {
+        // Vanilla animations are already in AnimationLayer format (JPM expressions)
+        const vanillaLayers = vanillaAnims as unknown as AnimationLayer[];
+
+        if (finalLayers.length === 0) {
+          // No pack animations - use vanilla only
+          finalLayers = vanillaLayers;
+          usingVanillaAnimations = true;
+          console.log(`[EntityModel] Using vanilla JPM animations for ${entityId}:`, finalLayers);
+        } else {
+          // Pack animations exist - merge vanilla on top for trigger support
+          // This allows the "Ring" trigger to work even with pack animations
+          finalLayers = [...finalLayers, ...vanillaLayers];
+          console.log(`[EntityModel] Merged vanilla animations with pack for ${entityId}. Total layers:`, finalLayers.length);
+        }
+      }
+    }
+
+    setAnimationLayers(finalLayers);
     const info = getEntityInfoFromAssetId(assetId);
     const isBanner = info?.variant === "banner";
-    const discovered = getAvailableAnimationPresetIdsForAnimationLayers(effectiveLayers);
-    setAvailableAnimationPresets(discovered ?? (isBanner ? ["idle"] : null));
-    setAvailableAnimationTriggers(
-      getAvailableAnimationTriggerIdsForAnimationLayers(effectiveLayers),
-    );
+    const discovered = getAvailableAnimationPresetIdsForAnimationLayers(finalLayers);
+
+    // Set animation presets
+    if (usingVanillaAnimations) {
+      console.log(`[EntityModel] Using vanilla animations for entity: ${entityId}`);
+      setAvailableAnimationPresets(["idle"]);
+    } else {
+      setAvailableAnimationPresets(discovered ?? (isBanner ? ["idle"] : null));
+    }
+
+    // ALWAYS check for vanilla triggers - they should be available even with pack animations
+    // This enables the "Ring" button for bells even when a JEM file exists
+    const vanillaTrigger = entityId ? getVanillaAnimationTrigger(entityId) : undefined;
+    const packTriggers = getAvailableAnimationTriggerIdsForAnimationLayers(finalLayers) ?? [];
+
+    if (vanillaTrigger === 'interact') {
+      // Add interact trigger for block entities like bell, chest
+      const allTriggers = [...packTriggers];
+      if (!allTriggers.includes("trigger.interact")) {
+        allTriggers.push("trigger.interact");
+      }
+      console.log(`[EntityModel] Setting triggers for ${entityId}:`, allTriggers);
+      setAvailableAnimationTriggers(allTriggers.length > 0 ? allTriggers : null);
+    } else {
+      setAvailableAnimationTriggers(packTriggers.length > 0 ? packTriggers : null);
+    }
+
     setAvailablePoseToggles(
-      getAvailablePoseToggleIdsForAnimationLayers(effectiveLayers),
+      getAvailablePoseToggleIdsForAnimationLayers(finalLayers),
     );
   }, [
     entityAnimationVariant,
@@ -799,7 +934,11 @@ function EntityModel({
       });
     }
     baseBoneMapRef.current = map;
-  }, [entityGroup]);
+
+    // Expose available bone names to the UI
+    const boneNames = Array.from(map.keys());
+    setAvailableBones(boneNames.length > 0 ? boneNames : null);
+  }, [entityGroup, setAvailableBones]);
 
   useEffect(() => {
     const maps: Record<string, Map<string, THREE.Object3D>> = {};
@@ -1119,7 +1258,8 @@ function EntityModel({
           if (extra) textureMap[jemTexPath] = extra;
         }
 
-        const g = jemToThreeJS(overlayModel, tex, textureMap);
+        const overlayEntityId = layer.cemEntityTypeCandidates?.[0];
+        const g = jemToThreeJS(overlayModel, tex, textureMap, overlayEntityId);
         g.position.copy(entityGroup.position);
         g.rotation.copy(entityGroup.rotation);
         g.scale.copy(entityGroup.scale);
@@ -1183,7 +1323,7 @@ function EntityModel({
     }
 
 	    console.log("[EntityModel] Creating animation engine");
-	    const engine = createAnimationEngine(entityGroup, animationLayers);
+	    const engine = createAnimationEngine(entityGroup, animationLayers, currentEntityIdRef.current);
 	    animationEngineRef.current = engine;
 	    engine.setFeatureBoneInputOverrides?.(featureBoneInputOverrides);
 
@@ -1193,6 +1333,7 @@ function EntityModel({
     }
     engine.setSpeed(animationSpeed);
     engine.setHeadOrientation(entityHeadYaw, entityHeadPitch);
+    engine.setSwingDirection(entitySwingDirection);
     engine.setPoseToggles(
       Object.entries(activePoseToggles)
         .filter(([, enabled]) => enabled)
@@ -1252,6 +1393,14 @@ function EntityModel({
     engine.setHeadOrientation(entityHeadYaw, entityHeadPitch);
   }, [entityHeadYaw, entityHeadPitch]);
 
+  // Sync swing direction changes to engine (for bell and similar block entities)
+  useEffect(() => {
+    const engine = animationEngineRef.current;
+    if (!engine) return;
+
+    engine.setSwingDirection(entitySwingDirection);
+  }, [entitySwingDirection]);
+
   // Sync pose toggles (persistent overlays)
   useEffect(() => {
     const engine = animationEngineRef.current;
@@ -1302,6 +1451,12 @@ function EntityModel({
     };
   }, [jemDebugMode, entityGroup, parsedJemData]);
 
+  // Update vanilla animation ref when animation changes (Phase 4)
+  useEffect(() => {
+    vanillaAnimationRef.current = vanillaAnimationData || null;
+    vanillaAnimationTimeRef.current = 0; // Reset animation time
+  }, [vanillaAnimationData]);
+
   // Animation frame update
   useFrame((_, delta) => {
     const engine = animationEngineRef.current;
@@ -1311,8 +1466,71 @@ function EntityModel({
     // (manual transform adjustments would be overridden)
     if (jemDebugMode) return;
 
-    // Tick the animation engine
-    engine.tick(delta);
+    // Handle vanilla keyframe animations (Phase 4)
+    // NOTE: This is for keyframe animations only (with duration, looping, parts)
+    // JPM animations (like bell) are handled by the AnimationEngine, not this code
+    const vanillaAnim = vanillaAnimationRef.current;
+    if (vanillaAnim && vanillaAnim.parts && animationPlaying) {
+      // Update vanilla animation time
+      const scaledDelta = delta * animationSpeed;
+      vanillaAnimationTimeRef.current += scaledDelta;
+
+      // Calculate normalized time (0-1)
+      const duration = vanillaAnim.duration / 20; // Convert ticks to seconds
+      let normalizedTime = (vanillaAnimationTimeRef.current % duration) / duration;
+
+      // For non-looping animations, clamp to 1.0 at the end
+      if (!vanillaAnim.looping && vanillaAnimationTimeRef.current >= duration) {
+        normalizedTime = 1.0;
+      }
+
+      // Apply keyframe animations to bones
+      const baseBones = baseBoneMapRef.current;
+      for (const [partName, partAnim] of Object.entries(vanillaAnim.parts)) {
+        const bone = baseBones.get(partName);
+        if (!bone) continue;
+
+        // Interpolate rotation X
+        if (partAnim.rotationX) {
+          const value = interpolateKeyframes(partAnim.rotationX, normalizedTime);
+          bone.rotation.x = (value * Math.PI) / 180; // Convert degrees to radians
+        }
+
+        // Interpolate rotation Y
+        if (partAnim.rotationY) {
+          const value = interpolateKeyframes(partAnim.rotationY, normalizedTime);
+          bone.rotation.y = (value * Math.PI) / 180;
+        }
+
+        // Interpolate rotation Z
+        if (partAnim.rotationZ) {
+          const value = interpolateKeyframes(partAnim.rotationZ, normalizedTime);
+          bone.rotation.z = (value * Math.PI) / 180;
+        }
+
+        // Interpolate position X/Y/Z (in pixels, convert to Minecraft units)
+        if (partAnim.positionX) {
+          const value = interpolateKeyframes(partAnim.positionX, normalizedTime);
+          bone.position.x = value / 16; // Convert pixels to Minecraft units
+        }
+
+        if (partAnim.positionY) {
+          const value = interpolateKeyframes(partAnim.positionY, normalizedTime);
+          bone.position.y = value / 16;
+        }
+
+        if (partAnim.positionZ) {
+          const value = interpolateKeyframes(partAnim.positionZ, normalizedTime);
+          bone.position.z = value / 16;
+        }
+      }
+
+      // Skip the normal animation engine tick for vanilla animations
+      // (but still apply visibility overrides and other logic below)
+    } else {
+      // Tick the animation engine for JEM/procedural animations
+      engine.tick(delta);
+    }
 
     const applyBoneVisibilityOverrides = () => {
       if (!boneRenderOverrides) return;

@@ -822,22 +822,6 @@ fn merge_physics(
     }
 }
 
-/// Map Provider types to their corresponding particle type
-fn get_provider_to_particle_map() -> HashMap<&'static str, &'static str> {
-    let mut map = HashMap::new();
-    map.insert("__provider_flame", "flame");
-    map.insert("__provider_small_flame", "small_flame");
-    map.insert("__provider_smoke", "smoke");
-    map.insert("__provider_large_smoke", "large_smoke");
-    map.insert("__provider_soul_fire_flame", "soul_fire_flame");
-    map.insert("__provider_soul_fire_flame_emissive", "soul_fire_flame");
-    map.insert("__provider_portal", "portal");
-    map.insert("__provider_dust", "dust");
-    map.insert("__provider_campfire_cosy", "campfire_cosy_smoke");
-    map.insert("__provider_campfire_signal", "campfire_signal_smoke");
-    map
-}
-
 /// Extract physics from super() calls to base classes
 ///
 /// Many particle classes pass physics values through super() constructor calls.
@@ -2292,7 +2276,7 @@ pub async fn extract_particle_physics(
         &class_mappings,
         Some(&deobf_to_obf),
     )?;
-    for (provider_class, instantiated_class) in provider_to_particle_class.iter() {
+    for (_provider_class, instantiated_class) in provider_to_particle_class.iter() {
         // CRITICAL: Store under instantiated_class name, not provider_class name
         // Example: FlameParticle.Provider instantiates FlameParticle
         //   → extract from "FlameParticle" class, store as "__particle_class_FlameParticle"
