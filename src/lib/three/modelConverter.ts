@@ -18,7 +18,6 @@ import type {
 } from "@lib/tauri/blockModels";
 import {
   getBlockLightLevel,
-  calculateEmissiveIntensity,
   shouldHaveVisualEmissive,
 } from "@/constants/blockLightEmission";
 

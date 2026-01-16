@@ -20,6 +20,7 @@ import {
 import { resolveBlockEntityRenderSpec } from "@lib/blockEntityResolver";
 import { getMultiBlockParts, type MultiBlockPart } from "@lib/multiBlockConfig";
 import { updateAnimatedTextures } from "@lib/three/textureLoader";
+import { resolveMinecartCompositeSpec } from "@lib/minecartComposite";
 import s from "./styles.module.scss";
 
 /**
@@ -34,6 +35,7 @@ function AnimationUpdater() {
 
 interface Props {
   assetId?: string;
+  sourceAssetId?: string;
   biomeColor?: { r: number; g: number; b: number } | null;
   onTintDetected?: (info: {
     hasTint: boolean;
@@ -48,6 +50,7 @@ interface Props {
 
 export default function Preview3D({
   assetId,
+  sourceAssetId,
   biomeColor,
   onTintDetected,
   showPot,
@@ -122,6 +125,14 @@ export default function Preview3D({
   // Colormap assets are now handled in the dedicated "Biome & Colormaps" tab
   // If someone tries to preview them here, just show nothing
   const previewAssetId = assetId && !isColormapAsset ? assetId : undefined;
+  const minecartCompositeSpec = useMemo(
+    () =>
+      resolveMinecartCompositeSpec(
+        sourceAssetId ?? previewAssetId,
+        allAssetIds,
+      ),
+    [sourceAssetId, previewAssetId, allAssetIds],
+  );
   const multiBlockParts: MultiBlockPart[] | null = previewAssetId
     ? getMultiBlockParts(previewAssetId, blockProps)
     : null;
@@ -135,6 +146,9 @@ export default function Preview3D({
   const directEntityAssetId =
     previewAssetId && isEntityAsset(previewAssetId) ? previewAssetId : undefined;
   const entityAssetId = blockEntitySpec?.assetId ?? directEntityAssetId;
+  const isMinecartEntity =
+    entityAssetId?.replace(/^minecraft:/, "").startsWith("entity/minecart") ??
+    false;
   const particleStateProps = useMemo(
     () => ({ ...blockProps, ...particleConditionOverrides }),
     [blockProps, particleConditionOverrides],
@@ -145,46 +159,20 @@ export default function Preview3D({
   const shouldHaveShadow = useMemo(() => {
     if (!previewAssetId) return true;
 
-    const transparentBlocks = [
-      'redstone_wire',
-      'redstone_dust', // Alternative name
-      'glass',
-      'tinted_glass',
-      'white_stained_glass',
-      'orange_stained_glass',
-      'magenta_stained_glass',
-      'light_blue_stained_glass',
-      'yellow_stained_glass',
-      'lime_stained_glass',
-      'pink_stained_glass',
-      'gray_stained_glass',
-      'light_gray_stained_glass',
-      'cyan_stained_glass',
-      'purple_stained_glass',
-      'blue_stained_glass',
-      'brown_stained_glass',
-      'green_stained_glass',
-      'red_stained_glass',
-      'black_stained_glass',
-      'glass_pane',
-      'torch',
-      'wall_torch',
-      'soul_torch',
-      'soul_wall_torch',
-      'redstone_torch',
-      'redstone_wall_torch',
-      'tripwire',
-      'string',
-      'scaffolding',
-      'ladder',
-      'vine',
-      'glow_lichen',
-      'sculk_vein',
+    const normalizedId = previewAssetId.toLowerCase();
+
+    // Pattern-based checks for block families (avoids listing every color variant)
+    if (normalizedId.includes('glass')) return false; // glass, stained_glass, glass_pane
+    if (normalizedId.includes('redstone_wire') || normalizedId.includes('redstone_dust')) return false;
+    if (normalizedId.includes('torch')) return false; // torch, wall_torch, soul_torch, redstone_torch
+
+    // Explicit flat/transparent blocks
+    const noShadowBlocks = [
+      'tripwire', 'string', 'scaffolding', 'ladder',
+      'vine', 'glow_lichen', 'sculk_vein',
     ];
 
-    // Check if asset ID contains any of the transparent block names
-    const normalizedId = previewAssetId.toLowerCase();
-    return !transparentBlocks.some((blockName) => normalizedId.includes(blockName));
+    return !noShadowBlocks.some((block) => normalizedId.includes(block));
   }, [previewAssetId]);
 
   useEffect(() => {
@@ -261,7 +249,39 @@ export default function Preview3D({
           {/* Model rendering - use EntityModel for entities, BlockModel for blocks */}
           {previewAssetId &&
             (entityAssetId ? (
-              blockEntitySpec?.renderBoth ? (
+              isMinecartEntity ? (
+                <>
+                  <EntityModel
+                    assetId={entityAssetId}
+                    entityTypeOverride={minecartCompositeSpec?.entityTypeOverride}
+                    parentEntityOverride={blockEntitySpec?.parentEntityOverride}
+                  />
+                  {minecartCompositeSpec?.cargo && (
+                    <group position={[0, 0.1, 0]} scale={[0.75, 0.75, 0.75]}>
+                      {minecartCompositeSpec.cargo.kind === "entity" ? (
+                        <EntityModel
+                          assetId={minecartCompositeSpec.cargo.assetId}
+                          entityTypeOverride={
+                            minecartCompositeSpec.cargo.entityTypeOverride
+                          }
+                          parentEntityOverride={
+                            minecartCompositeSpec.cargo.parentEntityOverride
+                          }
+                        />
+                      ) : (
+                        <BlockModel
+                          assetId={minecartCompositeSpec.cargo.assetId}
+                          biomeColor={effectiveBiomeColor}
+                          showPot={false}
+                          isPotted={false}
+                          blockProps={minecartCompositeSpec.cargo.blockProps ?? {}}
+                          seed={seed}
+                        />
+                      )}
+                    </group>
+                  )}
+                </>
+              ) : blockEntitySpec?.renderBoth ? (
                 // Composite rendering: both block model AND entity model (e.g., bells)
                 // Block model renders the frame/structure, entity model renders the dynamic part
                 <>

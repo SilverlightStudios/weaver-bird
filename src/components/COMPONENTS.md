@@ -177,20 +177,6 @@
 
 ---
 
-## ResizeHandle
-
-**Purpose**: Window resize grip for Tauri app (bottom-right corner)
-
-**useEffects**: None
-
-**Utilities**: None
-
-**Usage Count**: 1 usage (`src/routes/main.tsx`)
-
-**Child Components**: None
-
----
-
 ## ResourcePackCard
 
 **Purpose**: Reusable pack card UI with dynamic accent color extraction from icon
@@ -308,20 +294,6 @@
 **Utilities**: None
 
 **Usage Count**: 1 usage (OptionsPanel/PackVariantsTab)
-
-**Child Components**: None
-
----
-
-## WindowControls
-
-**Purpose**: macOS-style window controls (close, minimize, maximize) for Tauri app
-
-**useEffects**: None
-
-**Utilities**: None
-
-**Usage Count**: 1 usage (`src/routes/main.tsx`)
 
 **Child Components**: None
 

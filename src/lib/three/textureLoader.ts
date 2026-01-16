@@ -108,6 +108,60 @@ function createAnimatedTextureMaterial(
 }
 
 /**
+ * Setup animated texture configuration and register it for animation updates
+ * Shared between loadPackTexture and loadVanillaTexture to avoid duplication
+ */
+async function setupAnimatedTexture(
+  tex: THREE.Texture,
+  textureUrl: string,
+  textureId: string,
+): Promise<void> {
+  if (!tex.image) return;
+
+  const width = tex.image.width;
+  const height = tex.image.height;
+
+  // Animated textures have height > width and height evenly divisible by width
+  const isAnimated = height > width && height % width === 0;
+  if (!isAnimated) return;
+
+  const frameCount = height / width;
+  console.log(
+    `[textureLoader] Animated texture: ${textureId} (${frameCount} frames, ${width}x${height})`,
+  );
+
+  // Apply animation frame cropping - V coordinates scaled: repeat by 1/frameCount
+  tex.repeat.set(1, 1 / frameCount);
+
+  // Load animation metadata (frametime, frames, interpolate) when available
+  const metadata = await loadAnimationMetadata(textureUrl);
+  const timeline = buildAnimationTimeline(frameCount, metadata);
+  const initialFrame = timeline.frames[0] ?? 0;
+  const offset = (frameCount - 1 - initialFrame) / frameCount;
+  tex.offset.set(0, offset);
+
+  const interpolate = metadata?.interpolate ?? false;
+  const material = interpolate
+    ? createAnimatedTextureMaterial(tex, frameCount)
+    : undefined;
+
+  animatedTextures.set(tex, {
+    texture: tex,
+    frameCount,
+    frames: timeline.frames,
+    frameTimesMs: timeline.frameTimesMs,
+    sequenceIndex: 0,
+    lastUpdateTime: performance.now(),
+    interpolate,
+    material,
+  });
+
+  console.log(
+    `[textureLoader] Registered animated texture: ${frameCount} frames @ ${timeline.frameTimesMs[0] ?? 50}ms/frame`,
+  );
+}
+
+/**
  * Update all animated textures
  * Should be called in the render loop
  */
@@ -221,55 +275,10 @@ export async function loadPackTexture(
           tex.minFilter = THREE.NearestFilter;
           tex.wrapS = THREE.ClampToEdgeWrapping;
           tex.wrapT = THREE.ClampToEdgeWrapping;
-          tex.colorSpace = THREE.SRGBColorSpace; // Ensure correct color interpretation
+          tex.colorSpace = THREE.SRGBColorSpace;
 
-          // Check if texture is animated based on image dimensions
-          if (tex.image) {
-            const width = tex.image.width;
-            const height = tex.image.height;
-
-            // Animated textures have height > width and height evenly divisible by width
-            const isAnimated = height > width && height % width === 0;
-
-            if (isAnimated) {
-              const frameCount = height / width;
-              console.log(
-                `[textureLoader] ✓ Animated texture detected: ${frameCount} frames (${width}x${height})`,
-              );
-
-              // Apply animation frame cropping
-              // V coordinates need to be scaled: repeat by 1/frameCount
-              tex.repeat.set(1, 1 / frameCount);
-
-              // Load animation metadata (frametime, frames, interpolate) when available
-              const metadata = await loadAnimationMetadata(textureUrl);
-              const timeline = buildAnimationTimeline(frameCount, metadata);
-              const initialFrame = timeline.frames[0] ?? 0;
-              const offset =
-                (frameCount - 1 - initialFrame) / frameCount;
-              tex.offset.set(0, offset);
-
-              const interpolate = metadata?.interpolate ?? false;
-              const material = interpolate
-                ? createAnimatedTextureMaterial(tex, frameCount)
-                : undefined;
-
-              animatedTextures.set(tex, {
-                texture: tex,
-                frameCount,
-                frames: timeline.frames,
-                frameTimesMs: timeline.frameTimesMs,
-                sequenceIndex: 0,
-                lastUpdateTime: performance.now(),
-                interpolate,
-                material,
-              });
-
-              console.log(
-                `[textureLoader] → Registered animated texture: ${frameCount} frames @ ${timeline.frameTimesMs[0] ?? 50}ms/frame`,
-              );
-            }
-          }
+          // Setup animation if texture dimensions indicate animated texture
+          await setupAnimatedTexture(tex, textureUrl, textureId);
 
           resolve(tex);
         },
@@ -334,49 +343,10 @@ export async function loadVanillaTexture(
           tex.minFilter = THREE.NearestFilter;
           tex.wrapS = THREE.ClampToEdgeWrapping;
           tex.wrapT = THREE.ClampToEdgeWrapping;
-          tex.colorSpace = THREE.SRGBColorSpace; // Ensure correct color interpretation
+          tex.colorSpace = THREE.SRGBColorSpace;
 
-          // Check if texture is animated based on image dimensions
-          if (tex.image) {
-            const width = tex.image.width;
-            const height = tex.image.height;
-
-            // Animated textures have height > width and height evenly divisible by width
-            const isAnimated = height > width && height % width === 0;
-
-            if (isAnimated) {
-              const frameCount = height / width;
-              console.log(
-                `[textureLoader] ✓ Animated vanilla texture: ${textureId} (${frameCount} frames, ${width}x${height})`,
-              );
-
-              // Apply animation frame cropping
-              tex.repeat.set(1, 1 / frameCount);
-
-              const metadata = await loadAnimationMetadata(textureUrl);
-              const timeline = buildAnimationTimeline(frameCount, metadata);
-              const initialFrame = timeline.frames[0] ?? 0;
-              const offset =
-                (frameCount - 1 - initialFrame) / frameCount;
-              tex.offset.set(0, offset);
-
-              const interpolate = metadata?.interpolate ?? false;
-              const material = interpolate
-                ? createAnimatedTextureMaterial(tex, frameCount)
-                : undefined;
-
-              animatedTextures.set(tex, {
-                texture: tex,
-                frameCount,
-                frames: timeline.frames,
-                frameTimesMs: timeline.frameTimesMs,
-                sequenceIndex: 0,
-                lastUpdateTime: performance.now(),
-                interpolate,
-                material,
-              });
-            }
-          }
+          // Setup animation if texture dimensions indicate animated texture
+          await setupAnimatedTexture(tex, textureUrl, textureId);
 
           resolve(tex);
         },

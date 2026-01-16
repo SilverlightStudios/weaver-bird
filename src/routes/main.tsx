@@ -58,8 +58,6 @@ import { TargetVersion } from "@components/Settings/components/TargetVersion";
 import { VanillaTextureProgress } from "@components/VanillaTextureProgress";
 import { CanvasSettings } from "@components/CanvasSettings";
 import { BiomeSelector } from "@components/BiomeSelector";
-import { WindowControls } from "@components/WindowControls";
-import { ResizeHandle } from "@components/ResizeHandle";
 import Button from "@/ui/components/buttons/Button";
 import {
   Pagination,
@@ -91,7 +89,6 @@ import {
   getLauncherResourcepacksDir,
   getEntityVersionVariants,
 } from "@lib/tauri";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import type { LauncherInfo } from "@lib/tauri";
 import { getBlockTintType } from "@/constants/vanillaBlockColors";
@@ -770,14 +767,6 @@ export default function MainRoute() {
     [setOverride],
   );
 
-  const handleDragWindow = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    try {
-      await getCurrentWindow().startDragging();
-    } catch (error) {
-      console.error("Failed to start window dragging:", error);
-    }
-  }, []);
 
   const handleBrowsePacksFolder = useCallback(async () => {
     try {
@@ -1298,6 +1287,7 @@ export default function MainRoute() {
           content = (
             <Preview3D
               assetId={viewingVariantId || previewBlockId}
+              sourceAssetId={viewingVariantId ?? uiState.selectedAssetId}
               biomeColor={biomeColor}
               onTintDetected={setTintInfo}
               showPot={showPot}
@@ -1320,18 +1310,12 @@ export default function MainRoute() {
   return (
     <div className={s.container}>
       {/* Header */}
-      <div className={s.header}>
+      <div className={s.header} data-tauri-drag-region>
         <div className={s.headerContent}>
           <div className={s.headerLeft}>
-            <WindowControls />
             <div className={s.headerTitle}>
               <h1>Weaverbird</h1>
               <p>Minecraft Resource Pack Manager</p>
-            </div>
-          </div>
-          <div className={s.dragRegion} onMouseDown={handleDragWindow}>
-            <div className={s.dragHandle}>
-              <span className={s.dragIndicator}></span>
             </div>
           </div>
           <div className={s.headerRight}>
@@ -1428,9 +1412,6 @@ export default function MainRoute() {
         vanillaVersionTab={<VanillaTextureVersion />}
         targetVersionTab={<TargetVersion />}
       />
-
-      {/* Resize Handle */}
-      <ResizeHandle />
     </div>
   );
 }

@@ -101,7 +101,7 @@ function evaluatePositionExpr(
     // Pattern: ($0.getValue(FACING)).getOpposite().getStepX()
     // or: ($0.getValue(FACING)).getStepZ()
     const facingPattern = /\(\$0\.getValue\(FACING\)\)(\.getOpposite\(\))?\.(getStep[XYZ])\(\)/g;
-    processed = processed.replace(facingPattern, (match, opposite, stepMethod) => {
+    processed = processed.replace(facingPattern, (_match, opposite, stepMethod) => {
       const facing = blockProps.facing || "north";
       const actualFacing = opposite ? getOppositeFacing(facing) : facing;
       const stepAxis = stepMethod.slice(7).toLowerCase() as "x" | "y" | "z"; // getStepX -> x
