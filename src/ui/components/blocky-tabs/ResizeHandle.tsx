@@ -1,5 +1,5 @@
 import React from "react";
-import { ZoneId } from "./types";
+import type { ZoneId } from "./types";
 import { RESIZE_DOT_SIZE } from "./constants";
 import { getResizeHandleBaseStyle, getResizeHandleZoneStyle } from "./utils";
 

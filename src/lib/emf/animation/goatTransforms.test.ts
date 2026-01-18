@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
+import type * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 const PX = 16;
 
@@ -20,22 +21,22 @@ describe("Fresh Animations (goat) translation semantics", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
     engine.tick(0);
 
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
-    const coat = group.getObjectByName("coat") as THREE.Object3D | null;
-    const mouth = group.getObjectByName("mouth") as THREE.Object3D | null;
-    const rightEye = group.getObjectByName("right_eye") as THREE.Object3D | null;
-    const leftEye = group.getObjectByName("left_eye") as THREE.Object3D | null;
+    const body = group.getObjectByName("body") as BoneWithUserData | null;
+    const coat = group.getObjectByName("coat") as BoneWithUserData | null;
+    const mouth = group.getObjectByName("mouth") as BoneWithUserData | null;
+    const rightEye = group.getObjectByName("right_eye") as BoneWithUserData | null;
+    const leftEye = group.getObjectByName("left_eye") as BoneWithUserData | null;
 
     expect(body).toBeTruthy();
     expect(coat).toBeTruthy();
@@ -46,7 +47,7 @@ describe("Fresh Animations (goat) translation semantics", () => {
     // Coat: `coat.ty` in FA goat is an absolute origin value (CEM-space),
     // so we treat Y as absolute with a 0px Y origin.
     expect(coat!.parent?.name).toBe("body");
-    const coatUserData = (coat as any).userData ?? {};
+    const coatUserData = coat!.userData;
     const coatAxes =
       typeof coatUserData.absoluteTranslationAxes === "string"
         ? (coatUserData.absoluteTranslationAxes as string)
@@ -55,8 +56,8 @@ describe("Fresh Animations (goat) translation semantics", () => {
     expect(coatUserData.cemYOriginPx).toBe(0);
 
     const coatTy = engine.getBoneValue("coat", "ty");
-    const bodyOriginPx = Array.isArray((body as any).userData?.originPx)
-      ? ((body as any).userData.originPx as [number, number, number])
+    const bodyOriginPx = Array.isArray(body!.userData?.originPx)
+      ? (body!.userData.originPx as [number, number, number])
       : ([0, 0, 0] as [number, number, number]);
     const coatInvertAxis =
       typeof coatUserData.invertAxis === "string"
@@ -75,7 +76,7 @@ describe("Fresh Animations (goat) translation semantics", () => {
 
     // Mouth: FA goat sets mouth.ty/mouth.tz as absolute local positions, not offsets.
     expect(mouth!.parent?.name).toBe("snout");
-    const mouthUserData = (mouth as any).userData ?? {};
+    const mouthUserData = mouth!.userData;
     const mouthAxes =
       typeof mouthUserData.absoluteTranslationAxes === "string"
         ? (mouthUserData.absoluteTranslationAxes as string)
@@ -100,7 +101,7 @@ describe("Fresh Animations (goat) translation semantics", () => {
     // Eyes: `right_eye.tx` and `left_eye.tx` include the base translate.
     expect(rightEye!.parent?.name).toBe("eyes");
     expect(leftEye!.parent?.name).toBe("eyes");
-    const rightEyeUserData = (rightEye as any).userData ?? {};
+    const rightEyeUserData = rightEye!.userData;
     const rightEyeAxes =
       typeof rightEyeUserData.absoluteTranslationAxes === "string"
         ? (rightEyeUserData.absoluteTranslationAxes as string)

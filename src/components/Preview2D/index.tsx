@@ -580,7 +580,7 @@ export default function Preview2D({ assetId }: Props) {
       }
     };
 
-    loadTexture();
+    void loadTexture();
 
     return () => {
       mounted = false;
@@ -625,7 +625,7 @@ export default function Preview2D({ assetId }: Props) {
       }
     };
 
-    loadModel();
+    void loadModel();
 
     return () => {
       mounted = false;

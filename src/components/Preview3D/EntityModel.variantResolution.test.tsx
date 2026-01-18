@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, type Mock } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import * as THREE from "three";
 
@@ -39,16 +39,16 @@ vi.mock("@state/selectors", async () => {
 
 vi.mock("@lib/emf", async () => {
   return {
-    getEntityInfoFromAssetId: (...args: any[]) => getEntityInfoFromAssetIdMock(...args),
+    getEntityInfoFromAssetId: (...args: unknown[]) => getEntityInfoFromAssetIdMock(...args),
     jemToThreeJS: vi.fn(() => new THREE.Group()),
-    loadEntityModel: (...args: any[]) => loadEntityModelMock(...args),
+    loadEntityModel: (...args: unknown[]) => loadEntityModelMock(...args),
     isEntityTexture: () => true,
   };
 });
 
 vi.mock("@lib/entityComposite", async () => {
   return {
-    resolveEntityCompositeSchema: (...args: any[]) =>
+    resolveEntityCompositeSchema: (...args: unknown[]) =>
       resolveEntityCompositeSchemaMock(...args),
   };
 });
@@ -68,11 +68,11 @@ vi.mock("@lib/tauri", async () => {
 
 vi.mock("@lib/emf/animation/AnimationEngine", async () => {
   return {
-    createAnimationEngine: (...args: any[]) => createAnimationEngineMock(...args),
+    createAnimationEngine: (...args: unknown[]) => createAnimationEngineMock(...args),
   };
 });
 
-function makeParsedModel(animations?: any) {
+function makeParsedModel(animations?: unknown) {
   return {
     texturePath: "entity/zombie/zombie",
     textureSize: [64, 64],
@@ -112,15 +112,15 @@ describe("EntityModel variant resolution", () => {
 
     // Winner is vanilla, so the component should load the vanilla JEM and never
     // attempt to load from another pack path.
-    const calls = loadEntityModelMock.mock.calls;
+    const {calls} = loadEntityModelMock.mock;
     expect(calls.length).toBeGreaterThanOrEqual(1);
     expect(calls[0]?.[1]).toBeUndefined();
   });
 
   it("respects animation variant selection (vanilla disables pack JPM layers)", async () => {
     // Switch winner pack to a non-vanilla pack for this test.
-    const selectors = await import("@state/selectors");
-    (selectors.useSelectWinner as any).mockReturnValue("fresh:animations");
+    const selectors = (await import("@state/selectors")) as unknown as { useSelectWinner: Mock };
+    selectors.useSelectWinner.mockReturnValue("fresh:animations");
 
     loadEntityModelMock.mockResolvedValue(makeParsedModel([{ "body.rx": "0" }]));
     createAnimationEngineMock.mockReturnValue({

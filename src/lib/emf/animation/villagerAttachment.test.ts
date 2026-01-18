@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import * as THREE from "three";
+import type * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { createAnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 describe("Fresh Animations (villager) attachment", () => {
   it("treats headwear geometry as the animated head bone", () => {
@@ -18,7 +19,7 @@ describe("Fresh Animations (villager) attachment", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: any[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
@@ -31,9 +32,9 @@ describe("Fresh Animations (villager) attachment", () => {
     engine.tick(0.05);
     group.updateMatrixWorld(true);
 
-    const head = group.getObjectByName("head") as THREE.Object3D | null;
-    const headPivot = group.getObjectByName("head_pivot") as THREE.Object3D | null;
-    const nose = group.getObjectByName("nose") as THREE.Object3D | null;
+    const head = group.getObjectByName("head") as BoneWithUserData | null;
+    const headPivot = group.getObjectByName("head_pivot") as BoneWithUserData | null;
+    const nose = group.getObjectByName("nose") as BoneWithUserData | null;
 
     expect(head).toBeTruthy();
     expect(headPivot).toBeTruthy();
@@ -42,7 +43,7 @@ describe("Fresh Animations (villager) attachment", () => {
 
     let headHasMesh = false;
     head!.traverse((obj) => {
-      if (obj !== head && (obj as any).isMesh === true) headHasMesh = true;
+      if (obj !== head && (obj as THREE.Mesh).isMesh === true) headHasMesh = true;
     });
     expect(headHasMesh).toBe(true);
 
@@ -61,7 +62,7 @@ describe("Fresh Animations (villager) attachment", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: any[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
@@ -74,10 +75,10 @@ describe("Fresh Animations (villager) attachment", () => {
     engine.tick(0.5);
     group.updateMatrixWorld(true);
 
-    const armsRotation = group.getObjectByName("arms_rotation") as THREE.Object3D | null;
-    const arms = group.getObjectByName("arms") as THREE.Object3D | null;
-    const leftLeg = group.getObjectByName("left_leg") as THREE.Object3D | null;
-    const rightLeg = group.getObjectByName("right_leg") as THREE.Object3D | null;
+    const armsRotation = group.getObjectByName("arms_rotation") as BoneWithUserData | null;
+    const arms = group.getObjectByName("arms") as BoneWithUserData | null;
+    const leftLeg = group.getObjectByName("left_leg") as BoneWithUserData | null;
+    const rightLeg = group.getObjectByName("right_leg") as BoneWithUserData | null;
     expect(armsRotation).toBeTruthy();
     expect(arms).toBeTruthy();
     expect(leftLeg).toBeTruthy();
@@ -98,8 +99,10 @@ describe("Fresh Animations (villager) attachment", () => {
 
     // Villager legs use tx=±2 as entity-space pivots; if treated additively the
     // legs drift to ±4.
-    expect(leftLeg!.userData.absoluteTranslationAxes).toContain("x");
-    expect(rightLeg!.userData.absoluteTranslationAxes).toContain("x");
+    expect(typeof leftLeg!.userData.absoluteTranslationAxes).toBe("string");
+    expect((leftLeg!.userData.absoluteTranslationAxes as string)).toContain("x");
+    expect(typeof rightLeg!.userData.absoluteTranslationAxes).toBe("string");
+    expect((rightLeg!.userData.absoluteTranslationAxes as string)).toContain("x");
     expect(leftLeg!.position.x * 16).toBeCloseTo(-2, 2);
     expect(rightLeg!.position.x * 16).toBeCloseTo(2, 2);
   });

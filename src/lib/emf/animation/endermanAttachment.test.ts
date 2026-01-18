@@ -4,6 +4,7 @@ import { join } from "node:path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { createAnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 describe("Fresh Animations (enderman) attachment", () => {
   it("keeps left/right limbs symmetrically attached during CEM playback", () => {
@@ -18,7 +19,7 @@ describe("Fresh Animations (enderman) attachment", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: any[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
@@ -104,7 +105,7 @@ describe("Fresh Animations (enderman) attachment", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: any[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
@@ -117,10 +118,10 @@ describe("Fresh Animations (enderman) attachment", () => {
     engine.tick(0.5);
     group.updateMatrixWorld(true);
 
-    const leftFoot = group.getObjectByName("left_foot") as THREE.Object3D | null;
+    const leftFoot = group.getObjectByName("left_foot") as BoneWithUserData | null;
     const rightFoot = group.getObjectByName(
       "right_foot",
-    ) as THREE.Object3D | null;
+    ) as BoneWithUserData | null;
 
     expect(leftFoot).toBeTruthy();
     expect(rightFoot).toBeTruthy();
@@ -147,7 +148,7 @@ describe("Fresh Animations (enderman) attachment", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: any[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
@@ -160,10 +161,10 @@ describe("Fresh Animations (enderman) attachment", () => {
     engine.tick(0.5);
     group.updateMatrixWorld(true);
 
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
-    const headwear = group.getObjectByName("headwear") as THREE.Object3D | null;
-    const leftArm = group.getObjectByName("left_arm") as THREE.Object3D | null;
-    const rightArm = group.getObjectByName("right_arm") as THREE.Object3D | null;
+    const body = group.getObjectByName("body") as BoneWithUserData | null;
+    const headwear = group.getObjectByName("headwear") as BoneWithUserData | null;
+    const leftArm = group.getObjectByName("left_arm") as BoneWithUserData | null;
+    const rightArm = group.getObjectByName("right_arm") as BoneWithUserData | null;
     expect(body).toBeTruthy();
     expect(headwear).toBeTruthy();
     expect(leftArm).toBeTruthy();

@@ -40,7 +40,7 @@ const mockFetch = vi.fn();
 describe("animationTexture", () => {
   beforeEach(() => {
     // Setup mocks
-    global.Image = MockImage as any;
+    global.Image = MockImage as unknown as typeof Image;
     global.fetch = mockFetch;
     mockFetch.mockReset();
   });

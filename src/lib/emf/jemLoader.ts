@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { VANILLA_HIERARCHIES } from "@constants/animations/generated";
+import type { BoneWithUserData } from "./types";
 
 /**
  * JEM Loader - Parses OptiFine Entity Models following Blockbench's exact logic
@@ -291,7 +292,7 @@ function parseModelPart(
   options: ParseOptions,
 ): ParsedPart {
   const name = part.id || part.part || "unnamed";
-  const invertAxis = part.invertAxis;
+  const {invertAxis} = part;
   const hasTranslate = Array.isArray(part.translate);
   const translate: [number, number, number] = hasTranslate
     ? [...(part.translate as [number, number, number])]
@@ -696,7 +697,7 @@ export function jemToThreeJS(
         );
       });
 
-    const body = rootGroups.body;
+    const {body} = rootGroups;
     if (body && !hasZeroedBodyTranslation) {
       body.userData.absoluteTranslationAxes = "xyz";
     }
@@ -783,7 +784,7 @@ export function jemToThreeJS(
           : "";
       obj.userData.absoluteTranslationAxes = existing.includes("z")
         ? existing
-        : existing + "z";
+        : `${existing  }z`;
       obj.userData.absoluteTranslationSpace = "local";
     }
     // Wolves also author `body_rotation.tz` (and friends) as rotationPoint values
@@ -815,8 +816,8 @@ export function jemToThreeJS(
         );
       obj.userData.absoluteTranslationSpace = "local";
 
-      const parentOriginPx = Array.isArray((obj.parent as any)?.userData?.originPx)
-        ? ((obj.parent as any).userData.originPx as [number, number, number])
+      const parentOriginPx = Array.isArray((obj.parent as BoneWithUserData | null)?.userData?.originPx)
+        ? ((obj.parent as BoneWithUserData).userData.originPx as [number, number, number])
         : null;
       // Use the parent's origin as the Y origin so absolute-Y becomes a direct
       // CEM->Three conversion (avoids the 24px biped origin logic).
@@ -1114,7 +1115,7 @@ function applyVanillaHierarchy(
   const hasMeshDescendant = (obj: THREE.Object3D): boolean => {
     let hasMesh = false;
     obj.traverse((child) => {
-      if (child !== obj && (child as any).isMesh === true) hasMesh = true;
+      if (child !== obj && child instanceof THREE.Mesh) hasMesh = true;
     });
     return hasMesh;
   };
@@ -1201,8 +1202,8 @@ function applyVanillaHierarchy(
     // `head.*`, so swap the names to animate the real head geometry without
     // forcing a hard-coded pivot translation.
     if (rootGroups.head && rootGroups.headwear) {
-      const head = rootGroups.head;
-      const headwear = rootGroups.headwear;
+      const {head} = rootGroups;
+      const {headwear} = rootGroups;
       if (!hasMeshDescendant(head) && hasMeshDescendant(headwear)) {
         let pivotName = "head_pivot";
         while (rootGroups[pivotName]) pivotName = `${pivotName}_`;
@@ -1370,7 +1371,7 @@ function createBoxMesh(
   boxIdx: number,
 ): THREE.Mesh | null {
   const { from, to } = box;
-  const textureSize = box.textureSize;
+  const {textureSize} = box;
 
   // Blockbench expands 0-sized dimensions slightly (cube.js updateGeometry):
   //   if (from[i] === to[i]) to[i] += 0.001
@@ -1399,7 +1400,7 @@ function createBoxMesh(
   // renders these from both sides in practice, so duplicate the UV to the
   // opposite face to preserve expected two-sided appearance.
   if (isPlanar) {
-    const uv = box.uv;
+    const {uv} = box;
     const isZero = (r: [number, number, number, number]) => r.every((v) => v === 0);
     const planarAxis =
       Math.abs(originalWidthPx) <= PLANAR_EPS_PX
@@ -1574,9 +1575,9 @@ function applyUVs(
       v2 -= marginV;
     }
 
-    let uvU1 = u1 / texWidth,
+    const uvU1 = u1 / texWidth,
       uvV1 = 1 - v1 / texHeight;
-    let uvU2 = u2 / texWidth,
+    const uvU2 = u2 / texWidth,
       uvV2 = 1 - v2 / texHeight;
 
     const base = face.index * 4;

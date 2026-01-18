@@ -17,7 +17,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 // Mock THREE.TextureLoader by mocking the entire 'three' module
 vi.mock("three", async () => {
-  const actual = await vi.importActual<typeof import("three")>("three");
+  const actual = await vi.importActual<typeof THREE>("three");
 
   class MockTextureLoader {
     load(

@@ -93,7 +93,7 @@ export function generateDisplayName(asset: AssetItem): string {
 
             if (parts.length === 2) {
                 // hanging/birch or wall/oak
-                signType = parts[0].charAt(0).toUpperCase() + parts[0].slice(1) + " Sign";
+                signType = `${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)  } Sign`;
                 woodType = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
             } else {
                 // oak (regular standing sign)

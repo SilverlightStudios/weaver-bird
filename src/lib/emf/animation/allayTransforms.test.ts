@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 const PX = 16;
 
@@ -20,20 +21,18 @@ describe("Fresh Animations (allay) transform sanity", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
-    const bodyBefore = group.getObjectByName("body") as THREE.Object3D | null;
-    const rightArmBefore = group.getObjectByName(
-      "right_arm",
-    ) as THREE.Object3D | null;
-    const leftArmBefore = group.getObjectByName("left_arm") as THREE.Object3D | null;
+    const bodyBefore = group.getObjectByName("body");
+    const rightArmBefore = group.getObjectByName("right_arm");
+    const leftArmBefore = group.getObjectByName("left_arm");
     expect(bodyBefore).toBeTruthy();
     expect(rightArmBefore).toBeTruthy();
     expect(leftArmBefore).toBeTruthy();
@@ -47,13 +46,13 @@ describe("Fresh Animations (allay) transform sanity", () => {
 
     engine.tick(0);
 
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
-    const head2 = group.getObjectByName("head2") as THREE.Object3D | null;
-    const rightArm = group.getObjectByName("right_arm") as THREE.Object3D | null;
-    const leftArm = group.getObjectByName("left_arm") as THREE.Object3D | null;
-    const eyes = group.getObjectByName("eyes") as THREE.Object3D | null;
-    const rightEye = group.getObjectByName("right_eye") as THREE.Object3D | null;
-    const leftEye = group.getObjectByName("left_eye") as THREE.Object3D | null;
+    const body = group.getObjectByName("body");
+    const head2 = group.getObjectByName("head2");
+    const rightArm = group.getObjectByName("right_arm");
+    const leftArm = group.getObjectByName("left_arm");
+    const eyes = group.getObjectByName("eyes");
+    const rightEye = group.getObjectByName("right_eye");
+    const leftEye = group.getObjectByName("left_eye");
 
     expect(body).toBeTruthy();
     expect(head2).toBeTruthy();

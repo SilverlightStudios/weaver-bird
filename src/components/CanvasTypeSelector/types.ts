@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 export type CanvasRenderMode = "3D" | "2D" | "Item";
 

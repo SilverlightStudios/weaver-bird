@@ -1,3 +1,5 @@
+import type { ParsedEntityModel } from "@lib/emf/jemLoader";
+
 export interface MinecraftCSSBlockProps {
     /** Asset ID (texture ID like "minecraft:block/oak_planks") */
     assetId: string;
@@ -16,7 +18,7 @@ export interface MinecraftCSSBlockProps {
     /** Rendering mode: "block" (default) or "entity" */
     renderMode?: "block" | "entity";
     /** Parsed JEM entity model (required when renderMode is "entity") */
-    jemModel?: import("@lib/emf/jemLoader").ParsedEntityModel;
+    jemModel?: ParsedEntityModel;
     /** Entity texture URL (required when renderMode is "entity") */
     entityTextureUrl?: string;
 }

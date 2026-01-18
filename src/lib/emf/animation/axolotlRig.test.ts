@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 const getMeshSide = (mesh: THREE.Mesh): THREE.Side => {
   const mat = mesh.material;
@@ -24,14 +25,14 @@ describe("Fresh Animations (axolotl) rig", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
+    const body = group.getObjectByName("body");
     expect(body).toBeTruthy();
     const restY = body!.position.y;
 
@@ -79,14 +80,14 @@ describe("Fresh Animations (axolotl) rig", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
-    const head2 = group.getObjectByName("head2") as THREE.Object3D | null;
+    const head2 = group.getObjectByName("head2");
     expect(head2).toBeTruthy();
 
     const engine = new AnimationEngine(group, parsed.animations);
@@ -110,14 +111,14 @@ describe("Fresh Animations (axolotl) rig", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
-    const leg1 = group.getObjectByName("leg1") as THREE.Object3D | null;
+    const leg1 = group.getObjectByName("leg1");
     expect(leg1).toBeTruthy();
 
     const engine = new AnimationEngine(group, parsed.animations);

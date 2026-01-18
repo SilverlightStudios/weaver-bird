@@ -464,7 +464,7 @@ function BlockModel({
       }
     }
 
-    loadModel();
+    void loadModel();
 
     return () => {
       cancelled = true;

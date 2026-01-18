@@ -157,7 +157,7 @@ export const BiomeColorCard = ({
       }
     }
 
-    loadColormap();
+    void loadColormap();
     return () => {
       cancelled = true;
     };

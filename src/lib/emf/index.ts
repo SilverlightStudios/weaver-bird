@@ -553,8 +553,8 @@ export async function loadEntityModel(
             } else {
               // Create empty attachment bone for animations/pivots
               const attachClone: JEMModelPart = { ...modelPart };
-              delete (attachClone as any).model;
-              delete (attachClone as any).attach;
+              delete attachClone.model;
+              delete attachClone.attach;
 	              const emptyPart = parseJEMPart(
 	                attachClone,
 	                parsed.textureSize,
@@ -569,8 +569,8 @@ export async function loadEntityModel(
           } else {
             // Replacement/standalone external part
             const baseClone: JEMModelPart = { ...modelPart };
-            delete (baseClone as any).model;
-            delete (baseClone as any).attach;
+            delete baseClone.model;
+            delete baseClone.attach;
 	            const basePart = parseJEMPart(
 	              baseClone,
 	              parsed.textureSize,

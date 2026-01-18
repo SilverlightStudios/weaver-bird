@@ -61,7 +61,7 @@ function createAnimatedTextureMaterial(
     shader.uniforms.blendFactor = { value: 0.0 };
 
     // Store reference to shader uniforms for updates
-    (material as any).userData.animUniforms = shader.uniforms;
+    (material as AnimMaterial).userData.animUniforms = shader.uniforms as unknown as AnimUniforms;
 
     // Add uniform declarations to fragment shader
     shader.fragmentShader = `
@@ -118,8 +118,8 @@ async function setupAnimatedTexture(
 ): Promise<void> {
   if (!tex.image) return;
 
-  const width = tex.image.width;
-  const height = tex.image.height;
+  const {width} = tex.image;
+  const {height} = tex.image;
 
   // Animated textures have height > width and height evenly divisible by width
   const isAnimated = height > width && height % width === 0;
@@ -161,6 +161,19 @@ async function setupAnimatedTexture(
   );
 }
 
+interface AnimUniforms {
+  currentFrame: { value: number };
+  nextFrame: { value: number };
+  blendFactor: { value: number };
+  [key: string]: THREE.IUniform;
+}
+
+interface AnimMaterial extends THREE.Material {
+  userData: {
+    animUniforms?: AnimUniforms;
+  } & Record<string, unknown>;
+}
+
 /**
  * Update all animated textures
  * Should be called in the render loop
@@ -171,7 +184,7 @@ export function updateAnimatedTextures(currentTime: number): void {
       return;
     }
 
-    let sequenceIndex = info.sequenceIndex;
+    let {sequenceIndex} = info;
     let frameStartTime = info.lastUpdateTime;
     let elapsedMs = currentTime - frameStartTime;
     let frameTimeMs = info.frameTimesMs[sequenceIndex] ?? 50;
@@ -202,7 +215,7 @@ export function updateAnimatedTextures(currentTime: number): void {
       const progress = Math.min(elapsedMs / frameTimeMs, 1.0);
 
       // Update shader uniforms (stored in userData by onBeforeCompile)
-      const animUniforms = (info.material as any).userData?.animUniforms;
+      const animUniforms = (info.material as AnimMaterial).userData?.animUniforms;
       if (animUniforms) {
         animUniforms.currentFrame.value = currentFrame;
         animUniforms.nextFrame.value = nextFrame;

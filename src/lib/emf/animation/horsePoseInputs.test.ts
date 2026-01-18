@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
-import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
+import type * as THREE from "three";
+import { parseJEM, jemToThreeJS, type JEMFile, type ParsedPart, type ParsedEntityModel } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
-function indexPartsByName(parts: any[]): Map<string, any> {
-  const map = new Map<string, any>();
-  const visit = (part: any) => {
+function indexPartsByName(parts: ParsedPart[]): Map<string, ParsedPart> {
+  const map = new Map<string, ParsedPart>();
+  const visit = (part: ParsedPart) => {
     map.set(part.name, part);
     for (const child of part.children ?? []) visit(child);
   };
@@ -15,9 +16,9 @@ function indexPartsByName(parts: any[]): Map<string, any> {
   return map;
 }
 
-function mergeVanillaPivotsIntoAttachPlaceholders(parsed: any, vanilla: any) {
+function mergeVanillaPivotsIntoAttachPlaceholders(parsed: ParsedEntityModel, vanilla: ParsedEntityModel) {
   const vanillaMap = indexPartsByName(vanilla.parts);
-  const apply = (part: any) => {
+  const apply = (part: ParsedPart) => {
     if ((part.boxes?.length ?? 0) === 0 && (part.children?.length ?? 0) === 0) {
       const vanillaPart = vanillaMap.get(part.name);
       if (vanillaPart) {
@@ -48,11 +49,11 @@ describe("Fresh Animations (horse) JPM input bones", () => {
       readFileSync(vanillaJemPath, "utf-8"),
     ) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(faJem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const groupUnmerged = jemToThreeJS(parsed, null, {});
     const engineUnmerged = new AnimationEngine(groupUnmerged, parsed.animations);
@@ -65,7 +66,7 @@ describe("Fresh Animations (horse) JPM input bones", () => {
     expect(engineUnmerged.getVariable("eating")).toBeCloseTo(0, 3);
 
     const parsedMerged = parseJEM(faJem);
-    parsedMerged.animations = jpm.animations as any;
+    parsedMerged.animations = jpm.animations;
     const vanillaParsed = parseJEM(vanillaJem);
     mergeVanillaPivotsIntoAttachPlaceholders(parsedMerged, vanillaParsed);
 

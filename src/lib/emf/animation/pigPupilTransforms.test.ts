@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
+import type * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 const PX = 16;
 
@@ -20,19 +21,19 @@ describe("Fresh Animations (pig) pupil transforms", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
     engine.tick(0);
 
-    const rPupil = group.getObjectByName("r_pupil") as THREE.Object3D | null;
-    const lPupil = group.getObjectByName("l_pupil") as THREE.Object3D | null;
+    const rPupil = group.getObjectByName("r_pupil") as BoneWithUserData | null;
+    const lPupil = group.getObjectByName("l_pupil") as BoneWithUserData | null;
     expect(rPupil).toBeTruthy();
     expect(lPupil).toBeTruthy();
     expect(rPupil!.parent?.name).toBe("right_eye");

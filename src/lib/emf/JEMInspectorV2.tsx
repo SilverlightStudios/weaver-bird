@@ -5,16 +5,46 @@
  * and lil-gui for transform controls panel.
  */
 
-import { createRoot, Root } from "react-dom/client";
+import type { Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import { GUI } from "lil-gui";
 import * as THREE from "three";
 import { JEMTreeView } from "./JEMTreeView";
 import styles from "./JEMInspectorV2.module.scss";
+import type { JEMFile, JEMModelPart } from "./types";
 
 interface JEMInspectorConfig {
   scene: THREE.Scene;
-  jemData: any;
+  jemData: JEMFile;
   rootGroup: THREE.Group;
+}
+
+interface TransformControlsState {
+  partName: string;
+  posX: number;
+  posY: number;
+  posZ: number;
+  inverseX: boolean;
+  inverseY: boolean;
+  inverseZ: boolean;
+  rotX: number;
+  rotY: number;
+  rotZ: number;
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  worldPosX: number;
+  worldPosY: number;
+  worldPosZ: number;
+}
+
+interface ChangesState {
+  changes: string;
+}
+
+interface JEMInspectorTransformControls {
+  state: TransformControlsState;
+  changesState: ChangesState;
 }
 
 export class JEMInspectorV2 {
@@ -22,14 +52,11 @@ export class JEMInspectorV2 {
   private reactRoot: Root;
   private gui: GUI;
   private scene: THREE.Scene;
-  private jemData: any;
+  private jemData: JEMFile;
   private rootGroup: THREE.Group;
   private selectedObject: THREE.Object3D | null = null;
   private currentHighlight: THREE.BoxHelper | null = null;
-  private transformControls: {
-    state: any;
-    changesState: any;
-  } | null = null;
+  private transformControls: JEMInspectorTransformControls | null = null;
   private originalValues: {
     posX: number;
     posY: number;
@@ -77,7 +104,7 @@ export class JEMInspectorV2 {
         <JEMTreeView
           rootGroup={this.rootGroup}
           selectedObject={this.selectedObject}
-          onSelect={(object) => this.selectPart(object)}
+          onSelect={(object: THREE.Object3D) => this.selectPart(object)}
         />
       </div>,
     );
@@ -91,7 +118,7 @@ export class JEMInspectorV2 {
     this.gui.add(infoState, "info").name("").disable();
 
     // State for selected part
-    const state = {
+    const state: TransformControlsState = {
       partName: "None selected",
       posX: 0,
       posY: 0,
@@ -261,7 +288,7 @@ export class JEMInspectorV2 {
 
     // Changes log
     const changesFolder = this.gui.addFolder("📝 Changes Made");
-    const changesState = {
+    const changesState: ChangesState = {
       changes: "No changes yet",
     };
     changesFolder.add(changesState, "changes").name("").disable();
@@ -449,8 +476,8 @@ export class JEMInspectorV2 {
       .forEach((controller) => controller.updateDisplay());
   }
 
-  private findJEMPart(name: string): any {
-    const searchModels = (models: any[]): any => {
+  private findJEMPart(name: string): JEMModelPart | null {
+    const searchModels = (models: JEMModelPart[]): JEMModelPart | null => {
       for (const model of models) {
         if (model.id === name || model.part === name) return model;
         if (model.submodels) {

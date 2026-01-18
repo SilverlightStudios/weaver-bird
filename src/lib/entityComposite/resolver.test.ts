@@ -3,6 +3,7 @@ import {
   isEntityFeatureLayerTextureAssetId,
   resolveEntityCompositeSchema,
 } from "@lib/entityComposite";
+import type { EntityCemModelLayerDefinition, EntityCloneTextureLayerDefinition } from "@lib/entityComposite/types";
 
 describe("entityComposite", () => {
   it("detects feature-layer textures via heuristics", () => {
@@ -139,7 +140,7 @@ describe("entityComposite", () => {
       toggles: { "creeper.charge": true },
       selects: {},
     });
-    const charge = layers.find((l) => l.id === "creeper_charge") as any;
+    const charge = layers.find((l) => l.id === "creeper_charge") as EntityCemModelLayerDefinition;
     expect(charge).toBeTruthy();
     expect(charge.materialMode?.kind).toBe("energySwirl");
   });
@@ -164,7 +165,7 @@ describe("entityComposite", () => {
     const baseHidden = schema!.getBoneRenderOverrides!({
       toggles: {},
       selects: {},
-    }) as any;
+    });
     expect(baseHidden["*"]?.visible).toBe(false);
 
     // Humanoid equipment previews always use an armor-stand rig as the base
@@ -199,8 +200,8 @@ describe("entityComposite", () => {
       },
       selects: {},
     } as const;
-    const layersHelmetOnly = schema!.getActiveLayers(helmetOnlyState as any);
-    const layer1 = layersHelmetOnly.find((l) => l.id === "equipment_armor_layer_1") as any;
+    const layersHelmetOnly = schema!.getActiveLayers(helmetOnlyState);
+    const layer1 = layersHelmetOnly.find((l) => l.id === "equipment_armor_layer_1") as EntityCemModelLayerDefinition;
     expect(layer1).toBeTruthy();
     expect(layer1.boneRenderOverrides?.["*"]?.visible).toBe(false);
     expect(layer1.boneRenderOverrides?.head?.visible).toBe(true);
@@ -211,15 +212,15 @@ describe("entityComposite", () => {
     const playerUnderlayOverrides = schema!.getBoneRenderOverrides!({
       toggles: { "equipment.add_player": true, "equipment.show_helmet": true },
       selects: {},
-    }) as any;
+    });
     expect(playerUnderlayOverrides.head).toBeUndefined();
     expect(playerUnderlayOverrides.headwear?.visible).toBe(false);
 
     const layersOnPlayer = schema!.getActiveLayers({
       toggles: { "equipment.add_player": true },
       selects: {},
-    } as any);
-    const playerLayer1 = layersOnPlayer.find((l) => l.id === "equipment_armor_layer_1") as any;
+    });
+    const playerLayer1 = layersOnPlayer.find((l) => l.id === "equipment_armor_layer_1") as EntityCemModelLayerDefinition;
     expect(playerLayer1?.bonePositionOffsets?.head?.y).toBeCloseTo(0.5 / 16, 6);
   });
 
@@ -430,9 +431,9 @@ describe("entityComposite", () => {
     ];
     const schema = resolveEntityCompositeSchema("minecraft:entity/bed/red", all);
     expect(schema).toBeTruthy();
-    const control = schema!.controls.find((c) => c.id === "entity.variant") as any;
+    const control = schema!.controls.find((c) => c.id === "entity.variant");
     expect(control).toBeTruthy();
-    expect(control.label).toBe("Color");
+    expect(control!.label).toBe("Color");
     expect(schema!.getBaseTextureAssetId).toBeTruthy();
     expect(schema!.getBaseTextureAssetId!({ toggles: {}, selects: {} })).toBe(
       "minecraft:entity/bed/red",
@@ -453,9 +454,9 @@ describe("entityComposite", () => {
     ];
     const schema = resolveEntityCompositeSchema("minecraft:entity/boat/oak", all);
     expect(schema).toBeTruthy();
-    const control = schema!.controls.find((c) => c.id === "entity.variant") as any;
+    const control = schema!.controls.find((c) => c.id === "entity.variant");
     expect(control).toBeTruthy();
-    expect(control.label).toBe("Wood Type");
+    expect(control!.label).toBe("Wood Type");
     expect(schema!.getBaseTextureAssetId).toBeTruthy();
     expect(
       schema!.getBaseTextureAssetId!({
@@ -473,9 +474,9 @@ describe("entityComposite", () => {
     ];
     const schema = resolveEntityCompositeSchema("minecraft:entity/cat/tabby", all);
     expect(schema).toBeTruthy();
-    const control = schema!.controls.find((c) => c.id === "entity.variant") as any;
+    const control = schema!.controls.find((c) => c.id === "entity.variant");
     expect(control).toBeTruthy();
-    expect(control.label).toBe("Cat Type");
+    expect(control!.label).toBe("Cat Type");
     expect(schema!.getBaseTextureAssetId).toBeTruthy();
     expect(schema!.getBaseTextureAssetId!({ toggles: {}, selects: {} })).toBe(
       "minecraft:entity/cat/tabby",
@@ -567,14 +568,14 @@ describe("entityComposite", () => {
     expect(schema!.controls.some((c) => c.id === "sheep.color")).toBe(true);
 
     const full = schema!.getActiveLayers({ toggles: {}, selects: { "sheep.coat_state": "full" } });
-    const undercoat = full.find((l) => l.id === "sheep_undercoat");
-    const wool = full.find((l) => l.id === "sheep_wool");
+    const undercoat = full.find((l) => l.id === "sheep_undercoat") as EntityCloneTextureLayerDefinition;
+    const wool = full.find((l) => l.id === "sheep_wool") as EntityCloneTextureLayerDefinition;
     expect(undercoat).toBeTruthy();
     expect(wool).toBeTruthy();
-    expect((undercoat as any).textureAssetId).toBe(
+    expect(undercoat.textureAssetId).toBe(
       "minecraft:entity/sheep/sheep_wool_undercoat",
     );
-    expect((wool as any).textureAssetId).toBe("minecraft:entity/sheep/sheep_wool");
+    expect(wool.textureAssetId).toBe("minecraft:entity/sheep/sheep_wool");
 
     const sheared = schema!.getActiveLayers({
       toggles: {},

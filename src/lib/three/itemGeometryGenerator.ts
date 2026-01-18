@@ -358,8 +358,8 @@ export function generateItemGeometryFromImageFrame(
   frameIndex: number,
   thickness: number = 0.0625,
 ): THREE.BufferGeometry {
-  const width = image.width;
-  const height = image.height;
+  const {width} = image;
+  const {height} = image;
   const hasAnimation = height > width && height % width === 0;
   const frameCount = hasAnimation ? height / width : 1;
   const frameHeight = hasAnimation ? width : height;

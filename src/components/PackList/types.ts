@@ -1,4 +1,5 @@
 import type { DragDropEvents } from "@dnd-kit/react";
+import type { LauncherInfo } from "@/state/types";
 
 export interface PackItem {
     id: string;
@@ -17,9 +18,9 @@ export interface PackListProps {
     onEnable?: (packId: string, targetIndex?: number) => void;
     onBrowse?: () => void;
     packsDir?: string;
-    selectedLauncher?: import("@/state/types").LauncherInfo;
-    availableLaunchers?: import("@/state/types").LauncherInfo[];
-    onLauncherChange?: (launcher: import("@/state/types").LauncherInfo) => void;
+    selectedLauncher?: LauncherInfo;
+    availableLaunchers?: LauncherInfo[];
+    onLauncherChange?: (launcher: LauncherInfo) => void;
 }
 
 export type PackContainer = "enabled" | "disabled";

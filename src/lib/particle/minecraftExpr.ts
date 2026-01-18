@@ -175,7 +175,7 @@ function replaceDirectionFrom2D(expr: string): string | null {
 
     const balanced = extractBalanced(expr, start);
     const arg = balanced.value.slice(1, -1).trim();
-    let rest = expr.slice(balanced.end);
+    const rest = expr.slice(balanced.end);
 
     const clockwiseMatch = rest.match(
       /^\s*\.getClockWise\s*\(\s*\)\s*\.getStep([XYZ])\s*\(\s*\)/,
@@ -392,7 +392,7 @@ export function compileMinecraftExpr(
 
   try {
 
-    // eslint-disable-next-line no-new-func
+     
     const fn = new Function(
       "rand",
       "randInt",

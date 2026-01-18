@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 describe("Fresh Animations (chicken) root translation semantics", () => {
   it("keeps the body at its JEM rest position at tick(0)", () => {
@@ -18,28 +18,28 @@ describe("Fresh Animations (chicken) root translation semantics", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
     parsed.animations = [
       ...(parsed.animations ?? []),
-      ...((jpm.animations ?? []) as any),
+      ...(jpm.animations ?? []),
     ];
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
-    const bodyBefore = group.getObjectByName("body") as THREE.Object3D | null;
+    const bodyBefore = group.getObjectByName("body") as BoneWithUserData | null;
     expect(bodyBefore).toBeTruthy();
     const snapY = bodyBefore!.position.y;
 
     engine.tick(0);
 
-    const bodyAfter = group.getObjectByName("body") as THREE.Object3D | null;
+    const bodyAfter = group.getObjectByName("body") as BoneWithUserData | null;
     expect(bodyAfter).toBeTruthy();
 
-    const bodyUserData = (bodyAfter as any).userData ?? {};
+    const bodyUserData = bodyAfter!.userData;
     const axes =
       typeof bodyUserData.absoluteTranslationAxes === "string"
         ? (bodyUserData.absoluteTranslationAxes as string)
@@ -67,27 +67,27 @@ describe("Fresh Animations (chicken) root translation semantics", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
     parsed.animations = [
       ...(parsed.animations ?? []),
-      ...((jpm.animations ?? []) as any),
+      ...(jpm.animations ?? []),
     ];
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
     engine.setPreset("idle", true);
 
-    const bodyBase = group.getObjectByName("body") as THREE.Object3D | null;
+    const bodyBase = group.getObjectByName("body") as BoneWithUserData | null;
     expect(bodyBase).toBeTruthy();
     const snapY = bodyBase!.position.y;
 
     // Advance a bit so time-based idle motion kicks in.
     for (let i = 0; i < 10; i++) engine.tick(0.05);
 
-    const bodyAfter = group.getObjectByName("body") as THREE.Object3D | null;
+    const bodyAfter = group.getObjectByName("body") as BoneWithUserData | null;
     expect(bodyAfter).toBeTruthy();
 
     // Idle breathing/bobbing should be subtle.

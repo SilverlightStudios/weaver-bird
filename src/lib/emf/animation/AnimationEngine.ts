@@ -13,6 +13,7 @@ import type {
   ParsedExpression,
   BoneTransform,
 } from "./types";
+import type { BoneWithUserData } from "@/lib/emf/types";
 import {
   createAnimationContext,
   DEFAULT_ENTITY_STATE,
@@ -20,9 +21,10 @@ import {
 } from "./types";
 import { compileExpression, isConstantExpression } from "./expressionParser";
 import { safeEvaluate } from "./expressionEvaluator";
-import {
+import type {
   BoneMap,
-  BaseTransformMap,
+  BaseTransformMap} from "./boneController";
+import {
   buildBoneMap,
   storeBaseTransforms,
   resetAllBones,
@@ -274,7 +276,7 @@ export class AnimationEngine {
 
     // For interact triggers, use entity-specific duration from extracted data
     // Otherwise use the trigger's default duration
-    let durationSec = def.durationSec;
+    let {durationSec} = def;
     if (def.id === "trigger.interact") {
       // Convert ticks to seconds (20 ticks = 1 second)
       durationSec = this.animationDurationTicks / 20;
@@ -305,9 +307,9 @@ export class AnimationEngine {
 
     const readsNeckTy = this.animationLayers.some((layer) =>
       layer.some((a) => {
-        const expr: any = a.expression as any;
+        const expr = a.expression;
         const src =
-          typeof expr?.source === "string" ? (expr.source as string) : "";
+          "source" in expr && typeof expr.source === "string" ? expr.source : "";
         return src.includes("neck.ty");
       }),
     );
@@ -320,8 +322,8 @@ export class AnimationEngine {
   private expressionMentions(needle: string): boolean {
     for (const layer of this.animationLayers) {
       for (const a of layer) {
-        const expr: any = a.expression as any;
-        const src = typeof expr?.source === "string" ? (expr.source as string) : "";
+        const expr = a.expression;
+        const src = "source" in expr && typeof expr.source === "string" ? expr.source : "";
         if (src.includes(needle)) return true;
       }
     }
@@ -337,8 +339,8 @@ export class AnimationEngine {
 
     for (const [name, bone] of this.bones) {
       const base = this.baseTransforms.get(name);
-      const originPx = Array.isArray((bone as any)?.userData?.originPx)
-        ? ((bone as any).userData.originPx as [number, number, number])
+      const originPx = Array.isArray((bone as BoneWithUserData).userData?.originPx)
+        ? ((bone as BoneWithUserData).userData.originPx as [number, number, number])
         : null;
 
       rest[name] = {
@@ -359,7 +361,7 @@ export class AnimationEngine {
       //
       // Important: the values expected by CEM expressions are *CEM-space* pivots
       // (including `invertAxis` and the 24px Y origin), not the raw parsed origin.
-      const boxesGroup = (bone as any)?.userData?.boxesGroup as
+      const boxesGroup = (bone as BoneWithUserData).userData?.boxesGroup as
         | THREE.Object3D
         | undefined;
       const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
@@ -369,8 +371,8 @@ export class AnimationEngine {
         const pivots = pivotSeeds.get(name) ?? new Set<"tx" | "ty" | "tz">();
 
         const invertAxis =
-          typeof (bone as any)?.userData?.invertAxis === "string"
-            ? ((bone as any).userData.invertAxis as string)
+          typeof (bone as BoneWithUserData).userData?.invertAxis === "string"
+            ? ((bone as BoneWithUserData).userData.invertAxis as string)
             : "";
         const localPxX = base.position.x * 16;
         const localPxY = base.position.y * 16;
@@ -420,8 +422,8 @@ export class AnimationEngine {
         if (reads && reads.size > 0) {
           const pivots = pivotSeeds.get(name) ?? new Set<"tx" | "ty" | "tz">();
           const invertAxis =
-            typeof (bone as any)?.userData?.invertAxis === "string"
-              ? ((bone as any).userData.invertAxis as string)
+            typeof (bone as BoneWithUserData).userData?.invertAxis === "string"
+              ? ((bone as BoneWithUserData).userData.invertAxis as string)
               : "";
 
           const baseLocal = this.baseTransforms.get(name)?.position;
@@ -503,7 +505,7 @@ export class AnimationEngine {
             node: ASTNode,
           ): { bone: string; prop: "tx" | "ty" | "tz" } | null => {
             if (node.type !== "Variable") return null;
-            const name = node.name;
+            const {name} = node;
             const dot = name.indexOf(".");
             if (dot === -1) return null;
             const bone = name.slice(0, dot);
@@ -516,7 +518,7 @@ export class AnimationEngine {
             node: ASTNode,
           ): { bone: string; prop: "rx" | "ry" | "rz" } | null => {
             if (node.type !== "Variable") return null;
-            const name = node.name;
+            const {name} = node;
             const dot = name.indexOf(".");
             if (dot === -1) return null;
             const bone = name.slice(0, dot);
@@ -654,7 +656,7 @@ export class AnimationEngine {
                     const alternateLiteral =
                       alternate.type === "Literal" ? alternate.value : null;
                     const isRootBone = this.bones.get(targetBone)?.parent === this.modelGroup;
-                    const userData = (this.bones.get(targetBone) as any)?.userData ?? {};
+                    const userData = (this.bones.get(targetBone) as BoneWithUserData | undefined)?.userData ?? {};
                     const invertAxis =
                       typeof userData.invertAxis === "string" ? (userData.invertAxis as string) : "";
                     const basePos = this.baseTransforms.get(targetBone)?.position;
@@ -967,9 +969,9 @@ export class AnimationEngine {
           continue;
         }
         if (!("ast" in anim.expression)) continue;
-        const ast = anim.expression.ast;
+        const {ast} = anim.expression;
         if (ast.type !== "Variable") continue;
-        const name = ast.name;
+        const {name} = ast;
         const dot = name.indexOf(".");
         if (dot === -1) continue;
         const bone = name.slice(0, dot);
@@ -1011,7 +1013,7 @@ export class AnimationEngine {
 	    ): void => {
       switch (node.type) {
         case "Variable": {
-          const name = node.name;
+          const {name} = node;
           const dot = name.indexOf(".");
           if (dot === -1) return;
           const bone = name.slice(0, dot);
@@ -1087,7 +1089,7 @@ export class AnimationEngine {
 	      if (!bone) return false;
 	      if (bone.parent !== this.modelGroup) return false;
 	      // No local boxes/meshes on this bone (placeholder).
-	      const boxesGroup = (bone as any)?.userData?.boxesGroup as
+	      const boxesGroup = (bone as BoneWithUserData).userData?.boxesGroup as
 	        | THREE.Object3D
 	        | undefined;
 	      const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
@@ -1177,7 +1179,7 @@ export class AnimationEngine {
 	      const bone = this.bones.get(boneName);
 	      if (!bone) continue;
 
-      const userData = (bone as any).userData ?? {};
+      const userData = (bone as BoneWithUserData).userData ?? {};
       const getAbsoluteAxes = (): string =>
         typeof userData.absoluteTranslationAxes === "string"
           ? (userData.absoluteTranslationAxes as string)
@@ -1263,7 +1265,7 @@ export class AnimationEngine {
         const existing = getAbsoluteAxes();
         userData.absoluteTranslationAxes = existing.includes("y")
           ? existing
-          : existing + "y";
+          : `${existing  }y`;
         if (typeof userData.absoluteTranslationSpace !== "string") {
           userData.absoluteTranslationSpace = "entity";
         }
@@ -1317,9 +1319,9 @@ export class AnimationEngine {
 				          // Treat these as baselines even if constant-only, or the part
 				          // will jump upward by ~24px when applied additively.
 				          const parentOriginPx = Array.isArray(
-				            (bone.parent as any)?.userData?.originPx,
+				            (bone.parent as BoneWithUserData | null)?.userData?.originPx,
 				          )
-				            ? (((bone.parent as any).userData.originPx as [
+				            ? (((bone.parent as BoneWithUserData).userData.originPx as [
 				                number,
 				                number,
 				                number,
@@ -1358,7 +1360,7 @@ export class AnimationEngine {
 		        }
 	      }
 
-      (bone as any).userData = userData;
+      (bone as BoneWithUserData).userData = userData;
     }
 
 	    // Rotations are applied in authored CEM space. Only mark axes as absolute
@@ -1368,9 +1370,9 @@ export class AnimationEngine {
 		      const bone = this.bones.get(boneName);
 		      if (!bone) continue;
 
-		      const userData = (bone as any).userData ?? {};
+		      const userData = (bone as BoneWithUserData).userData ?? {};
 		      const base = this.baseTransforms.get(boneName);
-		      const boxesGroup = (bone as any)?.userData?.boxesGroup as
+		      const boxesGroup = (bone as BoneWithUserData).userData?.boxesGroup as
 		        | THREE.Object3D
 		        | undefined;
 		      const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
@@ -1441,8 +1443,8 @@ export class AnimationEngine {
 		          const childBase = this.baseTransforms.get(obj.name);
 		          if (!childBase) return false;
 		          const childInvertAxis =
-		            typeof (obj as any).userData?.invertAxis === "string"
-		              ? ((obj as any).userData.invertAxis as string)
+		            typeof (obj as BoneWithUserData).userData?.invertAxis === "string"
+		              ? ((obj as BoneWithUserData).userData.invertAxis as string)
 		              : "";
 		          const childSign =
 		            axis === "x"
@@ -1642,7 +1644,7 @@ export class AnimationEngine {
 		      if (axesSet.has("z") && !isDirectCopy("z"))
 		        ensureRotationOffsetForLargeBaseline("z");
 
-	      (bone as any).userData = userData;
+	      (bone as BoneWithUserData).userData = userData;
     }
     this.applyDirectRotationCopyOverrides(directRotationCopyTargets);
   }
@@ -1659,8 +1661,8 @@ export class AnimationEngine {
       const targetBone = this.bones.get(targetBoneName);
       const sourceBone = this.bones.get(sourceBoneName);
       if (!targetBone || !sourceBone) continue;
-      const targetUserData = (targetBone as any).userData ?? {};
-      const sourceUserData = (sourceBone as any).userData ?? {};
+      const targetUserData = (targetBone as BoneWithUserData).userData ?? {};
+      const sourceUserData = (sourceBone as BoneWithUserData).userData ?? {};
       const sourceAbsAxes: string =
         typeof sourceUserData.absoluteRotationAxes === "string"
           ? (sourceUserData.absoluteRotationAxes as string)
@@ -1685,12 +1687,12 @@ export class AnimationEngine {
             ? "rotationOffsetY"
             : "rotationOffsetZ";
       if (
-        typeof (targetUserData as any)[offsetKey] !== "number" &&
-        typeof (sourceUserData as any)[offsetKey] === "number"
+        typeof targetUserData[offsetKey] !== "number" &&
+        typeof sourceUserData[offsetKey] === "number"
       ) {
-        (targetUserData as any)[offsetKey] = (sourceUserData as any)[offsetKey];
+        targetUserData[offsetKey] = sourceUserData[offsetKey];
       }
-      (targetBone as any).userData = targetUserData;
+      (targetBone as BoneWithUserData).userData = targetUserData;
     }
   }
 
@@ -1717,7 +1719,7 @@ export class AnimationEngine {
       const bone = this.bones.get(boneName);
       if (!bone) return;
       const base = this.baseTransforms.get(boneName);
-      const userData = (bone as any).userData ?? {};
+      const userData = (bone as BoneWithUserData).userData ?? {};
       const invertAxis =
         typeof userData.invertAxis === "string" ? (userData.invertAxis as string) : "";
       const signX = invertAxis.includes("x") ? -1 : 1;
@@ -2477,7 +2479,7 @@ export class AnimationEngine {
     let torsoBox: THREE.Box3 | null = null;
     let torsoVolume = 0;
     this.modelGroup.traverse((obj) => {
-      if ((obj as any).isMesh !== true) return;
+      if (!(obj instanceof THREE.Mesh)) return;
       const box = new THREE.Box3().setFromObject(obj);
       const size = new THREE.Vector3();
       box.getSize(size);
@@ -2513,7 +2515,7 @@ export class AnimationEngine {
 
       let hasMeshDescendant = false;
       child.traverse((obj) => {
-        if ((obj as any).isMesh === true) hasMeshDescendant = true;
+        if (obj instanceof THREE.Mesh) hasMeshDescendant = true;
       });
       if (!hasMeshDescendant) continue;
 
@@ -2973,8 +2975,8 @@ export class AnimationEngine {
         if (a.targetType !== "bone") continue;
         if (a.targetName !== "varb") continue;
         if (a.propertyName !== "index_eat") continue;
-        const expr: any = a.expression as any;
-        const src = typeof expr?.source === "string" ? (expr.source as string) : "";
+        const expr = a.expression;
+        const src = "source" in expr && typeof expr.source === "string" ? expr.source : "";
         const match = src.match(/rule_index\\s*==\\s*(\\d+)/);
         if (match) return Number(match[1]);
       }

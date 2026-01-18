@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import type { JEMFile, JEMModelPart } from "@lib/emf/jemLoader";
 import DocThreePreview from "../components/DocThreePreview";
 import DocTexturePreview from "../components/DocTexturePreview";
 import LiveCodeEditor from "../../components/LiveCodeEditor/LiveCodeEditor";
@@ -20,19 +21,21 @@ const SHEEP_WOOL_JEM = JSON.parse(sheepWoolJemRaw);
 const SHEEP_UNDERCOAT_JEM = JSON.parse(sheepWoolUndercoatJemRaw);
 
 // Helper to extract parts for the tutorial
-const extractPart = (jem: any, partId: string | string[]) => {
-  const clone = JSON.parse(JSON.stringify(jem));
+const extractPart = (jem: JEMFile, partId: string | string[]): JEMFile => {
+  const clone = JSON.parse(JSON.stringify(jem)) as JEMFile;
+  if (!clone.models) return clone;
   if (Array.isArray(partId)) {
-    clone.models = clone.models.filter((m: any) => partId.includes(m.id));
+    clone.models = clone.models.filter((m: JEMModelPart) => partId.includes(m.id || ""));
   } else {
-    clone.models = clone.models.filter((m: any) => m.id === partId);
+    clone.models = clone.models.filter((m: JEMModelPart) => m.id === partId);
   }
   return clone;
 };
 
-const extractPartsPrefix = (jem: any, prefix: string) => {
-  const clone = JSON.parse(JSON.stringify(jem));
-  clone.models = clone.models.filter((m: any) => m.id.startsWith(prefix));
+const extractPartsPrefix = (jem: JEMFile, prefix: string): JEMFile => {
+  const clone = JSON.parse(JSON.stringify(jem)) as JEMFile;
+  if (!clone.models) return clone;
+  clone.models = clone.models.filter((m: JEMModelPart) => m.id?.startsWith(prefix));
   return clone;
 };
 

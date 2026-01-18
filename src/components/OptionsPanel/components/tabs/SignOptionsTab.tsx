@@ -34,7 +34,7 @@ export const SignOptionsTab = ({
   const handleLineChange =
     (lineIndex: number, maxLength: number) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
+      const {value} = e.target;
       // Limit based on character count (approximation of width-based limit)
       if (value.length <= maxLength) {
         const newText = [...signText];

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import DocsLayout, { DocRoute } from "./components/Layout/DocsLayout";
+import type { DocRoute } from "./components/Layout/DocsLayout";
+import DocsLayout from "./components/Layout/DocsLayout";
 import DocsHome from "./pages/Home/DocsHome";
 import UnderstandingJemModels from "./tutorials/UnderstandingJemModels/UnderstandingJemModels";
 import "./styles/docs.scss";

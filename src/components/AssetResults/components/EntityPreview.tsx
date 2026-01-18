@@ -3,9 +3,10 @@ import * as THREE from "three";
 import { jemToThreeJS } from "@lib/emf";
 import { OrbitControls, PerspectiveCamera, Bounds } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import type { ParsedEntityModel } from "@/lib/emf/types";
 
 interface Props {
-  jemModel: any;
+  jemModel: ParsedEntityModel;
   textureUrl: string | null;
   extraTextureUrls?: Record<string, string | null> | null;
 }
@@ -105,7 +106,7 @@ export function EntityPreview({ jemModel, textureUrl, extraTextureUrls }: Props)
     }
   });
 
-  const boundsRef = useRef<any>(null);
+  const boundsRef = useRef<{ refresh: () => { fit: () => void } } | null>(null);
   const frameCountRef = useRef(0);
 
   // Force bounds refresh when group changes
@@ -148,7 +149,7 @@ export function EntityPreview({ jemModel, textureUrl, extraTextureUrls }: Props)
       <PerspectiveCamera makeDefault position={[0, 5, 10]} fov={50} />
 
       {/* Bounds will auto-fit the model to the view */}
-      {/* @ts-ignore - Bounds ref type definition is missing in this version of drei */}
+      {/* @ts-expect-error - Bounds ref type definition is missing in this version of drei */}
       <Bounds ref={boundsRef} fit clip observe margin={1.2}>
         <group ref={groupRef}>
           <primitive object={group} />

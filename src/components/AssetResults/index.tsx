@@ -323,7 +323,7 @@ export default function AssetResults({
       setAllGroupedAssets(displayAssets);
     };
 
-    groupAssets();
+    void groupAssets();
 
     return () => {
       mounted = false;
