@@ -99,6 +99,21 @@ export default tseslint.config(
 
       // No console in production (disabled for debugging)
       "no-console": "off",
+
+      // Limit cyclomatic complexity - encourages breaking down complex functions
+      "complexity": ["warn", 15],
+
+      // Prevent unhandled promises - critical for Tauri/Rust backend calls
+      "@typescript-eslint/no-floating-promises": "error",
+
+      // Use ?? instead of || for null/undefined checks
+      "@typescript-eslint/prefer-nullish-coalescing": "warn",
+
+      // Limit nesting depth - improves readability
+      "max-depth": ["warn", 4],
+
+      // Always use === and !== instead of == and !=
+      "eqeqeq": ["error", "always"],
     },
   },
 
