@@ -62,7 +62,8 @@
       "Bash(JAR_PATH=\"/Users/nicholaswillette/Library/Application Support/ModrinthApp/meta/versions/1.21.10-0.18.1/1.21.10-0.18.1.jar\" CFR_JAR=\"/Users/nicholaswillette/Library/Caches/weaverbird/tools/cfr.jar\" OUTPUT_DIR=\"/Users/nicholaswillette/Library/Caches/weaverbird/particle_physics/flame_decompile\" mkdir:*)",
       "Bash(unzip:*)",
       "Bash(node:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

@@ -748,6 +748,14 @@ export function jemToThreeJS(
     entityId,
   );
 
+  // Reparenting preserves world transforms but changes local positions, so
+  // refresh rest positions after hierarchy adjustments.
+  root.traverse((obj) => {
+    if (obj instanceof THREE.Group && obj.name && obj.name !== "jem_entity") {
+      obj.userData.restPosition = obj.position.clone();
+    }
+  });
+
   // Fix translation semantics for specific animated submodels.
   const hasNegativeHead2TyBaseline = (() => {
     if (!isQuadruped || !Array.isArray(model.animations)) return false;
@@ -1272,6 +1280,7 @@ function convertPart(
   }
 
   group.position.set(localX, localY, localZ);
+  group.userData.restPosition = new THREE.Vector3(localX, localY, localZ);
   log.convert(part.name, part.origin, parentOrigin, [localX, localY, localZ]);
 
   // Rotation
@@ -1467,9 +1476,9 @@ function createBoxMesh(
   // model parts (and resource packs frequently use 0-width "planes" for details).
   // To keep behavior consistent and avoid per-entity exceptions, default to
   // DoubleSide for all entity model meshes.
-  const side = THREE.DoubleSide;
+  const side = isPlanar ? THREE.DoubleSide : THREE.FrontSide;
   const texKey = texture ? texture.uuid : "null";
-  const cacheKey = `${texKey}:double`;
+  const cacheKey = `${texKey}:${side === THREE.DoubleSide ? "double" : "front"}`;
   let material = materialCache.get(cacheKey);
   if (!material) {
     material = texture

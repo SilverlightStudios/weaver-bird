@@ -30,13 +30,15 @@ export function normalizeQuery(query: string): string {
 }
 
 /**
- * Normalize an asset ID for matching
- * - Converts to lowercase
- * - Optionally keeps namespace
+ * Normalize an asset ID for search matching
+ * - Converts to lowercase for case-insensitive search
  *
- * Example: "minecraft:block/acacia_log" -> "minecraft:block/acacia_log"
+ * Note: This is different from assetUtils.normalizeAssetId() which handles
+ * malformed asset IDs. This function is purely for search matching.
+ *
+ * Example: "minecraft:block/Acacia_Log" -> "minecraft:block/acacia_log"
  */
-export function normalizeAssetId(assetId: string): string {
+export function normalizeForSearch(assetId: string): string {
   return assetId.toLowerCase();
 }
 
@@ -49,7 +51,7 @@ export function normalizeAssetId(assetId: string): string {
  */
 export function assetMatchesQuery(assetId: string, labels: string[], query: string): boolean {
   const normalizedQuery = normalizeQuery(query);
-  const normalizedId = normalizeAssetId(assetId);
+  const normalizedId = normalizeForSearch(assetId);
 
   // Check if asset ID contains the query
   if (normalizedId.includes(normalizedQuery)) {

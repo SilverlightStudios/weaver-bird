@@ -150,6 +150,7 @@ export interface EntityState {
 
   // Block Entity Interactions
   ticks: number; // Interaction animation ticks (for bells, chests, etc.)
+  openness: number; // Chest lid openness (0.0 = closed, 1.0 = fully open)
 
   // Position
   pos_x: number; // Entity world X position
@@ -305,6 +306,7 @@ export const DEFAULT_ENTITY_STATE: EntityState = {
   // Block Entity Interactions
   ticks: 0,
   swing_direction: 3, // Default WEST (3) - swings on Z axis
+  openness: 0, // Chest closed by default
 
   // Position
   pos_x: 0,

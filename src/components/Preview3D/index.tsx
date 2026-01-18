@@ -69,6 +69,16 @@ export default function Preview3D({
   }>({ hasTint: false });
   const isPlantPotted = assetId ? isPottedPlant(assetId) : false;
   const isColormapAsset = assetId ? isBiomeColormapAsset(assetId) : false;
+  const previewCameraPosition = useMemo(() => {
+    const radius = Math.sqrt(2 * 2 + 2 * 2 + 2 * 2);
+    const pitch = THREE.MathUtils.degToRad(30);
+    const yaw = 0.8 + Math.PI;
+    const cosPitch = Math.cos(pitch);
+    const x = radius * Math.sin(yaw) * cosPitch;
+    const z = radius * Math.cos(yaw) * cosPitch;
+    const y = radius * Math.sin(pitch);
+    return [x, y, z] as [number, number, number];
+  }, []);
 
   // Calculate redstone wire color based on power level
   // Overrides biomeColor when this is a redstone wire block
@@ -229,7 +239,11 @@ export default function Preview3D({
           }}
           resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
         >
-          <PerspectiveCamera makeDefault position={[2, 2, 2]} fov={50} />
+          <PerspectiveCamera
+            makeDefault
+            position={previewCameraPosition}
+            fov={50}
+          />
           <OrbitControls
             enablePan={false}
             minDistance={0.75}

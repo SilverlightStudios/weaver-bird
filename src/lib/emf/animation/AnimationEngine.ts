@@ -912,9 +912,9 @@ export class AnimationEngine {
         this.baselineBoneValues.set(`${boneName}.rz`, transform.rz);
     }
 
-	    // Determine which channels are constant-only (these are often intended as
-	    // authored offsets and should not be normalized away).
-	    const isConstantByChannel = new Map<string, boolean>();
+    // Determine which channels are constant-only (these are often intended as
+    // authored offsets and should not be normalized away).
+    const isConstantByChannel = new Map<string, boolean>();
     for (const layer of this.animationLayers) {
       for (const anim of layer) {
         if (anim.targetType !== "bone") continue;
@@ -923,6 +923,31 @@ export class AnimationEngine {
           `${anim.targetName}.${anim.propertyName}`,
           isConstantExpression(anim.expression),
         );
+      }
+    }
+    const directRotationCopyTargets = new Map<string, string>();
+    for (const layer of this.animationLayers) {
+      for (const anim of layer) {
+        if (anim.targetType !== "bone") continue;
+        if (
+          anim.propertyName !== "rx" &&
+          anim.propertyName !== "ry" &&
+          anim.propertyName !== "rz"
+        ) {
+          continue;
+        }
+        if (!("ast" in anim.expression)) continue;
+        const ast = anim.expression.ast;
+        if (ast.type !== "Variable") continue;
+        const name = ast.name;
+        const dot = name.indexOf(".");
+        if (dot === -1) continue;
+        const bone = name.slice(0, dot);
+        const prop = name.slice(dot + 1);
+        if (bone === "var" || bone === "render" || bone === "varb") continue;
+        if (prop === anim.propertyName) {
+          directRotationCopyTargets.set(`${anim.targetName}.${prop}`, bone);
+        }
       }
     }
 
@@ -1315,6 +1340,10 @@ export class AnimationEngine {
 
 		      const userData = (bone as any).userData ?? {};
 		      const base = this.baseTransforms.get(boneName);
+		      const boxesGroup = (bone as any)?.userData?.boxesGroup as
+		        | THREE.Object3D
+		        | undefined;
+		      const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
 		      const invertAxis =
 		        typeof userData.invertAxis === "string"
 		          ? (userData.invertAxis as string)
@@ -1419,7 +1448,7 @@ export class AnimationEngine {
 		        }
 		      };
 
-			      const ensureRotationOffsetForLargeBaseline = (axis: "x" | "y" | "z") => {
+		      const ensureRotationOffsetForLargeBaseline = (axis: "x" | "y" | "z") => {
 			        const absAxes: string =
 			          typeof userData.absoluteRotationAxes === "string"
 			            ? (userData.absoluteRotationAxes as string)
@@ -1514,6 +1543,43 @@ export class AnimationEngine {
 			          userData.rotationOffsetZ = baseline;
 			        }
 			      };
+		      const ensureRotationOffsetForPivotOnlyBaseline = (
+		        axis: "x" | "y" | "z",
+		      ) => {
+		        if (hasLocalBoxes) return;
+		        const absAxes: string =
+		          typeof userData.absoluteRotationAxes === "string"
+		            ? (userData.absoluteRotationAxes as string)
+		            : "";
+		        if (absAxes.includes(axis)) return;
+		        const prop = `r${axis}` as "rx" | "ry" | "rz";
+		        const baseline = this.getBaselineBoneValue(boneName, prop);
+		        const baseRot =
+		          axis === "x"
+		            ? base?.rotation.x ?? 0
+		            : axis === "y"
+		              ? base?.rotation.y ?? 0
+		              : base?.rotation.z ?? 0;
+		        const sign = axis === "x" ? signX : axis === "y" ? signY : signZ;
+		        const baseRotCem = sign * baseRot;
+		        if (Math.abs(baseRotCem) < 0.75) return;
+		        const effectiveBaseline = baseline + baseRotCem;
+		        // Pivot-only bones with large baked rotations (e.g. reins) often author
+		        // absolute-looking values; treat the combined baseline as a calibration.
+		        if (Math.abs(effectiveBaseline) < 1.25) return;
+		        if (axis === "x" && typeof userData.rotationOffsetX !== "number") {
+		          userData.rotationOffsetX = effectiveBaseline;
+		        }
+		        if (axis === "y" && typeof userData.rotationOffsetY !== "number") {
+		          userData.rotationOffsetY = effectiveBaseline;
+		        }
+		        if (axis === "z" && typeof userData.rotationOffsetZ !== "number") {
+		          userData.rotationOffsetZ = effectiveBaseline;
+		        }
+		      };
+
+			      const isDirectCopy = (axis: "x" | "y" | "z") =>
+			        directRotationCopyTargets.has(`${boneName}.r${axis}`);
 
 			      if (axesSet.has("x")) ensureAbsoluteRotation("x");
 			      if (axesSet.has("y")) ensureAbsoluteRotation("y");
@@ -1521,19 +1587,82 @@ export class AnimationEngine {
 			      if (axesSet.has("x")) ensureAbsoluteWhenBaselineMatchesRest("x");
 		      if (axesSet.has("y")) ensureAbsoluteWhenBaselineMatchesRest("y");
 		      if (axesSet.has("z")) ensureAbsoluteWhenBaselineMatchesRest("z");
-			      if (axesSet.has("x")) ensureRotationOffsetWhenBaselineDuplicatesChildRest("x");
-			      if (axesSet.has("y")) ensureRotationOffsetWhenBaselineDuplicatesChildRest("y");
-			      if (axesSet.has("z")) ensureRotationOffsetWhenBaselineDuplicatesChildRest("z");
-			      if (axesSet.has("x")) ensureRotationOffsetForModerateBaselineOnPivotBone("x");
-			      if (axesSet.has("y")) ensureRotationOffsetForModerateBaselineOnPivotBone("y");
-			      if (axesSet.has("z")) ensureRotationOffsetForModerateBaselineOnPivotBone("z");
-			      if (axesSet.has("x")) ensureRotationOffsetForLargeBaseline("x");
-			      if (axesSet.has("y")) ensureRotationOffsetForLargeBaseline("y");
-			      if (axesSet.has("z")) ensureRotationOffsetForLargeBaseline("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetForPivotOnlyBaseline("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetForPivotOnlyBaseline("y");
+			      if (axesSet.has("z") && !isDirectCopy("z"))
+			        ensureRotationOffsetForPivotOnlyBaseline("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetWhenBaselineDuplicatesChildRest("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetWhenBaselineDuplicatesChildRest("y");
+			      if (axesSet.has("z") && !isDirectCopy("z"))
+			        ensureRotationOffsetWhenBaselineDuplicatesChildRest("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetForModerateBaselineOnPivotBone("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetForModerateBaselineOnPivotBone("y");
+			      if (axesSet.has("z") && !isDirectCopy("z"))
+			        ensureRotationOffsetForModerateBaselineOnPivotBone("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetForLargeBaseline("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetForLargeBaseline("y");
+		      if (axesSet.has("z") && !isDirectCopy("z"))
+		        ensureRotationOffsetForLargeBaseline("z");
 
-			      (bone as any).userData = userData;
-		    }
-		  }
+	      (bone as any).userData = userData;
+    }
+    this.applyDirectRotationCopyOverrides(directRotationCopyTargets);
+  }
+
+  private applyDirectRotationCopyOverrides(
+    directRotationCopyTargets: Map<string, string>,
+  ): void {
+    for (const [targetKey, sourceBoneName] of directRotationCopyTargets) {
+      const dot = targetKey.indexOf(".");
+      if (dot === -1) continue;
+      const targetBoneName = targetKey.slice(0, dot);
+      const prop = targetKey.slice(dot + 1);
+      const axis = prop[1] as "x" | "y" | "z";
+      const targetBone = this.bones.get(targetBoneName);
+      const sourceBone = this.bones.get(sourceBoneName);
+      if (!targetBone || !sourceBone) continue;
+      const targetUserData = (targetBone as any).userData ?? {};
+      const sourceUserData = (sourceBone as any).userData ?? {};
+      const sourceAbsAxes: string =
+        typeof sourceUserData.absoluteRotationAxes === "string"
+          ? (sourceUserData.absoluteRotationAxes as string)
+          : sourceUserData.absoluteRotation === true
+            ? "xyz"
+            : "";
+      if (sourceAbsAxes.includes(axis)) {
+        const existing =
+          typeof targetUserData.absoluteRotationAxes === "string"
+            ? (targetUserData.absoluteRotationAxes as string)
+            : targetUserData.absoluteRotation === true
+              ? "xyz"
+              : "";
+        if (!existing.includes(axis)) {
+          targetUserData.absoluteRotationAxes = existing + axis;
+        }
+      }
+      const offsetKey =
+        axis === "x"
+          ? "rotationOffsetX"
+          : axis === "y"
+            ? "rotationOffsetY"
+            : "rotationOffsetZ";
+      if (
+        typeof (targetUserData as any)[offsetKey] !== "number" &&
+        typeof (sourceUserData as any)[offsetKey] === "number"
+      ) {
+        (targetUserData as any)[offsetKey] = (sourceUserData as any)[offsetKey];
+      }
+      (targetBone as any).userData = targetUserData;
+    }
+  }
 
   private applyVanillaRotationInputSeeding(
     context: AnimationContext = this.context,
@@ -1887,6 +2016,37 @@ export class AnimationEngine {
   }
 
   /**
+   * Snapshot custom variables for cross-engine continuity.
+   */
+  getVariableSnapshot(): Record<string, number> {
+    return { ...this.context.variables };
+  }
+
+  /**
+   * Restore custom variables for cross-engine continuity.
+   */
+  setVariableSnapshot(vars: Record<string, number>): void {
+    this.context.variables = { ...vars };
+  }
+
+  /**
+   * Snapshot random cache so overlay animations stay deterministic across rebuilds.
+   */
+  getRandomCacheSnapshot(): Array<[number, number]> {
+    return Array.from(this.context.randomCache.entries());
+  }
+
+  /**
+   * Restore random cache entries for overlay continuity.
+   */
+  setRandomCacheSnapshot(snapshot: Array<[number, number]>): void {
+    this.context.randomCache.clear();
+    for (const [key, value] of snapshot) {
+      this.context.randomCache.set(key, value);
+    }
+  }
+
+  /**
    * Get a bone's current animated value.
    */
   getBoneValue(boneName: string, property: string): number {
@@ -1968,6 +2128,49 @@ export class AnimationEngine {
     // Apply root overlay even if no CEM animations are present.
     this.applyRootOverlay();
     return this.isPlaying;
+  }
+
+  /**
+   * Evaluate animations using an externally-provided entity state.
+   * This is used for overlay layers that should mirror the base entity timing
+   * without running their own presets/state updates.
+   */
+  tickWithExternalState(deltaTime: number, externalState: EntityState): boolean {
+    if (!this.initialized) {
+      return false;
+    }
+
+    const scaledDelta = deltaTime * this.speed;
+    this.context.entityState = { ...externalState };
+    if (!Number.isFinite(this.context.entityState.frame_time)) {
+      this.context.entityState.frame_time = scaledDelta;
+    }
+    if (!Number.isFinite(this.context.entityState.frame_counter)) {
+      this.context.entityState.frame_counter = 0;
+    }
+
+    // Clear trigger overlays to avoid double-advancing timers on overlays.
+    this.triggerBoneInputOverrides = {};
+    this.rootOverlay = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
+
+    // Pose toggles still apply deterministically based on the external state.
+    this.updatePoseOverlays();
+
+    if (this.animationLayers.length > 0) {
+      try {
+        this.evaluateAndApply();
+      } catch (error) {
+        console.error(
+          "[AnimationEngine] Error during overlay evaluation:",
+          error,
+        );
+      }
+      return true;
+    }
+
+    resetAllBones(this.bones, this.baseTransforms);
+    this.applyRootOverlay();
+    return false;
   }
 
   /**

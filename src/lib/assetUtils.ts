@@ -2,6 +2,322 @@
  * Utilities for working with Minecraft asset IDs and names
  */
 
+import {
+  EXACT_RENAMES,
+  PREFIX_MAPPINGS,
+  REGEX_TRANSFORMS,
+  PRESERVED_NAMES,
+  PRESSURE_PLATE_MAPPINGS,
+  WALL_PATTERNS,
+  SPECIAL_PATH_PATTERNS,
+  VARIANT_GROUP_OVERRIDES,
+  VARIANT_GROUP_PATTERNS,
+  STRUCTURAL_SUFFIX_REGEX,
+  STATE_SUFFIX_REGEX,
+  VARIANT_STRUCTURAL_SUFFIX_REGEX,
+  VARIANT_STATE_SUFFIX_REGEX,
+  BLOCKSTATE_NUMERIC_SUFFIX_REGEX,
+} from "./assetMappings";
+
+// ============================================================================
+// PARSED ASSET ID INTERFACE
+// ============================================================================
+
+export interface ParsedAssetId {
+  /** Original asset ID */
+  original: string;
+  /** Namespace (e.g., "minecraft") */
+  namespace: string;
+  /** Category path (e.g., "block", "item", "entity") */
+  category: string;
+  /** Base name for blockstate lookup (e.g., "acacia_door" from "acacia_door_bottom") */
+  baseName: string;
+  /** Key for grouping variants in UI (e.g., "block/acacia_leaves") */
+  variantGroupKey: string;
+  /** Variant number if present (e.g., "1" from "acacia_planks1"), null otherwise */
+  variantNumber: string | null;
+  /** Whether this is an inventory texture variant */
+  isInventory: boolean;
+}
+
+// ============================================================================
+// UNIFIED ASSET ID PARSER
+// ============================================================================
+
+/**
+ * Parse an asset ID into its components using data-driven mappings
+ * This is the single source of truth for asset ID normalization
+ */
+export function parseAssetId(assetId: string): ParsedAssetId {
+  // Normalize first (remove .png, underscores before numbers, trailing underscores)
+  const normalized = normalizeAssetId(assetId);
+
+  // Extract namespace and path
+  const colonIndex = normalized.indexOf(":");
+  const namespace = colonIndex >= 0 ? normalized.slice(0, colonIndex) : "minecraft";
+  const fullPath = colonIndex >= 0 ? normalized.slice(colonIndex + 1) : normalized;
+
+  // Extract category (first path segment)
+  const firstSlash = fullPath.indexOf("/");
+  const category = firstSlash >= 0 ? fullPath.slice(0, firstSlash) : "";
+  let name = firstSlash >= 0 ? fullPath.slice(firstSlash + 1) : fullPath;
+
+  // Compute base name for blockstate lookup
+  const baseName = computeBaseName(name);
+
+  // Compute variant group key for UI grouping
+  const variantGroupKey = computeVariantGroupKey(fullPath);
+
+  // Extract variant number
+  const variantNumber = extractVariantNumber(name);
+
+  // Check if inventory variant
+  const isInventory = /_inventory\d*$/.test(name);
+
+  return {
+    original: assetId,
+    namespace,
+    category,
+    baseName,
+    variantGroupKey,
+    variantNumber,
+    isInventory,
+  };
+}
+
+/**
+ * Compute the base name for blockstate lookup
+ * Handles exact renames, prefix mappings, regex transforms, and suffix stripping
+ */
+function computeBaseName(name: string): string {
+  // Remove .png extension if present
+  name = name.replace(/\.png$/, "");
+
+  // Handle special path patterns first
+  const variatedMatch = name.match(SPECIAL_PATH_PATTERNS.variated);
+  if (variatedMatch) {
+    return variatedMatch[1];
+  }
+
+  if (SPECIAL_PATH_PATTERNS.break.test(name)) {
+    name = name.replace(SPECIAL_PATH_PATTERNS.break, "");
+  }
+
+  if (SPECIAL_PATH_PATTERNS.oldIron.test(name)) {
+    name = name.replace(SPECIAL_PATH_PATTERNS.oldIron, "");
+  }
+
+  // Handle nested paths (extract first segment, skip readme)
+  const nestedMatch = name.match(SPECIAL_PATH_PATTERNS.nestedPath);
+  if (nestedMatch) {
+    if (name.includes("readme")) {
+      return "readme";
+    }
+    name = nestedMatch[1];
+  }
+
+  // Apply fungi -> fungus transformation
+  name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
+
+  // Handle wall patterns (pattern-based, not name-based)
+  if (WALL_PATTERNS.wallPrefix.test(name)) {
+    name = name.replace(WALL_PATTERNS.wallPrefix, "");
+  } else if (WALL_PATTERNS.wallInfix.test(name)) {
+    name = name.replace(WALL_PATTERNS.wallInfix, "_");
+  }
+
+  // Check exact renames first
+  if (EXACT_RENAMES[name]) {
+    return EXACT_RENAMES[name];
+  }
+
+  // Check prefix mappings (sorted by length, longest first)
+  for (const { prefix, target } of PREFIX_MAPPINGS) {
+    if (name.startsWith(prefix)) {
+      return target;
+    }
+  }
+
+  // Apply regex transformations
+  for (const { pattern, replacement } of REGEX_TRANSFORMS) {
+    if (pattern.test(name)) {
+      if (typeof replacement === "function") {
+        const match = name.match(pattern);
+        if (match) {
+          return replacement(match);
+        }
+      } else {
+        return name.replace(pattern, replacement);
+      }
+    }
+  }
+
+  // Check preserved names (stems that shouldn't have suffixes stripped)
+  if (PRESERVED_NAMES.has(name)) {
+    return name;
+  }
+
+  // Handle pressure plate shorthand
+  if (name.endsWith("_pp")) {
+    const base = name.replace(/_pp$/, "");
+    if (PRESSURE_PLATE_MAPPINGS[base]) {
+      return PRESSURE_PLATE_MAPPINGS[base];
+    }
+    return `${base}_pressure_plate`;
+  }
+
+  // Remove _dfx suffix (custom format)
+  name = name.replace(/_dfx$/, "");
+
+  // Strip structural suffixes
+  name = name.replace(STRUCTURAL_SUFFIX_REGEX, "");
+
+  // Strip state suffixes
+  name = name.replace(STATE_SUFFIX_REGEX, "");
+
+  // Remove trailing numbers (texture variants)
+  name = name.replace(/\d+$/, "");
+
+  return name;
+}
+
+/**
+ * Compute the variant group key for UI grouping
+ * Similar to baseName but optimized for grouping related textures together
+ */
+function computeVariantGroupKey(fullPath: string): string {
+  let path = fullPath;
+
+  // Check for direct overrides
+  if (VARIANT_GROUP_OVERRIDES[path]) {
+    return VARIANT_GROUP_OVERRIDES[path];
+  }
+
+  // Check pattern-based overrides
+  for (const { pattern, groupKey } of VARIANT_GROUP_PATTERNS) {
+    if (pattern.test(path)) {
+      return groupKey;
+    }
+  }
+
+  // Handle break/ overlay paths
+  if (path.startsWith("block/break/")) {
+    path = `block/${path.slice("block/break/".length)}`;
+  }
+
+  // Handle wall patterns for grouping
+  if (path.includes("/wall_")) {
+    path = path.replace(/\/wall_/, "/");
+  } else if (path.includes("_wall_")) {
+    path = path.replace(/_wall_/, "_");
+  }
+
+  // Handle colormap paths
+  if (path.startsWith("colormap/")) {
+    const parts = path.split("/");
+    if (parts.length > 1) {
+      return `colormap/${parts[parts.length - 1]}`;
+    }
+  }
+
+  // Strip potted prefix/suffix for grouping with base plant
+  if (path.includes("/potted_")) {
+    path = path.replace("/potted_", "/");
+    path = path.replace("/azalea_bush", "/azalea");
+    path = path.replace("/flowering_azalea_bush", "/flowering_azalea");
+  } else if (path.endsWith("_potted")) {
+    path = path.replace(/_potted$/, "");
+  }
+
+  // Preserve stem blockstate names
+  if (
+    /(^|\/)pumpkin_stem$/.test(path) ||
+    /(^|\/)melon_stem$/.test(path) ||
+    /(^|\/)attached_pumpkin_stem$/.test(path) ||
+    /(^|\/)attached_melon_stem$/.test(path)
+  ) {
+    return path;
+  }
+
+  // Handle variated texture paths
+  const variatedMatch = path.match(/^(.+?)\/variated\/([^/]+)\//);
+  if (variatedMatch) {
+    return `${variatedMatch[1]}/${variatedMatch[2]}`;
+  }
+  const variatedMatchEnd = path.match(/^(.+?)\/variated\/([^/]+)\/([^/]+)$/);
+  if (variatedMatchEnd) {
+    return `${variatedMatchEnd[1]}/${variatedMatchEnd[2]}`;
+  }
+
+  // Extract block name for suffix processing
+  const pathParts = path.split("/");
+  let blockName = pathParts[pathParts.length - 1];
+  let pathPrefix = pathParts.slice(0, -1).join("/");
+
+  // Group wall hanging signs with base hanging sign
+  if (blockName.endsWith("_wall_hanging_sign")) {
+    blockName = blockName.replace(/_wall_hanging_sign$/, "_hanging_sign");
+  }
+  if (blockName.endsWith("_wall_sign")) {
+    blockName = blockName.replace(/_wall_sign$/, "_sign");
+  }
+
+  // Group redstone_dust with redstone_wire
+  if (blockName.startsWith("redstone_dust")) {
+    blockName = "redstone_wire";
+    pathPrefix = "block";
+  }
+
+  // Group campfire textures
+  if (blockName === "campfire_fire" || blockName === "campfire_log") {
+    blockName = "campfire";
+    pathPrefix = "block";
+  } else if (blockName === "soul_campfire_fire" || blockName === "soul_campfire_log") {
+    blockName = "soul_campfire";
+    pathPrefix = "block";
+  }
+
+  // Strip suffixes iteratively
+  let changed = true;
+  while (changed) {
+    const before = blockName;
+    blockName = blockName.replace(VARIANT_STRUCTURAL_SUFFIX_REGEX, "");
+    if (blockName === before) {
+      blockName = blockName.replace(VARIANT_STATE_SUFFIX_REGEX, "");
+    }
+    changed = blockName !== before;
+  }
+
+  // Reconstruct path
+  path = pathPrefix ? `${pathPrefix}/${blockName}` : blockName;
+
+  // Remove trailing numbers (texture variants)
+  const numberMatch = path.match(/^(.+?)_?(\d+)$/);
+  if (numberMatch) {
+    return numberMatch[1].replace(/_$/, "");
+  }
+
+  return path;
+}
+
+/**
+ * Extract variant number from a name
+ * Returns null if not a numbered variant or if it's a blockstate property
+ */
+function extractVariantNumber(name: string): string | null {
+  // Don't treat blockstate numeric properties as variant numbers
+  if (BLOCKSTATE_NUMERIC_SUFFIX_REGEX.test(name)) {
+    return null;
+  }
+
+  const match = name.match(/(\d+)$/);
+  return match ? match[1] : null;
+}
+
+// ============================================================================
+// PUBLIC API FUNCTIONS
+// ============================================================================
+
 /**
  * Normalize an asset ID by removing trailing underscores and underscores before numbers
  * This fixes malformed asset IDs from certain resource packs (especially VanillaTweaks)
@@ -778,444 +1094,18 @@ export function normalizeBlockNameForBlockstate(name: string): string {
  * Example: "activator_rail_on" -> "activator_rail"
  * Example: "variated/andesite/0" -> "andesite"
  * Example: "wheat_stage6_bottom" -> "wheat"
+ *
+ * Uses the data-driven parseAssetId() internally for consistent normalization
  */
 export function getBaseName(assetId: string): string {
+  // Extract just the name portion for parsing
   let name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
 
-  // Remove .png extension if present (malformed asset IDs)
+  // Remove .png extension if present
   name = name.replace(/\.png$/, "");
 
-  // Handle variated/ texture paths: "variated/andesite/0" -> "andesite"
-  const variatedMatch = name.match(/^variated\/([^/]+)\//);
-  if (variatedMatch) {
-    name = variatedMatch[1];
-    return name;
-  }
-
-  // Handle break/ texture paths - these are particle textures, not blocks
-  // We'll still try to extract a base name for grouping
-  if (name.startsWith("break/")) {
-    name = name.replace(/^break\//, "");
-  }
-
-  // Handle "old iron/" prefixed textures
-  if (name.startsWith("old iron/")) {
-    name = name.replace(/^old iron\//, "");
-  }
-
-  // Handle green_birch_leaves/readme type paths
-  const slashMatch = name.match(/^([^/]+)\//);
-  if (slashMatch) {
-    // Skip readme files and similar non-texture files
-    if (name.includes("readme")) {
-      return "readme"; // This will fail but that's expected
-    }
-    name = slashMatch[1];
-  }
-
-  // Fix fungi -> fungus (warped_fungi -> warped_fungus, crimson_fungi -> crimson_fungus)
-  name = name.replace(/^(warped|crimson)_fungi/, "$1_fungus");
-
-  // Pattern-based: wall-mounted blocks use the same blockstate as floor/standing variants
-  // This is pattern-based, not name-based - works for any block with "_wall_" in the name
-  // Examples: wall_torch -> torch, redstone_wall_torch -> redstone_torch, oak_wall_sign -> oak_sign
-  if (name.startsWith("wall_")) {
-    // Remove "wall_" prefix
-    name = name.replace(/^wall_/, "");
-  } else if (name.includes("_wall_")) {
-    // Remove "_wall_" infix
-    name = name.replace(/_wall_/, "_");
-  }
-
-  // Campfire textures map to the base campfire blockstate
-  if (
-    name === "campfire_log" ||
-    name === "campfire_log_lit" ||
-    name === "campfire_fire"
-  ) {
-    return "campfire";
-  }
-  if (
-    name === "soul_campfire_log" ||
-    name === "soul_campfire_log_lit" ||
-    name === "soul_campfire_fire"
-  ) {
-    return "soul_campfire";
-  }
-
-  // Handle pitcherbot/pitchertop -> pitcher_crop (custom pack abbreviations)
-  if (name.startsWith("pitcherbot") || name.startsWith("pitchertop")) {
-    return "pitcher_crop";
-  }
-
-  // Handle blackstonebutton -> polished_blackstone_button
-  if (name === "blackstonebutton") {
-    return "polished_blackstone_button";
-  }
-
-  // Handle pitcher_crop patterns BEFORE general crop stage check
-  // pitcher_crop_bottom_stage_4 -> pitcher_crop
-  // pitcher_crop_top_stage_3 -> pitcher_crop
-  if (name.startsWith("pitcher_crop")) {
-    return "pitcher_crop";
-  }
-
-  // Handle crop stage patterns with multiple suffixes
-  // wheat_stage6_bottom -> wheat, wheat_stage_6_top -> wheat
-  // potatoes_stage3_bottom -> potatoes, carrots_stage3_top -> carrots
-  const cropMatch = name.match(/^(.+?)_stage_?\d+/);
-  if (cropMatch) {
-    name = cropMatch[1];
-    return name;
-  }
-
-  // Handle kelp_age_25 -> kelp
-  if (name.startsWith("kelp_age")) {
-    return "kelp";
-  }
-
-  // Handle turtle_egg patterns -> turtle_egg
-  if (name.startsWith("turtle_egg")) {
-    return "turtle_egg";
-  }
-
-  // Handle structure_block patterns -> structure_block
-  if (name.startsWith("structure_block")) {
-    return "structure_block";
-  }
-
-  // Handle sculk_catalyst patterns -> sculk_catalyst
-  if (name.startsWith("sculk_catalyst")) {
-    return "sculk_catalyst";
-  }
-
-  // Handle sculk_shrieker patterns -> sculk_shrieker
-  if (name.startsWith("sculk_shrieker")) {
-    return "sculk_shrieker";
-  }
-
-  // Handle pink_petals patterns -> pink_petals
-  if (name.startsWith("pink_petals")) {
-    return "pink_petals";
-  }
-
-  // Handle potted_azalea_bush patterns -> potted_azalea_bush or potted_flowering_azalea_bush
-  if (name.startsWith("potted_flowering_azalea_bush")) {
-    return "potted_flowering_azalea_bush";
-  }
-  if (name.startsWith("potted_azalea_bush")) {
-    return "potted_azalea_bush";
-  }
-
-  // Handle bee nest/hive honey patterns
-  // bee_nest_front_honey -> bee_nest, beehive_front_honey -> beehive
-  if (name.includes("_honey")) {
-    name = name.replace(/_front_honey$/, "").replace(/_honey$/, "");
-  }
-
-  // Handle beehive_end -> beehive
-  if (name === "beehive_end") {
-    return "beehive";
-  }
-
-  // Handle barrel_top_open -> barrel
-  if (name.startsWith("barrel_top")) {
-    return "barrel";
-  }
-
-  // Handle observer_back_on -> observer
-  if (name.startsWith("observer_back")) {
-    return "observer";
-  }
-
-  // Handle respawn_anchor_top_off -> respawn_anchor
-  if (name.startsWith("respawn_anchor")) {
-    return "respawn_anchor";
-  }
-
-  // Handle daylight_detector_inverted_top -> daylight_detector
-  if (name.startsWith("daylight_detector")) {
-    return "daylight_detector";
-  }
-
-  // Handle piston patterns -> piston or sticky_piston
-  if (name === "piston_top_sticky") {
-    return "sticky_piston";
-  }
-
-  // Handle furnace/smoker/blast_furnace _front_on patterns
-  // These blocks use "lit" property, but textures use "_on" suffix
-  const furnaceMatch = name.match(
-    /^(furnace|smoker|blast_furnace)_(front|top)_on$/,
-  );
-  if (furnaceMatch) {
-    return furnaceMatch[1];
-  }
-  const furnaceMatch2 = name.match(
-    /^(furnace|smoker|blast_furnace)_(front|top)$/,
-  );
-  if (furnaceMatch2) {
-    return furnaceMatch2[1];
-  }
-
-  // Handle _double suffix for slabs
-  // cut_copper_slab_double -> cut_copper_slab
-  const doubleSlabMatch = name.match(/^(.+_slab)_double$/);
-  if (doubleSlabMatch) {
-    return doubleSlabMatch[1];
-  }
-
-  // Handle dispenser/dropper _vertical patterns -> dispenser/dropper
-  if (name === "dispenser_front_vertical") {
-    return "dispenser";
-  }
-  if (name === "dropper_front_vertical") {
-    return "dropper";
-  }
-
-  // Handle dirt_path_side_lower -> dirt_path
-  if (name.startsWith("dirt_path")) {
-    return "dirt_path";
-  }
-
-  // Handle grass_block patterns -> grass_block
-  if (name.startsWith("grass_block")) {
-    return "grass_block";
-  }
-
-  // Handle moss_block side overlay -> moss_block
-  if (name.startsWith("moss_side") || name === "moss_block_side_overlay") {
-    return "moss_block";
-  }
-
-  // Handle mushroom_block_inside -> brown_mushroom_block (or red, but we default to brown)
-  if (name === "mushroom_block_inside") {
-    return "brown_mushroom_block";
-  }
-
-  // Handle magma -> magma_block
-  if (name === "magma") {
-    return "magma_block";
-  }
-
-  // Handle grass (short grass plant) -> short_grass
-  if (name === "grass") {
-    return "short_grass";
-  }
-
-  // Handle lectern_sides -> lectern
-  if (name.startsWith("lectern")) {
-    return "lectern";
-  }
-
-  // Handle quartz_block_slab_side -> quartz_slab
-  if (name.startsWith("quartz_block_slab")) {
-    return "quartz_slab";
-  }
-
-  // Handle jigsaw_lock -> jigsaw
-  if (name.startsWith("jigsaw")) {
-    return "jigsaw";
-  }
-
-  // Handle tripbase -> tripwire_hook
-  if (name === "tripbase") {
-    return "tripwire_hook";
-  }
-
-  // Handle warped_side -> warped_stem
-  if (name === "warped_side" || name === "warped") {
-    return "warped_stem";
-  }
-
-  // Handle warped_block -> warped_wart_block
-  if (name === "warped_block") {
-    return "warped_wart_block";
-  }
-
-  // Handle crimson_roots_pot and warped_roots_pot -> potted versions
-  if (name === "crimson_roots_pot") {
-    return "potted_crimson_roots";
-  }
-  if (name === "warped_roots_pot") {
-    return "potted_warped_roots";
-  }
-
-  // Preserve stem blockstate names that include "_stem"
-  if (
-    name === "pumpkin_stem" ||
-    name === "melon_stem" ||
-    name === "attached_pumpkin_stem" ||
-    name === "attached_melon_stem"
-  ) {
-    return name;
-  }
-
-  // Handle chiseled_bookshelf_book_ends -> chiseled_bookshelf
-  if (name.startsWith("chiseled_bookshelf")) {
-    return "chiseled_bookshelf";
-  }
-
-  // Handle acacia_leaves_bushy_inventory -> acacia_leaves
-  // and mangrove_leaves_bushy_inventory -> mangrove_leaves
-  const leavesInventoryMatch = name.match(/^(.+_leaves)_bushy_inventory$/);
-  if (leavesInventoryMatch) {
-    return leavesInventoryMatch[1];
-  }
-
-  // Handle azalea_plant -> azalea
-  if (name === "azalea_plant") {
-    return "azalea";
-  }
-
-  // Handle water textures -> water
-  if (name.startsWith("water_")) {
-    return "water";
-  }
-
-  // Handle lava textures -> lava
-  if (name.startsWith("lava_")) {
-    return "lava";
-  }
-
-  // Handle sandstone_smooth -> smooth_sandstone
-  if (name === "sandstone_smooth") {
-    return "smooth_sandstone";
-  }
-  if (name === "red_sandstone_smooth") {
-    return "smooth_red_sandstone";
-  }
-
-  // Handle sandstonetrim -> chiseled_sandstone (old naming)
-  if (name === "sandstonetrim") {
-    return "chiseled_sandstone";
-  }
-
-  // Handle diamond_ore_new -> diamond_ore
-  if (name === "diamond_ore_new") {
-    return "diamond_ore";
-  }
-
-  // Handle _dfx suffix (custom format) - strip it
-  name = name.replace(/_dfx$/, "");
-
-  // Handle _pp suffix (pressure plate shorthand from custom packs)
-  // Map to actual Minecraft pressure plate names
-  if (name.endsWith("_pp")) {
-    const base = name.replace(/_pp$/, "");
-    // Special cases for weighted pressure plates
-    if (base === "gold") {
-      return "light_weighted_pressure_plate";
-    }
-    if (base === "iron") {
-      return "heavy_weighted_pressure_plate";
-    }
-    if (base === "polished_bs") {
-      return "polished_blackstone_pressure_plate";
-    }
-    // For wood types, convert to pressure plate
-    // oak_pp -> oak_pressure_plate, etc.
-    return `${base}_pressure_plate`;
-  }
-
-  // Handle destroy_stage_X -> these aren't real blocks
-  if (name.startsWith("destroy_stage")) {
-    return "destroy_stage";
-  }
-
-  // Handle sniffer_egg patterns
-  // sniffer_egg_not_cracked_bottom -> sniffer_egg
-  // sniffer_egg_slightly_cracked_top -> sniffer_egg
-  // sniffer_egg_very_cracked_east -> sniffer_egg
-  if (name.startsWith("sniffer_egg")) {
-    return "sniffer_egg";
-  }
-
-  // Handle trial_spawner textures -> trial_spawner
-  if (name.startsWith("trial_spawner")) {
-    return "trial_spawner";
-  }
-
-  // Handle vault textures -> vault
-  if (name.startsWith("vault_")) {
-    return "vault";
-  }
-
-  // Handle crafter textures -> crafter
-  if (name.startsWith("crafter_")) {
-    return "crafter";
-  }
-
-  // Handle copper_bulb variants -> copper_bulb (or exposed/oxidized/weathered variants)
-  const copperBulbMatch = name.match(
-    /^((?:exposed_|oxidized_|weathered_)?copper_bulb)/,
-  );
-  if (copperBulbMatch) {
-    return copperBulbMatch[1];
-  }
-
-  // Handle campfire patterns -> campfire or soul_campfire
-  if (name.startsWith("campfire_") || name.startsWith("soul_campfire_")) {
-    return name.startsWith("soul_") ? "soul_campfire" : "campfire";
-  }
-
-  // Handle sculk_sensor_tendril -> sculk_sensor
-  if (name.startsWith("sculk_sensor_tendril")) {
-    return "sculk_sensor";
-  }
-
-  // Handle calibrated_sculk_sensor patterns
-  if (name.startsWith("calibrated_sculk_sensor")) {
-    return "calibrated_sculk_sensor";
-  }
-
-  // Handle small_dripleaf_stem -> small_dripleaf
-  if (name.startsWith("small_dripleaf_stem")) {
-    return "small_dripleaf";
-  }
-
-  // Handle big_dripleaf patterns -> big_dripleaf
-  if (name.startsWith("big_dripleaf")) {
-    return "big_dripleaf";
-  }
-
-  // Handle pointed_dripstone patterns -> pointed_dripstone
-  if (name.startsWith("pointed_dripstone")) {
-    return "pointed_dripstone";
-  }
-
-  // Handle stonecutter_saw -> stonecutter
-  if (name.startsWith("stonecutter_saw")) {
-    return "stonecutter";
-  }
-
-  // Handle redstone_dust patterns -> redstone_wire
-  if (name.startsWith("redstone_dust")) {
-    return "redstone_wire";
-  }
-
-  // Handle dried_kelp_block patterns (dried_kelp_top/side/bottom are block textures)
-  if (name.startsWith("dried_kelp_") && !name.includes("block")) {
-    return "dried_kelp_block";
-  }
-
-  // Remove common structural suffixes (top/bottom, head/foot, etc.)
-  // Also handles texture-specific suffixes that don't correspond to blockstates:
-  // - bamboo_stalk, bamboo_large_leaves, bamboo_small_leaves -> bamboo
-  // - azalea_plant -> azalea
-  // - chiseled_bookshelf_occupied, chiseled_bookshelf_empty -> chiseled_bookshelf
-  name = name.replace(
-    /_(top|bottom|upper|lower|head|foot|side|front|back|end|left|right|inventory|bushy|stage\d+|stalk|stem|plant|large_leaves|small_leaves|singleleaf|occupied|empty|inner|base|round|pivot|overlay|moist|corner|flow|still|arm|inside|outside|eye|conditional|dead|compost|ready|bloom|hanging|particle|post|walls|tip|frustum|merge|middle|crafting|ejecting|ominous)\d*$/,
-    "",
-  );
-
-  // Remove block state suffixes (on/off, lit, open/closed, etc.)
-  name = removeBlockStateSuffixes(name);
-
-  // Remove trailing numbers
-  name = name.replace(/\d+$/, "");
-
-  return name;
+  // Use the unified computeBaseName function
+  return computeBaseName(name);
 }
 
 /**
@@ -1246,173 +1136,19 @@ export function getBlockStateIdFromAssetId(assetId: string): string {
  *
  * Groups variants across different namespaces:
  * - "minecraft:block/bamboo_planks" and "custom:block/bamboo_planks01" -> same group
+ *
+ * Uses the data-driven computeVariantGroupKey() internally for consistent grouping
  */
 export function getVariantGroupKey(assetId: string): string {
-  // Normalize the asset ID first (remove trailing underscores)
+  // Normalize the asset ID first (remove trailing underscores, etc.)
   const normalized = normalizeAssetId(assetId);
 
   // Extract just the path portion, ignoring namespace
   // This allows grouping variants from different namespaces
   const pathMatch = normalized.match(/^[^:]*:(.+)$/);
-  let path = pathMatch ? pathMatch[1] : normalized;
+  const fullPath = pathMatch ? pathMatch[1] : normalized;
 
-  // Group block break overlays with their base block textures
-  // Example: "block/break/black_candle" -> "block/black_candle"
-  if (path.startsWith("block/break/")) {
-    path = `block/${path.slice("block/break/".length)}`;
-  }
-
-  // Pattern-based grouping: wall-mounted variants group with floor/standing variants
-  // This handles torches, buttons, banners, signs, etc. without hardcoding specific blocks
-  // Examples:
-  //   - wall_torch -> torch, redstone_wall_torch -> redstone_torch
-  //   - oak_wall_sign -> oak_sign, birch_wall_banner -> birch_banner
-  //   - stone_wall_button -> stone_button (if it existed)
-  if (path.includes("/wall_")) {
-    // Remove "wall_" prefix: "block/wall_torch" -> "block/torch"
-    path = path.replace(/\/wall_/, "/");
-  } else if (path.includes("_wall_")) {
-    // Remove "_wall_" infix: "block/redstone_wall_torch" -> "block/redstone_torch"
-    path = path.replace(/_wall_/, "_");
-  }
-
-  // Special case: item/redstone groups with block/redstone_wire
-  // Similar to how campfire item groups with campfire block
-  if (path === "item/redstone") {
-    return "block/redstone_wire";
-  }
-
-  // Special case: GUI redstone_dust sprite groups with block/redstone_wire
-  if (path.startsWith("gui/sprites/container/slot/redstone_dust")) {
-    return "block/redstone_wire";
-  }
-
-  if (path.startsWith("colormap/")) {
-    const parts = path.split("/");
-    if (parts.length > 1) {
-      return `colormap/${parts[parts.length - 1]}`;
-    }
-  }
-
-  // Group campfire fire/log textures with their base campfire (any path depth)
-  if (
-    path.includes("campfire_fire") ||
-    path.includes("campfire_log")
-  ) {
-    if (path.includes("soul_campfire")) {
-      return "block/soul_campfire";
-    }
-    return "block/campfire";
-  }
-
-  // Strip potted prefix/suffix to group with base plant
-  // "block/potted_oak_sapling" -> "block/oak_sapling"
-  // "block/oxeye_daisy_potted" -> "block/oxeye_daisy"
-  // "block/potted_azalea_bush" -> "block/azalea" (special case: azalea bush → azalea)
-  if (path.includes("/potted_")) {
-    path = path.replace("/potted_", "/");
-    // Special case: potted azalea_bush/flowering_azalea_bush → azalea/flowering_azalea
-    path = path.replace("/azalea_bush", "/azalea");
-    path = path.replace("/flowering_azalea_bush", "/flowering_azalea");
-  } else if (path.endsWith("_potted")) {
-    path = path.replace(/_potted$/, "");
-  }
-
-  // Keep stem blockstate names intact (avoid grouping with pumpkin/melon blocks)
-  if (
-    /(^|\/)pumpkin_stem$/.test(path) ||
-    /(^|\/)melon_stem$/.test(path) ||
-    /(^|\/)attached_pumpkin_stem$/.test(path) ||
-    /(^|\/)attached_melon_stem$/.test(path)
-  ) {
-    return path;
-  }
-
-  // Handle variated/ texture paths FIRST before other processing
-  // "block/variated/grass_block/grass_block_top_01" -> "block/grass_block"
-  // "block/variated/grass_block/grass_block" -> "block/grass_block"
-  // "block/variated/andesite/0" -> "block/andesite"
-  const variatedMatch = path.match(/^(.+?)\/variated\/([^/]+)\//);
-  if (variatedMatch) {
-    const prefixPath = variatedMatch[1]; // "block"
-    const blockName = variatedMatch[2]; // "grass_block"
-    return `${prefixPath}/${blockName}`;
-  }
-
-  // Also handle variated paths without trailing slash (end of path)
-  const variatedMatchEnd = path.match(/^(.+?)\/variated\/([^/]+)\/([^/]+)$/);
-  if (variatedMatchEnd) {
-    const prefixPath = variatedMatchEnd[1]; // "block"
-    const blockName = variatedMatchEnd[2]; // "grass_block"
-    return `${prefixPath}/${blockName}`;
-  }
-
-  // Extract the block name from the path for suffix processing
-  const pathParts = path.split("/");
-  let blockName = pathParts[pathParts.length - 1];
-  let pathPrefix = pathParts.slice(0, -1).join("/");
-
-  // Group wall hanging signs with their base hanging sign
-  if (blockName.endsWith("_wall_hanging_sign")) {
-    blockName = blockName.replace(/_wall_hanging_sign$/, "_hanging_sign");
-  }
-  // Group wall signs with their standing sign base
-  if (blockName.endsWith("_wall_sign")) {
-    blockName = blockName.replace(/_wall_sign$/, "_sign");
-  }
-
-  // Group redstone_dust textures with redstone_wire block
-  // (dot, line0, line1, overlay are all parts of the multipart redstone_wire model)
-  if (blockName.startsWith("redstone_dust")) {
-    blockName = "redstone_wire";
-    pathPrefix = "block";
-  }
-
-  // Group campfire fire/log textures with their base campfire
-  if (blockName === "campfire_fire" || blockName === "campfire_log") {
-    blockName = "campfire";
-    pathPrefix = "block";
-  } else if (
-    blockName === "soul_campfire_fire" ||
-    blockName === "soul_campfire_log"
-  ) {
-    blockName = "soul_campfire";
-    pathPrefix = "block";
-  }
-
-  // Remove comprehensive structural and texture-specific suffixes
-  // Loop to handle compound suffixes like "_front_honey" -> strip "_honey" then "_front"
-  // This groups block states/faces on the same card (e.g., activator_rail + activator_rail_on)
-  // Note: Variant counting logic separately determines what's a "texture variant"
-  let changed = true;
-  while (changed) {
-    const before = blockName;
-    // Try structural suffixes first
-    blockName = blockName.replace(
-      /_(top|bottom|upper|lower|head|foot|side|front|back|end|left|right|north|south|east|west|inventory|bushy|bushy_inventory|stage\d+|stalk|stem|plant|large_leaves|small_leaves|singleleaf|occupied|empty|inner|base|round|pivot|overlay|snow|moist|corner|flow|still|arm|inside|outside|eye|conditional|dead|compost|ready|bloom|hanging|particle|post|walls|tip|frustum|merge|middle|crafting|ejecting|ominous)\d*$/,
-      "",
-    );
-    // If no structural suffix matched, try state suffixes
-    if (blockName === before) {
-      blockName = blockName.replace(
-      /_(on|off|lit|unlit|powered|unpowered|open|closed|locked|unlocked|connected|disconnected|triggered|untriggered|enabled|disabled|active|inactive|extended|retracted|attached|detached|disarmed|unstable|tipped|filled|empty|honey|partial_tilt|full_tilt|level_\d+|age_\d+|bites_\d+|layers_\d+|delay_\d+|note_\d+|power_\d+|moisture_\d+|rotation_\d+|distance_\d+|charges_\d+|candles_\d+|pickles_\d+|eggs_\d+|hatch_\d+|dusted_\d+|not_cracked|slightly_cracked|very_cracked)$/,
-        "",
-      );
-    }
-    changed = blockName !== before;
-  }
-
-  // Reconstruct path with cleaned block name
-  path = pathPrefix ? `${pathPrefix}/${blockName}` : blockName;
-
-  // Remove trailing numbers with optional underscore separator
-  // Handles: "acacia_planks1", "acacia_planks01", "acacia_planks_1", "acacia_planks_01"
-  const numberMatch = path.match(/^(.+?)_?(\d+)$/);
-  if (numberMatch) {
-    // Remove any trailing underscore from the base
-    return numberMatch[1].replace(/_$/, "");
-  }
-  return path;
+  return computeVariantGroupKey(fullPath);
 }
 
 /**
@@ -1452,12 +1188,13 @@ export function categorizeVariants(variantIds: string[]): {
 /**
  * Check if an asset ID represents a numbered variant
  * Example: "minecraft:block/acacia_leaves1" -> true
+ *
+ * Uses BLOCKSTATE_NUMERIC_SUFFIX_REGEX to exclude blockstate properties
  */
 export function isNumberedVariant(assetId: string): boolean {
   const name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
-  const blockStateNumericSuffix =
-    /_(stage|age|level|distance|power|moisture|rotation|charges|candles|bites|layers|delay|note|pickles|eggs|hatch|dusted)_?\d+$/;
-  if (blockStateNumericSuffix.test(name)) {
+  // Exclude blockstate numeric properties (stage_0, age_7, etc.)
+  if (BLOCKSTATE_NUMERIC_SUFFIX_REGEX.test(name)) {
     return false;
   }
   return /\d+$/.test(name);
@@ -1468,12 +1205,13 @@ export function isNumberedVariant(assetId: string): boolean {
  * Example: "minecraft:block/allium3" -> "3"
  * Example: "minecraft:block/acacia_planks_01" -> "01"
  * Example: "minecraft:block/oak_planks" -> null
+ *
+ * Uses BLOCKSTATE_NUMERIC_SUFFIX_REGEX to exclude blockstate properties
  */
 export function getVariantNumber(assetId: string): string | null {
   const name = assetId.replace(/^minecraft:(block\/|item\/|)/, "");
-  const blockStateNumericSuffix =
-    /_(stage|age|level|distance|power|moisture|rotation|charges|candles|bites|layers|delay|note|pickles|eggs|hatch|dusted)_?\d+$/;
-  if (blockStateNumericSuffix.test(name)) {
+  // Exclude blockstate numeric properties (stage_0, age_7, etc.)
+  if (BLOCKSTATE_NUMERIC_SUFFIX_REGEX.test(name)) {
     return null;
   }
   const match = name.match(/(\d+)$/);

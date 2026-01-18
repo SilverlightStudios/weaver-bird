@@ -10,6 +10,21 @@ export interface BlockEntityRenderSpec {
 
 const ENTITY_PREFIX = "entity/";
 
+const normalizeChestTextureKey = (value: string): string => {
+  let key = value.replace(/^waxed_/, "");
+  const match = key.match(/^(exposed|weathered|oxidized)_copper$/);
+  if (match) {
+    key = `copper_${match[1]}`;
+  }
+  return key;
+};
+
+const getChestEntityTypeOverride = (blockName: string): string => {
+  if (blockName.includes("trapped")) return "trapped_chest";
+  if (blockName.includes("ender")) return "ender_chest";
+  return "chest";
+};
+
 const splitAssetId = (assetId: string): { namespace: string; path: string } => {
   const normalized = normalizeAssetId(assetId);
   const parts = normalized.split(":");
@@ -64,9 +79,13 @@ export function resolveBlockEntityRenderSpec(
   const normalizedAll = new Set(allAssetIds.map(normalizeAssetId));
   const { namespace, path } = splitAssetId(assetId);
 
-  if (!path.startsWith("block/")) return null;
+  const normalizedPath = path.startsWith("block/break/")
+    ? `block/${path.slice("block/break/".length)}`
+    : path;
 
-  const blockName = path.slice("block/".length);
+  if (!normalizedPath.startsWith("block/")) return null;
+
+  const blockName = normalizedPath.slice("block/".length);
 
   if (blockName.endsWith("_wall_hanging_sign")) {
     const wood = blockName.replace(/_wall_hanging_sign$/, "");
@@ -138,23 +157,52 @@ export function resolveBlockEntityRenderSpec(
   }
 
   if (blockName === "chest" || blockName.endsWith("_chest")) {
-    const prefix = blockName === "chest" ? "" : blockName.replace(/_chest$/, "");
-    const candidate = prefix
-      ? findEntityAssetId(namespace, normalizedAll, [`entity/chest/${prefix}`])
-      : null;
+    const rawPrefix = blockName === "chest" ? "normal" : blockName.replace(/_chest$/, "");
+    const chestType = normalizeChestTextureKey(rawPrefix);
 
-    const fallback =
-      candidate ??
-      findEntityAssetId(namespace, normalizedAll, ["entity/chest/normal"]) ??
-      findAnyEntityAssetIdByPrefix(
+    // Build comprehensive fallback list
+    // Vanilla Minecraft has used different paths over versions: entity/chest/X and chest/X
+    const fallbackCandidates: string[] = [
+      // Primary path with entity/ prefix
+      `entity/chest/${chestType}`,
+      // Older format without entity/ prefix
+      `chest/${chestType}`,
+    ];
+
+    // Add generic fallbacks
+    fallbackCandidates.push(
+      "entity/chest/normal",
+      "chest/normal",
+      "entity/chest/chest",
+      "chest/chest"
+    );
+
+    let fallback: string | null = null;
+    for (const path of fallbackCandidates) {
+      fallback = findEntityAssetId(namespace, normalizedAll, [path]);
+      if (fallback) break;
+    }
+
+    // Last resort: find any chest texture
+    if (!fallback) {
+      fallback = findAnyEntityAssetIdByPrefix(
         namespace,
         normalizedAll,
         "entity/chest/",
         (id) => !id.endsWith("_left") && !id.endsWith("_right"),
+      ) ?? findAnyEntityAssetIdByPrefix(
+        namespace,
+        normalizedAll,
+        "chest/",
+        (id) => !id.endsWith("_left") && !id.endsWith("_right"),
       );
+    }
 
     if (fallback) {
-      return { assetId: fallback, entityTypeOverride: blockName };
+      return {
+        assetId: fallback,
+        entityTypeOverride: getChestEntityTypeOverride(blockName),
+      };
     }
   }
 

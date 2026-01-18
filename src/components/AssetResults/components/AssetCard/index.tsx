@@ -89,8 +89,98 @@ export const AssetCard = memo(
     const isColormap = isBiomeColormapAsset(asset.id);
     const is2DTexture = is2DOnlyTexture(asset.id);
     const isItem = isMinecraftItem(asset.id);
-    const isEntity = isEntityTexture(asset.id);
     const useItemTextureForCard = shouldUseItemTextureForCard(asset.id);
+
+    // Check if this is a direct entity texture OR a block that should render as entity
+    // For resource cards, we determine this directly from the block name rather than
+    // checking if the entity texture exists in the asset list
+    const isEntityBlock = useMemo(() => {
+      const path = asset.id.includes(":") ? asset.id.split(":")[1] : asset.id;
+      const normalizedPath = path.replace(/^block\/break\//, "block/");
+      if (!normalizedPath.startsWith("block/")) return false;
+
+      const blockName = normalizedPath.slice("block/".length);
+
+      // List of blocks that should render as entities in resource cards
+      return (
+        blockName === "chest" ||
+        blockName.endsWith("_chest") ||
+        blockName.endsWith("_shulker_box") ||
+        blockName === "shulker_box" ||
+        blockName.endsWith("_bed") ||
+        blockName.endsWith("_sign") ||
+        blockName.endsWith("_hanging_sign") ||
+        blockName.endsWith("_banner") ||
+        blockName === "decorated_pot"
+      );
+    }, [asset.id]);
+
+    const isEntity = isEntityTexture(asset.id) || isEntityBlock;
+
+    // For block entities, construct the expected entity texture path
+    const effectiveAssetId = useMemo(() => {
+      if (!isEntityBlock) return asset.id;
+
+      const namespace = asset.id.includes(":") ? asset.id.split(":")[0] : "minecraft";
+      const path = asset.id.includes(":") ? asset.id.split(":")[1] : asset.id;
+      const normalizedPath = path.replace(/^block\/break\//, "block/");
+      const blockName = normalizedPath.slice("block/".length);
+
+      // Map block names to entity paths
+      if (blockName === "chest" || blockName.endsWith("_chest")) {
+        let prefix = blockName === "chest" ? "normal" : blockName.replace(/_chest$/, "");
+        prefix = prefix.replace(/^waxed_/, "");
+        const copperMatch = prefix.match(/^(exposed|weathered|oxidized)_copper$/);
+        if (copperMatch) {
+          prefix = `copper_${copperMatch[1]}`;
+        }
+
+        // Vanilla Minecraft uses both "chest/X" and "entity/chest/X" paths
+        // depending on the version. We'll try "entity/chest/X" first.
+        return `${namespace}:entity/chest/${prefix}`;
+      }
+
+      if (blockName === "shulker_box" || blockName.endsWith("_shulker_box")) {
+        const color = blockName === "shulker_box" ? "" : blockName.replace(/_shulker_box$/, "");
+        const shulkerSuffix = color ? `shulker_${color}` : "shulker";
+        return `${namespace}:entity/shulker/${shulkerSuffix}`;
+      }
+
+      if (blockName.endsWith("_bed")) {
+        const color = blockName.replace(/_bed$/, "");
+        return `${namespace}:entity/bed/${color}`;
+      }
+
+      if (blockName.endsWith("_wall_hanging_sign")) {
+        const wood = blockName.replace(/_wall_hanging_sign$/, "");
+        return `${namespace}:entity/signs/hanging/${wood}`;
+      }
+
+      if (blockName.endsWith("_hanging_sign")) {
+        const wood = blockName.replace(/_hanging_sign$/, "");
+        return `${namespace}:entity/signs/hanging/${wood}`;
+      }
+
+      if (blockName.endsWith("_wall_sign")) {
+        const wood = blockName.replace(/_wall_sign$/, "");
+        return `${namespace}:entity/signs/${wood}`;
+      }
+
+      if (blockName.endsWith("_sign")) {
+        const wood = blockName.replace(/_sign$/, "");
+        return `${namespace}:entity/signs/${wood}`;
+      }
+
+      if (blockName.endsWith("_wall_banner") || blockName.endsWith("_banner")) {
+        return `${namespace}:entity/banner_base`;
+      }
+
+      if (blockName === "decorated_pot") {
+        return `${namespace}:entity/decorated_pot/decorated_pot_base`;
+      }
+
+      return asset.id;
+    }, [asset.id, isEntityBlock]);
 
     // Entity rendering state
     const [jemModel, setJemModel] = useState<any>(null);
@@ -108,8 +198,8 @@ export const AssetCard = memo(
 
     // Check entity compatibility
     const entityId = useMemo(
-      () => getEntityTypeFromAssetId(asset.id),
-      [asset.id],
+      () => getEntityTypeFromAssetId(effectiveAssetId),
+      [effectiveAssetId],
     );
     const packFormat = useStore((state) =>
       winnerPackId ? state.packFormats[winnerPackId] : undefined,
@@ -381,7 +471,8 @@ export const AssetCard = memo(
 
       const loadEntity = async () => {
         try {
-          const normalizedAssetId = normalizeAssetId(asset.id);
+          // Use effectiveAssetId (which might be the entity ID from blockEntitySpec)
+          const normalizedAssetId = normalizeAssetId(effectiveAssetId);
           const entityInfo = getEntityInfoFromAssetId(normalizedAssetId);
           const textureAssetId = getEntityTextureAssetId(normalizedAssetId);
           const path = normalizedAssetId.includes(":")
@@ -394,7 +485,7 @@ export const AssetCard = memo(
 
           if (!entityInfo) {
             console.warn(
-              `[AssetCard] Could not extract entity info from ${asset.id}`,
+              `[AssetCard] Could not extract entity info from ${effectiveAssetId}`,
             );
             return;
           }
@@ -428,7 +519,8 @@ export const AssetCard = memo(
 
           // Load entity texture
           let texturePath: string;
-          const resolveTexturePath = async (assetId: string): Promise<string> => {
+          const resolveTexturePath = async (assetId: string, fallbackAssetIds?: string[]): Promise<string> => {
+            // Try the primary asset ID first
             if (winnerPackId && winnerPack) {
               try {
                 return await getPackTexturePath(
@@ -437,10 +529,27 @@ export const AssetCard = memo(
                   winnerPack.is_zip,
                 );
               } catch {
-                return await getVanillaTexturePath(assetId);
+                // Fall through to vanilla attempt
               }
             }
-            return await getVanillaTexturePath(assetId);
+
+            // Try vanilla with primary ID
+            try {
+              return await getVanillaTexturePath(assetId);
+            } catch (primaryError) {
+              // If primary fails, try fallbacks
+              if (fallbackAssetIds && fallbackAssetIds.length > 0) {
+                for (const fallbackId of fallbackAssetIds) {
+                  try {
+                    return await getVanillaTexturePath(fallbackId);
+                  } catch {
+                    // Continue to next fallback
+                  }
+                }
+              }
+              // If all fallbacks fail, throw the original error
+              throw primaryError;
+            }
           };
 
           const basePotAssetId = `${ns}:entity/decorated_pot/decorated_pot_base`;
@@ -471,7 +580,22 @@ export const AssetCard = memo(
               extra![sidePotAssetId] = null;
             }
           } else {
-            texturePath = await resolveTexturePath(textureAssetId);
+            // Build fallback paths for chest textures
+            // Vanilla Minecraft has changed chest texture paths over versions
+            let fallbacks: string[] | undefined;
+
+            if (textureAssetId.includes("/chest/")) {
+              const chestType = textureAssetId.split("/chest/")[1] || "normal";
+              fallbacks = [
+                // Try without "entity/" prefix (older format)
+                `${ns}:chest/${chestType}`,
+                // Try alternate naming (normal <-> chest)
+                chestType === "normal" ? `${ns}:entity/chest/chest` : `${ns}:chest/chest`,
+                chestType === "normal" ? `${ns}:chest/chest` : undefined,
+              ].filter(Boolean) as string[];
+            }
+
+            texturePath = await resolveTexturePath(textureAssetId, fallbacks);
           }
 
           if (mounted) {
@@ -482,7 +606,7 @@ export const AssetCard = memo(
           }
         } catch (error) {
           console.error(
-            `[AssetCard] Failed to load entity ${asset.id}:`,
+            `[AssetCard] Failed to load entity ${effectiveAssetId}:`,
             error,
           );
           if (mounted) setEntityExtraTextureUrls(null);
@@ -497,7 +621,7 @@ export const AssetCard = memo(
     }, [
       isVisible,
       isEntity,
-      asset.id,
+      effectiveAssetId,
       winnerPackId,
       winnerPack,
       targetMinecraftVersion,

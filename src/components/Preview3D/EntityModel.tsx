@@ -128,6 +128,7 @@ function EntityModel({
   const [layerGroups, setLayerGroups] = useState<
     Array<{ id: string; group: THREE.Group; dispose: "materials" | "all" }>
   >([]);
+  const [loadedLayerIds, setLoadedLayerIds] = useState<string[]>([]);
   const [cemSourcePack, setCemSourcePack] = useState<
     | { id: string; path: string; is_zip: boolean; pack_format?: number }
     | null
@@ -157,6 +158,17 @@ function EntityModel({
   const overlayBoneMapsRef = useRef<Record<string, Map<string, THREE.Object3D>>>(
     {},
   );
+  const overlayEnginesRef = useRef<Record<string, AnimationEngineType>>({});
+  const overlayEngineSnapshotsRef = useRef<
+    Record<string, { variables: Record<string, number>; randomCache: Array<[number, number]> }>
+  >({});
+  const overlayAnimationLayersRef = useRef<
+    Record<string, AnimationLayer[] | null>
+  >({});
+  const overlayAnimationEntityIdsRef = useRef<Record<string, string | undefined>>(
+    {},
+  );
+  const overlayAnimatedBonesRef = useRef<Record<string, Set<string>>>({});
   const layerBoneRenderOverridesRef = useRef<
     Record<string, Partial<Record<string, { visible?: boolean }>> | null>
   >({});
@@ -185,6 +197,7 @@ function EntityModel({
   const tmpWorldCopyLocalRef = useRef(new THREE.Matrix4());
   const tmpOverlayScaleRef = useRef(new THREE.Vector3());
   const tmpOverlayPosOffsetRef = useRef(new THREE.Vector3());
+  const tmpRotatedOffsetRef = useRef(new THREE.Vector3());
 
   // JEM Inspector state
   const jemInspectorRef = useRef<JEMInspectorV2 | null>(null);
@@ -290,6 +303,10 @@ function EntityModel({
     layerGroupsRef.current = layerGroups;
   }, [layerGroups]);
 
+  useEffect(() => {
+    overlayEngineSnapshotsRef.current = {};
+  }, [assetId]);
+
   const disposeGroupMaterials = (group: THREE.Group) => {
     group.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
@@ -321,6 +338,10 @@ function EntityModel({
       if (Array.isArray(obj.material)) obj.material.forEach(disposeMat);
       else disposeMat(obj.material);
     });
+  };
+
+  const forEachOverlayEngine = (fn: (engine: AnimationEngineType) => void) => {
+    Object.values(overlayEnginesRef.current).forEach(fn);
   };
 
   const allAssetIds = useMemo(() => allAssets.map((a) => a.id), [allAssets]);
@@ -373,6 +394,14 @@ function EntityModel({
       return null;
     }
   }, [entityFeatureSchema, entityFeatureStateView]);
+  const entityStateOverrides = useMemo(() => {
+    if (!entityFeatureSchema?.getEntityStateOverrides) return null;
+    try {
+      return entityFeatureSchema.getEntityStateOverrides(entityFeatureStateView);
+    } catch {
+      return null;
+    }
+  }, [entityFeatureSchema, entityFeatureStateView]);
   const cemEntityOverride = useMemo(() => {
     if (!entityFeatureSchema?.getCemEntityType) return null;
     try {
@@ -404,6 +433,25 @@ function EntityModel({
       selects: entityFeatureStateView.selects,
     });
   }, [entityFeatureSchema, entityFeatureStateView]);
+  const effectiveBoneRenderOverrides = useMemo(() => {
+    const loadedSet = new Set(loadedLayerIds);
+    let overlayOverrides: Partial<Record<string, { visible?: boolean }>> | null =
+      null;
+
+    if (activeEntityLayers.length > 0 && loadedSet.size > 0) {
+      for (const layer of activeEntityLayers) {
+        if (!layer.replacesBaseBones || !loadedSet.has(layer.id)) continue;
+        if (!overlayOverrides) overlayOverrides = {};
+        for (const boneName of layer.replacesBaseBones) {
+          overlayOverrides[boneName] = { visible: false };
+        }
+      }
+    }
+
+    if (!boneRenderOverrides) return overlayOverrides;
+    if (!overlayOverrides) return boneRenderOverrides;
+    return { ...boneRenderOverrides, ...overlayOverrides };
+  }, [activeEntityLayers, boneRenderOverrides, loadedLayerIds]);
 
   // Load entity version variants when packs directory changes
   useEffect(() => {
@@ -487,28 +535,43 @@ function EntityModel({
           | { id: string; path: string; is_zip: boolean; pack_format?: number }
           | null = null;
 
-        // Load model/animations from the selected (winning) pack variant only.
-        // This avoids accidentally mixing geometry from one pack with animations
-        // from another (e.g. Fresh Animations leaking into the vanilla variant).
-        if (resolvedPack && resolvedPackId !== "minecraft:vanilla") {
+        // Load model/animations from the highest-priority pack that ships CEM
+        // data for this entity (independent from the texture winner).
+        const disabledSet = new Set(disabledPackIds);
+        const modelPackCandidates: Array<{
+          id: string;
+          path: string;
+          is_zip: boolean;
+          pack_format?: number;
+        }> = [];
+        for (const packId of packOrder) {
+          if (packId === "minecraft:vanilla") continue;
+          if (disabledSet.has(packId)) continue;
+          const pack = packsById[packId];
+          if (!pack) continue;
+          modelPackCandidates.push({
+            id: packId,
+            path: pack.path,
+            is_zip: pack.is_zip,
+            pack_format: pack.pack_format,
+          });
+        }
+
+        for (const pack of modelPackCandidates) {
           const attempt = await loadEntityModel(
             cemEntityType,
-            resolvedPack.path,
-            resolvedPack.is_zip,
+            pack.path,
+            pack.is_zip,
             targetMinecraftVersion,
             entityVersionVariants,
             cemParentEntity,
-            resolvedPack.pack_format,
+            pack.pack_format,
             selectedEntityVariant,
           );
           if (attempt) {
             parsedModel = attempt;
-            modelPack = {
-              id: resolvedPackId!,
-              path: resolvedPack.path,
-              is_zip: resolvedPack.is_zip,
-              pack_format: resolvedPack.pack_format,
-            };
+            modelPack = pack;
+            break;
           }
         }
 
@@ -710,6 +773,7 @@ function EntityModel({
         setEntityGroup(group);
         setCemSourcePack(modelPack);
         setLayerGroups([]);
+        setLoadedLayerIds([]);
         setLoading(false);
         console.log("=== [EntityModel] Entity Model Load Complete ===");
       } catch (err) {
@@ -759,6 +823,7 @@ function EntityModel({
         setEntityGroup(group);
         setCemSourcePack(null);
         setLayerGroups([]);
+        setLoadedLayerIds([]);
         setLoading(false);
         setPackAnimationLayers(undefined);
       } catch (err) {
@@ -794,6 +859,9 @@ function EntityModel({
     parentEntityOverride,
     resolvedPackId,
     resolvedPack,
+    packOrder,
+    packsById,
+    disabledPackIds,
     packsDir,
     targetMinecraftVersion,
     entityVersionVariants,
@@ -958,13 +1026,21 @@ function EntityModel({
   useEffect(() => {
     if (!entityGroup || !packsDir || !entityFeatureSchema) {
       setLayerGroups([]);
+      setLoadedLayerIds([]);
       energySwirlMaterialsRef.current = [];
+      overlayAnimationLayersRef.current = {};
+      overlayAnimationEntityIdsRef.current = {};
+      overlayAnimatedBonesRef.current = {};
       return;
     }
 
     if (activeEntityLayers.length === 0) {
       setLayerGroups([]);
+      setLoadedLayerIds([]);
       energySwirlMaterialsRef.current = [];
+      overlayAnimationLayersRef.current = {};
+      overlayAnimationEntityIdsRef.current = {};
+      overlayAnimatedBonesRef.current = {};
       return;
     }
 
@@ -1011,6 +1087,25 @@ function EntityModel({
       return tex;
     };
 
+    const collectAnimatedBones = (
+      layers: AnimationLayer[] | null | undefined,
+    ): Set<string> => {
+      const out = new Set<string>();
+      if (!layers) return out;
+      for (const layer of layers) {
+        if (!layer || typeof layer !== "object") continue;
+        for (const key of Object.keys(layer)) {
+          const dot = key.indexOf(".");
+          if (dot === -1) continue;
+          const target = key.slice(0, dot);
+          if (!target || target === "var" || target === "varb" || target === "render")
+            continue;
+          out.add(target);
+        }
+      }
+      return out;
+    };
+
     const normalizeJemTextureId = (jemTex: string): string => {
       let namespace = "minecraft";
       let path = jemTex.replace(/\\/g, "/");
@@ -1041,6 +1136,8 @@ function EntityModel({
       const blending =
         layer.blend === "additive" ? THREE.AdditiveBlending : THREE.NormalBlending;
       const isAdditive = layer.blend === "additive";
+      const hasAlpha = !!tex && tex.format === THREE.RGBAFormat;
+      const useTransparency = isAdditive || opacity < 1 || hasAlpha;
 
       const mode = layer.materialMode ?? { kind: "default" as const };
 
@@ -1106,10 +1203,10 @@ function EntityModel({
         map: tex ?? undefined,
         // Prefer cutout rendering for layer textures to avoid transparent sorting
         // artifacts when stacking multiple entity groups.
-        transparent: isAdditive || opacity < 1,
+        transparent: useTransparency,
         opacity,
         blending,
-        depthWrite: !isAdditive && opacity >= 1,
+        depthWrite: !isAdditive && opacity >= 1 && !hasAlpha,
         depthTest: true,
         alphaTest: 0.1,
         color,
@@ -1120,15 +1217,17 @@ function EntityModel({
         emissiveIntensity: isAdditive ? 0.7 : 0,
         side,
       });
-      mat.polygonOffset = true;
-      // Use a small, stable polygon offset to avoid z-fighting while preserving
-      // the intended layering order:
-      // - positive `zIndex` pulls the layer forward
-      // - negative `zIndex` pushes the layer backward (useful for underlays)
-      const offset = 1 + Math.abs(layer.zIndex) / 1000;
-      const dir = layer.zIndex >= 0 ? -1 : 1;
-      mat.polygonOffsetFactor = dir * offset;
-      mat.polygonOffsetUnits = dir * offset;
+      if (layer.kind === "cloneTexture") {
+        mat.polygonOffset = true;
+        // Use a small, stable polygon offset to avoid z-fighting while preserving
+        // the intended layering order:
+        // - positive `zIndex` pulls the layer forward
+        // - negative `zIndex` pushes the layer backward (useful for underlays)
+        const offset = 1 + Math.abs(layer.zIndex) / 1000;
+        const dir = layer.zIndex >= 0 ? -1 : 1;
+        mat.polygonOffsetFactor = dir * offset;
+        mat.polygonOffsetUnits = dir * offset;
+      }
       return mat;
     };
 
@@ -1150,8 +1249,14 @@ function EntityModel({
     };
 
     const tryLoadCemOverlay = async (
-      candidates: string[],
+      layer: (typeof activeEntityLayers)[number],
     ): Promise<ReturnType<typeof loadEntityModel> | null> => {
+      const candidates = layer.cemEntityTypeCandidates;
+      const allowVanillaFallback =
+        layer.allowVanillaFallback !== false ||
+        !cemSourcePack ||
+        cemSourcePack.id === "minecraft:vanilla";
+
       for (const cemEntityType of candidates) {
         if (cemSourcePack) {
           const attempt = await loadEntityModel(
@@ -1167,17 +1272,19 @@ function EntityModel({
           if (attempt) return attempt;
         }
 
-        const vanillaAttempt = await loadEntityModel(
-          cemEntityType,
-          undefined,
-          undefined,
-          targetMinecraftVersion,
-          entityVersionVariants,
-          null,
-          undefined,
-          selectedEntityVariant,
-        );
-        if (vanillaAttempt) return vanillaAttempt;
+        if (allowVanillaFallback) {
+          const vanillaAttempt = await loadEntityModel(
+            cemEntityType,
+            undefined,
+            undefined,
+            targetMinecraftVersion,
+            entityVersionVariants,
+            null,
+            undefined,
+            selectedEntityVariant,
+          );
+          if (vanillaAttempt) return vanillaAttempt;
+        }
       }
 
       return null;
@@ -1188,6 +1295,24 @@ function EntityModel({
         if (prev.dispose === "materials") disposeGroupMaterials(prev.group);
         else disposeGroupAll(prev.group);
       }
+
+      const baseBones = baseBoneMapRef.current;
+      const hasMeshDescendant = (obj: THREE.Object3D): boolean => {
+        let found = false;
+        obj.traverse((child) => {
+          if (child !== obj && child instanceof THREE.Mesh) found = true;
+        });
+        return found;
+      };
+      const shouldSkipLayer = (layer: (typeof activeEntityLayers)[number]) => {
+        const replacements = layer.replacesBaseBones ?? [];
+        if (replacements.length === 0) return false;
+        for (const name of replacements) {
+          const bone = baseBones.get(name);
+          if (bone && hasMeshDescendant(bone)) return true;
+        }
+        return false;
+      };
 
       const built: Array<{
         id: string;
@@ -1208,6 +1333,9 @@ function EntityModel({
         string,
         Record<string, { x: number; y: number; z: number }> | null
       > = {};
+      const layerAnimations: Record<string, AnimationLayer[] | null> = {};
+      const layerAnimationEntityIds: Record<string, string | undefined> = {};
+      const layerAnimatedBones: Record<string, Set<string>> = {};
 
       const collectEnergySwirlMaterials = (g: THREE.Group) => {
         g.traverse((obj) => {
@@ -1221,6 +1349,12 @@ function EntityModel({
       };
 
       for (const layer of activeEntityLayers) {
+        if (shouldSkipLayer(layer)) {
+          console.log(
+            `[EntityModel] Skipping overlay "${layer.id}" because base model already contains replacement geometry`,
+          );
+          continue;
+        }
         const tex = await loadTextureByAssetId(layer.textureAssetId);
         if (cancelled) return;
 
@@ -1234,13 +1368,22 @@ function EntityModel({
           layerAliasMaps[layer.id] = layer.boneAliasMap ?? null;
           layerPositionOffsets[layer.id] = layer.bonePositionOffsets ?? null;
           layerScaleMultipliers[layer.id] = layer.boneScaleMultipliers ?? null;
+          layerAnimations[layer.id] = null;
+          layerAnimationEntityIds[layer.id] = undefined;
+          layerAnimatedBones[layer.id] = new Set<string>();
           collectEnergySwirlMaterials(g);
           continue;
         }
 
-        const overlayModel = await tryLoadCemOverlay(layer.cemEntityTypeCandidates);
+        console.log(`[EntityModel] Loading overlay for layer "${layer.id}", candidates:`, layer.cemEntityTypeCandidates);
+        const overlayModel = await tryLoadCemOverlay(layer);
         if (cancelled) return;
-        if (!overlayModel) continue;
+        if (!overlayModel) {
+          console.log(`[EntityModel] No overlay model found for layer "${layer.id}"`);
+          continue;
+        }
+        console.log(`[EntityModel] Overlay model loaded for layer "${layer.id}"`);
+
 
         const extraTexturePaths = new Set<string>();
         const collectTextures = (part: any) => {
@@ -1278,6 +1421,15 @@ function EntityModel({
         layerAliasMaps[layer.id] = layer.boneAliasMap ?? null;
         layerPositionOffsets[layer.id] = layer.bonePositionOffsets ?? null;
         layerScaleMultipliers[layer.id] = layer.boneScaleMultipliers ?? null;
+        if (layer.syncToBasePose) {
+          layerAnimations[layer.id] = null;
+          layerAnimationEntityIds[layer.id] = undefined;
+          layerAnimatedBones[layer.id] = new Set<string>();
+        } else {
+          layerAnimations[layer.id] = overlayModel.animations ?? null;
+          layerAnimationEntityIds[layer.id] = overlayEntityId;
+          layerAnimatedBones[layer.id] = collectAnimatedBones(overlayModel.animations);
+        }
         collectEnergySwirlMaterials(g);
       }
 
@@ -1287,7 +1439,11 @@ function EntityModel({
         layerBoneAliasMapsRef.current = layerAliasMaps;
         layerBonePositionOffsetsRef.current = layerPositionOffsets;
         layerBoneScaleMultipliersRef.current = layerScaleMultipliers;
+        overlayAnimationLayersRef.current = layerAnimations;
+        overlayAnimationEntityIdsRef.current = layerAnimationEntityIds;
+        overlayAnimatedBonesRef.current = layerAnimatedBones;
         setLayerGroups(built);
+        setLoadedLayerIds(built.map((layer) => layer.id));
       }
     };
 
@@ -1339,6 +1495,9 @@ function EntityModel({
         .filter(([, enabled]) => enabled)
         .map(([id]) => id),
     );
+    if (entityStateOverrides) {
+      engine.updateEntityState(entityStateOverrides);
+    }
 
     // Ensure the very first render after loading reflects the same transforms
     // we use during playback (some rigs need a tick(0) to align correctly even
@@ -1354,18 +1513,78 @@ function EntityModel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
 	  }, [entityGroup, animationLayers]);
 
-	  useEffect(() => {
-	    const engine = animationEngineRef.current;
-	    if (!engine) return;
-	    engine.setFeatureBoneInputOverrides?.(featureBoneInputOverrides);
-	  }, [featureBoneInputOverrides]);
+  // Create animation engines for overlay layers that ship their own JPM animations.
+  useEffect(() => {
+    if (entityAnimationVariant === "vanilla") return;
+    if (layerGroups.length === 0) return;
+
+    for (const layer of layerGroups) {
+      const layers = overlayAnimationLayersRef.current[layer.id];
+      if (!layers || layers.length === 0) continue;
+      const overlayEntityId = overlayAnimationEntityIdsRef.current[layer.id];
+      const engine = createAnimationEngine(layer.group, layers, overlayEntityId);
+      overlayEnginesRef.current[layer.id] = engine;
+      const baseEngine = animationEngineRef.current;
+      if (baseEngine) {
+        engine.updateEntityState(baseEngine.getEntityState());
+      }
+      engine.setFeatureBoneInputOverrides?.(featureBoneInputOverrides);
+      if (animationPreset) engine.setPreset(animationPreset, animationPlaying);
+      engine.setSpeed(animationSpeed);
+      engine.setHeadOrientation(entityHeadYaw, entityHeadPitch);
+      engine.setSwingDirection(entitySwingDirection);
+      engine.setPoseToggles(
+        Object.entries(activePoseToggles)
+          .filter(([, enabled]) => enabled)
+          .map(([id]) => id),
+      );
+      if (entityStateOverrides) engine.updateEntityState(entityStateOverrides);
+      engine.tick(0);
+      const snapshot = overlayEngineSnapshotsRef.current[layer.id];
+      if (snapshot) {
+        engine.setVariableSnapshot(snapshot.variables);
+        engine.setRandomCacheSnapshot(snapshot.randomCache);
+      }
+    }
+
+    return () => {
+      const snapshots: Record<
+        string,
+        { variables: Record<string, number>; randomCache: Array<[number, number]> }
+      > = {};
+      for (const [layerId, engine] of Object.entries(overlayEnginesRef.current)) {
+        snapshots[layerId] = {
+          variables: engine.getVariableSnapshot(),
+          randomCache: engine.getRandomCacheSnapshot(),
+        };
+        engine.reset();
+      }
+      overlayEnginesRef.current = {};
+      overlayEngineSnapshotsRef.current = snapshots;
+    };
+    // Only recreate overlay engines when the layer set changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layerGroups, entityAnimationVariant]);
+
+  useEffect(() => {
+    const engine = animationEngineRef.current;
+    if (engine) {
+      engine.setFeatureBoneInputOverrides?.(featureBoneInputOverrides);
+    }
+    forEachOverlayEngine((overlay) =>
+      overlay.setFeatureBoneInputOverrides?.(featureBoneInputOverrides),
+    );
+  }, [featureBoneInputOverrides]);
 
   // Sync animation preset changes to engine
   useEffect(() => {
     const engine = animationEngineRef.current;
-    if (!engine) return;
-
-    engine.setPreset(animationPreset, animationPlaying);
+    if (engine) {
+      engine.setPreset(animationPreset, animationPlaying);
+    }
+    forEachOverlayEngine((overlay) =>
+      overlay.setPreset(animationPreset, animationPlaying),
+    );
   }, [animationPreset, animationPlaying]);
 
   // Sync trigger requests (one-shot overlays)
@@ -1374,31 +1593,41 @@ function EntityModel({
     if (!engine) return;
     if (!animationTriggerRequestId) return;
     engine.playTrigger(animationTriggerRequestId);
+    forEachOverlayEngine((overlay) =>
+      overlay.playTrigger(animationTriggerRequestId),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animationTriggerRequestNonce]);
 
   // Sync animation speed changes to engine
   useEffect(() => {
     const engine = animationEngineRef.current;
-    if (!engine) return;
-
-    engine.setSpeed(animationSpeed);
+    if (engine) {
+      engine.setSpeed(animationSpeed);
+    }
+    forEachOverlayEngine((overlay) => overlay.setSpeed(animationSpeed));
   }, [animationSpeed]);
 
   // Sync head orientation changes to engine
   useEffect(() => {
     const engine = animationEngineRef.current;
-    if (!engine) return;
-
-    engine.setHeadOrientation(entityHeadYaw, entityHeadPitch);
+    if (engine) {
+      engine.setHeadOrientation(entityHeadYaw, entityHeadPitch);
+    }
+    forEachOverlayEngine((overlay) =>
+      overlay.setHeadOrientation(entityHeadYaw, entityHeadPitch),
+    );
   }, [entityHeadYaw, entityHeadPitch]);
 
   // Sync swing direction changes to engine (for bell and similar block entities)
   useEffect(() => {
     const engine = animationEngineRef.current;
-    if (!engine) return;
-
-    engine.setSwingDirection(entitySwingDirection);
+    if (engine) {
+      engine.setSwingDirection(entitySwingDirection);
+    }
+    forEachOverlayEngine((overlay) =>
+      overlay.setSwingDirection(entitySwingDirection),
+    );
   }, [entitySwingDirection]);
 
   // Sync pose toggles (persistent overlays)
@@ -1410,6 +1639,7 @@ function EntityModel({
       .filter(([, enabled]) => enabled)
       .map(([id]) => id);
     engine.setPoseToggles(active);
+    forEachOverlayEngine((overlay) => overlay.setPoseToggles(active));
   }, [activePoseToggles]);
 
   // Create/destroy JEM inspector based on debug mode
@@ -1465,6 +1695,10 @@ function EntityModel({
     // Don't tick animations when debug mode is active
     // (manual transform adjustments would be overridden)
     if (jemDebugMode) return;
+
+    if (entityStateOverrides) {
+      engine.updateEntityState(entityStateOverrides);
+    }
 
     // Handle vanilla keyframe animations (Phase 4)
     // NOTE: This is for keyframe animations only (with duration, looping, parts)
@@ -1532,21 +1766,34 @@ function EntityModel({
       engine.tick(delta);
     }
 
+    const baseState = engine.getEntityState();
+    const overlayState = entityStateOverrides
+      ? { ...baseState, ...entityStateOverrides }
+      : baseState;
+    for (const overlayEngine of Object.values(overlayEnginesRef.current)) {
+      overlayEngine.tickWithExternalState(delta, overlayState);
+    }
+
     const applyBoneVisibilityOverrides = () => {
-      if (!boneRenderOverrides) return;
+      if (!effectiveBoneRenderOverrides) return;
       const baseBones = baseBoneMapRef.current;
-      const wildcard = boneRenderOverrides["*"];
+
+      const wildcard = effectiveBoneRenderOverrides["*"];
       if (wildcard && typeof wildcard.visible === "boolean") {
         for (const [, obj] of baseBones) {
           obj.visible = wildcard.visible;
         }
       }
-      for (const [boneName, props] of Object.entries(boneRenderOverrides)) {
+      for (const [boneName, props] of Object.entries(
+        effectiveBoneRenderOverrides,
+      )) {
         if (boneName === "*") continue;
         if (!props) continue;
         const obj = baseBones.get(boneName);
         if (!obj) continue;
-        if (typeof props.visible === "boolean") obj.visible = props.visible;
+        if (typeof props.visible === "boolean") {
+          obj.visible = props.visible;
+        }
       }
     };
 
@@ -1621,16 +1868,48 @@ function EntityModel({
       overlayBoneName: string,
       perLayerAlias: Record<string, string> | null,
     ) => {
-      const direct = baseBones.get(overlayBoneName);
-      if (direct) return direct;
-      // Common aliases between overlay rigs and base rigs.
-      const aliasMap: Record<string, string> = {
+      const resolveAlias = (name: string) => {
+        const direct = baseBones.get(name);
+        if (direct) return direct;
+        if (name === "head" || name === "neck" || name === "body") {
+          const alt = baseBones.get(`${name}2`);
+          if (alt) return alt;
+        }
+        if (name.endsWith("2")) {
+          const alt = baseBones.get(name.slice(0, -1));
+          if (alt) return alt;
+        }
+        return null;
+      };
+      // Check alias map FIRST (explicit mappings take priority)
+      const commonAliases: Record<string, string> = {
         left_shoe: "left_leg",
         right_shoe: "right_leg",
       };
-      const alias = perLayerAlias?.[overlayBoneName] ?? aliasMap[overlayBoneName];
-      if (!alias) return null;
-      return baseBones.get(alias) ?? null;
+      const alias = perLayerAlias?.[overlayBoneName] ?? commonAliases[overlayBoneName];
+      if (alias) {
+        const aliased = resolveAlias(alias);
+        if (aliased) return aliased;
+      }
+      // Fall back to direct name match if no alias specified
+      return resolveAlias(overlayBoneName);
+    };
+
+    const resolveRestPosition = (obj: THREE.Object3D): THREE.Vector3 => {
+      const rest = (obj.userData as any)?.restPosition;
+      if (rest instanceof THREE.Vector3) return rest;
+      if (
+        rest &&
+        typeof rest === "object" &&
+        typeof rest.x === "number" &&
+        typeof rest.y === "number" &&
+        typeof rest.z === "number"
+      ) {
+        const v = new THREE.Vector3(rest.x, rest.y, rest.z);
+        obj.userData.restPosition = v;
+        return v;
+      }
+      return obj.position;
     };
 
     const copyWorldTransform = (src: THREE.Object3D, dst: THREE.Object3D) => {
@@ -1676,19 +1955,49 @@ function EntityModel({
       const aliasMap = layerAliasMaps[layer.id] ?? null;
       const posOffsets = layerPositionOffsets[layer.id] ?? null;
       const scaleMults = layerScaleMultipliers[layer.id] ?? null;
+      const animatedBones = overlayAnimatedBonesRef.current[layer.id];
 
       for (const [name, dst] of overlayBones) {
-        const src = resolveBaseBoneForOverlay(name, aliasMap);
-        if (!src) continue;
-        copyWorldTransform(src, dst);
-        dst.visible = src.visible;
-        const pos = posOffsets?.[name];
-        if (pos) {
-          dst.position.add(
-            tmpOverlayPosOffsetRef.current.set(pos.x, pos.y, pos.z),
-          );
+        const shouldSync = !animatedBones || !animatedBones.has(name);
+        if (shouldSync) {
+          const src = resolveBaseBoneForOverlay(name, aliasMap);
+          if (!src) {
+            continue;
+          }
+
+          const overlayRest = resolveRestPosition(dst);
+          const baseRest = resolveRestPosition(src);
+          if (
+            !dst.userData.overlayLocalOffset ||
+            dst.userData.overlayOffsetBaseBone !== src.name
+          ) {
+            dst.userData.overlayOffsetBaseBone = src.name;
+            dst.userData.overlayLocalOffset = overlayRest.clone().sub(baseRest);
+          }
+
+          copyWorldTransform(src, dst);
+
+          // Re-apply the overlay offset in the base bone's rotated coordinate frame
+          const offset = dst.userData.overlayLocalOffset as THREE.Vector3;
+          const rotatedOffset = tmpRotatedOffsetRef.current
+            .copy(offset)
+            .applyQuaternion(dst.quaternion);
+          dst.position.add(rotatedOffset);
         }
-        const mul = scaleMults?.[name];
+
+        // Overlay bones should be visible by default (don't inherit hidden state from base bones).
+        // Avoid forcing visibility for animated bones so JPM `visible` tracks work.
+        if (shouldSync) {
+          dst.visible = true;
+        }
+        const pos = posOffsets?.[name] ?? posOffsets?.["*"];
+        if (pos) {
+          const rotatedOffset = tmpRotatedOffsetRef.current
+            .copy(tmpOverlayPosOffsetRef.current.set(pos.x, pos.y, pos.z))
+            .applyQuaternion(dst.quaternion);
+          dst.position.add(rotatedOffset);
+        }
+        const mul = scaleMults?.[name] ?? scaleMults?.["*"];
         if (mul) {
           dst.scale.multiply(
             tmpOverlayScaleRef.current.set(mul.x, mul.y, mul.z),
