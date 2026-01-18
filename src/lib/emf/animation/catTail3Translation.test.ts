@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 const PX = 16;
 
@@ -20,24 +20,24 @@ describe("Fresh Animations (cat) tail3 translation", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
     engine.tick(0);
 
-    const tail3 = group.getObjectByName("tail3") as THREE.Object3D | null;
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
+    const tail3 = group.getObjectByName("tail3") as BoneWithUserData | null;
+    const body = group.getObjectByName("body") as BoneWithUserData | null;
     expect(tail3).toBeTruthy();
     expect(body).toBeTruthy();
     expect(tail3!.parent?.name).toBe("body");
 
-    const tail3UserData = (tail3 as any).userData ?? {};
+    const tail3UserData = tail3!.userData;
     const absoluteAxes =
       typeof tail3UserData.absoluteTranslationAxes === "string"
         ? (tail3UserData.absoluteTranslationAxes as string)
@@ -49,8 +49,8 @@ describe("Fresh Animations (cat) tail3 translation", () => {
     const ty = engine.getBoneValue("tail3", "ty");
     const tz = engine.getBoneValue("tail3", "tz");
 
-    const bodyOriginPx = Array.isArray((body as any).userData?.originPx)
-      ? ((body as any).userData.originPx as [number, number, number])
+    const bodyOriginPx = Array.isArray(body!.userData?.originPx)
+      ? (body!.userData.originPx as [number, number, number])
       : ([0, 0, 0] as [number, number, number]);
 
     const invertAxis =

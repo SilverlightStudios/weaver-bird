@@ -29,9 +29,10 @@ describe("loadEntityModel (descendant boxes)", () => {
       ],
     };
 
-    vi.mocked(invoke).mockImplementation(async (command: string, payload: any) => {
+    vi.mocked(invoke).mockImplementation(async (command: string, payload: unknown) => {
       if (command !== "read_pack_file") throw new Error("unexpected command");
-      const filePath = String(payload?.filePath ?? "");
+      const p = payload as { filePath?: string };
+      const filePath = String(p?.filePath ?? "");
       if (filePath === "assets/minecraft/optifine/cem/enderman.jem") {
         return JSON.stringify(jem);
       }

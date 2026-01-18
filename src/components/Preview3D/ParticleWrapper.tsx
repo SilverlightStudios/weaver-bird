@@ -129,7 +129,7 @@ function evaluatePositionExpr(
     }
 
     // Evaluate the expression
-    // eslint-disable-next-line no-new-func
+     
     const result = new Function(`"use strict"; return (${processed});`)() as number;
 
     if (typeof result === "number" && isFinite(result)) {
@@ -345,7 +345,7 @@ export function ParticleWrapper({
 
         // Special handling for redstone_wire: calculate color from power level
         // and add 20% spawn probability (from spawnParticlesAlongLine method)
-        let probabilityExpr = emission.probabilityExpr;
+        let {probabilityExpr} = emission;
         if (blockId === "redstone_wire" && emission.particleId === "dust") {
           const powerStr = effectiveProps.power ?? "0";
           const power = parseInt(powerStr, 10);

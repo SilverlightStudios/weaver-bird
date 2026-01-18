@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 const PX = 16;
 
@@ -20,28 +20,28 @@ describe("Fresh Animations (horse) translation semantics", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
     engine.tick(0);
 
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
-    const saddle = group.getObjectByName("saddle") as THREE.Object3D | null;
-    const neck2 = group.getObjectByName("neck2") as THREE.Object3D | null;
-    const tail2 = group.getObjectByName("tail2") as THREE.Object3D | null;
+    const body = group.getObjectByName("body") as BoneWithUserData | null;
+    const saddle = group.getObjectByName("saddle") as BoneWithUserData | null;
+    const neck2 = group.getObjectByName("neck2") as BoneWithUserData | null;
+    const tail2 = group.getObjectByName("tail2") as BoneWithUserData | null;
     const headpieceNeck = group.getObjectByName(
       "headpiece_neck",
-    ) as THREE.Object3D | null;
-    const snout2 = group.getObjectByName("snout2") as THREE.Object3D | null;
+    ) as BoneWithUserData | null;
+    const snout2 = group.getObjectByName("snout2") as BoneWithUserData | null;
     const headpieceSnout = group.getObjectByName(
       "headpiece_snout",
-    ) as THREE.Object3D | null;
+    ) as BoneWithUserData | null;
 
     expect(body).toBeTruthy();
     expect(saddle).toBeTruthy();
@@ -58,12 +58,12 @@ describe("Fresh Animations (horse) translation semantics", () => {
     expect(neck2!.parent?.name).toBe("body");
     expect(tail2!.parent?.name).toBe("body");
 
-    const bodyOriginPx = Array.isArray((body as any).userData?.originPx)
-      ? ((body as any).userData.originPx as [number, number, number])
+    const bodyOriginPx = Array.isArray(body!.userData?.originPx)
+      ? (body!.userData.originPx as [number, number, number])
       : ([0, 0, 0] as [number, number, number]);
 
     // neck2.ty/tz are authored as absolute origin values with invertAxis="xy".
-    const neck2UserData = (neck2 as any).userData ?? {};
+    const neck2UserData = neck2!.userData;
     const neck2Axes =
       typeof neck2UserData.absoluteTranslationAxes === "string"
         ? (neck2UserData.absoluteTranslationAxes as string)
@@ -89,7 +89,7 @@ describe("Fresh Animations (horse) translation semantics", () => {
     expect(neck2!.position.z).toBeCloseTo(expectedNeck2Z, 6);
 
     // tail2.ty is authored as an absolute origin value.
-    const tail2UserData = (tail2 as any).userData ?? {};
+    const tail2UserData = tail2!.userData;
     const tail2Axes =
       typeof tail2UserData.absoluteTranslationAxes === "string"
         ? (tail2UserData.absoluteTranslationAxes as string)
@@ -110,11 +110,11 @@ describe("Fresh Animations (horse) translation semantics", () => {
     // Tack copies neck2 translation values onto headpiece_neck, which should use
     // the same absolute translation semantics (relative to the saddle pivot).
     expect(headpieceNeck!.parent?.name).toBe("saddle");
-    const saddleOriginPx = Array.isArray((saddle as any).userData?.originPx)
-      ? ((saddle as any).userData.originPx as [number, number, number])
+    const saddleOriginPx = Array.isArray(saddle!.userData?.originPx)
+      ? (saddle!.userData.originPx as [number, number, number])
       : ([0, 0, 0] as [number, number, number]);
 
-    const headpieceNeckUserData = (headpieceNeck as any).userData ?? {};
+    const headpieceNeckUserData = headpieceNeck!.userData;
     const headpieceNeckAxes =
       typeof headpieceNeckUserData.absoluteTranslationAxes === "string"
         ? (headpieceNeckUserData.absoluteTranslationAxes as string)
@@ -141,7 +141,7 @@ describe("Fresh Animations (horse) translation semantics", () => {
     expect(headpieceNeck!.position.z).toBeCloseTo(expectedHeadpieceNeckZ, 6);
 
     // Snout translations include their base translate, so treat them as local absolute.
-    const snout2UserData = (snout2 as any).userData ?? {};
+    const snout2UserData = snout2!.userData;
     expect(snout2UserData.absoluteTranslationSpace).toBe("local");
     const snout2Axes =
       typeof snout2UserData.absoluteTranslationAxes === "string"
@@ -158,7 +158,7 @@ describe("Fresh Animations (horse) translation semantics", () => {
       (snoutInvertAxis.includes("y") ? -1 : 1) * (snout2Ty / PX);
     expect(snout2!.position.y).toBeCloseTo(expectedSnout2Y, 6);
 
-    const headpieceSnoutUserData = (headpieceSnout as any).userData ?? {};
+    const headpieceSnoutUserData = headpieceSnout!.userData;
     expect(headpieceSnoutUserData.absoluteTranslationSpace).toBe("local");
     const headpieceSnoutAxes =
       typeof headpieceSnoutUserData.absoluteTranslationAxes === "string"

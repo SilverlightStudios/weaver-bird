@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 describe("Fresh Animations (axolotl) attachment", () => {
   it("keeps the land legs embedded in the torso under idle", () => {
@@ -18,11 +19,11 @@ describe("Fresh Animations (axolotl) attachment", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
@@ -31,9 +32,9 @@ describe("Fresh Animations (axolotl) attachment", () => {
     engine.tick(0);
     group.updateMatrixWorld(true);
 
-    const torso = group.getObjectByName("body2_box0") as THREE.Object3D | null;
+    const torso = group.getObjectByName("body2_box0");
     const legs = ["leg5_box0", "leg6_box0", "leg7_box0", "leg8_box0"].map(
-      (name) => group.getObjectByName(name) as THREE.Object3D | null,
+      (name) => group.getObjectByName(name),
     );
     expect(torso).toBeTruthy();
     for (const leg of legs) expect(leg).toBeTruthy();

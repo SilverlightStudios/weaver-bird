@@ -7,9 +7,10 @@ import {
   acquireUrlTexture,
   releaseUrlTexture,
 } from "@lib/three/urlTextureCache";
+import type { ParsedEntityModel } from "@/lib/emf/types";
 
 interface Props {
-  jemModel: any;
+  jemModel: ParsedEntityModel;
   textureUrl: string | null;
   extraTextureUrls?: Record<string, string | null> | null;
 }
@@ -34,7 +35,7 @@ export function EntityThumbnail({
       return;
     }
 
-    acquireUrlTexture(textureUrl).then((tex) => {
+    void acquireUrlTexture(textureUrl).then((tex) => {
       if (cancelled) return;
       setBaseTexture(tex);
       invalidate();
@@ -61,7 +62,7 @@ export function EntityThumbnail({
     let cancelled = false;
     const next: Record<string, THREE.Texture> = {};
 
-    Promise.all(
+    void Promise.all(
       urls.map(async ([key, url]) => {
         const tex = await acquireUrlTexture(url);
         if (tex) next[key] = tex;

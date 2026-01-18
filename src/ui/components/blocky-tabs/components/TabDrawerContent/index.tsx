@@ -6,7 +6,7 @@ import {
   DrawerTitle,
   DrawerClose,
 } from "../../../Drawer/Drawer";
-import { ZoneId } from "../../types";
+import type { ZoneId } from "../../types";
 import { ResizeHandle } from "../../ResizeHandle";
 import { viewTransition } from "@lib/viewTransitions";
 import s from "./TabDrawerContent.module.scss";

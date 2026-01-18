@@ -6,7 +6,7 @@
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useStore } from "./store";
-import { AssetId, PackId, OverrideEntry, OverrideWirePayload } from "./types";
+import type { AssetId, PackId, OverrideEntry, OverrideWirePayload } from "./types";
 import { assetMatchesQuery } from "@lib/searchUtils";
 import { shouldExcludeAsset } from "@lib/assetUtils";
 import { isEntityFeatureLayerTextureAssetId } from "@lib/entityComposite";
@@ -149,7 +149,7 @@ export const useSelectPaginatedAssets = () => {
     const allAssetIds = new Set(Object.keys(assets));
 
     // Filter out unwanted assets
-    let filteredAssets = Object.values(assets).filter(
+    const filteredAssets = Object.values(assets).filter(
       (asset) =>
         !shouldExcludeAsset(asset.id, allAssetIds) &&
         !isEntityFeatureLayerTextureAssetId(asset.id),

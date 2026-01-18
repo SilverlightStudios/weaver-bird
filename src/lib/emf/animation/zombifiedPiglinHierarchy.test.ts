@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { createAnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 describe("Fresh Animations (zombified piglin) hierarchy", () => {
   it("avoids re-parenting head under body when body translations reference head translations", () => {
@@ -17,7 +18,7 @@ describe("Fresh Animations (zombified piglin) hierarchy", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: any[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);

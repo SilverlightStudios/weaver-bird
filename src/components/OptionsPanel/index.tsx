@@ -258,7 +258,7 @@ export const OptionsPanel = ({
         }
       }
     }
-    loadSchema();
+    void loadSchema();
 
     return () => {
       cancelled = true;

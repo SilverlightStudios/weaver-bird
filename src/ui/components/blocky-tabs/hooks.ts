@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ZoneId } from "./types";
+import type { ZoneId } from "./types";
 import {
   ANIMATION_DURATION,
   DRAWER_COLLAPSE_THRESHOLD,

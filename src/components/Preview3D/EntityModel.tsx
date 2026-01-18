@@ -13,8 +13,11 @@ import {
   getEntityTextureAssetId,
   isEntityTexture,
   jemToThreeJS,
+  type ParsedEntityModel,
+  type ParsedPart,
+  type ParsedBox,
 } from "@lib/emf";
-import { resolveEntityCompositeSchema } from "@lib/entityComposite";
+import { resolveEntityCompositeSchema, type EntityLayerDefinition } from "@lib/entityComposite";
 import { loadPackTexture, loadVanillaTexture } from "@lib/three/textureLoader";
 import { useStore } from "@state/store";
 import { getEntityVersionVariants } from "@lib/tauri";
@@ -30,6 +33,7 @@ import {
   isConstantExpression,
 } from "@lib/emf/animation";
 import type { AnimationLayer } from "@lib/emf/jemLoader";
+import type { BoneUserData } from "@/lib/emf/types";
 import { JEMInspectorV2 } from "@lib/emf/JEMInspectorV2";
 import { getVanillaAnimation, type VanillaAnimation, type AnimationKeyframe, VANILLA_ANIMATIONS, getVanillaAnimationTrigger } from "@constants/animations";
 
@@ -220,7 +224,7 @@ function EntityModel({
 
   // JEM Inspector state
   const jemInspectorRef = useRef<JEMInspectorV2 | null>(null);
-  const [parsedJemData, setParsedJemData] = useState<any>(null);
+  const [parsedJemData, setParsedJemData] = useState<ParsedEntityModel | null>(null);
   const entityVariant = useMemo(
     () => getEntityInfoFromAssetId(assetId)?.variant ?? null,
     [assetId],
@@ -331,9 +335,10 @@ function EntityModel({
       if (!(obj instanceof THREE.Mesh)) return;
       const disposeMat = (mat: THREE.Material | null | undefined) => {
         if (!mat) return;
-        const any = mat as any;
-        if (any?.userData?.disposeMap && any.map instanceof THREE.Texture) {
-          any.map.dispose();
+        const userData = mat.userData as BoneUserData;
+        const meshMat = mat as THREE.MeshStandardMaterial;
+        if (userData?.disposeMap && meshMat.map instanceof THREE.Texture) {
+          meshMat.map.dispose();
         }
         mat.dispose();
       };
@@ -348,9 +353,10 @@ function EntityModel({
       obj.geometry?.dispose();
       const disposeMat = (mat: THREE.Material | null | undefined) => {
         if (!mat) return;
-        const any = mat as any;
-        if (any?.userData?.disposeMap && any.map instanceof THREE.Texture) {
-          any.map.dispose();
+        const userData = mat.userData as BoneUserData;
+        const meshMat = mat as THREE.MeshStandardMaterial;
+        if (userData?.disposeMap && meshMat.map instanceof THREE.Texture) {
+          meshMat.map.dispose();
         }
         mat.dispose();
       };
@@ -490,7 +496,7 @@ function EntityModel({
       }
     }
 
-    loadVariants();
+    void loadVariants();
   }, [packsDir]);
 
   useEffect(() => {
@@ -624,20 +630,19 @@ function EntityModel({
           return;
         }
 
-        // Apply schema-driven per-part texture overrides before conversion.
         // IMPORTANT: `loadEntityModel` is cached; do not mutate `parsedModel` in-place.
         const modelForConversion = (() => {
           if (!partTextureOverrides) return parsedModel;
-          const clonePart = (p: any): any => ({
+          const clonePart = (p: ParsedPart): ParsedPart => ({
             ...p,
-            boxes: Array.isArray(p.boxes) ? p.boxes.map((b: any) => ({ ...b })) : [],
+            boxes: Array.isArray(p.boxes) ? p.boxes.map((b: ParsedBox) => ({ ...b })) : [],
             children: Array.isArray(p.children) ? p.children.map(clonePart) : [],
           });
-          const cloned = {
+          const cloned: ParsedEntityModel = {
             ...parsedModel,
             parts: parsedModel.parts.map(clonePart),
           };
-          const apply = (part: any) => {
+          const apply = (part: ParsedPart) => {
             const override = partTextureOverrides[part.name];
             if (override) part.texturePath = override;
             if (part.children) part.children.forEach(apply);
@@ -708,7 +713,7 @@ function EntityModel({
 
         // Load any additional textures referenced by parts
         const extraTexturePaths = new Set<string>();
-        const collectTextures = (part: any) => {
+        const collectTextures = (part: ParsedPart) => {
           if (part.texturePath) extraTexturePaths.add(part.texturePath);
           if (part.children) part.children.forEach(collectTextures);
         };
@@ -851,7 +856,7 @@ function EntityModel({
       }
     }
 
-    loadModel();
+    void loadModel();
 
     return () => {
       console.log("[EntityModel] Cleanup function called");
@@ -1206,15 +1211,15 @@ function EntityModel({
           toneMapped: false,
           side,
         });
-        (mat as any).userData = {
-          ...(mat as any).userData,
+        mat.userData = {
+          ...mat.userData,
           energySwirl: {
             uPerSec: mode.scroll?.uPerSec ?? 0.2,
             vPerSec: mode.scroll?.vPerSec ?? 0.2,
             intensity: mode.intensity ?? 1,
           },
           disposeMap,
-        };
+        } as BoneUserData;
         return mat;
       }
 
@@ -1273,8 +1278,10 @@ function EntityModel({
     };
 
     const tryLoadCemOverlay = async (
-      layer: (typeof activeEntityLayers)[number],
+      layer: EntityLayerDefinition,
     ): Promise<ReturnType<typeof loadEntityModel> | null> => {
+      if (layer.kind !== "cemModel") return null;
+
       const candidates = layer.cemEntityTypeCandidates;
       const allowVanillaFallback =
         layer.allowVanillaFallback !== false ||
@@ -1366,8 +1373,8 @@ function EntityModel({
           if (!(obj instanceof THREE.Mesh)) return;
           const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
           for (const mat of mats) {
-            const any = mat as any;
-            if (any?.userData?.energySwirl) energySwirlMaterials.push(mat);
+            const userData = mat?.userData as BoneUserData;
+            if (userData?.energySwirl) energySwirlMaterials.push(mat!);
           }
         });
       };
@@ -1410,7 +1417,7 @@ function EntityModel({
 
 
         const extraTexturePaths = new Set<string>();
-        const collectTextures = (part: any) => {
+        const collectTextures = (part: ParsedPart) => {
           if (part.texturePath) extraTexturePaths.add(part.texturePath);
           if (part.children) part.children.forEach(collectTextures);
         };
@@ -1471,7 +1478,7 @@ function EntityModel({
       }
     };
 
-    buildLayers();
+    void buildLayers();
 
     return () => {
       cancelled = true;
@@ -1920,24 +1927,24 @@ function EntityModel({
     };
 
     const resolveRestPosition = (obj: THREE.Object3D): THREE.Vector3 => {
-      const rest = (obj.userData as any)?.restPosition;
+      const rest = (obj.userData as BoneUserData)?.restPosition;
       if (rest instanceof THREE.Vector3) return rest;
       if (
         rest &&
-        typeof rest === "object" &&
-        typeof rest.x === "number" &&
-        typeof rest.y === "number" &&
-        typeof rest.z === "number"
+        typeof rest === "object"
       ) {
-        const v = new THREE.Vector3(rest.x, rest.y, rest.z);
-        obj.userData.restPosition = v;
-        return v;
+        const r = rest as { x?: unknown; y?: unknown; z?: unknown };
+        if (typeof r.x === "number" && typeof r.y === "number" && typeof r.z === "number") {
+          const v = new THREE.Vector3(r.x, r.y, r.z);
+          (obj.userData as BoneUserData).restPosition = v;
+          return v;
+        }
       }
       return obj.position;
     };
 
     const copyWorldTransform = (src: THREE.Object3D, dst: THREE.Object3D) => {
-      const parent = dst.parent;
+      const {parent} = dst;
       if (parent) {
         const parentInv = tmpWorldCopyParentInvRef.current;
         const local = tmpWorldCopyLocalRef.current;
@@ -1954,11 +1961,9 @@ function EntityModel({
     if (swirlMats.length > 0) {
       const nowSec = performance.now() / 1000;
       for (const mat of swirlMats) {
-        const any = mat as any;
-        const cfg = any?.userData?.energySwirl as
-          | { uPerSec: number; vPerSec: number }
-          | undefined;
-        const map = any?.map as THREE.Texture | undefined;
+        const userData = mat.userData as BoneUserData;
+        const cfg = userData?.energySwirl;
+        const map = (mat as THREE.MeshStandardMaterial).map;
         if (!cfg || !map) continue;
         map.offset.x = (nowSec * cfg.uPerSec) % 1;
         map.offset.y = (nowSec * cfg.vPerSec) % 1;

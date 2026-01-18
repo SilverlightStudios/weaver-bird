@@ -5,7 +5,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { ZoneId, TabItem } from "../../types";
+import type { ZoneId, TabItem } from "../../types";
 import { DRAWER_DEFAULT_SIZE } from "../../constants";
 import { DraggableTab } from "../DraggableTab";
 import s from "./SortableTabZone.module.scss";

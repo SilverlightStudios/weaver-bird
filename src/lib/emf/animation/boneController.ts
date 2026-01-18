@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { BoneTransform } from "./types";
+import type { BoneWithUserData } from "../types";
 
 const PIXELS_PER_UNIT = 16;
 const CEM_Y_ORIGIN = 24;
@@ -78,9 +79,7 @@ export function storeBaseTransforms(bones: BoneMap): BaseTransformMap {
   const baseTransforms: BaseTransformMap = new Map();
 
   for (const [name, bone] of bones) {
-    const boxesGroup = (bone as any)?.userData?.boxesGroup as
-      | THREE.Object3D
-      | undefined;
+    const boxesGroup = (bone as BoneWithUserData).userData.boxesGroup;
     baseTransforms.set(name, {
       position: bone.position.clone(),
       rotation: bone.rotation.clone(),
@@ -110,9 +109,7 @@ export function resetBone(
   bone.rotation.copy(baseTransform.rotation);
   bone.scale.copy(baseTransform.scale);
   bone.visible = baseTransform.visible;
-  const boxesGroup = (bone as any)?.userData?.boxesGroup as
-    | THREE.Object3D
-    | undefined;
+  const boxesGroup = (bone as BoneWithUserData).userData.boxesGroup;
   if (boxesGroup) boxesGroup.visible = baseTransform.boxesVisible;
 }
 
@@ -208,24 +205,24 @@ export function applyBoneTransform(
       console.log(`  ANIMATION ROTATION (radians):`);
       const rxDeg =
         transforms.rx !== undefined
-          ? ((transforms.rx * 180) / Math.PI).toFixed(1) + "°"
+          ? `${((transforms.rx * 180) / Math.PI).toFixed(1)  }°`
           : "none";
       const ryDeg =
         transforms.ry !== undefined
-          ? ((transforms.ry * 180) / Math.PI).toFixed(1) + "°"
+          ? `${((transforms.ry * 180) / Math.PI).toFixed(1)  }°`
           : "none";
       const rzDeg =
         transforms.rz !== undefined
-          ? ((transforms.rz * 180) / Math.PI).toFixed(1) + "°"
+          ? `${((transforms.rz * 180) / Math.PI).toFixed(1)  }°`
           : "none";
       console.log(`    rx=${rxDeg}, ry=${ryDeg}, rz=${rzDeg}`);
     }
   }
 
-  const userData = (bone as any).userData || {};
+  const userData = (bone as BoneWithUserData).userData;
   const absoluteAxes: string =
     typeof userData.absoluteTranslationAxes === "string"
-      ? userData.absoluteTranslationAxes
+      ? (userData.absoluteTranslationAxes as string)
       : userData.absoluteTranslation === true
         ? "xyz"
         : "";
@@ -267,8 +264,8 @@ export function applyBoneTransform(
       : "entity";
   const isLocalAbsolute = absoluteSpace === "local";
 
-  const parentOriginPx = Array.isArray((bone.parent as any)?.userData?.originPx)
-    ? ((bone.parent as any).userData.originPx as [number, number, number])
+  const parentOriginPx = Array.isArray((bone.parent as BoneWithUserData | null)?.userData?.originPx)
+    ? ((bone.parent as BoneWithUserData).userData.originPx as [number, number, number])
     : ([0, 0, 0] as [number, number, number]);
 
   // Absolute translations are authored as rotationPoint values in CEM space.
@@ -397,9 +394,7 @@ export function applyBoneTransform(
   }
 
   if (transforms.visible_boxes !== undefined) {
-    const boxesGroup = (bone as any)?.userData?.boxesGroup as
-      | THREE.Object3D
-      | undefined;
+    const boxesGroup = (bone as BoneWithUserData).userData.boxesGroup;
     if (boxesGroup) boxesGroup.visible = transforms.visible_boxes;
   }
 
@@ -542,3 +537,5 @@ export class BoneTransformAccumulator {
     }
   }
 }
+
+

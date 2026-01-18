@@ -10,34 +10,60 @@
  * - Export corrected JEM files
  */
 
-import { GUI } from "lil-gui";
+import { GUI, type Controller } from "lil-gui";
 import * as THREE from "three";
+import type { JEMFile, JEMModelPart } from "./jemLoader";
 
 interface JEMInspectorConfig {
   scene: THREE.Scene;
-  jemData: any; // Original JEM file data
+  jemData: JEMFile; // Original JEM file data
   rootGroup: THREE.Group; // Root entity group from jemToThreeJS
+}
+
+interface TransformControlsState {
+  partName: string;
+  posX: number;
+  posY: number;
+  posZ: number;
+  inverseX: boolean;
+  inverseY: boolean;
+  inverseZ: boolean;
+  rotX: number;
+  rotY: number;
+  rotZ: number;
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  worldPosX: number;
+  worldPosY: number;
+  worldPosZ: number;
+}
+
+interface ChangesState {
+  changes: string;
+}
+
+interface JEMInspectorTransformControls {
+  state: TransformControlsState;
+  posXCtrl: Controller;
+  posYCtrl: Controller;
+  posZCtrl: Controller;
+  rotXCtrl: Controller;
+  rotYCtrl: Controller;
+  rotZCtrl: Controller;
+  changesState: ChangesState;
 }
 
 export class JEMInspector {
   private gui: GUI;
   private scene: THREE.Scene;
-  private jemData: any;
+  private jemData: JEMFile;
   private rootGroup: THREE.Group;
   private selectedPart: THREE.Object3D | null = null;
   private currentHighlight: THREE.BoxHelper | null = null;
   private selectedFolder: GUI | null = null;
   private folderLabels: Map<GUI, string> = new Map();
-  private transformControls: {
-    state: any;
-    posXCtrl: any;
-    posYCtrl: any;
-    posZCtrl: any;
-    rotXCtrl: any;
-    rotYCtrl: any;
-    rotZCtrl: any;
-    changesState: any;
-  } | null = null;
+  private transformControls: JEMInspectorTransformControls | null = null;
 
   private originalValues: {
     posX: number;
@@ -158,7 +184,9 @@ export class JEMInspector {
         if (this.selectedPart) {
           const jemPart = this.findJEMPart(this.selectedPart.name);
           if (jemPart) {
-            navigator.clipboard.writeText(JSON.stringify(jemPart, null, 2));
+            navigator.clipboard.writeText(JSON.stringify(jemPart, null, 2)).catch(err => {
+              console.error("Failed to copy JEM data:", err);
+            });
             console.log("Copied JEM data:", jemPart);
           }
         }
@@ -199,7 +227,7 @@ export class JEMInspector {
     transformFolder.add(infoState, "info").name("").disable();
 
     // State that will be updated when a part is selected
-    const state = {
+    const state: TransformControlsState = {
       partName: "None selected",
       posX: 0,
       posY: 0,
@@ -350,7 +378,7 @@ export class JEMInspector {
 
     // Changes log
     const changesFolder = transformFolder.addFolder("📝 Changes Made");
-    const changesState = {
+    const changesState: ChangesState = {
       changes: "No changes yet",
     };
     changesFolder.add(changesState, "changes").name("").disable();
@@ -377,7 +405,9 @@ export class JEMInspector {
     const state = {
       exportCorrectedJEM: () => {
         const correctedJEM = this.exportToJEMFormat();
-        navigator.clipboard.writeText(JSON.stringify(correctedJEM, null, 2));
+        navigator.clipboard.writeText(JSON.stringify(correctedJEM, null, 2)).catch(err => {
+          console.error("Failed to export corrected JEM:", err);
+        });
         console.log("Corrected JEM exported to clipboard");
       },
       showDifferences: () => {
@@ -562,8 +592,8 @@ export class JEMInspector {
   /**
    * Find JEM part data by name
    */
-  private findJEMPart(name: string): any {
-    const searchModels = (models: any[]): any => {
+  private findJEMPart(name: string): JEMModelPart | null {
+    const searchModels = (models: JEMModelPart[]): JEMModelPart | null => {
       for (const model of models) {
         if (model.id === name || model.part === name) return model;
         if (model.submodels) {
@@ -598,9 +628,9 @@ export class JEMInspector {
   /**
    * Export current Three.js state back to JEM format
    */
-  private exportToJEMFormat(): any {
+  private exportToJEMFormat(): JEMFile {
     // Deep clone JEM data
-    const corrected = JSON.parse(JSON.stringify(this.jemData));
+    const corrected = JSON.parse(JSON.stringify(this.jemData)) as JEMFile;
 
     // TODO: Walk through Three.js scene and update translate values
     // This would require mapping Three.js objects back to JEM parts

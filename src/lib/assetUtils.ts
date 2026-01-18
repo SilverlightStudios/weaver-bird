@@ -60,7 +60,7 @@ export function parseAssetId(assetId: string): ParsedAssetId {
   // Extract category (first path segment)
   const firstSlash = fullPath.indexOf("/");
   const category = firstSlash >= 0 ? fullPath.slice(0, firstSlash) : "";
-  let name = firstSlash >= 0 ? fullPath.slice(firstSlash + 1) : fullPath;
+  const name = firstSlash >= 0 ? fullPath.slice(firstSlash + 1) : fullPath;
 
   // Compute base name for blockstate lookup
   const baseName = computeBaseName(name);

@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { getAvailableAnimationTriggerIdsForAnimationLayers } from "./triggerDiscovery";
 import { parseJEM, type JEMFile } from "../jemLoader";
+import type { AnimationLayer } from "../types";
 
 describe("trigger discovery", () => {
   it("detects horse-family triggers (rearing/eating) and core state triggers", () => {
@@ -11,11 +12,11 @@ describe("trigger discovery", () => {
       "../../../../__mocks__/resourcepacks/FreshAnimations_v1.10.2/assets/minecraft/optifine/cem/horse_animations.jpm",
     );
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const triggers = getAvailableAnimationTriggerIdsForAnimationLayers(
-      jpm.animations as any,
+      jpm.animations ?? [],
     );
 
     expect(triggers).toContain("trigger.horse_rearing");
@@ -31,11 +32,11 @@ describe("trigger discovery", () => {
       "../../../../__mocks__/resourcepacks/FreshAnimations_v1.10.2/assets/minecraft/optifine/cem/sheep_animations.jpm",
     );
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const triggers = getAvailableAnimationTriggerIdsForAnimationLayers(
-      jpm.animations as any,
+      jpm.animations ?? [],
     );
 
     expect(triggers).toContain("trigger.eat");
@@ -52,17 +53,17 @@ describe("trigger discovery", () => {
     );
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
     const layers = [
       ...(parsed.animations ?? []),
-      ...((jpm.animations ?? []) as any),
+      ...(jpm.animations ?? []),
     ];
 
     const triggers = getAvailableAnimationTriggerIdsForAnimationLayers(
-      layers as any,
+      layers,
     );
 
     expect(triggers).toContain("trigger.eat");
@@ -74,11 +75,11 @@ describe("trigger discovery", () => {
       "../../../../__mocks__/resourcepacks/FreshAnimations_v1.10.2/assets/minecraft/optifine/cem/allay_animations.jpm",
     );
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const triggers = getAvailableAnimationTriggerIdsForAnimationLayers(
-      jpm.animations as any,
+      jpm.animations ?? [],
     );
 
     expect(triggers).not.toContain("trigger.horse_rearing");

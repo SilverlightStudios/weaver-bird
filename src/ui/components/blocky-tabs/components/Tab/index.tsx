@@ -1,6 +1,6 @@
 import React from "react";
 import s from "./Tab.module.scss";
-import { ZoneId } from "../../types";
+import type { ZoneId } from "../../types";
 
 interface TabProps {
   zone: ZoneId;

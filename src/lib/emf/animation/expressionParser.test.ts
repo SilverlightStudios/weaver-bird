@@ -11,8 +11,8 @@ import {
   astToString,
 } from "./expressionParser";
 import { evaluate, evaluateAST } from "./expressionEvaluator";
-import { createAnimationContext, DEFAULT_ENTITY_STATE } from "./types";
-import type { AnimationContext } from "./types";
+import { createAnimationContext } from "./types";
+import type { AnimationContext , DEFAULT_ENTITY_STATE } from "./types";
 
 // Helper to create a test context with custom entity state
 function createTestContext(

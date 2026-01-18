@@ -1,4 +1,9 @@
 import React, { useState, useTransition } from "react";
+import type {
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
+  DropAnimation} from "@dnd-kit/core";
 import {
   DndContext,
   closestCorners,
@@ -7,15 +12,11 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
-  defaultDropAnimationSideEffects,
-  DragStartEvent,
-  DragOverEvent,
-  DragEndEvent,
-  DropAnimation,
+  defaultDropAnimationSideEffects
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import s from "./BlockyTabs.module.scss";
-import { ZoneId, TabItem, BlockyTabsProps } from "./types";
+import type { ZoneId, TabItem, BlockyTabsProps } from "./types";
 import {
   DND_ACTIVATION_DISTANCE,
   DRAWER_DEFAULT_SIZE,

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Drawer } from "../../../Drawer/Drawer";
-import { ZoneId, TabItem } from "../../types";
+import type { ZoneId, TabItem } from "../../types";
 import { isHorizontalZone } from "../../constants";
 import {
   useDrawerAnimation,

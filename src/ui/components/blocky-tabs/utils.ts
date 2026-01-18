@@ -1,4 +1,4 @@
-import { ZoneId } from "./types";
+import type { ZoneId } from "./types";
 import { TAB_HIDE_OFFSET, isHorizontalZone } from "./constants";
 import s from "./BlockyTabs.module.scss";
 

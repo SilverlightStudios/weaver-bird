@@ -14,7 +14,7 @@ export const EntityVariantTab = ({ assetId }: EntityVariantTabProps) => {
   const availableVariants = getEntityVariants(assetId);
 
   const handleVariantChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
+    const {value} = event.target;
     setEntityVariant(value === "wall" ? undefined : value);
   };
 

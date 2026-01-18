@@ -1,3 +1,5 @@
+import type { ItemDisplayMode } from "@lib/itemDisplayModes";
+
 export interface TabIconProps {
     icon: string;
     label: string;
@@ -21,6 +23,6 @@ export interface OptionsPanelProps {
     allAssets?: Array<{ id: string; name: string }>;
     onSelectVariant?: (variantId: string) => void;
     onViewingVariantChange?: (variantId: string | undefined) => void;
-    itemDisplayMode?: import("@lib/itemDisplayModes").ItemDisplayMode;
-    onItemDisplayModeChange?: (mode: import("@lib/itemDisplayModes").ItemDisplayMode) => void;
+    itemDisplayMode?: ItemDisplayMode;
+    onItemDisplayModeChange?: (mode: ItemDisplayMode) => void;
 }

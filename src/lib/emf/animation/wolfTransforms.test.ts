@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 describe("Fresh Animations (wolf) rotation + tail semantics", () => {
   it("handles wolf body_rotation, mane2, head2, tail2 semantics", () => {
@@ -18,22 +19,22 @@ describe("Fresh Animations (wolf) rotation + tail semantics", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
-    const bodyBefore = group.getObjectByName("body") as THREE.Object3D | null;
+    const bodyBefore = group.getObjectByName("body") as BoneWithUserData | null;
     const bodyRotationBefore = group.getObjectByName(
       "body_rotation",
-    ) as THREE.Object3D | null;
-    const tail2Before = group.getObjectByName("tail2") as THREE.Object3D | null;
-    const head2Before = group.getObjectByName("head2") as THREE.Object3D | null;
-    const mane2Before = group.getObjectByName("mane2") as THREE.Object3D | null;
+    ) as BoneWithUserData | null;
+    const tail2Before = group.getObjectByName("tail2") as BoneWithUserData | null;
+    const head2Before = group.getObjectByName("head2") as BoneWithUserData | null;
+    const mane2Before = group.getObjectByName("mane2") as BoneWithUserData | null;
 
     expect(bodyBefore).toBeTruthy();
     expect(bodyRotationBefore).toBeTruthy();
@@ -53,13 +54,13 @@ describe("Fresh Animations (wolf) rotation + tail semantics", () => {
 
     engine.tick(0);
 
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
+    const body = group.getObjectByName("body") as BoneWithUserData | null;
     const bodyRotation = group.getObjectByName(
       "body_rotation",
-    ) as THREE.Object3D | null;
-    const tail2 = group.getObjectByName("tail2") as THREE.Object3D | null;
-    const head2 = group.getObjectByName("head2") as THREE.Object3D | null;
-    const mane2 = group.getObjectByName("mane2") as THREE.Object3D | null;
+    ) as BoneWithUserData | null;
+    const tail2 = group.getObjectByName("tail2") as BoneWithUserData | null;
+    const head2 = group.getObjectByName("head2") as BoneWithUserData | null;
+    const mane2 = group.getObjectByName("mane2") as BoneWithUserData | null;
 
     expect(body).toBeTruthy();
     expect(bodyRotation).toBeTruthy();
@@ -75,7 +76,7 @@ describe("Fresh Animations (wolf) rotation + tail semantics", () => {
 
     // `body_rotation.tz` is authored as an absolute rotationPoint value, so it should
     // be interpreted in entity-absolute space (subtract parent origin).
-    const bodyRotationUserData = (bodyRotation as any).userData ?? {};
+    const bodyRotationUserData = bodyRotation!.userData;
     const bodyRotationAbsAxes =
       typeof bodyRotationUserData.absoluteTranslationAxes === "string"
         ? (bodyRotationUserData.absoluteTranslationAxes as string)

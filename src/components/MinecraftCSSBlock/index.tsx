@@ -213,7 +213,7 @@ export const MinecraftCSSBlock = ({
       }
     };
 
-    load2DFallback();
+    void load2DFallback();
 
     return () => {
       mounted = false;
@@ -490,7 +490,7 @@ export const MinecraftCSSBlock = ({
       }
     };
 
-    load3DModel();
+    void load3DModel();
 
     return () => {
       mounted = false;

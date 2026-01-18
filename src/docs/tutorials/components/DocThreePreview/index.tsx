@@ -1,195 +1,14 @@
-import { useEffect, useMemo, useState, useRef } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
+import { useEffect, useState, useRef } from "react";
+import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
   PerspectiveCamera,
   ContactShadows,
-  // Environment,
-  Text,
 } from "@react-three/drei";
 import * as THREE from "three";
-import {
-  loadJEM,
-  addDebugVisualization,
-  type JEMFile,
-} from "@lib/emf/jemLoader";
-
-interface Layer {
-  jemData: JEMFile;
-  textureUrl?: string;
-  color?: string;
-}
-
-interface Props {
-  jemData: JEMFile;
-  textureUrl?: string;
-  showPivots?: boolean;
-  solidColor?: boolean;
-  showLabels?: boolean;
-  color?: string;
-  extraLayers?: Layer[];
-}
-
-function DirectionalLabels() {
-  return (
-    <group>
-      <Text
-        position={[0, 0, -2.5]}
-        fontSize={0.25}
-        color="#3b82f6"
-        anchorY="bottom"
-      >
-        North (-Z)
-      </Text>
-      <Text
-        position={[0, 0, 2.5]}
-        fontSize={0.25}
-        color="#3b82f6"
-        anchorY="top"
-      >
-        South (+Z)
-      </Text>
-      <Text
-        position={[-2.5, 0, 0]}
-        fontSize={0.25}
-        color="#ef4444"
-        anchorX="right"
-      >
-        West (-X)
-      </Text>
-      <Text
-        position={[2.5, 0, 0]}
-        fontSize={0.25}
-        color="#ef4444"
-        anchorX="left"
-      >
-        East (+X)
-      </Text>
-      <Text
-        position={[0, 2.8, 0]}
-        fontSize={0.25}
-        color="#22c55e"
-        anchorY="bottom"
-      >
-        Up (+Y)
-      </Text>
-
-      {/* Axis lines - X (Red) */}
-      <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.015, 0.015, 5]} />
-        <meshBasicMaterial color="#ef4444" transparent opacity={0.6} />
-      </mesh>
-
-      {/* Axis lines - Y (Green) */}
-      <mesh position={[0, 1.25, 0]}>
-        <cylinderGeometry args={[0.015, 0.015, 2.5]} />
-        <meshBasicMaterial color="#22c55e" transparent opacity={0.6} />
-      </mesh>
-
-      {/* Axis lines - Z (Blue) */}
-      <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.015, 0.015, 5]} />
-        <meshBasicMaterial color="#3b82f6" transparent opacity={0.6} />
-      </mesh>
-    </group>
-  );
-}
-
-// Separate component for textured models to avoid useLoader being called with empty string
-function TexturedModel({
-  jemData,
-  textureUrl,
-  showPivots,
-  showLabels,
-  color,
-}: {
-  jemData: JEMFile;
-  textureUrl: string;
-  showPivots?: boolean;
-  showLabels?: boolean;
-  color?: string;
-}) {
-  const loadedTexture = useLoader(THREE.TextureLoader, textureUrl);
-
-  // Configure texture settings (Three.js textures are mutable by design)
-  useEffect(() => {
-    if (loadedTexture) {
-      // eslint-disable-next-line react-hooks/immutability
-      loadedTexture.magFilter = THREE.NearestFilter;
-       
-      loadedTexture.minFilter = THREE.NearestFilter;
-       
-      loadedTexture.colorSpace = THREE.SRGBColorSpace;
-    }
-  }, [loadedTexture]);
-
-  const group = useMemo(() => {
-    const modelGroup = loadJEM(jemData, loadedTexture);
-
-    if (color) {
-      modelGroup.traverse((child) => {
-        if (
-          child instanceof THREE.Mesh &&
-          child.material instanceof THREE.MeshStandardMaterial
-        ) {
-          child.material.color.set(color);
-        }
-      });
-    }
-
-    if (showPivots) {
-      addDebugVisualization(modelGroup);
-    }
-
-    return modelGroup;
-  }, [jemData, loadedTexture, showPivots, color]);
-
-  return (
-    <group>
-      <primitive object={group} />
-      {showLabels && <DirectionalLabels />}
-    </group>
-  );
-}
-
-// Component for solid color models (no texture loading)
-function SolidColorModel({
-  jemData,
-  showPivots,
-  showLabels,
-}: {
-  jemData: JEMFile;
-  showPivots?: boolean;
-  showLabels?: boolean;
-}) {
-  const group = useMemo(() => {
-    const modelGroup = loadJEM(jemData, null);
-
-    modelGroup.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.material = new THREE.MeshStandardMaterial({
-          color: 0x888888,
-          roughness: 0.7,
-          metalness: 0.1,
-          side: THREE.DoubleSide,
-        });
-      }
-    });
-
-    if (showPivots) {
-      addDebugVisualization(modelGroup);
-    }
-
-    return modelGroup;
-  }, [jemData, showPivots]);
-
-  return (
-    <group>
-      <primitive object={group} />
-      {showLabels && <DirectionalLabels />}
-    </group>
-  );
-}
+import type { DocThreePreviewProps } from "./types";
+import TexturedModel from "./TexturedModel";
+import SolidColorModel from "./SolidColorModel";
 
 export default function DocThreePreview({
   jemData,
@@ -199,7 +18,7 @@ export default function DocThreePreview({
   showLabels,
   color,
   extraLayers,
-}: Props) {
+}: DocThreePreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 

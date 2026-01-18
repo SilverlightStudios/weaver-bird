@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 describe("Fresh Animations (allay) wing mirroring", () => {
   it("keeps left/right wing transforms mirrored (no baseline double-application)", () => {
@@ -18,18 +19,18 @@ describe("Fresh Animations (allay) wing mirroring", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
-    const leftWing2 = group.getObjectByName("left_wing2") as THREE.Object3D | null;
-    const rightWing2 = group.getObjectByName("right_wing2") as THREE.Object3D | null;
+    const body = group.getObjectByName("body");
+    const leftWing2 = group.getObjectByName("left_wing2");
+    const rightWing2 = group.getObjectByName("right_wing2");
     expect(body).toBeTruthy();
     expect(leftWing2).toBeTruthy();
     expect(rightWing2).toBeTruthy();

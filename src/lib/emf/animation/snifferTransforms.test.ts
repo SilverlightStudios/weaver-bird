@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 describe("Fresh Animations (sniffer) transform sanity", () => {
   it("keeps leg Z offsets distinct, preserves base leg/body heights, and avoids double-adding ear2 ty", () => {
@@ -18,20 +19,20 @@ describe("Fresh Animations (sniffer) transform sanity", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
     engine.tick(0);
 
-    const frontLeft = group.getObjectByName("front_left_leg") as THREE.Object3D | null;
-    const backLeft = group.getObjectByName("back_left_leg") as THREE.Object3D | null;
-    const middleLeft = group.getObjectByName("middle_left_leg") as THREE.Object3D | null;
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
+    const frontLeft = group.getObjectByName("front_left_leg");
+    const backLeft = group.getObjectByName("back_left_leg");
+    const middleLeft = group.getObjectByName("middle_left_leg");
+    const body = group.getObjectByName("body");
     expect(frontLeft).toBeTruthy();
     expect(backLeft).toBeTruthy();
     expect(middleLeft).toBeTruthy();
@@ -52,7 +53,7 @@ describe("Fresh Animations (sniffer) transform sanity", () => {
     // Body should remain close to rest at tick(0) (minor idle/breathing offsets are OK).
     expect(body!.position.y).toBeCloseTo(19 / 16, 1);
 
-    const leftEar2 = group.getObjectByName("left_ear2") as THREE.Object3D | null;
+    const leftEar2 = group.getObjectByName("left_ear2");
     expect(leftEar2).toBeTruthy();
 
     // FA sniffer uses left_ear2.ty = -6.8 as a local absolute pivot value.

@@ -88,7 +88,9 @@ export function useBlockTinting(
             }
         };
 
-        applyTinting();
+        applyTinting().catch((err) => {
+            console.error("[useBlockTinting] Failed to apply tinting:", err);
+        });
 
         return () => {
             mounted = false;

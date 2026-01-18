@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { parseJEM, type JEMFile, jemToThreeJS } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 describe("Fresh Animations (blaze) cross-bone translation handling", () => {
   it("does not baseline-normalize cross-bone `rod*.ty = stick*.ty + k` channels", () => {
@@ -17,13 +18,13 @@ describe("Fresh Animations (blaze) cross-bone translation handling", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
     parsed.animations = [
       ...(parsed.animations ?? []),
-      ...((jpm.animations ?? []) as any),
+      ...(jpm.animations ?? []),
     ];
 
     const group = jemToThreeJS(parsed, null, {});

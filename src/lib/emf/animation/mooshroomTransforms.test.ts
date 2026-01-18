@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer, BoneWithUserData } from "../types";
 
 const PX = 16;
 
@@ -20,24 +20,24 @@ describe("Fresh Animations (mooshroom) translation semantics", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
     engine.tick(0);
 
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
-    const head2 = group.getObjectByName("head2") as THREE.Object3D | null;
-    const udder = group.getObjectByName("udder") as THREE.Object3D | null;
-    const rightEye = group.getObjectByName("right_eye") as THREE.Object3D | null;
-    const leftEye = group.getObjectByName("left_eye") as THREE.Object3D | null;
+    const body = group.getObjectByName("body") as BoneWithUserData | null;
+    const head2 = group.getObjectByName("head2") as BoneWithUserData | null;
+    const udder = group.getObjectByName("udder") as BoneWithUserData | null;
+    const rightEye = group.getObjectByName("right_eye") as BoneWithUserData | null;
+    const leftEye = group.getObjectByName("left_eye") as BoneWithUserData | null;
     const legs = ["leg1", "leg2", "leg3", "leg4"].map(
-      (name) => group.getObjectByName(name) as THREE.Object3D | null,
+      (name) => group.getObjectByName(name) as BoneWithUserData | null,
     );
 
     expect(body).toBeTruthy();
@@ -64,7 +64,7 @@ describe("Fresh Animations (mooshroom) translation semantics", () => {
     expect(body!.position.z).toBeCloseTo(bodyTz / PX, 6);
 
     for (const legName of ["leg1", "leg2", "leg3", "leg4"]) {
-      const leg = group.getObjectByName(legName) as THREE.Object3D | null;
+      const leg = group.getObjectByName(legName) as BoneWithUserData | null;
       expect(leg).toBeTruthy();
 
       const tx = engine.getBoneValue(legName, "tx");
@@ -78,8 +78,8 @@ describe("Fresh Animations (mooshroom) translation semantics", () => {
 
     // head2 translations are authored in a local absolute space (base translate is included),
     // so we use cemYOriginPx=0 and subtract the parent's originPx.
-    const parentOriginPx = Array.isArray((head2!.parent as any)?.userData?.originPx)
-      ? ((head2!.parent as any).userData.originPx as [number, number, number])
+    const parentOriginPx = Array.isArray((head2!.parent as unknown as BoneWithUserData)?.userData?.originPx)
+      ? ((head2!.parent as unknown as BoneWithUserData).userData.originPx as [number, number, number])
       : ([0, 0, 0] as [number, number, number]);
 
     const head2Tx = engine.getBoneValue("head2", "tx");

@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 const CEM_Y_ORIGIN = 24;
 const PX = 16;
@@ -21,19 +22,19 @@ describe("CEM translation semantics (zombie)", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
 
     engine.tick(0);
 
-    const rightArm = group.getObjectByName("right_arm") as THREE.Object3D | null;
-    const leftArm = group.getObjectByName("left_arm") as THREE.Object3D | null;
+    const rightArm = group.getObjectByName("right_arm");
+    const leftArm = group.getObjectByName("left_arm");
     expect(rightArm).toBeTruthy();
     expect(leftArm).toBeTruthy();
 

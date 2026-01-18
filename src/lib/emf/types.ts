@@ -5,6 +5,8 @@
  * https://github.com/sp614x/optifine/tree/master/OptiFineDoc/doc
  */
 
+import type * as THREE from "three";
+
 /**
  * Root JEM file structure
  */
@@ -204,3 +206,32 @@ export interface ParsedBox {
   /** Whether texture is mirrored */
   mirror: boolean;
 }
+
+/**
+ * UserData attached to Three.js bone objects for animation
+ */
+export interface BoneUserData {
+  /** Origin point in pixels [x, y, z] */
+  originPx?: [number, number, number];
+  /** Group containing box meshes for this bone */
+  boxesGroup?: THREE.Group;
+  /** Axis inversion string (e.g., "xy", "xz") */
+  invertAxis?: string;
+  /** Rest position for animation syncing */
+  restPosition?: THREE.Vector3;
+  /** Energy swirl configuration for UV scrolling */
+  energySwirl?: {
+    uPerSec: number;
+    vPerSec: number;
+    intensity: number;
+  };
+  /** Whether to dispose of the texture when the material is disposed */
+  disposeMap?: boolean;
+  /** Optional additional properties */
+  [key: string]: unknown;
+}
+
+/**
+ * Three.js Object3D (typically Bone) with typed userData for animation
+ */
+export type BoneWithUserData = THREE.Object3D & { userData: BoneUserData };

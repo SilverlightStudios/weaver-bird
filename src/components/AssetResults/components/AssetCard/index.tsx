@@ -44,6 +44,7 @@ import {
   getIncompatibilityMessage,
 } from "@lib/packFormatCompatibility";
 import type { AssetCardProps } from "./types";
+import type { ParsedEntityModel, ParsedModelPart, ParsedBox } from "@/lib/emf/types";
 import s from "./styles.module.scss";
 
 import { View } from "@react-three/drei";
@@ -54,7 +55,7 @@ function EntityThumbnailView({
   textureUrl,
   extraTextureUrls,
 }: {
-  jemModel: any;
+  jemModel: ParsedEntityModel;
   textureUrl: string | null;
   extraTextureUrls?: Record<string, string | null> | null;
 }) {
@@ -183,7 +184,7 @@ export const AssetCard = memo(
     }, [asset.id, isEntityBlock]);
 
     // Entity rendering state
-    const [jemModel, setJemModel] = useState<any>(null);
+    const [jemModel, setJemModel] = useState<ParsedEntityModel | null>(null);
     const [entityTextureUrl, setEntityTextureUrl] = useState<string | null>(
       null,
     );
@@ -352,7 +353,7 @@ export const AssetCard = memo(
         }
       };
 
-      loadImage();
+      void loadImage();
 
       return () => {
         mounted = false;
@@ -508,10 +509,10 @@ export const AssetCard = memo(
             return;
           }
 
-          const cloneModel = (m: any): any => {
-            const clonePart = (p: any): any => ({
+          const cloneModel = (m: ParsedEntityModel): ParsedEntityModel => {
+            const clonePart = (p: ParsedModelPart): ParsedModelPart => ({
               ...p,
-              boxes: Array.isArray(p.boxes) ? p.boxes.map((b: any) => ({ ...b })) : [],
+              boxes: Array.isArray(p.boxes) ? p.boxes.map((b: ParsedBox) => ({ ...b })) : [],
               children: Array.isArray(p.children) ? p.children.map(clonePart) : [],
             });
             return { ...m, parts: Array.isArray(m.parts) ? m.parts.map(clonePart) : [] };
@@ -563,7 +564,7 @@ export const AssetCard = memo(
             : null;
 
           if (isDecoratedPot) {
-            const applySide = (part: any) => {
+            const applySide = (part: ParsedModelPart) => {
               if (["front", "back", "left", "right"].includes(part.name)) {
                 part.texturePath = sidePotAssetId;
               }
@@ -613,7 +614,7 @@ export const AssetCard = memo(
         }
       };
 
-      loadEntity();
+      void loadEntity();
 
       return () => {
         mounted = false;

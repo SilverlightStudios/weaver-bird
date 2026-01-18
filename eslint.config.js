@@ -112,8 +112,19 @@ export default tseslint.config(
       // Limit nesting depth - improves readability
       "max-depth": ["warn", 4],
 
-      // Always use === and !== instead of == and !=
-      "eqeqeq": ["error", "always"],
+      // Always use === and !== instead of == and !=, except for null checks
+      "eqeqeq": ["error", "always", { "null": "ignore" }],
+
+      // Prevent inline type imports - use top-level imports instead
+      "@typescript-eslint/no-import-type-side-effects": "error",
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          "prefer": "type-imports",
+          "disallowTypeAnnotations": true,
+          "fixStyle": "separate-type-imports"
+        }
+      ],
     },
   },
 

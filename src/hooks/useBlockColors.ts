@@ -82,7 +82,7 @@ export function useBlockColors(mcVersion: string): UseBlockColorsResult {
       }
     };
 
-    loadBlockColors();
+    void loadBlockColors();
 
     return () => {
       mounted = false;

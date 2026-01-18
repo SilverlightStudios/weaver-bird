@@ -4,6 +4,7 @@ import { join } from "path";
 import * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 describe("Fresh Animations (zombified piglin) headwear attachment", () => {
   it("keeps headwear vertically aligned with body under walking", () => {
@@ -18,15 +19,15 @@ describe("Fresh Animations (zombified piglin) headwear attachment", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
-    const headwear = group.getObjectByName("headwear") as THREE.Object3D | null;
-    const body = group.getObjectByName("body") as THREE.Object3D | null;
+    const headwear = group.getObjectByName("headwear");
+    const body = group.getObjectByName("body");
     expect(headwear).toBeTruthy();
     expect(body).toBeTruthy();
 

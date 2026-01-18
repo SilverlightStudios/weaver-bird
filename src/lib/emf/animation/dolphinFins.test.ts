@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as THREE from "three";
+import type * as THREE from "three";
 import { parseJEM, jemToThreeJS, type JEMFile } from "../jemLoader";
 import { AnimationEngine } from "./AnimationEngine";
+import type { AnimationLayer } from "../types";
 
 describe("Fresh Animations (dolphin) fin orientation", () => {
   const loadEngine = (): { group: THREE.Group; engine: AnimationEngine } => {
@@ -18,11 +19,11 @@ describe("Fresh Animations (dolphin) fin orientation", () => {
 
     const jem = JSON.parse(readFileSync(jemPath, "utf-8")) as JEMFile;
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
     const parsed = parseJEM(jem);
-    parsed.animations = jpm.animations as any;
+    parsed.animations = jpm.animations;
 
     const group = jemToThreeJS(parsed, null, {});
     const engine = new AnimationEngine(group, parsed.animations);
@@ -35,8 +36,8 @@ describe("Fresh Animations (dolphin) fin orientation", () => {
     engine.setPreset("swimming", false);
     engine.tick(0);
 
-    const right = group.getObjectByName("right_fin2") as THREE.Object3D | null;
-    const left = group.getObjectByName("left_fin2") as THREE.Object3D | null;
+    const right = group.getObjectByName("right_fin2");
+    const left = group.getObjectByName("left_fin2");
     expect(right).toBeTruthy();
     expect(left).toBeTruthy();
 

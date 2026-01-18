@@ -1,4 +1,4 @@
-import { ZoneId } from "./types";
+import type { ZoneId } from "./types";
 
 // Animation timings
 export const ANIMATION_DURATION = 300; // ms

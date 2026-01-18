@@ -102,8 +102,8 @@ function ItemMesh({
         let frameSize = 0;
 
         if (loadedTexture.image) {
-          const width = loadedTexture.image.width;
-          const height = loadedTexture.image.height;
+          const {width} = loadedTexture.image;
+          const {height} = loadedTexture.image;
           const isAnimated = height > width && height % width === 0;
 
           frameCount = isAnimated ? height / width : 1;
@@ -249,7 +249,7 @@ function ItemMesh({
 
     const animation = animationRef.current;
     if (animation && texture) {
-      const frameCount = animation.frameCount;
+      const {frameCount} = animation;
       const shouldAnimate = animateTextures && frameCount > 1;
 
       let nextFrame = activeFrameRef.current;

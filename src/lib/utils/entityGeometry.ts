@@ -130,7 +130,7 @@ function generateFaceTransform(
  * Check if a face should be rendered based on camera angle
  * At 135° isometric view, we only render up, north, and west faces
  */
-// @ts-ignore - Keeping for future face culling optimization
+// @ts-expect-error - Keeping for future face culling optimization
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function shouldRenderFace(faceDirection: string): boolean {
   // For rotated entities, we can't easily cull faces because "north" might be rotated to be visible.

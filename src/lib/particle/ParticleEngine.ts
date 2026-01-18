@@ -447,7 +447,7 @@ export class ParticleEngine {
     for (const particle of this.particles) {
       if (!particle.active || !particle.physics) continue;
 
-      const physics = particle.physics;
+      const {physics} = particle;
 
       // Save previous position for interpolation.
       particle.prevPosition.copy(particle.position);

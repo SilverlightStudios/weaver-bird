@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { getAvailableAnimationPresetIdsForAnimationLayers } from "./presetDiscovery";
+import type { AnimationLayer } from "../types";
 
 describe("preset discovery", () => {
   it("returns null when no CEM animation layers exist", () => {
@@ -43,10 +44,10 @@ describe("preset discovery", () => {
       "../../../../__mocks__/resourcepacks/FreshAnimations_v1.10.2/assets/minecraft/optifine/cem/piglin_animations.jpm",
     );
     const jpm = JSON.parse(readFileSync(jpmPath, "utf-8")) as {
-      animations?: Record<string, any>[];
+      animations?: AnimationLayer[];
     };
 
-    const ids = getAvailableAnimationPresetIdsForAnimationLayers(jpm.animations as any);
+    const ids = getAvailableAnimationPresetIdsForAnimationLayers(jpm.animations);
     expect(ids).not.toBeNull();
     expect(ids!).toContain("walking");
     expect(ids!).toContain("sprinting");
