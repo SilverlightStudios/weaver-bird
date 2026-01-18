@@ -1075,6 +1075,46 @@ export function resolveEntityCompositeSchema(
   }
 
   // -----------------------------------------------------------------------
+  // Allay: holding item pose toggle (drives var.hold in Fresh Animations packs).
+  // -----------------------------------------------------------------------
+  if (folderRoot === "allay" || entityType === "allay") {
+    controls.push({
+      kind: "toggle",
+      id: "allay.holding_item",
+      label: "Holding Item",
+      defaultValue: false,
+    });
+    controls.push({
+      kind: "toggle",
+      id: "allay.dancing",
+      label: "Dancing (Jukebox)",
+      defaultValue: false,
+    });
+
+    const existing = getBoneInputOverrides;
+    getBoneInputOverrides = (state) => {
+      const holding = getToggle(state, "allay.holding_item", false);
+      const dancing = getToggle(state, "allay.dancing", false);
+      const overrides: Record<string, Record<string, number>> = holding
+        ? {
+            right_arm: { rx: -1 },
+          }
+        : {};
+      if (dancing) {
+        overrides.head = { rz: Math.PI / 18 };
+      }
+      return existing ? { ...existing(state), ...overrides } : overrides;
+    };
+
+    const existingStateOverrides = getEntityStateOverrides;
+    getEntityStateOverrides = (state) => {
+      const base = existingStateOverrides ? existingStateOverrides(state) : {};
+      const holding = getToggle(state, "allay.holding_item", false);
+      return holding ? { ...base, is_in_hand: true } : base;
+    };
+  }
+
+  // -----------------------------------------------------------------------
   // Sheep wool/coat overlay + color
   // -----------------------------------------------------------------------
   let sheepWoolTexture: AssetId | null = null;

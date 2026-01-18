@@ -95,6 +95,8 @@ export class AnimationEngine {
    * being present in `bone.rx` rather than authoring their own limb_swing math.
    */
   private rotationInputReads: Map<string, Set<"rx" | "ry" | "rz">> = new Map();
+  private rotationInputUsage: Map<string, { bone: boolean; var: boolean }> =
+    new Map();
   /**
    * Tracks self-reads for rotation channels. When an expression reads its own
    * rotation (e.g. `leg.rx*(1-testing)+...`), it is usually constructing an
@@ -194,11 +196,18 @@ export class AnimationEngine {
 
     // Compile animations if provided (needed for rest-value seeding and normalization).
     if (animationLayers && animationLayers.length > 0) {
-      const { reads, pivotSeeds, rotationInputs, selfRotationReads } =
+      const {
+        reads,
+        pivotSeeds,
+        rotationInputs,
+        rotationInputUsage,
+        selfRotationReads,
+      } =
         this.collectSelfTranslationReadUsage(animationLayers);
       this.selfTranslationReads = reads;
       this.selfTranslationPivotSeeds = pivotSeeds;
       this.rotationInputReads = rotationInputs;
+      this.rotationInputUsage = rotationInputUsage;
       this.selfRotationReads = selfRotationReads;
       this.compileAnimations(animationLayers);
     }
@@ -467,11 +476,13 @@ export class AnimationEngine {
     reads: Map<string, Set<"tx" | "ty" | "tz">>;
     pivotSeeds: Map<string, Set<"tx" | "ty" | "tz">>;
     rotationInputs: Map<string, Set<"rx" | "ry" | "rz">>;
+    rotationInputUsage: Map<string, { bone: boolean; var: boolean }>;
     selfRotationReads: Map<string, Set<"rx" | "ry" | "rz">>;
   } {
     const reads = new Map<string, Set<"tx" | "ty" | "tz">>();
     const pivotSeeds = new Map<string, Set<"tx" | "ty" | "tz">>();
     const rotationInputs = new Map<string, Set<"rx" | "ry" | "rz">>();
+    const rotationInputUsage = new Map<string, { bone: boolean; var: boolean }>();
     const selfRotationReads = new Map<string, Set<"rx" | "ry" | "rz">>();
 
     for (const layer of layers) {
@@ -531,6 +542,18 @@ export class AnimationEngine {
             set.add(prop);
             rotationInputs.set(bone, set);
           };
+          const markRotationInputUsage = (bone: string, isBoneTarget: boolean) => {
+            const usage = rotationInputUsage.get(bone) ?? {
+              bone: false,
+              var: false,
+            };
+            if (isBoneTarget) {
+              usage.bone = true;
+            } else {
+              usage.var = true;
+            }
+            rotationInputUsage.set(bone, usage);
+          };
           const markSelfRotationRead = (prop: "rx" | "ry" | "rz") => {
             const set =
               selfRotationReads.get(targetBone) ??
@@ -585,6 +608,7 @@ export class AnimationEngine {
                 const rot = getRotationVar(node);
                 if (rot) {
                   markRotationInput(rot.bone, rot.prop);
+                  markRotationInputUsage(rot.bone, targetIsBone);
                   if (targetIsBone && rot.bone === targetBone) {
                     markSelfRotationRead(rot.prop);
                   }
@@ -692,7 +716,13 @@ export class AnimationEngine {
       }
     }
 
-    return { reads, pivotSeeds, rotationInputs, selfRotationReads };
+    return {
+      reads,
+      pivotSeeds,
+      rotationInputs,
+      rotationInputUsage,
+      selfRotationReads,
+    };
   }
 
   private cloneRestBoneValues(): Record<string, Record<string, number>> {
@@ -1679,6 +1709,11 @@ export class AnimationEngine {
     ) => {
       const reads = this.rotationInputReads.get(boneName);
       if (!reads || reads.size === 0) return;
+      const usage = this.rotationInputUsage.get(boneName);
+      // Skip seeding when rotations are explicitly authored and only read in vars.
+      if (usage && this.rotationAxesByBone.has(boneName) && !usage.bone) {
+        return;
+      }
       const bone = this.bones.get(boneName);
       if (!bone) return;
       const base = this.baseTransforms.get(boneName);

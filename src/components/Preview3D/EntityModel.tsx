@@ -26,6 +26,8 @@ import {
   getAvailableAnimationPresetIdsForAnimationLayers,
   getAvailableAnimationTriggerIdsForAnimationLayers,
   getAvailablePoseToggleIdsForAnimationLayers,
+  compileExpression,
+  isConstantExpression,
 } from "@lib/emf/animation";
 import type { AnimationLayer } from "@lib/emf/jemLoader";
 import { JEMInspectorV2 } from "@lib/emf/JEMInspectorV2";
@@ -78,6 +80,23 @@ function interpolateKeyframes(keyframes: AnimationKeyframe[], normalizedTime: nu
 
   // Linear interpolation with eased factor
   return prevKeyframe.value + (nextKeyframe.value - prevKeyframe.value) * easedT;
+}
+
+function areAnimationLayersStatic(layers: AnimationLayer[] | null | undefined): boolean {
+  if (!layers || layers.length === 0) return false;
+  for (const layer of layers) {
+    for (const expr of Object.values(layer)) {
+      if (typeof expr === "number") continue;
+      if (typeof expr !== "string") return false;
+      try {
+        const parsed = compileExpression(expr);
+        if (!isConstantExpression(parsed)) return false;
+      } catch {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 const buildVersionFolderCandidates = (
@@ -925,9 +944,10 @@ function EntityModel({
     const blockMatch = normalized.match(/block\/([^/]+)/);
     const entityId = entityMatch?.[1] || blockMatch?.[1];
 
-    // Load vanilla JPM animations - merge with pack animations if both exist
+    // Load vanilla JPM animations only when pack animations are absent.
     let finalLayers = effectiveLayers ? [...effectiveLayers] : [];
     let usingVanillaAnimations = false;
+    const packLayersAreStatic = areAnimationLayersStatic(effectiveLayers);
 
     // Check if vanilla animations exist for this entity
     if (entityId) {
@@ -941,11 +961,15 @@ function EntityModel({
           finalLayers = vanillaLayers;
           usingVanillaAnimations = true;
           console.log(`[EntityModel] Using vanilla JPM animations for ${entityId}:`, finalLayers);
-        } else {
-          // Pack animations exist - merge vanilla on top for trigger support
-          // This allows the "Ring" trigger to work even with pack animations
+        } else if (packLayersAreStatic) {
+          // Pack animations are constant-only (no dynamic expressions).
+          // Merge vanilla JPM animations so interactive entities (bell, chest, etc.)
+          // still get their vanilla-driven motion.
           finalLayers = [...finalLayers, ...vanillaLayers];
-          console.log(`[EntityModel] Merged vanilla animations with pack for ${entityId}. Total layers:`, finalLayers.length);
+          usingVanillaAnimations = true;
+          console.log(
+            `[EntityModel] Merging vanilla JPM animations for ${entityId} (pack animations are static).`,
+          );
         }
       }
     }

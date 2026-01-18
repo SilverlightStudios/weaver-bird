@@ -1110,6 +1110,35 @@ function applyVanillaHierarchy(
   referencedTranslationBonesByTarget: Map<string, Set<string>>,
   entityId?: string,
 ): void {
+  const hasBody = !!rootGroups.body;
+  const hasMeshDescendant = (obj: THREE.Object3D): boolean => {
+    let hasMesh = false;
+    obj.traverse((child) => {
+      if (child !== obj && (child as any).isMesh === true) hasMesh = true;
+    });
+    return hasMesh;
+  };
+
+  const hasArms = !!rootGroups.left_arm && !!rootGroups.right_arm;
+  const hasLegs = !!rootGroups.left_leg && !!rootGroups.right_leg;
+  const hasVillagerArms = !!rootGroups.arms;
+  const hasVillagerLegs = !!rootGroups.left_leg && !!rootGroups.right_leg;
+  const hasHumanoidLimbs = hasArms && hasLegs;
+  const hasArmsOnly = hasArms && !hasLegs;
+  const hasVillagerLimbs = hasVillagerArms && hasVillagerLegs;
+
+  const hasQuadrupedLegs =
+    !!rootGroups.leg1 &&
+    !!rootGroups.leg2 &&
+    !!rootGroups.leg3 &&
+    !!rootGroups.leg4;
+  const hasDirectionalLegs =
+    !!rootGroups.front_left_leg &&
+    !!rootGroups.front_right_leg &&
+    !!rootGroups.back_left_leg &&
+    !!rootGroups.back_right_leg;
+  const isQuadruped = hasQuadrupedLegs || hasDirectionalLegs;
+
   // First, check if we have extracted hierarchy data for this entity from Minecraft's code
   // This is the preferred source of truth for parent-child relationships
   if (entityId) {
@@ -1125,49 +1154,23 @@ function applyVanillaHierarchy(
       }
 
       if (Object.keys(parentMap).length > 0) {
-        applyParentMap(root, rootGroups, parentMap, animatedBones, referencedBonesByTarget, referencedTranslationBonesByTarget);
+        const skipChecks = hasArmsOnly || hasVillagerLimbs;
+        applyParentMap(
+          root,
+          rootGroups,
+          parentMap,
+          animatedBones,
+          referencedBonesByTarget,
+          referencedTranslationBonesByTarget,
+          skipChecks,
+        );
         return;
       }
     }
   }
 
   // Fall back to heuristic-based hierarchy for models without extracted data
-  const hasBody = !!rootGroups.body;
   if (!hasBody) return;
-
-  const hasMeshDescendant = (obj: THREE.Object3D): boolean => {
-    let hasMesh = false;
-    obj.traverse((child) => {
-      if (child !== obj && (child as any).isMesh === true) hasMesh = true;
-    });
-    return hasMesh;
-  };
-
-  const hasArms = !!rootGroups.left_arm && !!rootGroups.right_arm;
-  const hasLegs = !!rootGroups.left_leg && !!rootGroups.right_leg;
-  const hasVillagerArms = !!rootGroups.arms;
-  const hasVillagerLegs = !!rootGroups.left_leg && !!rootGroups.right_leg;
-
-  // Vanilla biped-style skeletons (body + arms + legs)
-  const hasHumanoidLimbs = hasArms && hasLegs;
-
-  // Flying/humanoid-lite skeletons (body + arms, but no legs)
-  const hasArmsOnly = hasArms && !hasLegs;
-
-  // Villager-style skeletons (body + arms + legs, but arms are a single bone)
-  const hasVillagerLimbs = hasVillagerArms && hasVillagerLegs;
-
-  const hasQuadrupedLegs =
-    !!rootGroups.leg1 &&
-    !!rootGroups.leg2 &&
-    !!rootGroups.leg3 &&
-    !!rootGroups.leg4;
-  const hasDirectionalLegs =
-    !!rootGroups.front_left_leg &&
-    !!rootGroups.front_right_leg &&
-    !!rootGroups.back_left_leg &&
-    !!rootGroups.back_right_leg;
-  const isQuadruped = hasQuadrupedLegs || hasDirectionalLegs;
 
   let parentMap: Record<string, string>;
 
