@@ -46,6 +46,21 @@ describe("emf getEntityInfoFromAssetId", () => {
     });
   });
 
+  it("maps chest texture variants to the correct chest models", () => {
+    expect(getEntityInfoFromAssetId("minecraft:entity/chest/normal")).toEqual({
+      variant: "chest",
+      parent: null,
+    });
+    expect(getEntityInfoFromAssetId("minecraft:entity/chest/trapped")).toEqual({
+      variant: "trapped_chest",
+      parent: null,
+    });
+    expect(getEntityInfoFromAssetId("minecraft:entity/chest/ender")).toEqual({
+      variant: "ender_chest",
+      parent: null,
+    });
+  });
+
   it("maps equipment textures to preview rigs", () => {
     expect(
       getEntityInfoFromAssetId("minecraft:entity/equipment/humanoid/chainmail"),

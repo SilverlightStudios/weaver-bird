@@ -11,6 +11,7 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
+import react from "eslint-plugin-react";
 
 export default tseslint.config(
   {
@@ -46,11 +47,21 @@ export default tseslint.config(
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
+      react,
       "react-hooks": reactHooks,
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-hooks/set-state-in-effect": "off",
+
+      // Enforce one React component per file
+      // This can only be disabled if the second component is necessary and extremely simple
+      "react/no-multi-comp": ["error", { ignoreStateless: false }],
     },
   },
 
@@ -88,6 +99,25 @@ export default tseslint.config(
 
       // No console in production (disabled for debugging)
       "no-console": "off",
+    },
+  },
+
+  // File size limits - enforce DRY, clean, concise code
+  {
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["**/*.test.{ts,tsx}", "**/*.fixture.{ts,tsx}", "**/generated/**"],
+    rules: {
+      // Max 300 lines per file - break down large files into child components
+      // Organize as components/childcomponent/index.tsx and styles.module.tsx
+      // Or separate into logic files. Keep code DRY, clean, and concise
+      "max-lines": [
+        "error",
+        {
+          max: 300,
+          skipBlankLines: true,
+          skipComments: true,
+        },
+      ],
     },
   },
 );

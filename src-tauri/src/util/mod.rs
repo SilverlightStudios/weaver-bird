@@ -1,5 +1,8 @@
+pub mod animation_typescript_gen;
 pub mod asset_indexer;
+pub mod block_animation_extractor;
 pub mod block_models;
+pub mod java_ast_parser;
 pub mod block_particle_extractor;
 pub mod blockstates;
 pub mod bytecode_parser;
@@ -16,6 +19,7 @@ pub mod weaver_nest;
 pub mod zip;
 
 pub use asset_indexer::*;
+pub use block_animation_extractor::*;
 pub use block_models::*;
 pub use block_particle_extractor::*;
 pub use blockstates::*;

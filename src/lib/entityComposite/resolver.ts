@@ -73,6 +73,13 @@ function getEntityVariantLabel(dir: string, leaf: string): string {
   return titleLabel(leaf);
 }
 
+function isHorseCoatLeaf(leaf: string): boolean {
+  if (!leaf.startsWith("horse_")) return false;
+  if (leaf.startsWith("horse_markings_")) return false;
+  if (leaf.includes("skeleton") || leaf.includes("zombie")) return false;
+  return true;
+}
+
 function sortByPreferredOrder(values: string[], preferredOrder: string[]): string[] {
   const order = new Map<string, number>();
   preferredOrder.forEach((id, idx) => order.set(id, idx));
@@ -277,6 +284,7 @@ export function resolveEntityCompositeSchema(
       }
 
       // Horse coats + markings share a folder. Normalize to a stable coat texture.
+      // Only apply to actual coat textures (exclude donkey/mule/skeleton/zombie).
       if (entityPath.startsWith("horse/")) {
         const coats: string[] = [];
         for (const id of all) {
@@ -286,8 +294,7 @@ export function resolveEntityCompositeSchema(
           const d = getDirectEntityDirAndLeaf(p);
           if (!d) continue;
           if (d.dir !== "horse") continue;
-          if (!d.leaf.startsWith("horse_")) continue;
-          if (d.leaf.startsWith("horse_markings_")) continue;
+          if (!isHorseCoatLeaf(d.leaf)) continue;
           coats.push(d.leaf);
         }
         const unique = stableUnique(coats);
@@ -296,7 +303,7 @@ export function resolveEntityCompositeSchema(
           : unique[0];
         const canonical =
           preferred ? findAssetId(ns, [`entity/horse/${preferred}`], all) : null;
-        if (canonical) baseAssetId = canonical;
+        if (canonical && direct && isHorseCoatLeaf(direct.leaf)) baseAssetId = canonical;
       }
     }
   }
@@ -322,6 +329,9 @@ export function resolveEntityCompositeSchema(
     | undefined;
   let getBoneInputOverrides:
     | EntityCompositeSchema["getBoneInputOverrides"]
+    | undefined;
+  let getEntityStateOverrides:
+    | EntityCompositeSchema["getEntityStateOverrides"]
     | undefined;
   let getPartTextureOverrides:
     | EntityCompositeSchema["getPartTextureOverrides"]
@@ -481,18 +491,19 @@ export function resolveEntityCompositeSchema(
   // -----------------------------------------------------------------------
   // Horse: coat + markings composition.
   // -----------------------------------------------------------------------
-  if (folderRoot === "horse") {
+  if (folderRoot === "horse" && isHorseCoatLeaf(entityType)) {
     const coatLeaves: string[] = [];
     const markingsLeaves: string[] = [];
     for (const id of all) {
-      if (isEntityFeatureLayerTextureAssetId(id)) continue;
       const p = getEntityPath(id);
       if (!p) continue;
       const d = getDirectEntityDirAndLeaf(p);
       if (!d) continue;
       if (d.dir !== "horse") continue;
-      if (d.leaf.startsWith("horse_markings_")) markingsLeaves.push(d.leaf);
-      else if (d.leaf.startsWith("horse_")) coatLeaves.push(d.leaf);
+      const isMarkings = d.leaf.startsWith("horse_markings_");
+      if (isEntityFeatureLayerTextureAssetId(id) && !isMarkings) continue;
+      if (isMarkings) markingsLeaves.push(d.leaf);
+      else if (isHorseCoatLeaf(d.leaf)) coatLeaves.push(d.leaf);
     }
     const coats = stableUnique(coatLeaves);
     const markings = stableUnique(markingsLeaves);
@@ -500,7 +511,7 @@ export function resolveEntityCompositeSchema(
       controls.push({
         kind: "select",
         id: "horse.coat",
-        label: "Coat",
+        label: "Coat Color",
         defaultValue: coats.includes("horse_brown") ? "horse_brown" : coats[0]!,
         options: coats.map((c) => ({
           value: c,
@@ -517,7 +528,7 @@ export function resolveEntityCompositeSchema(
       controls.push({
         kind: "select",
         id: "horse.markings",
-        label: "Markings",
+        label: "Spot Type",
         defaultValue: "none",
         options: [
           { value: "none", label: "None" },
@@ -528,6 +539,7 @@ export function resolveEntityCompositeSchema(
         ],
       });
     }
+
   }
 
   // -----------------------------------------------------------------------
@@ -1114,13 +1126,58 @@ export function resolveEntityCompositeSchema(
   // -----------------------------------------------------------------------
   // Entity equipment overlays (saddles, armor, harnesses, decorations)
   // -----------------------------------------------------------------------
-  const findEquipment = (path: string): AssetId | null =>
-    findAssetId(ns, [`entity/equipment/${path}`], all);
+  const findEquipment = (path: string): AssetId | null => {
+    // Search all namespaces for equipment, not just the selected entity's namespace
+    for (const id of all) {
+      const stripped = stripNamespace(id);
+      if (stripped === `entity/equipment/${path}`) return id;
+    }
+    return null;
+  };
 
   // Horse: armor select + saddle toggle.
   const horseSaddleTexture = findEquipment("horse_saddle/saddle");
+  const horseSaddleBoneNames = [
+    "headpiece",
+    "noseband",
+    "left_bit",
+    "right_bit",
+    "left_rein",
+    "right_rein",
+    "saddle",
+  ];
   let horseArmorOptions: Array<{ value: string; label: string; assetId: AssetId }> = [];
   if (folderRoot === "horse") {
+    // Some resource packs bake saddle parts into horse.jem. Hide/show them based on
+    // the saddle toggle, and let overlays suppress them when present.
+    const existingOverrides = getBoneRenderOverrides;
+    getBoneRenderOverrides = (innerState) => {
+      const baseOverrides = existingOverrides ? existingOverrides(innerState) : {};
+      const saddleEnabled = getToggle(innerState, "horse.saddle", false);
+
+      const saddleOverrides: Record<string, { visible: boolean }> = {};
+      for (const partName of horseSaddleBoneNames) {
+        saddleOverrides[partName] = { visible: saddleEnabled };
+      }
+
+      return {
+        ...baseOverrides,
+        ...saddleOverrides,
+      };
+    };
+
+    const existingStateOverrides = getEntityStateOverrides;
+    getEntityStateOverrides = (innerState) => {
+      const baseOverrides = existingStateOverrides
+        ? existingStateOverrides(innerState)
+        : {};
+      const riderEnabled = getToggle(innerState, "horse.rider", false);
+      return {
+        ...baseOverrides,
+        is_ridden: riderEnabled,
+      };
+    };
+
     for (const id of all) {
       if (!id.startsWith(`${ns}:entity/equipment/horse_body/`)) continue;
       const leafName = stripNamespace(id).split("/").pop();
@@ -1149,6 +1206,12 @@ export function resolveEntityCompositeSchema(
         label: "Saddle",
         defaultValue: false,
       });
+      controls.push({
+        kind: "toggle",
+        id: "horse.rider",
+        label: "Rider",
+        defaultValue: false,
+      });
     }
   }
 
@@ -1161,6 +1224,18 @@ export function resolveEntityCompositeSchema(
       label: "Saddle",
       defaultValue: false,
     });
+
+    const existingStateOverrides = getEntityStateOverrides;
+    getEntityStateOverrides = (innerState) => {
+      const baseOverrides = existingStateOverrides
+        ? existingStateOverrides(innerState)
+        : {};
+      const saddleEnabled = getToggle(innerState, "camel.saddle", false);
+      return {
+        ...baseOverrides,
+        is_ridden: saddleEnabled,
+      };
+    };
   }
 
   // Donkey: saddle toggle.
@@ -1172,6 +1247,18 @@ export function resolveEntityCompositeSchema(
       label: "Saddle",
       defaultValue: false,
     });
+
+    const existingStateOverrides = getEntityStateOverrides;
+    getEntityStateOverrides = (innerState) => {
+      const baseOverrides = existingStateOverrides
+        ? existingStateOverrides(innerState)
+        : {};
+      const saddleEnabled = getToggle(innerState, "donkey.saddle", false);
+      return {
+        ...baseOverrides,
+        is_ridden: saddleEnabled,
+      };
+    };
   }
   // Donkey: chest toggle (model includes chest bones).
   if (folderRoot === "donkey") {
@@ -1635,6 +1722,7 @@ export function resolveEntityCompositeSchema(
       if (chosen !== "none") {
         const tex = `${ns}:entity/horse/${chosen}` as AssetId;
         if (all.has(tex)) {
+          const markingScale = 1.001;
           layers.push({
             id: "horse_markings",
             label: "Markings",
@@ -1644,6 +1732,9 @@ export function resolveEntityCompositeSchema(
             zIndex: 80,
             opacity: 1,
             materialMode: { kind: "default" },
+            boneScaleMultipliers: {
+              "*": { x: markingScale, y: markingScale, z: markingScale },
+            },
           });
         }
       }
@@ -1746,6 +1837,8 @@ export function resolveEntityCompositeSchema(
             zIndex: 140,
             opacity: 1,
             materialMode: { kind: "default" },
+            syncToBasePose: true,
+            boneScaleMultipliers: { "*": { x: 1.004, y: 1.004, z: 1.004 } },
           });
         }
       }
@@ -1761,7 +1854,10 @@ export function resolveEntityCompositeSchema(
           zIndex: 135,
           opacity: 1,
           materialMode: { kind: "default" },
+          allowVanillaFallback: false,
+          replacesBaseBones: horseSaddleBoneNames,
           boneAliasMap: {
+            // Vanilla horse_saddle.jem structure (standalone parts with geometry)
             headpiece: "head",
             noseband: "head",
             left_bit: "head",
@@ -1769,6 +1865,11 @@ export function resolveEntityCompositeSchema(
             left_rein: "head",
             right_rein: "head",
             saddle: "body",
+            // Fresh Animations horse_saddle.jem structure (parent bones with submodel geometry)
+            head: "head",
+            body: "body",
+            neck: "neck",
+            mouth: "mouth",
           },
         });
       }
@@ -2227,6 +2328,7 @@ export function resolveEntityCompositeSchema(
     ...(getRootTransform ? { getRootTransform } : {}),
     ...(getBoneRenderOverrides ? { getBoneRenderOverrides } : {}),
     ...(getBoneInputOverrides ? { getBoneInputOverrides } : {}),
+    ...(getEntityStateOverrides ? { getEntityStateOverrides } : {}),
     ...(getPartTextureOverrides ? { getPartTextureOverrides } : {}),
     getActiveLayers,
   };

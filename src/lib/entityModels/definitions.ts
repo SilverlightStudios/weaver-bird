@@ -44,6 +44,7 @@ export function getEntityType(assetId: string): EntityType | undefined {
     if (textureName.includes('trapped')) {
       return 'trapped_chest';
     }
+    // All other chests (including copper variants) use the regular chest model
     return 'chest';
   }
 

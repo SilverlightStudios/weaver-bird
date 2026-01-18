@@ -9,6 +9,12 @@ export interface AnimationTriggerDefinition {
 
 export const ANIMATION_TRIGGERS: AnimationTriggerDefinition[] = [
   {
+    id: "trigger.interact",
+    name: "Ring",
+    description: "Plays when player interacts with block entity (bells, chests, etc.).",
+    durationSec: 3.0,
+  },
+  {
     id: "trigger.attack",
     name: "Attack",
     description: "Plays a one-shot swing/attack overlay (swing_progress).",

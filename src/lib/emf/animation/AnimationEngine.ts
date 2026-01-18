@@ -37,6 +37,7 @@ import { getPresetById } from "./entityState";
 import { getTriggerDefinition } from "./triggers";
 import { getPoseToggleDefinition } from "./poses";
 import type { ASTNode } from "./types";
+import { VANILLA_DURATIONS } from "@constants/animations/generated";
 
 /**
  * Compiled animation expression with metadata.
@@ -156,17 +157,31 @@ export class AnimationEngine {
   /** Set of bone names that have been warned about (to avoid spam) */
   private warnedMissingBones: Set<string> = new Set();
 
+  /** Entity ID (e.g., "bell", "zombie") for looking up extracted data */
+  private entityId: string | undefined;
+
+  /** Animation duration in game ticks (extracted from Minecraft or default 100) */
+  private animationDurationTicks: number = 100;
+
   /**
    * Create a new animation engine.
    *
    * @param modelGroup The Three.js group containing the entity model
    * @param animationLayers Raw animation layers from JEM file
+   * @param entityId Optional entity ID for looking up extracted animation data
    */
-  constructor(modelGroup: THREE.Group, animationLayers?: AnimationLayer[]) {
+  constructor(modelGroup: THREE.Group, animationLayers?: AnimationLayer[], entityId?: string) {
     // Store reference to model group
     this.modelGroup = modelGroup;
     this.baseRootPosition = modelGroup.position.clone();
     this.baseRootRotation = modelGroup.rotation.clone();
+
+    // Store entity ID and look up animation duration from extracted data
+    this.entityId = entityId;
+    if (this.entityId && this.entityId in VANILLA_DURATIONS) {
+      this.animationDurationTicks = VANILLA_DURATIONS[this.entityId as keyof typeof VANILLA_DURATIONS];
+      console.log(`[AnimationEngine] Using extracted duration for ${this.entityId}: ${this.animationDurationTicks} ticks`);
+    }
 
     // Build bone map from model
     this.bones = buildBoneMap(modelGroup);
@@ -222,6 +237,12 @@ export class AnimationEngine {
     }
 
     switch (def.id) {
+      case "trigger.interact":
+        // Interaction animation (bells, chests, etc.)
+        // In Minecraft, ticks counts UP from 0 (not down) for dampening to work
+        // The expression sin((ticks / pi)) / (4.0 + ticks / 3.0) dampens as ticks increases
+        this.context.entityState.ticks = 1; // Start at 1 to trigger animation
+        break;
       case "trigger.hurt":
         // Hurt time counts down in ticks (0-10).
         this.context.entityState.hurt_time = Math.max(
@@ -242,10 +263,18 @@ export class AnimationEngine {
         break;
     }
 
+    // For interact triggers, use entity-specific duration from extracted data
+    // Otherwise use the trigger's default duration
+    let durationSec = def.durationSec;
+    if (def.id === "trigger.interact") {
+      // Convert ticks to seconds (20 ticks = 1 second)
+      durationSec = this.animationDurationTicks / 20;
+    }
+
     this.activeTriggers.push({
       id: def.id,
       elapsedSec: 0,
-      durationSec: def.durationSec,
+      durationSec,
     });
   }
 
@@ -883,9 +912,9 @@ export class AnimationEngine {
         this.baselineBoneValues.set(`${boneName}.rz`, transform.rz);
     }
 
-	    // Determine which channels are constant-only (these are often intended as
-	    // authored offsets and should not be normalized away).
-	    const isConstantByChannel = new Map<string, boolean>();
+    // Determine which channels are constant-only (these are often intended as
+    // authored offsets and should not be normalized away).
+    const isConstantByChannel = new Map<string, boolean>();
     for (const layer of this.animationLayers) {
       for (const anim of layer) {
         if (anim.targetType !== "bone") continue;
@@ -894,6 +923,31 @@ export class AnimationEngine {
           `${anim.targetName}.${anim.propertyName}`,
           isConstantExpression(anim.expression),
         );
+      }
+    }
+    const directRotationCopyTargets = new Map<string, string>();
+    for (const layer of this.animationLayers) {
+      for (const anim of layer) {
+        if (anim.targetType !== "bone") continue;
+        if (
+          anim.propertyName !== "rx" &&
+          anim.propertyName !== "ry" &&
+          anim.propertyName !== "rz"
+        ) {
+          continue;
+        }
+        if (!("ast" in anim.expression)) continue;
+        const ast = anim.expression.ast;
+        if (ast.type !== "Variable") continue;
+        const name = ast.name;
+        const dot = name.indexOf(".");
+        if (dot === -1) continue;
+        const bone = name.slice(0, dot);
+        const prop = name.slice(dot + 1);
+        if (bone === "var" || bone === "render" || bone === "varb") continue;
+        if (prop === anim.propertyName) {
+          directRotationCopyTargets.set(`${anim.targetName}.${prop}`, bone);
+        }
       }
     }
 
@@ -1286,6 +1340,10 @@ export class AnimationEngine {
 
 		      const userData = (bone as any).userData ?? {};
 		      const base = this.baseTransforms.get(boneName);
+		      const boxesGroup = (bone as any)?.userData?.boxesGroup as
+		        | THREE.Object3D
+		        | undefined;
+		      const hasLocalBoxes = !!boxesGroup && boxesGroup.children.length > 0;
 		      const invertAxis =
 		        typeof userData.invertAxis === "string"
 		          ? (userData.invertAxis as string)
@@ -1390,7 +1448,7 @@ export class AnimationEngine {
 		        }
 		      };
 
-			      const ensureRotationOffsetForLargeBaseline = (axis: "x" | "y" | "z") => {
+		      const ensureRotationOffsetForLargeBaseline = (axis: "x" | "y" | "z") => {
 			        const absAxes: string =
 			          typeof userData.absoluteRotationAxes === "string"
 			            ? (userData.absoluteRotationAxes as string)
@@ -1485,6 +1543,43 @@ export class AnimationEngine {
 			          userData.rotationOffsetZ = baseline;
 			        }
 			      };
+		      const ensureRotationOffsetForPivotOnlyBaseline = (
+		        axis: "x" | "y" | "z",
+		      ) => {
+		        if (hasLocalBoxes) return;
+		        const absAxes: string =
+		          typeof userData.absoluteRotationAxes === "string"
+		            ? (userData.absoluteRotationAxes as string)
+		            : "";
+		        if (absAxes.includes(axis)) return;
+		        const prop = `r${axis}` as "rx" | "ry" | "rz";
+		        const baseline = this.getBaselineBoneValue(boneName, prop);
+		        const baseRot =
+		          axis === "x"
+		            ? base?.rotation.x ?? 0
+		            : axis === "y"
+		              ? base?.rotation.y ?? 0
+		              : base?.rotation.z ?? 0;
+		        const sign = axis === "x" ? signX : axis === "y" ? signY : signZ;
+		        const baseRotCem = sign * baseRot;
+		        if (Math.abs(baseRotCem) < 0.75) return;
+		        const effectiveBaseline = baseline + baseRotCem;
+		        // Pivot-only bones with large baked rotations (e.g. reins) often author
+		        // absolute-looking values; treat the combined baseline as a calibration.
+		        if (Math.abs(effectiveBaseline) < 1.25) return;
+		        if (axis === "x" && typeof userData.rotationOffsetX !== "number") {
+		          userData.rotationOffsetX = effectiveBaseline;
+		        }
+		        if (axis === "y" && typeof userData.rotationOffsetY !== "number") {
+		          userData.rotationOffsetY = effectiveBaseline;
+		        }
+		        if (axis === "z" && typeof userData.rotationOffsetZ !== "number") {
+		          userData.rotationOffsetZ = effectiveBaseline;
+		        }
+		      };
+
+			      const isDirectCopy = (axis: "x" | "y" | "z") =>
+			        directRotationCopyTargets.has(`${boneName}.r${axis}`);
 
 			      if (axesSet.has("x")) ensureAbsoluteRotation("x");
 			      if (axesSet.has("y")) ensureAbsoluteRotation("y");
@@ -1492,19 +1587,82 @@ export class AnimationEngine {
 			      if (axesSet.has("x")) ensureAbsoluteWhenBaselineMatchesRest("x");
 		      if (axesSet.has("y")) ensureAbsoluteWhenBaselineMatchesRest("y");
 		      if (axesSet.has("z")) ensureAbsoluteWhenBaselineMatchesRest("z");
-			      if (axesSet.has("x")) ensureRotationOffsetWhenBaselineDuplicatesChildRest("x");
-			      if (axesSet.has("y")) ensureRotationOffsetWhenBaselineDuplicatesChildRest("y");
-			      if (axesSet.has("z")) ensureRotationOffsetWhenBaselineDuplicatesChildRest("z");
-			      if (axesSet.has("x")) ensureRotationOffsetForModerateBaselineOnPivotBone("x");
-			      if (axesSet.has("y")) ensureRotationOffsetForModerateBaselineOnPivotBone("y");
-			      if (axesSet.has("z")) ensureRotationOffsetForModerateBaselineOnPivotBone("z");
-			      if (axesSet.has("x")) ensureRotationOffsetForLargeBaseline("x");
-			      if (axesSet.has("y")) ensureRotationOffsetForLargeBaseline("y");
-			      if (axesSet.has("z")) ensureRotationOffsetForLargeBaseline("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetForPivotOnlyBaseline("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetForPivotOnlyBaseline("y");
+			      if (axesSet.has("z") && !isDirectCopy("z"))
+			        ensureRotationOffsetForPivotOnlyBaseline("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetWhenBaselineDuplicatesChildRest("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetWhenBaselineDuplicatesChildRest("y");
+			      if (axesSet.has("z") && !isDirectCopy("z"))
+			        ensureRotationOffsetWhenBaselineDuplicatesChildRest("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetForModerateBaselineOnPivotBone("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetForModerateBaselineOnPivotBone("y");
+			      if (axesSet.has("z") && !isDirectCopy("z"))
+			        ensureRotationOffsetForModerateBaselineOnPivotBone("z");
+			      if (axesSet.has("x") && !isDirectCopy("x"))
+			        ensureRotationOffsetForLargeBaseline("x");
+			      if (axesSet.has("y") && !isDirectCopy("y"))
+			        ensureRotationOffsetForLargeBaseline("y");
+		      if (axesSet.has("z") && !isDirectCopy("z"))
+		        ensureRotationOffsetForLargeBaseline("z");
 
-			      (bone as any).userData = userData;
-		    }
-		  }
+	      (bone as any).userData = userData;
+    }
+    this.applyDirectRotationCopyOverrides(directRotationCopyTargets);
+  }
+
+  private applyDirectRotationCopyOverrides(
+    directRotationCopyTargets: Map<string, string>,
+  ): void {
+    for (const [targetKey, sourceBoneName] of directRotationCopyTargets) {
+      const dot = targetKey.indexOf(".");
+      if (dot === -1) continue;
+      const targetBoneName = targetKey.slice(0, dot);
+      const prop = targetKey.slice(dot + 1);
+      const axis = prop[1] as "x" | "y" | "z";
+      const targetBone = this.bones.get(targetBoneName);
+      const sourceBone = this.bones.get(sourceBoneName);
+      if (!targetBone || !sourceBone) continue;
+      const targetUserData = (targetBone as any).userData ?? {};
+      const sourceUserData = (sourceBone as any).userData ?? {};
+      const sourceAbsAxes: string =
+        typeof sourceUserData.absoluteRotationAxes === "string"
+          ? (sourceUserData.absoluteRotationAxes as string)
+          : sourceUserData.absoluteRotation === true
+            ? "xyz"
+            : "";
+      if (sourceAbsAxes.includes(axis)) {
+        const existing =
+          typeof targetUserData.absoluteRotationAxes === "string"
+            ? (targetUserData.absoluteRotationAxes as string)
+            : targetUserData.absoluteRotation === true
+              ? "xyz"
+              : "";
+        if (!existing.includes(axis)) {
+          targetUserData.absoluteRotationAxes = existing + axis;
+        }
+      }
+      const offsetKey =
+        axis === "x"
+          ? "rotationOffsetX"
+          : axis === "y"
+            ? "rotationOffsetY"
+            : "rotationOffsetZ";
+      if (
+        typeof (targetUserData as any)[offsetKey] !== "number" &&
+        typeof (sourceUserData as any)[offsetKey] === "number"
+      ) {
+        (targetUserData as any)[offsetKey] = (sourceUserData as any)[offsetKey];
+      }
+      (targetBone as any).userData = targetUserData;
+    }
+  }
 
   private applyVanillaRotationInputSeeding(
     context: AnimationContext = this.context,
@@ -1825,6 +1983,25 @@ export class AnimationEngine {
   }
 
   /**
+   * Set swing direction for block entity animations (e.g., bell).
+   * Direction determines which axis the entity swings on:
+   * - 0 = NORTH: swings on X axis (negative)
+   * - 1 = SOUTH: swings on X axis (positive)
+   * - 2 = EAST: swings on Z axis (negative)
+   * - 3 = WEST: swings on Z axis (positive)
+   */
+  setSwingDirection(direction: number): void {
+    this.context.entityState.swing_direction = Math.max(0, Math.min(3, Math.floor(direction)));
+  }
+
+  /**
+   * Get current swing direction.
+   */
+  getSwingDirection(): number {
+    return this.context.entityState.swing_direction;
+  }
+
+  /**
    * Get a custom variable value.
    */
   getVariable(name: string): number {
@@ -1836,6 +2013,37 @@ export class AnimationEngine {
    */
   setVariable(name: string, value: number): void {
     this.context.variables[name] = value;
+  }
+
+  /**
+   * Snapshot custom variables for cross-engine continuity.
+   */
+  getVariableSnapshot(): Record<string, number> {
+    return { ...this.context.variables };
+  }
+
+  /**
+   * Restore custom variables for cross-engine continuity.
+   */
+  setVariableSnapshot(vars: Record<string, number>): void {
+    this.context.variables = { ...vars };
+  }
+
+  /**
+   * Snapshot random cache so overlay animations stay deterministic across rebuilds.
+   */
+  getRandomCacheSnapshot(): Array<[number, number]> {
+    return Array.from(this.context.randomCache.entries());
+  }
+
+  /**
+   * Restore random cache entries for overlay continuity.
+   */
+  setRandomCacheSnapshot(snapshot: Array<[number, number]>): void {
+    this.context.randomCache.clear();
+    for (const [key, value] of snapshot) {
+      this.context.randomCache.set(key, value);
+    }
   }
 
   /**
@@ -1920,6 +2128,49 @@ export class AnimationEngine {
     // Apply root overlay even if no CEM animations are present.
     this.applyRootOverlay();
     return this.isPlaying;
+  }
+
+  /**
+   * Evaluate animations using an externally-provided entity state.
+   * This is used for overlay layers that should mirror the base entity timing
+   * without running their own presets/state updates.
+   */
+  tickWithExternalState(deltaTime: number, externalState: EntityState): boolean {
+    if (!this.initialized) {
+      return false;
+    }
+
+    const scaledDelta = deltaTime * this.speed;
+    this.context.entityState = { ...externalState };
+    if (!Number.isFinite(this.context.entityState.frame_time)) {
+      this.context.entityState.frame_time = scaledDelta;
+    }
+    if (!Number.isFinite(this.context.entityState.frame_counter)) {
+      this.context.entityState.frame_counter = 0;
+    }
+
+    // Clear trigger overlays to avoid double-advancing timers on overlays.
+    this.triggerBoneInputOverrides = {};
+    this.rootOverlay = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
+
+    // Pose toggles still apply deterministically based on the external state.
+    this.updatePoseOverlays();
+
+    if (this.animationLayers.length > 0) {
+      try {
+        this.evaluateAndApply();
+      } catch (error) {
+        console.error(
+          "[AnimationEngine] Error during overlay evaluation:",
+          error,
+        );
+      }
+      return true;
+    }
+
+    resetAllBones(this.bones, this.baseTransforms);
+    this.applyRootOverlay();
+    return false;
   }
 
   /**
@@ -2435,6 +2686,33 @@ export class AnimationEngine {
       }
     }
 
+    // Apply bell swing direction logic before transforms are applied
+    // Bell swings on ONE axis based on swing_direction:
+    // 0=NORTH: -rx, 1=SOUTH: +rx, 2=EAST: -rz, 3=WEST: +rz
+    if (this.entityId === "bell") {
+      const bodyTransform = boneTransforms.get("body");
+      if (bodyTransform) {
+        const dir = this.context.entityState.swing_direction;
+        const useXAxis = dir === 0 || dir === 1; // NORTH or SOUTH
+        const useZAxis = dir === 2 || dir === 3; // EAST or WEST
+        const negateSign = dir === 0 || dir === 2; // NORTH or EAST use negative
+
+        if (useXAxis) {
+          // Use X rotation, clear Z
+          if (negateSign && bodyTransform.rx !== undefined) {
+            bodyTransform.rx = -bodyTransform.rx;
+          }
+          bodyTransform.rz = undefined;
+        } else if (useZAxis) {
+          // Use Z rotation, clear X
+          if (negateSign && bodyTransform.rz !== undefined) {
+            bodyTransform.rz = -bodyTransform.rz;
+          }
+          bodyTransform.rx = undefined;
+        }
+      }
+    }
+
     // Apply accumulated transforms to bones
     // With nested Three.js hierarchy, parent transforms automatically propagate
     // to children - we just apply each bone's animation offset to its local transform
@@ -2561,6 +2839,14 @@ export class AnimationEngine {
         0,
         this.context.entityState.death_time - dtTicks,
       );
+    }
+    // Interaction ticks count UP (not down) for proper dampening
+    // The bell expression sin((ticks / pi)) / (4.0 + ticks / 3.0) dampens as ticks increases
+    // Duration is data-driven from Minecraft (e.g., bell = 50 ticks = 2.5 seconds)
+    if (this.context.entityState.ticks > 0 && this.context.entityState.ticks < this.animationDurationTicks) {
+      this.context.entityState.ticks += dtTicks;
+    } else if (this.context.entityState.ticks >= this.animationDurationTicks) {
+      this.context.entityState.ticks = 0; // Reset after animation completes
     }
 
     // Build per-frame bone input overrides from active triggers.
@@ -2699,11 +2985,13 @@ export class AnimationEngine {
  *
  * @param modelGroup The Three.js group containing the entity model
  * @param animationLayers Optional animation layers from JEM file
+ * @param entityId Optional entity ID for looking up extracted animation data
  * @returns New AnimationEngine instance
  */
 export function createAnimationEngine(
   modelGroup: THREE.Group,
   animationLayers?: AnimationLayer[],
+  entityId?: string,
 ): AnimationEngine {
-  return new AnimationEngine(modelGroup, animationLayers);
+  return new AnimationEngine(modelGroup, animationLayers, entityId);
 }

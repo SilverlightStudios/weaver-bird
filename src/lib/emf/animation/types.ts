@@ -138,10 +138,19 @@ export interface EntityState {
   swing_progress: number; // Attack progress 0-1
   hurt_time: number; // Damage animation ticks (0-10)
   death_time: number; // Death animation ticks (0-20)
+
+  // Block entity animation direction
+  // For bell: determines which axis swings (0=NORTH, 1=SOUTH, 2=EAST, 3=WEST)
+  // NORTH/SOUTH use X rotation, EAST/WEST use Z rotation
+  swing_direction: number;
   health: number; // Current health
   max_health: number; // Maximum health
   anger_time: number; // Anger duration
   anger_time_start: number; // Initial anger duration
+
+  // Block Entity Interactions
+  ticks: number; // Interaction animation ticks (for bells, chests, etc.)
+  openness: number; // Chest lid openness (0.0 = closed, 1.0 = fully open)
 
   // Position
   pos_x: number; // Entity world X position
@@ -293,6 +302,11 @@ export const DEFAULT_ENTITY_STATE: EntityState = {
   max_health: 20,
   anger_time: 0,
   anger_time_start: 0,
+
+  // Block Entity Interactions
+  ticks: 0,
+  swing_direction: 3, // Default WEST (3) - swings on Z axis
+  openness: 0, // Chest closed by default
 
   // Position
   pos_x: 0,

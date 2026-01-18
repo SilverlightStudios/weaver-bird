@@ -222,6 +222,17 @@ export function getEntityInfoFromAssetId(assetId: string): {
     if (segments[0] === "banner") {
       return { variant: "banner", parent: null };
     }
+    if (segments[0] === "chest") {
+      const leaf = segments[segments.length - 1] ?? "";
+      const normalizedLeaf = leaf.replace(/_(left|right)$/, "");
+      if (normalizedLeaf.includes("trapped")) {
+        return { variant: "trapped_chest", parent: null };
+      }
+      if (normalizedLeaf.includes("ender")) {
+        return { variant: "ender_chest", parent: null };
+      }
+      return { variant: "chest", parent: null };
+    }
     if (segments[0] === "decorated_pot") {
       // Treat all decorated pot texture variants (base + pottery patterns)
       // as one model family, similar to banners.

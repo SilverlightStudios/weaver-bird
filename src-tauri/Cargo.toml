@@ -37,6 +37,14 @@ name = "extract_particle_physics"
 path = "src/bin/extract_particle_physics.rs"
 
 [[bin]]
+name = "extract_block_animations"
+path = "src/bin/extract_block_animations.rs"
+
+[[bin]]
+name = "generate_animations"
+path = "src/bin/generate_animations.rs"
+
+[[bin]]
 name = "show_campfire"
 path = "src/bin/show_campfire.rs"
 
@@ -45,7 +53,7 @@ name = "init_vanilla_cache"
 path = "src/bin/init_vanilla_cache.rs"
 
 [dependencies]
-tauri = { version = "2.5", features = ["macos-private-api", "protocol-asset"] }
+tauri = { version = "2.5", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2.1"
 tauri-plugin-fs = "2.1"
 tauri-plugin-shell = "2.1"
@@ -66,6 +74,8 @@ reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1.35", features = ["rt-multi-thread", "fs"] }
 chrono = "0.4"
 cafebabe = "0.3"
+tree-sitter = "0.20"
+tree-sitter-java = "0.20"
 
 [build-dependencies]
 tauri-build = { version = "2.5", features = [] }

@@ -94,6 +94,41 @@ export function normalizeUV(uv: [number, number, number, number] | undefined) {
   };
 }
 
+function generateAutoUV(
+  faceName: string,
+  from: [number, number, number],
+  to: [number, number, number],
+): [number, number, number, number] {
+  const [x1, y1, z1] = from;
+  const [x2, y2, z2] = to;
+
+  switch (faceName) {
+    case "up":
+      return [x1, z1, x2, z2];
+    case "down":
+      return [x1, 16 - z2, x2, 16 - z1];
+    case "north":
+      return [16 - x2, 16 - y2, 16 - x1, 16 - y1];
+    case "south":
+      return [x1, 16 - y2, x2, 16 - y1];
+    case "east":
+      return [16 - z2, 16 - y2, 16 - z1, 16 - y1];
+    case "west":
+      return [z1, 16 - y2, z2, 16 - y1];
+    default:
+      return [0, 0, 16, 16];
+  }
+}
+
+function resolveFaceUV(
+  faceName: string,
+  face: { uv?: [number, number, number, number] },
+  from: [number, number, number],
+  to: [number, number, number],
+): [number, number, number, number] {
+  return face.uv ?? generateAutoUV(faceName, from, to);
+}
+
 export function calculateFaceOffsets(
   element: { from: number[]; to: number[] },
   scale: number,
@@ -204,7 +239,7 @@ export function processElementsSync(
           z: offsets.top.z,
           width: width * scale,
           height: depth * scale,
-          uv: normalizeUV(face.uv),
+          uv: normalizeUV(resolveFaceUV("up", face, element.from, element.to)),
           zIndex: Math.round(centerY * 10 + 100),
           brightness: 1.0,
           tintType,
@@ -231,7 +266,7 @@ export function processElementsSync(
           z: offsets.left.z,
           width: width * scale,
           height: height * scale,
-          uv: normalizeUV(face.uv),
+          uv: normalizeUV(resolveFaceUV("south", face, element.from, element.to)),
           zIndex: Math.round(centerY * 10 + 50),
           brightness: 0.8,
           tintType,
@@ -258,7 +293,7 @@ export function processElementsSync(
           z: offsets.right.z,
           width: depth * scale,
           height: height * scale,
-          uv: normalizeUV(face.uv),
+          uv: normalizeUV(resolveFaceUV("east", face, element.from, element.to)),
           zIndex: Math.round(centerY * 10),
           brightness: 0.6,
           tintType,

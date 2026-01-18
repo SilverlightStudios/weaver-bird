@@ -263,13 +263,16 @@ describe("entityComposite", () => {
   it("resolves horse equipment controls + layers", () => {
     const all = [
       "minecraft:entity/horse/horse_brown",
+      "minecraft:entity/horse/horse_markings_white",
       "minecraft:entity/equipment/horse_body/diamond",
       "minecraft:entity/equipment/horse_saddle/saddle",
     ];
     const schema = resolveEntityCompositeSchema("minecraft:entity/horse/horse_brown", all);
     expect(schema).toBeTruthy();
+    expect(schema!.controls.some((c) => c.id === "horse.markings")).toBe(true);
     expect(schema!.controls.some((c) => c.id === "horse.armor")).toBe(true);
     expect(schema!.controls.some((c) => c.id === "horse.saddle")).toBe(true);
+    expect(schema!.controls.some((c) => c.id === "horse.rider")).toBe(true);
 
     const layers = schema!.getActiveLayers({
       toggles: { "horse.saddle": true },

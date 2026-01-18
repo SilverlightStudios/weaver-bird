@@ -147,7 +147,9 @@ export interface UIState {
   animationSpeed: number; // Animation playback speed multiplier (0.1 - 3.0)
   entityHeadYaw: number; // Entity head yaw for manual control (degrees)
   entityHeadPitch: number; // Entity head pitch for manual control (degrees)
+  entitySwingDirection: number; // Block entity swing direction (0=NORTH, 1=SOUTH, 2=EAST, 3=WEST)
   availableAnimationPresets: string[] | null; // Presets relevant to current model (null = show all)
+  availableBones: string[] | null; // Bone names available in current model (null = unknown)
 
   // Entity animation triggers (one-shot overlays)
   availableAnimationTriggers: string[] | null; // Triggers relevant to current model (null = show none)

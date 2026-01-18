@@ -1,4 +1,5 @@
 import type { AssetId } from "@state";
+import type { EntityState } from "@lib/emf/animation/types";
 
 export type EntityFeatureControl =
   | {
@@ -65,6 +66,17 @@ export interface EntityLayerDefinitionBase {
    */
   boneAliasMap?: Record<string, string>;
   /**
+   * Optional list of base-model bones that should be hidden when this layer
+   * successfully loads. Useful when a pack bakes geometry into the base model
+   * but ships a separate CEM overlay in newer versions.
+   */
+  replacesBaseBones?: string[];
+  /**
+   * When false, avoid falling back to vanilla CEM files if this layer's CEM
+   * is missing in the active model pack. Defaults to true.
+   */
+  allowVanillaFallback?: boolean;
+  /**
    * Optional per-layer bone position offsets (in Three.js units) applied after
    * syncing the overlay rig to the base pose. Offsets are additive and applied
    * every frame, but since overlays are re-synced each tick, this does not
@@ -86,6 +98,11 @@ export interface EntityLayerDefinitionBase {
     string,
     { x: number; y: number; z: number }
   >;
+  /**
+   * When true, ignore overlay JPM animations and always sync this layer's bones
+   * to the base pose. Useful for equipment that should inherit the base rig.
+   */
+  syncToBasePose?: boolean;
   /**
    * Opacity multiplier for the overlay material (0..1).
    */
@@ -164,6 +181,11 @@ export interface EntityCompositeSchema {
   getBoneInputOverrides?: (
     state: EntityFeatureStateView,
   ) => Record<string, Record<string, number>>;
+  /**
+   * Optional entity-state overrides applied every frame (e.g. mark a horse as
+   * `is_ridden` when the saddle toggle is enabled).
+   */
+  getEntityStateOverrides?: (state: EntityFeatureStateView) => Partial<EntityState>;
   /**
    * Optional per-part texture override map for the base model conversion.
    *
