@@ -44,7 +44,7 @@ export const LauncherSelector = ({
                 </label>
                 <Combobox
                     options={launcherOptions}
-                    value={selectedLauncher?.minecraft_dir || ""}
+                    value={selectedLauncher?.minecraft_dir ?? ""}
                     onValueChange={handleLauncherSelect}
                     placeholder="Select launcher..."
                     searchPlaceholder="Search launchers..."
@@ -64,7 +64,7 @@ export const LauncherSelector = ({
                                 aria-expanded={isOpen}
                             >
                                 <span className={s.launcherDropdownText}>
-                                    {selectedLabel || placeholder}
+                                    {selectedLabel ?? placeholder}
                                 </span>
                                 <span className={s.launcherDropdownArrow}>
                                     {isOpen ? "▲" : "▼"}

@@ -16,7 +16,6 @@
     cursor: pointer;
     font-family: var(--font-family);
     text-align: left;
-
     transition:
         rotate 120ms var(--spring-bezier),
         box-shadow 120ms var(--spring-bezier),
@@ -24,6 +23,7 @@
 
     &:hover {
         @include tokens.shadow-md;
+
         rotate: 0deg;
         translate: 1px -1px;
     }

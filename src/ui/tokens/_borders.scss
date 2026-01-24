@@ -65,7 +65,7 @@
  * Best for: Image containers, avatar frames
  */
 @mixin radius-icon-frame {
-    border-radius: 1.2rem 0.4rem 1.6rem 0.4rem;
+    border-radius: 1.2rem 0.4rem 1.6rem;
 }
 
 /**
@@ -76,7 +76,7 @@
     border-radius: 0.4rem 1rem 0.4rem 0.4rem;
 
     &:nth-child(2n) {
-        border-radius: 1rem 0.4rem 0.4rem 0.4rem;
+        border-radius: 1rem 0.4rem 0.4rem;
     }
 }
 

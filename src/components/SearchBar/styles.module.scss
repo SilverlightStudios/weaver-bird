@@ -2,6 +2,7 @@
 
 .root {
     position: relative;
+
     // Allow dropdown to overflow
     overflow: visible;
 }
@@ -9,6 +10,7 @@
 .command {
     position: relative;
     width: 100%;
+
     // Allow dropdown to overflow
     overflow: visible;
 }
@@ -40,18 +42,16 @@
     width: 100%;
     min-width: 0;
     padding: 0.6rem 0.75rem 0.6rem 2.5rem;
-
     font-family: var(--font-family);
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.06em;
 
     @include tokens.gradient-surface;
-    color: var(--color-text);
 
+    color: var(--color-text);
     outline: none;
     box-sizing: border-box;
-
     transition:
         background 180ms var(--spring-bezier),
         border-color 180ms var(--spring-bezier),
@@ -64,6 +64,7 @@
 
     &:focus {
         @include tokens.shadow-lg;
+
         background: white;
         border-color: var(--color-primary);
     }
@@ -84,13 +85,9 @@
     left: 0;
     right: 0;
     z-index: 1000;
-
     max-height: 400px;
-    overflow-y: auto;
-    overflow-x: hidden;
-
+    overflow: hidden auto;
     background: white;
-
     padding: 0.5rem;
 
     // Ensure it's visible above other elements
@@ -122,17 +119,13 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-
     padding: 0.75rem 1rem;
     margin-bottom: 0.25rem;
-
     font-family: var(--font-family);
     font-size: var(--font-size-sm);
     color: var(--color-text);
-
     cursor: pointer;
     user-select: none;
-
     transition:
         background 120ms var(--spring-bezier),
         transform 120ms var(--spring-bezier);
@@ -193,7 +186,6 @@
 
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
-
     .input,
     .suggestionItem {
         transition-duration: 0.01ms;

@@ -11,7 +11,6 @@
 import type {
   ExtractedPhysicsData,
   ExtractedParticlePhysics,
-  SpawnedParticle as ExtractedSpawnedParticle,
 } from "@lib/tauri";
 
 export interface SpawnedParticle {
@@ -158,6 +157,85 @@ export function getExtractedParticleTypes(): string[] {
 // PHYSICS CONVERSION
 // ============================================================================
 
+// Validation helpers
+function isValidNumber(value: unknown, min?: number, max?: number): value is number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return false;
+  if (min !== undefined && value < min) return false;
+  if (max !== undefined && value > max) return false;
+  return true;
+}
+
+function isValidVec3(value: unknown): value is [number, number, number] {
+  return Array.isArray(value) &&
+    value.length === 3 &&
+    value.every((v) => typeof v === "number" && Number.isFinite(v));
+}
+
+function setIfValidNumber(
+  target: ParticlePhysics,
+  key: keyof ParticlePhysics,
+  value: unknown,
+  min?: number,
+  max?: number,
+): void {
+  if (isValidNumber(value, min, max)) {
+    (target as Record<string, unknown>)[key] = value;
+  }
+}
+
+function setIfValidVec3(
+  target: ParticlePhysics,
+  key: keyof ParticlePhysics,
+  value: unknown,
+): void {
+  if (isValidVec3(value)) {
+    (target as Record<string, unknown>)[key] = [value[0], value[1], value[2]];
+  }
+}
+
+function setIfValidBoolean(
+  target: ParticlePhysics,
+  key: keyof ParticlePhysics,
+  value: unknown,
+): void {
+  if (typeof value === "boolean") {
+    (target as Record<string, unknown>)[key] = value;
+  }
+}
+
+function setIfValidString(
+  target: ParticlePhysics,
+  key: keyof ParticlePhysics,
+  value: unknown,
+): void {
+  if (typeof value === "string" && value.trim()) {
+    (target as Record<string, unknown>)[key] = value;
+  }
+}
+
+function extractQuadSize(extracted: ExtractedParticlePhysics): number | undefined {
+  if (typeof extracted.size === "number" && Number.isFinite(extracted.size) && extracted.size > 0) {
+    return extracted.size;
+  }
+  return undefined;
+}
+
+function extractSpawnedParticles(
+  spawns: unknown,
+): Array<{ particleId: string; probabilityExpr?: string; countExpr?: string }> | undefined {
+  if (!Array.isArray(spawns)) return undefined;
+
+  const mapped = spawns
+    .map((spawn) => ({
+      particleId: spawn.particle_id,
+      probabilityExpr: spawn.probability_expr ?? undefined,
+      countExpr: spawn.count_expr ?? undefined,
+    }))
+    .filter((spawn) => spawn.particleId);
+
+  return mapped.length > 0 ? mapped : undefined;
+}
+
 /**
  * Convert extracted physics (from Minecraft source) to our ParticlePhysics format
  *
@@ -174,112 +252,46 @@ function convertExtractedPhysics(extracted: ExtractedParticlePhysics): ParticleP
     return null;
   }
 
-  const quadSize =
-    typeof extracted.size === "number" && Number.isFinite(extracted.size) && extracted.size > 0
-      ? extracted.size
-      : undefined;
+  const quadSize = extractQuadSize(extracted);
 
   const result: ParticlePhysics = {
     lifetimeTicks: [extracted.lifetime[0], extracted.lifetime[1]],
-    // Convert lifetime from game ticks to seconds (20 ticks = 1 second)
     lifetime: [extracted.lifetime[0] / 20, extracted.lifetime[1] / 20],
-    // Default gravity to 0 if not specified
-    gravity: typeof extracted.gravity === "number" && Number.isFinite(extracted.gravity)
-      ? extracted.gravity
-      : 0,
-    // Default size to 0.1 if not specified
+    gravity: isValidNumber(extracted.gravity) ? extracted.gravity : 0,
     size: quadSize ? [quadSize, quadSize] : [0.1, 0.1],
     quadSize,
   };
 
-  // Optional friction
-  if (
-    typeof extracted.friction === "number" &&
-    Number.isFinite(extracted.friction) &&
-    extracted.friction > 0 &&
-    extracted.friction <= 1
-  ) {
-    result.friction = extracted.friction;
-  }
+  // Optional fields with validation
+  setIfValidNumber(result, "friction", extracted.friction, 0, 1);
+  setIfValidNumber(result, "baseAlpha", extracted.alpha, 0, 1);
+  setIfValidNumber(result, "scale", extracted.scale, 0);
+  setIfValidNumber(result, "colorScale", extracted.color_scale, 0);
+  setIfValidNumber(result, "lifetimeBase", extracted.lifetime_base, 0);
 
-  // Velocity modifiers (blocks/tick)
-  const vm = extracted.velocity_multiplier;
-  if (Array.isArray(vm) && vm.length === 3 && vm.every((v) => typeof v === "number" && Number.isFinite(v))) {
-    result.velocityMultiplier = [vm[0], vm[1], vm[2]];
-  }
+  setIfValidVec3(result, "velocityMultiplier", extracted.velocity_multiplier);
+  setIfValidVec3(result, "velocityAdd", extracted.velocity_add);
+  setIfValidVec3(result, "velocityJitter", extracted.velocity_jitter);
+  setIfValidVec3(result, "tickVelocityDelta", extracted.tick_velocity_delta);
 
-  const va = extracted.velocity_add;
-  if (Array.isArray(va) && va.length === 3 && va.every((v) => typeof v === "number" && Number.isFinite(v))) {
-    result.velocityAdd = [va[0], va[1], va[2]];
-  }
-
-  const vj = extracted.velocity_jitter;
-  if (Array.isArray(vj) && vj.length === 3 && vj.every((v) => typeof v === "number" && Number.isFinite(v))) {
-    result.velocityJitter = [vj[0], vj[1], vj[2]];
-  }
-
-  // Base RGB color (0..1)
-  const col = extracted.color;
-  if (Array.isArray(col) && col.length === 3 && col.every((v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1)) {
-    result.color = [col[0], col[1], col[2]];
-  }
-
-  // Base alpha/opacity multiplier
-  if (typeof extracted.alpha === "number" && Number.isFinite(extracted.alpha) && extracted.alpha >= 0 && extracted.alpha <= 1) {
-    result.baseAlpha = extracted.alpha;
-  }
-
-  // Scale multiplier (Particle.scale / ctor scale param)
-  if (typeof extracted.scale === "number" && Number.isFinite(extracted.scale) && extracted.scale > 0) {
-    result.scale = extracted.scale;
-  }
-
-  // BaseAshSmokeParticle extras
-  if (typeof extracted.color_scale === "number" && Number.isFinite(extracted.color_scale) && extracted.color_scale >= 0) {
-    result.colorScale = extracted.color_scale;
-  }
-  if (typeof extracted.lifetime_base === "number" && Number.isFinite(extracted.lifetime_base) && extracted.lifetime_base > 0) {
-    result.lifetimeBase = extracted.lifetime_base;
-  }
-
-  if (typeof extracted.lifetime_animation === "boolean") {
-    result.lifetimeAnimation = extracted.lifetime_animation;
-  }
-
-  if (typeof extracted.behavior === "string" && extracted.behavior.trim()) {
-    result.behavior = extracted.behavior;
-  }
-
-  // Friction and texture behavior flags
-  if (typeof extracted.has_physics === "boolean") {
-    result.hasPhysics = extracted.has_physics;
-  }
-
-  if (typeof extracted.skips_friction === "boolean") {
-    result.skipsFriction = extracted.skips_friction;
-  }
-
-  if (typeof extracted.uses_static_texture === "boolean") {
-    result.usesStaticTexture = extracted.uses_static_texture;
-  }
-
-  const tickDelta = extracted.tick_velocity_delta;
-  if (Array.isArray(tickDelta) && tickDelta.length === 3 && tickDelta.every((v) => typeof v === "number" && Number.isFinite(v))) {
-    result.tickVelocityDelta = [tickDelta[0], tickDelta[1], tickDelta[2]];
-  }
-
-  const spawns = extracted.spawns_particles as ExtractedSpawnedParticle[] | undefined | null;
-  if (Array.isArray(spawns)) {
-    const mapped = spawns
-      .map((spawn) => ({
-        particleId: spawn.particle_id,
-        probabilityExpr: spawn.probability_expr ?? undefined,
-        countExpr: spawn.count_expr ?? undefined,
-      }))
-      .filter((spawn) => spawn.particleId);
-    if (mapped.length > 0) {
-      result.spawnsParticles = mapped;
+  // Color needs special validation (0..1 range)
+  if (isValidVec3(extracted.color)) {
+    const [r, g, b] = extracted.color;
+    if (r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1) {
+      result.color = [r, g, b];
     }
+  }
+
+  setIfValidBoolean(result, "lifetimeAnimation", extracted.lifetime_animation);
+  setIfValidBoolean(result, "hasPhysics", extracted.has_physics);
+  setIfValidBoolean(result, "skipsFriction", extracted.skips_friction);
+  setIfValidBoolean(result, "usesStaticTexture", extracted.uses_static_texture);
+
+  setIfValidString(result, "behavior", extracted.behavior);
+
+  const spawns = extractSpawnedParticles(extracted.spawns_particles);
+  if (spawns) {
+    result.spawnsParticles = spawns;
   }
 
   return result;

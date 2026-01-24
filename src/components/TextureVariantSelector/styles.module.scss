@@ -83,6 +83,7 @@
 
     &:hover {
         @include tokens.shadow-lg;
+
         scale: 1.05;
         rotate: 0deg;
         z-index: 1;
@@ -90,6 +91,7 @@
 
     &.selected {
         @include tokens.shadow-xl;
+
         border-color: var(--color-primary);
         border-width: 4px;
         rotate: 0deg;
@@ -99,7 +101,9 @@
             position: absolute;
             inset: -6px;
             border: 2px solid var(--color-primary);
+
             @include tokens.radius-quirky-sm;
+
             opacity: 0.3;
             pointer-events: none;
         }
@@ -112,6 +116,7 @@
 
     &:active {
         @include tokens.shadow-sm;
+
         scale: 0.98;
     }
 }
@@ -129,6 +134,7 @@
     border-radius: 2px;
     line-height: 1;
     z-index: 1;
+
     @include tokens.shadow-sm;
 }
 
@@ -136,7 +142,7 @@
     width: 100%;
     object-fit: contain;
     image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     image-rendering: crisp-edges;
     border-radius: 0.2rem;
 }

@@ -66,6 +66,38 @@ export function getUsedEntityStateKeysFromAnimationLayers(
   return used;
 }
 
+// Map entity state keys to animation preset IDs
+const STATE_KEY_TO_PRESET: Array<{
+  keys: (keyof EntityState)[];
+  preset: string;
+}> = [
+  { keys: ["limb_swing", "limb_speed"], preset: "walking" },
+  { keys: ["limb_swing", "limb_speed"], preset: "sprinting" }, // Inferred from limb_speed thresholds
+  { keys: ["is_sprinting"], preset: "sprinting" },
+  { keys: ["swing_progress", "is_aggressive"], preset: "attacking" },
+  { keys: ["hurt_time", "is_hurt"], preset: "hurt" },
+  { keys: ["death_time"], preset: "dying" },
+  { keys: ["is_in_water", "is_wet"], preset: "swimming" },
+  { keys: ["is_sneaking"], preset: "sneaking" },
+  { keys: ["is_sitting"], preset: "sitting" },
+  { keys: ["is_riding", "is_ridden"], preset: "riding" },
+  { keys: ["anger_time", "anger_time_start"], preset: "angry" },
+  { keys: ["is_child"], preset: "baby" },
+];
+
+// Helper function to determine available presets based on used state keys
+function determineAvailablePresets(used: Set<keyof EntityState>): Set<string> {
+  const available = new Set<string>(["idle"]);
+
+  for (const mapping of STATE_KEY_TO_PRESET) {
+    if (mapping.keys.some((key) => used.has(key))) {
+      available.add(mapping.preset);
+    }
+  }
+
+  return available;
+}
+
 /**
  * Returns a list of preset IDs that are likely relevant for the current model's
  * CEM animation expressions. Returns null when no CEM animations are present.
@@ -76,52 +108,7 @@ export function getAvailableAnimationPresetIdsForAnimationLayers(
   if (!layers || layers.length === 0) return null;
 
   const used = getUsedEntityStateKeysFromAnimationLayers(layers);
-  const available = new Set<string>(["idle"]);
-
-  if (used.has("limb_swing") || used.has("limb_speed")) {
-    available.add("walking");
-    // Many CEM packs infer running from limb_speed thresholds rather than
-    // `is_sprinting`, so expose sprinting when movement vars are used.
-    available.add("sprinting");
-  }
-
-  if (used.has("is_sprinting")) available.add("sprinting");
-
-  if (used.has("swing_progress") || used.has("is_aggressive")) {
-    available.add("attacking");
-  }
-
-  if (used.has("hurt_time") || used.has("is_hurt")) {
-    available.add("hurt");
-  }
-
-  if (used.has("death_time")) {
-    available.add("dying");
-  }
-
-  if (used.has("is_in_water") || used.has("is_wet")) {
-    available.add("swimming");
-  }
-
-  if (used.has("is_sneaking")) {
-    available.add("sneaking");
-  }
-
-  if (used.has("is_sitting")) {
-    available.add("sitting");
-  }
-
-  if (used.has("is_riding") || used.has("is_ridden")) {
-    available.add("riding");
-  }
-
-  if (used.has("anger_time") || used.has("anger_time_start")) {
-    available.add("angry");
-  }
-
-  if (used.has("is_child")) {
-    available.add("baby");
-  }
+  const available = determineAvailablePresets(used);
 
   return ANIMATION_PRESETS.filter((preset) => available.has(preset.id)).map(
     (preset) => preset.id,

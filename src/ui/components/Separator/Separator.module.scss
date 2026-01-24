@@ -18,7 +18,9 @@
     content: "";
     position: absolute;
     inset: 0;
+
     @include tokens.pattern-halftone-sm;
+
     mix-blend-mode: soft-light;
     opacity: 0.3;
     pointer-events: none;

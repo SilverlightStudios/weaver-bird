@@ -2,7 +2,7 @@ import {
     Tooltip,
     TooltipTrigger,
     TooltipContent,
-} from "@/ui/components/Tooltip/Tooltip";
+} from "@/ui/components/Tooltip";
 import type { BiomeHotspotProps } from "./types";
 import s from "./styles.module.scss";
 

@@ -23,6 +23,7 @@ export default tseslint.config(
       ".next",
       "coverage",
       "src-tauri",
+      "**/__mocks__/**",
     ],
   },
   // Base JavaScript rules
@@ -65,6 +66,14 @@ export default tseslint.config(
     },
   },
 
+  // Story files can have multiple components for documentation
+  {
+    files: ["**/*.stories.{ts,tsx}"],
+    rules: {
+      "react/no-multi-comp": "off",
+    },
+  },
+
   // TypeScript-specific rules
   {
     files: ["**/*.{ts,tsx}"],
@@ -94,8 +103,16 @@ export default tseslint.config(
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
+          ignoreRestSiblings: false, // Strict: catch unused rest siblings (often dead code)
         },
       ],
+
+      // Dead code rules
+      "no-unreachable": "error",
+      "no-unused-expressions": "error",
+      "no-constant-condition": "error",
+      "no-constant-binary-expression": "error",
+      "no-unreachable-loop": "error",
 
       // No console in production (disabled for debugging)
       "no-console": "off",
@@ -131,7 +148,7 @@ export default tseslint.config(
   // File size limits - enforce DRY, clean, concise code
   {
     files: ["**/*.{ts,tsx}"],
-    ignores: ["**/*.test.{ts,tsx}", "**/*.fixture.{ts,tsx}", "**/generated/**"],
+    ignores: ["**/*.test.{ts,tsx}", "**/*.fixture.{ts,tsx}", "**/*.stories.{ts,tsx}", "**/generated/**", "**/generated.ts", "**/*.generated.ts", "**/constants/**", "**/docs/**"],
     rules: {
       // Max 300 lines per file - break down large files into child components
       // Organize as components/childcomponent/index.tsx and styles.module.tsx

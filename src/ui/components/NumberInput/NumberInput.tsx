@@ -29,7 +29,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     },
     ref,
   ) => {
-    const hasAddons = prefix || suffix;
+    const hasAddons = Boolean(prefix) || Boolean(suffix);
 
     const inputElement = (
       <input

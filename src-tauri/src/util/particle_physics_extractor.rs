@@ -193,16 +193,76 @@ struct DownloadInfo {
     sha1: String,
 }
 
-/// Get the cache directory for particle physics extraction
-fn get_physics_cache_dir() -> Result<PathBuf> {
+fn get_weaverbird_cache_dir() -> Result<PathBuf> {
     let cache_dir = dirs::cache_dir()
         .ok_or_else(|| anyhow!("Could not find cache directory"))?
-        .join("weaverbird")
-        .join("particle_physics");
+        .join("weaverbird");
+
+    fs::create_dir_all(&cache_dir).context("Failed to create weaverbird cache directory")?;
+
+    Ok(cache_dir)
+}
+
+/// Get the cache directory for particle physics extraction
+fn get_physics_cache_dir() -> Result<PathBuf> {
+    let cache_dir = get_weaverbird_cache_dir()?.join("particle_physics");
 
     fs::create_dir_all(&cache_dir).context("Failed to create particle physics cache directory")?;
 
     Ok(cache_dir)
+}
+
+fn legacy_decompile_dirs(cache_root: &Path, version: &str) -> Vec<PathBuf> {
+    vec![
+        cache_root
+            .join("particle_physics")
+            .join("decompiled")
+            .join(version),
+        cache_root
+            .join("block_emissions")
+            .join("decompiled")
+            .join(version),
+        cache_root
+            .join("block_animations")
+            .join("decompiled")
+            .join(version),
+    ]
+}
+
+pub fn get_shared_decompile_dir(version: &str) -> Result<PathBuf> {
+    let cache_root = get_weaverbird_cache_dir()?;
+    let shared_dir = cache_root.join("decompiled").join(version);
+    if shared_dir.exists() {
+        return Ok(shared_dir);
+    }
+
+    if let Some(legacy) = legacy_decompile_dirs(&cache_root, version)
+        .into_iter()
+        .find(|path| path.exists())
+    {
+        println!(
+            "[decompile] Using legacy decompile directory at {:?} for {}",
+            legacy, version
+        );
+        return Ok(legacy);
+    }
+
+    Ok(shared_dir)
+}
+
+pub fn clear_shared_decompile_dir(version: &str) -> Result<()> {
+    let cache_root = get_weaverbird_cache_dir()?;
+    let shared_dir = cache_root.join("decompiled").join(version);
+    let mut dirs = vec![shared_dir];
+    dirs.extend(legacy_decompile_dirs(&cache_root, version));
+
+    for dir in dirs {
+        if dir.exists() {
+            fs::remove_dir_all(&dir).context("Failed to remove decompile cache")?;
+        }
+    }
+
+    Ok(())
 }
 
 /// Get the cache file path for extracted physics data
@@ -269,10 +329,7 @@ pub fn load_cached_physics_data(version: &str) -> Result<Option<ExtractedPhysics
 
 pub fn clear_physics_cache(version: &str) -> Result<()> {
     clear_physics_data_cache(version)?;
-    let decompile_dir = get_physics_cache_dir()?.join("decompiled").join(version);
-    if decompile_dir.exists() {
-        fs::remove_dir_all(&decompile_dir).context("Failed to remove physics decompile cache")?;
-    }
+    clear_shared_decompile_dir(version)?;
     Ok(())
 }
 
@@ -2174,8 +2231,8 @@ pub async fn extract_particle_physics(
         alpha: Some("alpha".to_string()),
     };
 
-    // Use a version-specific decompile directory to avoid cross-version mismatches.
-    let decompile_dir = get_physics_cache_dir()?.join("decompiled").join(version);
+    // Use a version-specific shared decompile directory to avoid cross-version mismatches.
+    let decompile_dir = get_shared_decompile_dir(version)?;
     let resources_path =
         decompile_dir.join("net/minecraft/client/particle/ParticleResources.java");
     let resources_obf_path = deobf_to_obf

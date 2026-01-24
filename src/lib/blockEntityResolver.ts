@@ -1,4 +1,12 @@
 import { normalizeAssetId } from "./assetUtils";
+import {
+  resolveSignEntity,
+  resolveBannerEntity,
+  resolveBedEntity,
+  resolveShulkerBoxEntity,
+  resolveChestEntity,
+  resolveDecoratedPotEntity,
+} from "./blockEntityResolverHelpers";
 
 export interface BlockEntityRenderSpec {
   assetId: string;
@@ -87,134 +95,37 @@ export function resolveBlockEntityRenderSpec(
 
   const blockName = normalizedPath.slice("block/".length);
 
-  if (blockName.endsWith("_wall_hanging_sign")) {
-    const wood = blockName.replace(/_wall_hanging_sign$/, "");
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      `entity/signs/hanging/${wood}`,
-    ]);
-    if (entityAssetId) return { assetId: entityAssetId };
-  }
+  // Try sign entity resolution
+  const signResult = resolveSignEntity(blockName, namespace, normalizedAll, findEntityAssetId);
+  if (signResult) return signResult;
 
-  if (blockName.endsWith("_hanging_sign")) {
-    const wood = blockName.replace(/_hanging_sign$/, "");
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      `entity/signs/hanging/${wood}`,
-    ]);
-    if (entityAssetId) return { assetId: entityAssetId };
-  }
+  // Try banner entity resolution
+  const bannerResult = resolveBannerEntity(blockName, namespace, normalizedAll, findEntityAssetId);
+  if (bannerResult) return bannerResult;
 
-  if (blockName.endsWith("_wall_sign")) {
-    const wood = blockName.replace(/_wall_sign$/, "");
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      `entity/signs/${wood}`,
-    ]);
-    if (entityAssetId) {
-      return {
-        assetId: entityAssetId,
-        entityTypeOverride: `${wood}_wall_sign`,
-      };
-    }
-  }
+  // Try bed entity resolution
+  const bedResult = resolveBedEntity(blockName, namespace, normalizedAll, findEntityAssetId);
+  if (bedResult) return bedResult;
 
-  if (blockName.endsWith("_sign")) {
-    const wood = blockName.replace(/_sign$/, "");
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      `entity/signs/${wood}`,
-    ]);
-    if (entityAssetId) return { assetId: entityAssetId };
-  }
+  // Try shulker box entity resolution
+  const shulkerResult = resolveShulkerBoxEntity(blockName, namespace, normalizedAll, findEntityAssetId);
+  if (shulkerResult) return { ...shulkerResult, entityTypeOverride: "shulker_box" };
 
-  if (blockName.endsWith("_wall_banner") || blockName.endsWith("_banner")) {
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      "entity/banner_base",
-      "entity/banner/base",
-      "entity/banner/banner_base",
-    ]);
-    if (entityAssetId) return { assetId: entityAssetId };
-  }
+  // Try chest entity resolution
+  const chestResult = resolveChestEntity(
+    blockName,
+    namespace,
+    normalizedAll,
+    findEntityAssetId,
+    findAnyEntityAssetIdByPrefix,
+    normalizeChestTextureKey,
+    getChestEntityTypeOverride,
+  );
+  if (chestResult) return chestResult;
 
-  if (blockName.endsWith("_bed")) {
-    const color = blockName.replace(/_bed$/, "");
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      `entity/bed/${color}`,
-    ]);
-    if (entityAssetId) return { assetId: entityAssetId };
-  }
-
-  if (blockName === "shulker_box" || blockName.endsWith("_shulker_box")) {
-    const color =
-      blockName === "shulker_box"
-        ? ""
-        : blockName.replace(/_shulker_box$/, "");
-    const shulkerSuffix = color ? `shulker_${color}` : "shulker";
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      `entity/shulker/${shulkerSuffix}`,
-      "entity/shulker/shulker",
-    ]);
-    if (entityAssetId) {
-      return { assetId: entityAssetId, entityTypeOverride: "shulker_box" };
-    }
-  }
-
-  if (blockName === "chest" || blockName.endsWith("_chest")) {
-    const rawPrefix = blockName === "chest" ? "normal" : blockName.replace(/_chest$/, "");
-    const chestType = normalizeChestTextureKey(rawPrefix);
-
-    // Build comprehensive fallback list
-    // Vanilla Minecraft has used different paths over versions: entity/chest/X and chest/X
-    const fallbackCandidates: string[] = [
-      // Primary path with entity/ prefix
-      `entity/chest/${chestType}`,
-      // Older format without entity/ prefix
-      `chest/${chestType}`,
-    ];
-
-    // Add generic fallbacks
-    fallbackCandidates.push(
-      "entity/chest/normal",
-      "chest/normal",
-      "entity/chest/chest",
-      "chest/chest"
-    );
-
-    let fallback: string | null = null;
-    for (const path of fallbackCandidates) {
-      fallback = findEntityAssetId(namespace, normalizedAll, [path]);
-      if (fallback) break;
-    }
-
-    // Last resort: find any chest texture
-    if (!fallback) {
-      fallback = findAnyEntityAssetIdByPrefix(
-        namespace,
-        normalizedAll,
-        "entity/chest/",
-        (id) => !id.endsWith("_left") && !id.endsWith("_right"),
-      ) ?? findAnyEntityAssetIdByPrefix(
-        namespace,
-        normalizedAll,
-        "chest/",
-        (id) => !id.endsWith("_left") && !id.endsWith("_right"),
-      );
-    }
-
-    if (fallback) {
-      return {
-        assetId: fallback,
-        entityTypeOverride: getChestEntityTypeOverride(blockName),
-      };
-    }
-  }
-
-  if (blockName === "decorated_pot") {
-    const entityAssetId = findEntityAssetId(namespace, normalizedAll, [
-      "entity/decorated_pot/decorated_pot_base",
-      "entity/decorated_pot_base",
-    ]);
-    if (entityAssetId) {
-      return { assetId: entityAssetId, entityTypeOverride: "decorated_pot" };
-    }
-  }
+  // Try decorated pot entity resolution
+  const decoratedPotResult = resolveDecoratedPotEntity(blockName, namespace, normalizedAll, findEntityAssetId);
+  if (decoratedPotResult) return { ...decoratedPotResult, entityTypeOverride: "decorated_pot" };
 
   // Universal pattern: check if entity/{blockName}/* exists
   // This handles bells and any future blocks with entity models

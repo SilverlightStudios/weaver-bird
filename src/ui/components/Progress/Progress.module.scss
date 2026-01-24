@@ -35,7 +35,9 @@
     content: "";
     position: absolute;
     inset: 0;
+
     @include tokens.pattern-halftone-sm;
+
     mix-blend-mode: soft-light;
     opacity: 0.15;
     pointer-events: none;
@@ -85,6 +87,7 @@
   0% {
     background-position: 0 0;
   }
+
   100% {
     background-position: 28px 0;
   }

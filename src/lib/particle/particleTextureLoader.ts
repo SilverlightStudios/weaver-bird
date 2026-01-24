@@ -185,7 +185,7 @@ async function loadSingleParticleTexture(
   packPath?: string,
   isZip?: boolean,
 ): Promise<THREE.Texture | null> {
-  const cacheKey = `${packPath || "vanilla"}:particle/${textureName}`;
+  const cacheKey = `${packPath ?? "vanilla"}:particle/${textureName}`;
 
   // Check cache first
   const cached = textureCache.get(cacheKey);

@@ -306,7 +306,7 @@ export const useSelectProvidersWithWinner = (assetId?: AssetId) => {
       override && !disabledSet.has(override.packId)
         ? override.packId
         : undefined;
-    const winner = penciledPackId || sortedProviders[0];
+    const winner = penciledPackId ?? sortedProviders[0];
     const isPenciled = override !== undefined;
 
     return sortedProviders.map((packId) => ({

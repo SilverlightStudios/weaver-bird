@@ -28,7 +28,7 @@ export const MinecraftLocations = () => {
         setLoading(false);
       }
     };
-    detect();
+    void detect();
   }, []);
 
   // Handle browse for a specific launcher

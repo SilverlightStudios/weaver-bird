@@ -13,13 +13,17 @@ import type {
   BlockModel,
   ModelElement,
   ResolvedModel,
-  ElementFace,
-  ElementRotation,
 } from "@lib/tauri/blockModels";
 import {
-  getBlockLightLevel,
-  shouldHaveVisualEmissive,
-} from "@/constants/blockLightEmission";
+  logModelInfo,
+  createPlaceholderCube,
+  applyBlockstateRotations,
+  convertElementsToMeshes,
+  applyRotation,
+  resolveAllTextures,
+} from "./modelConverterHelpers";
+import { applyCustomUVs } from "./modelConverterUVMapping";
+import { createFaceMaterials } from "./modelConverterMaterials";
 
 const MINECRAFT_UNIT = 16; // Minecraft uses 16x16x16 units per block
 
@@ -46,20 +50,8 @@ export async function blockModelToThreeJs(
   const startTime = performance.now();
   const group = new THREE.Group();
 
-  console.log("[modelConverter] Model parent:", model.parent || "none");
-  console.log(
-    "[modelConverter] Model textures:",
-    model.textures ? Object.keys(model.textures).length : 0,
-    "keys",
-  );
-  if (model.textures) {
-    console.log("[modelConverter] Texture keys:", Object.keys(model.textures));
-    console.log(
-      "[modelConverter] Texture values:",
-      JSON.stringify(model.textures, null, 2),
-    );
-  }
-  console.log("[modelConverter] Model elements:", model.elements?.length || 0);
+  logModelInfo(model);
+
   if (!model.elements || model.elements.length === 0) {
     console.error("[modelConverter] ✗ CRITICAL: No elements in model!");
     console.error(
@@ -69,46 +61,13 @@ export async function blockModelToThreeJs(
       "[modelConverter] Full model data:",
       JSON.stringify(model, null, 2),
     );
-  }
-
-  if (!model.elements || model.elements.length === 0) {
-    // TODO: Implement proper entity rendering for block entities like decorated pots
-    // See ENTITY_RENDERING_ANALYSIS.md and implementation plan discussion
-    //
-    // Decorated pots are block entities that use entity-style rendering, not block models.
-    // They need:
-    // 1. A .jem (Java Entity Model) file defining the pot geometry (base, body, neck)
-    // 2. Entity texture mapping from entity/decorated_pot/* folder
-    // 3. Support for 4-sided pottery shard textures (north/south/east/west)
-    // 4. Integration with existing EntityModel.tsx component
-    //
-    // Resources for creating JEM models:
-    // - Blockbench: Export via CEM Template
-    // - JsonEM mod: Dump vanilla models with dump_models=true
-    // - EMF mod: Export examples to [MC_DIRECTORY]/emf/export/
-    // - OptiFine docs: https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_model.txt
-    //
-    // For now, these will render as orange placeholders in 3D view.
-    // MinecraftCSSBlock handles 2D rendering using the particle texture.
-
-    console.warn("[modelConverter] Creating orange placeholder (no elements)");
-    // Create a simple cube as fallback
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xff6b00, // Orange to indicate missing model
-      roughness: 0.8,
-      metalness: 0.2,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.y = 0.5;
-    group.add(mesh);
     console.log("=================================================");
-    return group;
+    return createPlaceholderCube();
   }
 
   // Resolve all texture variables first
   console.log("[modelConverter] Resolving texture variables...");
-  const resolvedTextures = resolveAllTextures(model.textures || {});
+  const resolvedTextures = resolveAllTextures(model.textures ?? {});
   console.log(
     "[modelConverter] Resolved textures count:",
     Object.keys(resolvedTextures).length,
@@ -118,37 +77,17 @@ export async function blockModelToThreeJs(
     JSON.stringify(resolvedTextures, null, 2),
   );
 
-  // Convert each element to a mesh using simple BoxGeometry approach
-  console.log(
-    `[modelConverter] Converting ${model.elements.length} element(s) to meshes...`,
+  // Convert each element to a mesh
+  await convertElementsToMeshes(
+    model.elements,
+    resolvedTextures,
+    textureLoader,
+    biomeColor,
+    blockId,
+    blockProps,
+    group,
+    createElementMesh
   );
-  for (let i = 0; i < model.elements.length; i++) {
-    const element = model.elements[i];
-    try {
-      console.log(
-        `[modelConverter] → Element ${i + 1}/${model.elements.length}`,
-      );
-      const mesh = await createElementMesh(
-        element,
-        resolvedTextures,
-        textureLoader,
-        biomeColor,
-        blockId,
-        blockProps,
-      );
-      if (mesh) {
-        group.add(mesh);
-        console.log(`[modelConverter] ✓ Element ${i + 1} added to group`);
-      } else {
-        console.warn(`[modelConverter] ✗ Element ${i + 1} returned null mesh`);
-      }
-    } catch (err) {
-      console.error(
-        `[modelConverter] ✗ Failed to create element ${i + 1}:`,
-        err,
-      );
-    }
-  }
 
   console.log(
     `[modelConverter] ✓ Conversion complete. Group has ${group.children.length} meshes`,
@@ -156,31 +95,7 @@ export async function blockModelToThreeJs(
 
   // Apply blockstate rotations if provided
   if (resolvedModel) {
-    console.log("[modelConverter] Applying blockstate rotations:");
-    console.log(`[modelConverter] - X rotation: ${resolvedModel.rotX}°`);
-    console.log(`[modelConverter] - Y rotation: ${resolvedModel.rotY}°`);
-    console.log(`[modelConverter] - Z rotation: ${resolvedModel.rotZ}°`);
-    console.log(`[modelConverter] - UV Lock: ${resolvedModel.uvlock}`);
-
-    // Apply rotations in order: X, Y, Z (Minecraft order)
-    // Convert degrees to radians
-    if (resolvedModel.rotX !== 0) {
-      group.rotateX(THREE.MathUtils.degToRad(resolvedModel.rotX));
-    }
-    if (resolvedModel.rotY !== 0) {
-      group.rotateY(THREE.MathUtils.degToRad(resolvedModel.rotY));
-    }
-    if (resolvedModel.rotZ !== 0) {
-      group.rotateZ(THREE.MathUtils.degToRad(resolvedModel.rotZ));
-    }
-
-    // TODO: Implement uvlock if needed (rotates UV coordinates to compensate for model rotation)
-    // For now, this is a placeholder - uvlock requires rotating UV coordinates in the opposite direction
-    if (resolvedModel.uvlock) {
-      console.log(
-        "[modelConverter] Note: uvlock is set but not yet fully implemented",
-      );
-    }
+    applyBlockstateRotations(group, resolvedModel);
   }
 
   const totalTime = performance.now() - startTime;
@@ -191,46 +106,6 @@ export async function blockModelToThreeJs(
   return group;
 }
 
-/**
- * Resolve all texture variables in the model
- * e.g., "#all" -> "minecraft:block/dirt"
- */
-function resolveAllTextures(
-  textures: Record<string, string>,
-): Record<string, string> {
-  const resolved: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(textures)) {
-    let currentValue = value;
-    const visited = new Set<string>();
-
-    // Follow the chain of references
-    while (currentValue.startsWith("#")) {
-      const varName = currentValue.substring(1);
-
-      // Prevent infinite loops
-      if (visited.has(varName)) {
-        console.warn(`[modelConverter] Circular texture reference: ${varName}`);
-        break;
-      }
-      visited.add(varName);
-
-      const nextValue = textures[varName];
-      if (!nextValue) {
-        console.warn(
-          `[modelConverter] Unresolved texture variable: #${varName}`,
-        );
-        break;
-      }
-
-      currentValue = nextValue;
-    }
-
-    resolved[key] = currentValue;
-  }
-
-  return resolved;
-}
 
 /**
  * Create a Three.js mesh from a Minecraft model element
@@ -301,508 +176,3 @@ async function createElementMesh(
   return mesh;
 }
 
-/**
- * Generate auto-UV coordinates for a face based on element dimensions.
- * This is Minecraft's behavior when UV is not explicitly specified.
- *
- * Per Minecraft spec:
- * - up/down faces: UV from element's X (u) and Z (v) coordinates
- * - north/south faces: UV from element's X (u) and Y (v) coordinates
- * - east/west faces: UV from element's Z (u) and Y (v) coordinates
- */
-function generateAutoUV(
-  faceName: string,
-  from: [number, number, number],
-  to: [number, number, number],
-): [number, number, number, number] {
-  const [x1, y1, z1] = from;
-  const [x2, y2, z2] = to;
-
-  switch (faceName) {
-    case "up":
-      // Top face: X maps to U, Z maps to V
-      return [x1, z1, x2, z2];
-    case "down":
-      // Bottom face: X maps to U, Z maps to V (but V is flipped)
-      return [x1, 16 - z2, x2, 16 - z1];
-    case "north":
-      // North face (-Z): X maps to U (flipped), Y maps to V
-      return [16 - x2, 16 - y2, 16 - x1, 16 - y1];
-    case "south":
-      // South face (+Z): X maps to U, Y maps to V
-      return [x1, 16 - y2, x2, 16 - y1];
-    case "east":
-      // East face (+X): Z maps to U (flipped), Y maps to V
-      return [16 - z2, 16 - y2, 16 - z1, 16 - y1];
-    case "west":
-      // West face (-X): Z maps to U, Y maps to V
-      return [z1, 16 - y2, z2, 16 - y1];
-    default:
-      return [0, 0, 16, 16];
-  }
-}
-
-/**
- * Apply custom UV coordinates to a box geometry
- *
- * Minecraft UV format: [x1, y1, x2, y2] where coords are 0-16
- * Three.js UV format: [0-1, 0-1] where (0,0) is bottom-left
- *
- * Three.js BoxGeometry has 6 faces, each face has 2 triangles (4 vertices)
- * Face order: [right, left, top, bottom, front, back]
- *
- * When UV is not specified in the model, auto-generate based on element dimensions.
- */
-function applyCustomUVs(
-  geometry: THREE.BoxGeometry,
-  faces: Record<string, ElementFace>,
-  from: [number, number, number],
-  to: [number, number, number],
-): void {
-  const faceMapping: Record<string, number> = {
-    east: 0, // right (+X)
-    west: 1, // left (-X)
-    up: 2, // top (+Y)
-    down: 3, // bottom (-Y)
-    south: 4, // front (+Z)
-    north: 5, // back (-Z)
-  };
-
-  const uvAttr = geometry.attributes.uv;
-  if (!uvAttr) return;
-
-  for (const [faceName, faceData] of Object.entries(faces)) {
-    const faceIndex = faceMapping[faceName];
-    if (faceIndex === undefined) continue;
-
-    // Use explicit UV if provided, otherwise auto-generate from element dimensions
-    const [x1, y1, x2, y2] = faceData.uv ?? generateAutoUV(faceName, from, to);
-
-    // Convert Minecraft UV (0-16) to Three.js UV (0-1)
-    // Minecraft UV coords: (0,0) is top-left, Y increases downward
-    // Three.js UV coords: (0,0) is bottom-left, Y increases upward
-    // So we need to flip the Y axis
-    const u1 = x1 / 16;
-    const u2 = x2 / 16;
-    const v1 = 1 - y1 / 16; // Flip Y: Minecraft top becomes Three.js top
-    const v2 = 1 - y2 / 16; // Flip Y: Minecraft bottom becomes Three.js bottom
-
-    // Handle UV rotation (0, 90, 180, 270 degrees clockwise)
-    const rotation = faceData.rotation || 0;
-
-    console.log(
-      `[modelConverter] UV ${faceName}: MC[${x1},${y1},${x2},${y2}] rot=${rotation}°`,
-    );
-
-    // BoxGeometry has 4 vertices per face
-    // The uv attribute has uvAttr.count total vertices (24 for a box = 4 per face × 6 faces)
-    const baseIndex = faceIndex * 4;
-
-    // Vertex layout for each face (before rotation):
-    // 2---3    (top edge, v2)
-    // |   |
-    // 0---1    (bottom edge, v1)
-
-    // Apply rotation by rotating the UV coordinates
-    // Rotation is clockwise in Minecraft
-    let uvCoords: [number, number][];
-
-    switch (rotation) {
-      case 90:
-        // Rotate 90° clockwise
-        uvCoords = [
-          [u1, v2], // 0: was top-left, now bottom-left
-          [u1, v1], // 1: was bottom-left, now bottom-right
-          [u2, v2], // 2: was top-right, now top-left
-          [u2, v1], // 3: was bottom-right, now top-right
-        ];
-        break;
-      case 180:
-        // Rotate 180°: flip both axes
-        uvCoords = [
-          [u2, v2], // 0: was bottom-left, now top-right
-          [u1, v2], // 1: was bottom-right, now top-left
-          [u2, v1], // 2: was top-left, now bottom-right
-          [u1, v1], // 3: was top-right, now bottom-left
-        ];
-        break;
-      case 270:
-        // Rotate 270° clockwise (or 90° counter-clockwise)
-        uvCoords = [
-          [u2, v1], // 0: was bottom-right, now bottom-left
-          [u2, v2], // 1: was top-right, now bottom-right
-          [u1, v1], // 2: was bottom-left, now top-left
-          [u1, v2], // 3: was top-left, now top-right
-        ];
-        break;
-      default: // 0 or undefined
-        uvCoords = [
-          [u1, v1], // 0: Bottom-left
-          [u2, v1], // 1: Bottom-right
-          [u1, v2], // 2: Top-left
-          [u2, v2], // 3: Top-right
-        ];
-    }
-
-    // Apply the UV coordinates to the vertices
-    uvCoords.forEach((uv, index) => {
-      uvAttr.setXY(baseIndex + index, uv[0], uv[1]);
-    });
-  }
-
-  uvAttr.needsUpdate = true;
-}
-
-/**
- * Create materials for each face of a box
- *
- * Three.js BoxGeometry face order: [right, left, top, bottom, front, back]
- * Minecraft faces: east, west, up, down, south, north
- */
-async function createFaceMaterials(
-  faces: Record<string, ElementFace>,
-  textureVariables: Record<string, string>,
-  textureLoader: (textureId: string) => Promise<THREE.Texture | null>,
-  _from: [number, number, number],
-  _to: [number, number, number],
-  biomeColor?: { r: number; g: number; b: number } | null,
-  blockId?: string,
-  blockProps?: Record<string, string>,
-): Promise<THREE.Material[]> {
-  // Map Minecraft face names to Three.js box face indices
-  const faceMapping: Record<string, number> = {
-    east: 0, // right (+X)
-    west: 1, // left (-X)
-    up: 2, // top (+Y)
-    down: 3, // bottom (-Y)
-    south: 4, // front (+Z)
-    north: 5, // back (-Z)
-  };
-
-  console.log(
-    "[modelConverter] Creating materials for faces:",
-    Object.keys(faces),
-  );
-  console.log(
-    "[modelConverter] Available texture variables:",
-    Object.keys(textureVariables),
-  );
-
-  // Create default materials for each of the 6 faces
-  // Use transparent material for undefined faces instead of magenta
-  const materials: THREE.Material[] = [];
-  for (let i = 0; i < 6; i++) {
-    materials.push(
-      new THREE.MeshStandardMaterial({
-        transparent: true,
-        opacity: 0, // Invisible for undefined faces
-        depthWrite: false,
-        colorWrite: false,
-        roughness: 0.8,
-        metalness: 0.2,
-        side: THREE.FrontSide, // Avoid double-rendering on crossed planes
-      }),
-    );
-  }
-
-  // Apply textures to faces that have them defined
-  for (const [faceName, faceData] of Object.entries(faces)) {
-    const faceIndex = faceMapping[faceName];
-    if (faceIndex === undefined) {
-      console.warn(`[modelConverter] ✗ Unknown face name: ${faceName}`);
-      continue;
-    }
-
-    console.log(
-      `[modelConverter] Processing face: ${faceName} (index ${faceIndex})`,
-    );
-    console.log(`[modelConverter] Face texture reference: ${faceData.texture}`);
-
-    // Resolve texture variable (e.g., "#all" -> "minecraft:block/dirt")
-    let textureId = faceData.texture;
-    if (textureId.startsWith("#")) {
-      const varName = textureId.substring(1);
-      console.log(`[modelConverter] Resolving variable: #${varName}`);
-      textureId = textureVariables[varName] || textureId;
-      console.log(`[modelConverter] Resolved to: ${textureId}`);
-    }
-
-    // Skip if still a variable (couldn't resolve)
-    if (textureId.startsWith("#")) {
-      console.warn(
-        `[modelConverter] ✗ Unresolved texture variable on ${faceName}: ${textureId}`,
-      );
-      continue;
-    }
-
-    console.log(
-      `[modelConverter] → Loading texture for ${faceName}: ${textureId}`,
-    );
-
-    // Load the texture
-    try {
-      const texture = await textureLoader(textureId);
-      if (texture) {
-        console.log(
-          `[modelConverter] ✓ Texture loaded successfully for ${faceName}`,
-        );
-
-        // Configure texture for Minecraft-style rendering
-        texture.magFilter = THREE.NearestFilter; // Pixelated look
-        texture.minFilter = THREE.NearestFilter;
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-
-        // Apply biome color tint if this face has tintindex and a color is provided
-        let materialColor: THREE.Color | undefined = undefined;
-        if (
-          faceData.tintindex !== undefined &&
-          faceData.tintindex !== null &&
-          biomeColor
-        ) {
-          // Convert RGB (0-255) to Three.js color
-          // Important: Minecraft colors are in sRGB space, so we need to convert to linear
-          // for proper rendering since Three.js materials work in linear space
-          materialColor = new THREE.Color();
-          materialColor.setRGB(
-            biomeColor.r / 255,
-            biomeColor.g / 255,
-            biomeColor.b / 255,
-            THREE.SRGBColorSpace
-          );
-          console.log(
-            `[modelConverter] Applying biome tint to ${faceName}:`,
-            materialColor,
-            `(sRGB input: rgb(${biomeColor.r}, ${biomeColor.g}, ${biomeColor.b}))`
-          );
-        }
-
-        // Check if texture is animated and needs shader material
-        const { getAnimationMaterial } = await import(
-          "@lib/three/textureLoader"
-        );
-        const animMaterial = getAnimationMaterial(texture);
-
-        if (animMaterial) {
-          // Use custom shader material for animated texture with interpolation
-          // Apply tint color if needed
-          if (materialColor) {
-            // TODO: Add color tinting support to shader
-            console.warn(
-              "[modelConverter] Color tinting not yet supported for interpolated animated textures",
-            );
-          }
-          materials[faceIndex] = animMaterial;
-        } else {
-          // Check if this block should have visual emissive based on blockstate properties
-          // (e.g., redstone_wire when power > 0)
-          const hasVisualEmissive = blockId
-            ? shouldHaveVisualEmissive(blockId, blockProps ?? {})
-            : false;
-
-          // Calculate block light emission level (0-15 in Minecraft)
-          let emitsLight = false;
-          if (blockId) {
-            const lightLevel = getBlockLightLevel(blockId, blockProps ?? {});
-            console.log(
-              `[modelConverter] Checking light for block=${blockId}, props=`,
-              blockProps,
-              `lightLevel=${lightLevel}`,
-            );
-            if (lightLevel !== null && lightLevel > 0) {
-              emitsLight = true;
-              console.log(
-                `[modelConverter] Block ${blockId} emits light level ${lightLevel}`,
-              );
-            }
-          }
-
-          // Try loading emissive overlay texture (_e) for resource pack support
-          // This enables partial emissive effects (e.g., only ore veins glow in redstone ore)
-          //
-          // Note: We only try loading _e for light-emitting blocks, not visual emissive blocks.
-          // Visual emissive (redstone wire when powered) should always be fullbright without _e
-          // because _e textures are masks (white = glow, black = no glow) and Three.js emissiveMap
-          // adds white glow on top, washing out colors. For now, visual emissive = fullbright.
-          let emissiveMap: THREE.Texture | undefined = undefined;
-          const shouldTryEmissiveMap = emitsLight; // Only for light-emitting blocks
-
-          if (shouldTryEmissiveMap) {
-            try {
-              const emissiveTextureId = textureId.replace(/\.png$/, "_e");
-              const emissiveTexture = await textureLoader(emissiveTextureId);
-              if (emissiveTexture) {
-                emissiveMap = emissiveTexture;
-                emissiveMap.magFilter = THREE.NearestFilter;
-                emissiveMap.minFilter = THREE.NearestFilter;
-                console.log(`[modelConverter] ✓ Loaded emissive overlay: ${emissiveTextureId}`);
-              }
-            } catch {
-              // No _e texture found - this is normal for vanilla Minecraft
-              console.log(`[modelConverter] No emissive overlay found for ${blockId} (will use fullbright fallback)`);
-            }
-          }
-
-          // Material selection strategy:
-          // 1. Emissive overlay texture exists (_e): Use MeshStandardMaterial with emissiveMap
-          //    - Resource packs can define which pixels glow (e.g., ore veins in redstone ore)
-          //    - LIMITATION: Three.js emissiveMap adds glow color, not perfect for Minecraft's
-          //      mask-based approach. Works best for partial emissive (mixed black/white in _e).
-          //      Future: Custom shader to properly handle _e as fullbright mask.
-          // 2. Should be emissive but no _e texture: Use MeshBasicMaterial (fullbright)
-          //    - Vanilla behavior: torches, lanterns, powered redstone are fully bright
-          //    - Entire texture glows, unaffected by darkness
-          // 3. Normal blocks: Use MeshStandardMaterial with regular lighting
-
-          if (emissiveMap) {
-            console.log(
-              `[modelConverter] Using MeshStandardMaterial with emissiveMap for ${blockId}`,
-            );
-            // Has emissive overlay - use it with Standard material for partial glow
-            // The _e texture defines which pixels glow (white = glow, black = no glow)
-            const standardMaterialProps: THREE.MeshStandardMaterialParameters = {
-              map: texture,
-              color: materialColor ?? 0xffffff,
-              transparent: true,
-              alphaTest: 0.1,
-              roughness: 0.8,
-              metalness: 0.2,
-              flatShading: false,
-              side: THREE.FrontSide,
-              emissiveMap: emissiveMap,
-              emissive: 0xffffff, // White multiplies with emissiveMap colors
-              emissiveIntensity: 1.0, // Standard glow intensity
-            };
-            materials[faceIndex] = new THREE.MeshStandardMaterial(standardMaterialProps);
-          } else if (hasVisualEmissive || emitsLight) {
-            console.log(
-              `[modelConverter] Using MeshBasicMaterial (fullbright) for ${blockId} (visualEmissive=${hasVisualEmissive}, emitsLight=${emitsLight})`,
-            );
-            // No _e texture but should be emissive - use fullbright rendering
-            // This preserves texture colors while making the block unaffected by lighting
-            const basicMaterialProps: THREE.MeshBasicMaterialParameters = {
-              map: texture,
-              color: materialColor ?? 0xffffff,
-              transparent: true,
-              alphaTest: 0.1,
-              side: THREE.FrontSide,
-            };
-            materials[faceIndex] = new THREE.MeshBasicMaterial(basicMaterialProps);
-          } else {
-            console.log(
-              `[modelConverter] Using MeshStandardMaterial (normal lighting) for ${blockId}`,
-            );
-            // Normal block - use Standard material with lighting
-            const standardMaterialProps: THREE.MeshStandardMaterialParameters = {
-              map: texture,
-              color: materialColor ?? 0xffffff,
-              transparent: true,
-              alphaTest: 0.1,
-              roughness: 0.8,
-              metalness: 0.2,
-              flatShading: false,
-              side: THREE.FrontSide,
-            };
-            materials[faceIndex] = new THREE.MeshStandardMaterial(standardMaterialProps);
-          }
-        }
-      } else {
-        console.warn(
-          `[modelConverter] ✗ Texture loader returned null for ${textureId}`,
-        );
-        // Use transparent material for missing textures
-        materials[faceIndex] = new THREE.MeshStandardMaterial({
-          transparent: true,
-          opacity: 0,
-          depthWrite: false,
-          colorWrite: false,
-          roughness: 0.8,
-          metalness: 0.2,
-          side: THREE.FrontSide,
-        });
-      }
-    } catch (err) {
-      console.error(
-        `[modelConverter] ✗ Failed to load texture ${textureId}:`,
-        err,
-      );
-      // Use transparent material for failed texture loads
-      materials[faceIndex] = new THREE.MeshStandardMaterial({
-        transparent: true,
-        opacity: 0,
-        depthWrite: false,
-        colorWrite: false,
-        roughness: 0.8,
-        metalness: 0.2,
-        side: THREE.FrontSide,
-      });
-    }
-  }
-
-  console.log(`[modelConverter] Materials created: ${materials.length} total`);
-  return materials;
-}
-
-/**
- * Apply Minecraft rotation to a Three.js mesh
- *
- * Minecraft rotations are around a specific origin point and can have
- * rescaling for 45-degree angles
- */
-function applyRotation(
-  mesh: THREE.Mesh,
-  rotation: ElementRotation,
-  _elementCenter: [number, number, number],
-): void {
-  // Minecraft rotations are around a specific origin point
-  const [originX, originY, originZ] = rotation.origin;
-  // Apply the same -0.5 offset to the rotation origin to match our centering
-  const origin = new THREE.Vector3(
-    originX / MINECRAFT_UNIT - 0.5,
-    originY / MINECRAFT_UNIT - 0.5,
-    originZ / MINECRAFT_UNIT - 0.5,
-  );
-
-  // Convert angle to radians
-  const angleRad = THREE.MathUtils.degToRad(rotation.angle);
-
-  // Determine rotation axis
-  const axis = new THREE.Vector3(
-    rotation.axis === "x" ? 1 : 0,
-    rotation.axis === "y" ? 1 : 0,
-    rotation.axis === "z" ? 1 : 0,
-  );
-
-  console.log(
-    `[modelConverter] Applying rotation: ${rotation.angle}° around ${rotation.axis} axis`,
-  );
-
-  // Rotate around the specified origin
-  mesh.position.sub(origin);
-  mesh.position.applyAxisAngle(axis, angleRad);
-  mesh.position.add(origin);
-  mesh.rotateOnAxis(axis, angleRad);
-
-  // Apply rescaling if specified (for 45° rotations)
-  // Rescale only scales in the plane perpendicular to the rotation axis
-  // For Y-axis rotation: scale X and Z, but not Y
-  // For X-axis rotation: scale Y and Z, but not X
-  // For Z-axis rotation: scale X and Y, but not Z
-  if (rotation.rescale && Math.abs(rotation.angle % 45) < 0.01) {
-    const scale = Math.sqrt(2);
-    console.log(
-      `[modelConverter] Applying rescale: ${scale} perpendicular to ${rotation.axis} axis`,
-    );
-
-    if (rotation.axis === "x") {
-      mesh.scale.y *= scale;
-      mesh.scale.z *= scale;
-    } else if (rotation.axis === "y") {
-      mesh.scale.x *= scale;
-      mesh.scale.z *= scale;
-    } else if (rotation.axis === "z") {
-      mesh.scale.x *= scale;
-      mesh.scale.y *= scale;
-    }
-  }
-}

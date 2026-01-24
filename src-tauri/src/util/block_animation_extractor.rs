@@ -250,18 +250,16 @@ pub async fn extract_block_animations(
     );
 
     // Reuse particle extractor infrastructure for decompilation and mappings
-    use super::particle_physics_extractor::{download_mojang_mappings, ensure_cfr_available};
+    use super::particle_physics_extractor::{
+        download_mojang_mappings, ensure_cfr_available, get_shared_decompile_dir,
+    };
 
     // Download mappings
     let mappings_path = download_mojang_mappings(version).await?;
     let class_mappings = parse_class_mappings(&mappings_path)?;
 
-    // Get decompile directory (shared with particle physics extractor)
-    let physics_cache_dir = dirs::cache_dir()
-        .ok_or_else(|| anyhow!("Could not find cache directory"))?
-        .join("weaverbird")
-        .join("particle_physics");
-    let decompile_dir = physics_cache_dir.join("decompiled").join(version);
+    // Get shared decompile directory
+    let decompile_dir = get_shared_decompile_dir(version)?;
 
     // Decompile if needed
     if !decompile_dir.exists() || !has_required_classes(&decompile_dir, &class_mappings) {

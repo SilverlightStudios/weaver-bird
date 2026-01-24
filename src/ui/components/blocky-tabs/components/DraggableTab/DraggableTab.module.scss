@@ -25,7 +25,9 @@
         opacity 200ms ease,
         transform 200ms ease,
         box-shadow 200ms ease;
+
     @include tokens.shadow-sm;
+
     // backgroundColor is set via inline styles from tab.color
 
     &[data-zone="left"] {
@@ -35,7 +37,9 @@
         width: calc(
             var(--tab-extend-offset) + 2px
         ); // Extend 2px to overlap tab
+
         @include tokens.border-standard;
+
         border-right: none;
         transform-origin: right center;
         z-index: 0; // Behind tab so tab shadow casts onto tail
@@ -48,7 +52,9 @@
         width: calc(
             var(--tab-extend-offset) + 2px
         ); // Extend 2px to overlap tab
+
         @include tokens.border-standard;
+
         border-left: none;
         transform-origin: left center;
         z-index: 2; // Above tab to hide tab's shadow edge
@@ -61,7 +67,9 @@
         height: calc(
             var(--tab-extend-offset) + 2px
         ); // Extend 2px to overlap tab
+
         @include tokens.border-standard;
+
         border-bottom: none;
         transform-origin: center bottom;
         z-index: 0; // Behind tab so tab shadow casts onto tail
@@ -74,7 +82,9 @@
         height: calc(
             var(--tab-extend-offset) + 2px
         ); // Extend 2px to overlap tab
+
         @include tokens.border-standard;
+
         border-top: none;
         transform-origin: center top;
         z-index: 2; // Above tab to hide tab's shadow edge
@@ -89,6 +99,8 @@
 
 .tailActive {
     scale: 1.1;
+
     @include tokens.shadow-md;
+
     border-color: var(--color-ink);
 }

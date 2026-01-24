@@ -160,7 +160,7 @@ export const BlockyTabs: React.FC<BlockyTabsProps> = ({
       .flat()
       .find((tab) => tab.id === activeTabId);
 
-    return activeTab?.defaultDrawerSize || DRAWER_DEFAULT_SIZE;
+    return activeTab?.defaultDrawerSize ?? DRAWER_DEFAULT_SIZE;
   };
 
   const getZoneStyle = (zone: ZoneId): React.CSSProperties => {
@@ -257,7 +257,7 @@ export const BlockyTabs: React.FC<BlockyTabsProps> = ({
           </div>
 
           <div className={s.canvas} style={getCanvasStyle()}>
-            {children ||
+            {children ??
               (!activeTabId && (
                 <div style={{ opacity: 0.5 }}>Select a tab</div>
               ))}

@@ -172,7 +172,7 @@ export function groupAssetsByVariant(assetIds: string[]): AssetGroup[] {
                 ? `entity/${entity.dir}`
                 : getVariantGroupKey(assetId));
 
-        const existing = groups.get(groupKey) || [];
+        const existing = groups.get(groupKey) ?? [];
         existing.push(assetId);
         groups.set(groupKey, existing);
     }
@@ -201,8 +201,8 @@ export function groupAssetsByVariant(assetIds: string[]): AssetGroup[] {
             if (aIsNumbered && !bIsNumbered) return 1;
 
             // Both are numbered, sort numerically
-            const aNum = parseInt(a.match(/(\d+)$/)?.[1] || "0");
-            const bNum = parseInt(b.match(/(\d+)$/)?.[1] || "0");
+            const aNum = parseInt(a.match(/(\d+)$/)?.[1] ?? "0");
+            const bNum = parseInt(b.match(/(\d+)$/)?.[1] ?? "0");
             if (aNum !== bNum) return aNum - bNum;
 
             // Stable fallback for non-numbered or equal-number variants
@@ -259,7 +259,7 @@ export function groupAssetsForCards(assetIds: string[]): AssetGroup[] {
                 ? `entity/${entity.dir}`
                 : getVariantGroupKey(assetId));
 
-        const existing = groups.get(groupKey) || [];
+        const existing = groups.get(groupKey) ?? [];
         existing.push(assetId);
         groups.set(groupKey, existing);
     }
@@ -285,8 +285,8 @@ export function groupAssetsForCards(assetIds: string[]): AssetGroup[] {
             if (!aIsNumbered && bIsNumbered) return -1;
             if (aIsNumbered && !bIsNumbered) return 1;
 
-            const aNum = parseInt(a.match(/(\d+)$/)?.[1] || "0");
-            const bNum = parseInt(b.match(/(\d+)$/)?.[1] || "0");
+            const aNum = parseInt(a.match(/(\d+)$/)?.[1] ?? "0");
+            const bNum = parseInt(b.match(/(\d+)$/)?.[1] ?? "0");
             if (aNum !== bNum) return aNum - bNum;
 
             return a.localeCompare(b);

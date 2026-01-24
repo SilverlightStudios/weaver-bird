@@ -1,8 +1,7 @@
 .container {
     width: 100%;
     height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden auto;
     scroll-behavior: smooth;
     background: var(--docs-bg);
     position: relative;
@@ -104,13 +103,13 @@
         inset: 0;
         background:
             radial-gradient(ellipse at 30% 20%,
-                rgba(255, 92, 92, 0.15) 0%,
+                rgb(255 92 92 / 15%) 0%,
                 transparent 50%),
             radial-gradient(ellipse at 70% 80%,
-                rgba(92, 225, 230, 0.12) 0%,
+                rgb(92 225 230 / 12%) 0%,
                 transparent 50%),
             radial-gradient(ellipse at 50% 50%,
-                rgba(139, 92, 246, 0.08) 0%,
+                rgb(139 92 246 / 8%) 0%,
                 transparent 60%);
         animation: heroGlow 10s ease-in-out infinite alternate;
         pointer-events: none;
@@ -122,9 +121,9 @@
         position: absolute;
         inset: 0;
         background-image:
-            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px),
             linear-gradient(90deg,
-                rgba(255, 255, 255, 0.02) 1px,
+                rgb(255 255 255 / 2%) 1px,
                 transparent 1px);
         background-size: 48px 48px;
         mask-image: radial-gradient(ellipse at center,
@@ -157,8 +156,8 @@
     align-items: center;
     gap: var(--docs-space-sm);
     padding: var(--docs-space-xs) var(--docs-space-md);
-    background: rgba(255, 92, 92, 0.1);
-    border: 1px solid rgba(255, 92, 92, 0.2);
+    background: rgb(255 92 92 / 10%);
+    border: 1px solid rgb(255 92 92 / 20%);
     border-radius: 100px;
     font-family: var(--docs-font-mono);
     font-size: 0.75rem;
@@ -178,7 +177,6 @@
 
     .accent {
         background: var(--docs-accent-gradient);
-        -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
@@ -225,7 +223,6 @@
 }
 
 @keyframes scrollBounce {
-
     0%,
     100% {
         transform: translateX(-50%) translateY(0);
@@ -302,7 +299,7 @@
     min-height: 0;
     align-items: center;
 
-    @media (max-width: 1100px) {
+    @media (width <= 1100px) {
         grid-template-columns: 1fr;
         gap: var(--docs-space-lg);
     }
@@ -567,7 +564,6 @@
 }
 
 @keyframes connectionPulse {
-
     0%,
     100% {
         opacity: 0.3;
@@ -587,7 +583,7 @@
     gap: var(--docs-space-lg);
     width: 100%;
 
-    @media (max-width: 1000px) {
+    @media (width <= 1000px) {
         grid-template-columns: 1fr;
     }
 }
@@ -670,7 +666,7 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .section {
         padding: var(--docs-space-xl) var(--docs-space-md);
         min-height: auto;

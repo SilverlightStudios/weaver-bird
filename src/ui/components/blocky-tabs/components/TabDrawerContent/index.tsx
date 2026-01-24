@@ -5,7 +5,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerClose,
-} from "../../../Drawer/Drawer";
+} from "../../../Drawer";
 import type { ZoneId } from "../../types";
 import { ResizeHandle } from "../../ResizeHandle";
 import { viewTransition } from "@lib/viewTransitions";

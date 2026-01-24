@@ -53,7 +53,7 @@ pub fn generate_particle_data_typescript(
  *
  * Generated at: {}
  */
-import type {{ ParticleData }} from "../types";
+import type {{ ParticleData }} from "./types";
 
 export const particleData: ParticleData = {{
   version: "{}",

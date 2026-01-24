@@ -190,7 +190,7 @@ const CustomTriggerComponent = () => {
         searchPlaceholder="Search frameworks..."
         renderTrigger={({ selectedLabel, placeholder, isOpen }) => (
           <Button variant="primary" style={{ width: "100%" }}>
-            {selectedLabel || placeholder} {isOpen ? "▲" : "▼"}
+            {selectedLabel ?? placeholder} {isOpen ? "▲" : "▼"}
           </Button>
         )}
       />

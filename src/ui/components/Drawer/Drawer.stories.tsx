@@ -8,7 +8,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "./Drawer";
+} from './index';
 import Button from "../buttons/Button/Button";
 import { useState } from "react";
 

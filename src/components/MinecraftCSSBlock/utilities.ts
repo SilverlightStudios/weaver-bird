@@ -29,7 +29,7 @@ export function getItemAssetId(blockAssetId: string): string {
   const match = blockAssetId.match(/^([^:]*:)?block\/(.+)$/);
   if (!match) return blockAssetId;
 
-  const namespace = match[1] || "minecraft:";
+  const namespace = match[1] ?? "minecraft:";
   let itemName = match[2];
 
   // Remove block-specific suffixes like _top, _bottom, etc.
@@ -106,6 +106,18 @@ export function isSuitableFor3D(elements: ModelElement[]): boolean {
 }
 
 /**
+ * Converts a texture value to a texture reference (e.g., "#all")
+ */
+function toTextureReference(
+  textureValue: string,
+  textures: Record<string, string>,
+): string {
+  if (textureValue.startsWith("#")) return textureValue;
+  const key = Object.keys(textures).find((k) => textures[k] === textureValue);
+  return `#${key ?? "all"}`;
+}
+
+/**
  * Creates a default full-block element for simple blocks without elements array
  */
 export function createDefaultElement(
@@ -113,12 +125,12 @@ export function createDefaultElement(
 ): ModelElement[] {
   // Resolve default textures for each face
   const allTexture =
-    textures.all || textures.particle || Object.values(textures)[0] || "";
-  const topTexture = textures.up || textures.top || textures.end || allTexture;
+    textures.all ?? textures.particle ?? Object.values(textures)[0] ?? "";
+  const topTexture = textures.up ?? textures.top ?? textures.end ?? allTexture;
   const southTexture =
-    textures.south || textures.north || textures.side || allTexture;
+    textures.south ?? textures.north ?? textures.side ?? allTexture;
   const eastTexture =
-    textures.east || textures.west || textures.side || allTexture;
+    textures.east ?? textures.west ?? textures.side ?? allTexture;
 
   return [
     {
@@ -126,19 +138,13 @@ export function createDefaultElement(
       to: [16, 16, 16],
       faces: {
         up: {
-          texture: topTexture.startsWith("#")
-            ? topTexture
-            : `#${Object.keys(textures).find((k) => textures[k] === topTexture) || "all"}`,
+          texture: toTextureReference(topTexture, textures),
         },
         south: {
-          texture: southTexture.startsWith("#")
-            ? southTexture
-            : `#${Object.keys(textures).find((k) => textures[k] === southTexture) || "all"}`,
+          texture: toTextureReference(southTexture, textures),
         },
         east: {
-          texture: eastTexture.startsWith("#")
-            ? eastTexture
-            : `#${Object.keys(textures).find((k) => textures[k] === eastTexture) || "all"}`,
+          texture: toTextureReference(eastTexture, textures),
         },
       },
     },

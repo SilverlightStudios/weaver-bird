@@ -8,10 +8,37 @@ import {
 } from "@lib/assetUtils";
 import { useSelectWinner } from "@state/selectors";
 import { useStore } from "@state/store";
-import { TextureThumbnail } from "./components/TextureThumbnail";
-import { getVariantDisplayName } from "./utilities";
+import { ViewModeTabs } from "./components/ViewModeTabs";
+import {
+  MultipleVariantsDisplay,
+  SingleVariantDisplay,
+  NoVariantsDisplay,
+} from "./components/VariantDisplay";
 import type { TextureVariantSelectorProps, ViewMode } from "./types";
+import type { AssetGroup } from "@lib/assetUtils";
 import s from "./styles.module.scss";
+
+// Helper functions for variant filtering
+function findVariantGroup(groups: AssetGroup[], assetId: string) {
+  return groups.find((g) => g.variantIds.includes(assetId));
+}
+
+function filterNumberedNonPottedVariants(variantIds: string[]) {
+  const numberedVariants = variantIds.filter(isNumberedVariant);
+  return numberedVariants.filter((id) => !isPottedPlant(id));
+}
+
+function filterByWinnerPack(
+  variants: string[],
+  winnerPackId: string | undefined,
+  providersByAsset: Record<string, string[]>
+) {
+  if (!winnerPackId) return variants;
+  return variants.filter((variantId) => {
+    const providers = providersByAsset[variantId] ?? [];
+    return providers.includes(winnerPackId);
+  });
+}
 
 export const TextureVariantSelector = ({
   assetId,
@@ -41,33 +68,19 @@ export const TextureVariantSelector = ({
 
     const allAssetIds = allAssets.map((a) => a.id);
     const groups = groupAssetsByVariant(allAssetIds);
-
-    // Find the group that contains the selected asset
-    const group = groups.find((g) => g.variantIds.includes(assetId));
+    const group = findVariantGroup(groups, assetId);
 
     if (!group || group.variantIds.length <= 1) {
       return { worldVariants: [], inventoryVariants: [] };
     }
 
-    // Filter to only numbered texture variants (e.g., acacia_planks1, acacia_planks2)
-    // Block states (_on, _off) and faces (_top, _side) should NOT appear in variant selector
-    const numberedVariants = group.variantIds.filter(isNumberedVariant);
-
-    // Filter out potted variants - they're controlled by "Show Pot" toggle, not texture selector
-    const nonPottedVariants = numberedVariants.filter(
-      (id) => !isPottedPlant(id),
+    const nonPottedVariants = filterNumberedNonPottedVariants(group.variantIds);
+    const filteredVariants = filterByWinnerPack(
+      nonPottedVariants,
+      winnerPackId,
+      providersByAsset
     );
 
-    // Filter to only include variants from the winning pack
-    // This ensures we only show variants from the currently selected resource pack
-    const filteredVariants = winnerPackId
-      ? nonPottedVariants.filter((variantId) => {
-        const providers = providersByAsset[variantId] ?? [];
-        return providers.includes(winnerPackId);
-      })
-      : nonPottedVariants;
-
-    // Categorize into world and inventory variants
     return categorizeVariants(filteredVariants);
   }, [assetId, allAssets, winnerPackId, providersByAsset]);
 
@@ -84,88 +97,30 @@ export const TextureVariantSelector = ({
 
   return (
     <div className={s.root}>
-      {/* View mode tabs - only show if inventory variants exist */}
       {hasInventoryVariants && (
-        <div className={s.viewTabs}>
-          <button
-            className={`${s.viewTab} ${viewMode === "world" ? s.active : ""}`}
-            onClick={() => {
-              setViewMode("world");
-              // Select first world variant when switching to world view
-              if (
-                worldVariants.length > 0 &&
-                assetId &&
-                !worldVariants.includes(assetId)
-              ) {
-                onSelectVariant(worldVariants[0]);
-              }
-            }}
-            disabled={!hasWorldVariants}
-          >
-            World View
-          </button>
-          <button
-            className={`${s.viewTab} ${viewMode === "inventory" ? s.active : ""}`}
-            onClick={() => {
-              setViewMode("inventory");
-              // Select first inventory variant when switching to inventory view
-              if (
-                inventoryVariants.length > 0 &&
-                assetId &&
-                !inventoryVariants.includes(assetId)
-              ) {
-                onSelectVariant(inventoryVariants[0]);
-              }
-            }}
-          >
-            Inventory View
-          </button>
-        </div>
+        <ViewModeTabs
+          viewMode={viewMode}
+          worldVariants={worldVariants}
+          inventoryVariants={inventoryVariants}
+          assetId={assetId}
+          hasWorldVariants={hasWorldVariants}
+          onSelectVariant={onSelectVariant}
+          setViewMode={setViewMode}
+        />
       )}
 
-      {/* Variant thumbnails */}
       {currentVariants.length > 1 ? (
-        <>
-          <h3 className={s.sectionTitle}>
-            {viewMode === "world" ? "Texture Variants" : "Inventory Variants"}
-          </h3>
-          <div className={s.thumbnailGrid}>
-            {currentVariants.map((variantId, index) => (
-              <TextureThumbnail
-                key={variantId}
-                variantId={variantId}
-                index={index}
-                isSelected={variantId === (selectedVariantId || assetId)}
-                onClick={() => onSelectVariant(variantId)}
-              />
-            ))}
-          </div>
-          <div className={s.hint}>
-            {currentVariants.length} variant
-            {currentVariants.length !== 1 ? "s" : ""} available
-          </div>
-        </>
+        <MultipleVariantsDisplay
+          viewMode={viewMode}
+          currentVariants={currentVariants}
+          selectedVariantId={selectedVariantId}
+          assetId={assetId}
+          onSelectVariant={onSelectVariant}
+        />
       ) : currentVariants.length === 1 ? (
-        <>
-          <label className={s.label}>
-            {viewMode === "world" ? "World Texture" : "Inventory Texture"}
-          </label>
-          <div className={s.singleVariant}>
-            {getVariantDisplayName(currentVariants[0], 0, viewMode).replace(
-              " (Default)",
-              "",
-            )}
-          </div>
-          {viewMode === "inventory" && (
-            <div className={s.hint}>
-              This is the texture shown when the block is in your inventory
-            </div>
-          )}
-        </>
+        <SingleVariantDisplay viewMode={viewMode} variantId={currentVariants[0]} />
       ) : (
-        <div className={s.noVariants}>
-          No {viewMode === "world" ? "world" : "inventory"} variants available
-        </div>
+        <NoVariantsDisplay viewMode={viewMode} />
       )}
     </div>
   );

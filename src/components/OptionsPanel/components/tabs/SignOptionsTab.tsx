@@ -11,7 +11,7 @@ export const SignOptionsTab = ({
   isHangingSign = false,
 }: SignOptionsTabProps) => {
   // Get sign text from global state
-  const signText = useStore((state) => state.signText || ["", "", "", ""]);
+  const signText = useStore((state) => state.signText ?? ["", "", "", ""]);
   const setSignText = useStore((state) => state.setSignText);
 
   // Destructure lines for easier access

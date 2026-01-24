@@ -202,7 +202,7 @@ export function getFaceUVs(faceData: ElementFace): number[] {
     const v1 = 1 - y1 / 16;
     const v2 = 1 - y2 / 16;
 
-    const rotation = faceData.rotation || 0;
+    const rotation = faceData.rotation ?? 0;
 
     switch (rotation) {
         case 90:
@@ -253,7 +253,7 @@ export function processModel(
                 ],
                 axis: element.rotation.axis,
                 angle: element.rotation.angle,
-                rescale: element.rotation.rescale || false,
+                rescale: element.rotation.rescale ?? false,
             };
         }
 

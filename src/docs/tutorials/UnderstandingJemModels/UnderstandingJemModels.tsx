@@ -25,7 +25,7 @@ const extractPart = (jem: JEMFile, partId: string | string[]): JEMFile => {
   const clone = JSON.parse(JSON.stringify(jem)) as JEMFile;
   if (!clone.models) return clone;
   if (Array.isArray(partId)) {
-    clone.models = clone.models.filter((m: JEMModelPart) => partId.includes(m.id || ""));
+    clone.models = clone.models.filter((m: JEMModelPart) => partId.includes(m.id ?? ""));
   } else {
     clone.models = clone.models.filter((m: JEMModelPart) => m.id === partId);
   }
@@ -101,6 +101,101 @@ type Props = {
   onNavigate: (path: string) => void;
 };
 
+function createJsonChangeHandler(
+  setCode: (code: string) => void,
+  setData: (data: JEMFile) => void
+) {
+  return (newCode: string) => {
+    setCode(newCode);
+    try {
+      setData(JSON.parse(newCode));
+    } catch {
+      // Ignore invalid JSON during editing
+    }
+  };
+}
+
+function filterModelsByStep(
+  jem: JEMFile,
+  step: "body" | "head" | "legs"
+): JEMFile {
+  const clone = JSON.parse(JSON.stringify(jem));
+  if (step === "body") {
+    clone.models = clone.models?.filter(
+      (m: { id: string }) => m.id === "body"
+    );
+  } else if (step === "head") {
+    clone.models = clone.models?.filter(
+      (m: { id: string }) => m.id === "head"
+    );
+  } else if (step === "legs") {
+    clone.models = clone.models?.filter((m: { id: string }) =>
+      m.id.startsWith("leg")
+    );
+  }
+  return clone;
+}
+
+function createUprightSheep(jem: JEMFile): JEMFile {
+  const clone = JSON.parse(JSON.stringify(jem));
+  const body = clone.models?.find((m: { id: string }) => m.id === "body");
+  if (body?.submodels?.[0]) {
+    body.submodels[0].rotate = [0, 0, 0];
+  }
+  return clone;
+}
+
+function useScrollTracking(
+  containerRef: React.RefObject<HTMLDivElement>,
+  setActiveSection: (section: string) => void,
+  setScrollProgress: (progress: number) => void
+) {
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setScrollProgress((scrollTop / (scrollHeight - clientHeight)) * 100);
+
+      const sections = container.querySelectorAll("[data-section]");
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const sectionTop = rect.top;
+        const threshold = window.innerHeight * 0.4;
+
+        if (sectionTop < threshold && sectionTop > -rect.height + threshold) {
+          setActiveSection(section.getAttribute("data-section") ?? "hero");
+        }
+      });
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [containerRef, setActiveSection, setScrollProgress]);
+}
+
+function useSectionAnimations(visibleClass: string) {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(visibleClass);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "-50px" }
+    );
+
+    const sections = document.querySelectorAll(`.${s.section}`);
+    sections.forEach((section) => observer.observe(section));
+
+    return () => observer.disconnect();
+  }, [visibleClass]);
+}
+
+// eslint-disable-next-line complexity
 export default function UnderstandingJemModels(_props: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState("hero");
@@ -128,50 +223,8 @@ export default function UnderstandingJemModels(_props: Props) {
   const [uvStep, setUvStep] = useState<"body" | "head" | "legs">("body");
   const [buildStep, setBuildStep] = useState<"body" | "legs" | "head">("body");
 
-  // Track visible sections
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      setScrollProgress((scrollTop / (scrollHeight - clientHeight)) * 100);
-
-      // Find active section
-      const sections = container.querySelectorAll("[data-section]");
-      sections.forEach((section) => {
-        const rect = section.getBoundingClientRect();
-        const sectionTop = rect.top;
-        const threshold = window.innerHeight * 0.4;
-
-        if (sectionTop < threshold && sectionTop > -rect.height + threshold) {
-          setActiveSection(section.getAttribute("data-section") || "hero");
-        }
-      });
-    };
-
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Intersection Observer for section animations
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add(s.visible);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "-50px" },
-    );
-
-    const sections = document.querySelectorAll(`.${s.section}`);
-    sections.forEach((section) => observer.observe(section));
-
-    return () => observer.disconnect();
-  }, []);
+  useScrollTracking(containerRef, setActiveSection, setScrollProgress);
+  useSectionAnimations(s.visible);
 
   const scrollToSection = useCallback((sectionId: string) => {
     const section = containerRef.current?.querySelector(
@@ -180,59 +233,27 @@ export default function UnderstandingJemModels(_props: Props) {
     section?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const handleBodyChange = (newCode: string) => {
-    setBodyCode(newCode);
-    try {
-      setBodyJemData(JSON.parse(newCode));
-    } catch {
-      // Ignore invalid JSON during editing
-    }
-  };
+  const handleBodyChange = useMemo(
+    () => createJsonChangeHandler(setBodyCode, setBodyJemData),
+    []
+  );
 
-  const handleLegsChange = (newCode: string) => {
-    setLegsCode(newCode);
-    try {
-      setLegsJemData(JSON.parse(newCode));
-    } catch {
-      // Ignore invalid JSON during editing
-    }
-  };
+  const handleLegsChange = useMemo(
+    () => createJsonChangeHandler(setLegsCode, setLegsJemData),
+    []
+  );
 
-  const handleHeadChange = (newCode: string) => {
-    setHeadCode(newCode);
-    try {
-      setHeadJemData(JSON.parse(newCode));
-    } catch {
-      // Ignore invalid JSON during editing
-    }
-  };
+  const handleHeadChange = useMemo(
+    () => createJsonChangeHandler(setHeadCode, setHeadJemData),
+    []
+  );
 
-  const uvData = useMemo(() => {
-    const clone = JSON.parse(JSON.stringify(FULL_SHEEP_JEM));
-    if (uvStep === "body") {
-      clone.models = clone.models.filter(
-        (m: { id: string }) => m.id === "body",
-      );
-    } else if (uvStep === "head") {
-      clone.models = clone.models.filter(
-        (m: { id: string }) => m.id === "head",
-      );
-    } else if (uvStep === "legs") {
-      clone.models = clone.models.filter((m: { id: string }) =>
-        m.id.startsWith("leg"),
-      );
-    }
-    return clone;
-  }, [uvStep]);
+  const uvData = useMemo(
+    () => filterModelsByStep(FULL_SHEEP_JEM, uvStep),
+    [uvStep]
+  );
 
-  const uprightSheep = useMemo(() => {
-    const clone = JSON.parse(JSON.stringify(FULL_SHEEP_JEM));
-    const body = clone.models.find((m: { id: string }) => m.id === "body");
-    if (body && body.submodels && body.submodels[0]) {
-      body.submodels[0].rotate = [0, 0, 0];
-    }
-    return clone;
-  }, []);
+  const uprightSheep = useMemo(() => createUprightSheep(FULL_SHEEP_JEM), []);
 
   return (
     <div className={s.container} ref={containerRef}>

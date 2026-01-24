@@ -33,18 +33,6 @@ export const getTabHideTransform = (zone: ZoneId): string => {
 };
 
 /**
- * Get resize handle base styles (common across all zones)
- */
-export const getResizeHandleBaseStyle = () => ({
-  position: "absolute" as const,
-  display: "flex",
-  justifyContent: "center" as const,
-  alignItems: "center" as const,
-  gap: "4px",
-  zIndex: 101,
-});
-
-/**
  * Get resize handle zone-specific styles
  */
 export const getResizeHandleZoneStyle = (zone: ZoneId) => {

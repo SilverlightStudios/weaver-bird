@@ -56,6 +56,52 @@ for (const { packFormat, versions } of PACK_FORMAT_DATA) {
   }
 }
 
+function expandPatchVersions(
+  major: number,
+  minor: number,
+  startPatch: number,
+  endPatch: number,
+): string[] {
+  const versions: string[] = [];
+  for (let p = startPatch + 1; p < endPatch; p++) {
+    versions.push(`${major}.${minor}.${p}`);
+  }
+  return versions;
+}
+
+function expandMinorVersions(
+  major: number,
+  minor1: number,
+  minor2: number,
+  patch1: number,
+  patch2: number,
+  existingVersions: string[],
+): string[] {
+  const versions: string[] = [];
+
+  for (let m = minor1; m <= minor2; m++) {
+    if (m === minor1 && patch1 > 0) {
+      // Start version with patch
+      for (let p = patch1; p <= 10; p++) {
+        const v = `${major}.${m}.${p}`;
+        if (!existingVersions.includes(v)) versions.push(v);
+      }
+    } else if (m === minor2) {
+      // End version with patches
+      for (let p = 0; p <= patch2; p++) {
+        const v = `${major}.${m}.${p}`;
+        if (!existingVersions.includes(v)) versions.push(v);
+      }
+    } else if (m !== minor1) {
+      // Intermediate minor versions
+      versions.push(`${major}.${m}`);
+      versions.push(`${major}.${m}.0`);
+    }
+  }
+
+  return versions;
+}
+
 /**
  * Parse a version range string into individual versions
  * e.g., "1.21 – 1.21.1" → ["1.21", "1.21.1"]
@@ -85,30 +131,19 @@ function parseVersionRange(range: string): string[] {
 
         if (major1 === major2 && minor1 === minor2) {
           // Same major.minor, increment patch
-          for (let p = patch1 + 1; p < patch2; p++) {
-            versions.push(`${major1}.${minor1}.${p}`);
-          }
+          const patchVersions = expandPatchVersions(major1, minor1, patch1, patch2);
+          versions.push(...patchVersions);
         } else if (major1 === major2) {
           // Same major, different minor - add intermediate minors
-          for (let m = minor1; m <= minor2; m++) {
-            if (m === minor1 && patch1 > 0) {
-              // Start version with patch
-              for (let p = patch1; p <= 10; p++) {
-                const v = `${major1}.${m}.${p}`;
-                if (!versions.includes(v)) versions.push(v);
-              }
-            } else if (m === minor2) {
-              // End version with patches
-              for (let p = 0; p <= patch2; p++) {
-                const v = `${major1}.${m}.${p}`;
-                if (!versions.includes(v)) versions.push(v);
-              }
-            } else if (m !== minor1) {
-              // Intermediate minor versions
-              versions.push(`${major1}.${m}`);
-              versions.push(`${major1}.${m}.0`);
-            }
-          }
+          const minorVersions = expandMinorVersions(
+            major1,
+            minor1,
+            minor2,
+            patch1,
+            patch2,
+            versions,
+          );
+          versions.push(...minorVersions);
         }
       }
     }

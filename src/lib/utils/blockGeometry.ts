@@ -188,6 +188,85 @@ export function getColormapType(
   return undefined;
 }
 
+interface ProcessFaceParams {
+  face: ModelFace;
+  faceType: "up" | "south" | "east";
+  textures: Record<string, string>;
+  textureUrls: Map<string, string>;
+  offsets: ReturnType<typeof calculateFaceOffsets>;
+  scale: number;
+  element: ModelElement;
+  centerY: number;
+}
+
+function processFace(params: ProcessFaceParams): RenderedFace | null {
+  const { face, faceType, textures, textureUrls, offsets, scale, element, centerY } = params;
+
+  const textureId = resolveTextureRef(face.texture, textures);
+  const textureUrl = textureId ? textureUrls.get(textureId) : null;
+
+  if (!textureUrl) return null;
+
+  const shouldTint = face.tintindex !== undefined && face.tintindex !== null;
+  const tintType = shouldTint && textureId ? getColormapType(textureId) : undefined;
+
+  const [x1, y1, z1] = element.from;
+  const [x2, y2, z2] = element.to;
+  const width = x2 - x1;
+  const height = y2 - y1;
+  const depth = z2 - z1;
+
+  if (faceType === "up") {
+    return {
+      type: "top",
+      textureUrl,
+      x: offsets.top.x,
+      y: offsets.top.y,
+      z: offsets.top.z,
+      width: width * scale,
+      height: depth * scale,
+      uv: normalizeUV(resolveFaceUV("up", face, element.from, element.to)),
+      zIndex: Math.round(centerY * 10 + 100),
+      brightness: 1.0,
+      tintType,
+    };
+  }
+
+  if (faceType === "south") {
+    return {
+      type: "left",
+      textureUrl,
+      x: offsets.left.x,
+      y: offsets.left.y,
+      z: offsets.left.z,
+      width: width * scale,
+      height: height * scale,
+      uv: normalizeUV(resolveFaceUV("south", face, element.from, element.to)),
+      zIndex: Math.round(centerY * 10 + 50),
+      brightness: 0.8,
+      tintType,
+    };
+  }
+
+  if (faceType === "east") {
+    return {
+      type: "right",
+      textureUrl,
+      x: offsets.right.x,
+      y: offsets.right.y,
+      z: offsets.right.z,
+      width: depth * scale,
+      height: height * scale,
+      uv: normalizeUV(resolveFaceUV("east", face, element.from, element.to)),
+      zIndex: Math.round(centerY * 10),
+      brightness: 0.6,
+      tintType,
+    };
+  }
+
+  return null;
+}
+
 export function processElementsSync(
   elements: ModelElement[],
   textures: Record<string, string>,
@@ -199,14 +278,10 @@ export function processElementsSync(
 
   for (const element of elements) {
     const faces: RenderedFace[] = [];
-    const [x1, y1, z1] = element.from;
-    const [x2, y2, z2] = element.to;
+    const [, y1, ] = element.from;
+    const [, y2, ] = element.to;
 
     const hasRotation = element.rotation && element.rotation.angle !== 0;
-
-    const width = x2 - x1;
-    const height = y2 - y1;
-    const depth = z2 - z1;
 
     let offsets = calculateFaceOffsets(element, scale, blockCenter);
 
@@ -220,85 +295,21 @@ export function processElementsSync(
 
     const centerY = (y1 + y2) / 2;
 
+    const faceParams = { textures, textureUrls, offsets, scale, element, centerY };
+
     if (element.faces.up) {
-      const face = element.faces.up;
-      const textureId = resolveTextureRef(face.texture, textures);
-      const textureUrl = textureId ? textureUrls.get(textureId) : null;
-
-      if (textureUrl) {
-        const shouldTint =
-          face.tintindex !== undefined && face.tintindex !== null;
-        const tintType =
-          shouldTint && textureId ? getColormapType(textureId) : undefined;
-
-        faces.push({
-          type: "top",
-          textureUrl,
-          x: offsets.top.x,
-          y: offsets.top.y,
-          z: offsets.top.z,
-          width: width * scale,
-          height: depth * scale,
-          uv: normalizeUV(resolveFaceUV("up", face, element.from, element.to)),
-          zIndex: Math.round(centerY * 10 + 100),
-          brightness: 1.0,
-          tintType,
-        });
-      }
+      const rendered = processFace({ ...faceParams, face: element.faces.up, faceType: "up" });
+      if (rendered) faces.push(rendered);
     }
 
     if (element.faces.south) {
-      const face = element.faces.south;
-      const textureId = resolveTextureRef(face.texture, textures);
-      const textureUrl = textureId ? textureUrls.get(textureId) : null;
-
-      if (textureUrl) {
-        const shouldTint =
-          face.tintindex !== undefined && face.tintindex !== null;
-        const tintType =
-          shouldTint && textureId ? getColormapType(textureId) : undefined;
-
-        faces.push({
-          type: "left",
-          textureUrl,
-          x: offsets.left.x,
-          y: offsets.left.y,
-          z: offsets.left.z,
-          width: width * scale,
-          height: height * scale,
-          uv: normalizeUV(resolveFaceUV("south", face, element.from, element.to)),
-          zIndex: Math.round(centerY * 10 + 50),
-          brightness: 0.8,
-          tintType,
-        });
-      }
+      const rendered = processFace({ ...faceParams, face: element.faces.south, faceType: "south" });
+      if (rendered) faces.push(rendered);
     }
 
     if (element.faces.east) {
-      const face = element.faces.east;
-      const textureId = resolveTextureRef(face.texture, textures);
-      const textureUrl = textureId ? textureUrls.get(textureId) : null;
-
-      if (textureUrl) {
-        const shouldTint =
-          face.tintindex !== undefined && face.tintindex !== null;
-        const tintType =
-          shouldTint && textureId ? getColormapType(textureId) : undefined;
-
-        faces.push({
-          type: "right",
-          textureUrl,
-          x: offsets.right.x,
-          y: offsets.right.y,
-          z: offsets.right.z,
-          width: depth * scale,
-          height: height * scale,
-          uv: normalizeUV(resolveFaceUV("east", face, element.from, element.to)),
-          zIndex: Math.round(centerY * 10),
-          brightness: 0.6,
-          tintType,
-        });
-      }
+      const rendered = processFace({ ...faceParams, face: element.faces.east, faceType: "east" });
+      if (rendered) faces.push(rendered);
     }
 
     if (faces.length > 0) {
