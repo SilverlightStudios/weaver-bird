@@ -9,7 +9,7 @@
   margin-bottom: 1.5rem;
 
   h3 {
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.5rem;
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--color-text-primary);
@@ -25,7 +25,7 @@
 
 .error {
   padding: 0.75rem;
-  background: var(--color-error-bg, rgba(239, 68, 68, 0.1));
+  background: var(--color-error-bg, rgb(239 68 68 / 10%));
   border: 1px solid var(--color-error, #ef4444);
   border-radius: 6px;
   color: var(--color-error, #ef4444);
@@ -69,7 +69,7 @@
     &:focus {
       outline: none;
       border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px var(--color-primary-alpha, rgba(59, 130, 246, 0.1));
+      box-shadow: 0 0 0 3px var(--color-primary-alpha, rgb(59 130 246 / 10%));
     }
 
     &:disabled {
@@ -80,7 +80,7 @@
 
   .switchingMessage {
     padding: 0.75rem;
-    background: var(--color-info-bg, rgba(59, 130, 246, 0.1));
+    background: var(--color-info-bg, rgb(59 130 246 / 10%));
     border: 1px solid var(--color-info, #3b82f6);
     border-radius: 6px;
     color: var(--color-info, #3b82f6);

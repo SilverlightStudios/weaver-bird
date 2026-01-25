@@ -13,6 +13,7 @@ import {
 } from "@constants/particles";
 import { ParticleEmitter3D } from "./ParticleEmitter3D";
 import { useStore } from "@state";
+import type { MinecraftExprContext } from "@lib/particle/minecraftExpr";
 
 export interface EntityParticlesProps {
   /** Entity asset ID (e.g., "minecraft:entity/zombie") */
@@ -48,6 +49,7 @@ export function EntityParticles({
 
   // Subscribe to particleDataReady to re-render when caches load
   const particleDataReady = useStore((state) => state.particleDataReady);
+  const entityParticleBounds = useStore((state) => state.entityParticleBoundsByAssetId[assetId]);
   console.log(`[EntityParticles] particleDataReady=${particleDataReady}`);
 
   const activeEmissions = useMemo(() => {
@@ -88,6 +90,21 @@ export function EntityParticles({
 
     return filtered;
   }, [assetId, entityProps, particleDataReady]);
+  const exprContext = useMemo((): MinecraftExprContext | undefined => {
+    const base = entityParticleBounds?.base ?? { x: 0, y: 0, z: 0 };
+    const size = entityParticleBounds?.size ?? { x: 1, y: 1, z: 1 };
+    return {
+      position: base,
+      dimensions: {
+        width: size.x || 1,
+        height: size.y || 1,
+        depth: size.z || size.x || 1,
+      },
+    };
+  }, [entityParticleBounds]);
+  const entityPosition = exprContext?.position
+    ? [exprContext.position.x, exprContext.position.y, exprContext.position.z] as [number, number, number]
+    : undefined;
 
   // Don't render if no active emissions or disabled
   if (!enabled || activeEmissions.length === 0) {
@@ -120,6 +137,7 @@ export function EntityParticles({
             key={`${emission.particleId}-${index}`}
             particleType={emission.particleId}
             emissionRate={emission.rate}
+            position={entityPosition}
             positionExpr={emission.positionExpr ?? undefined}
             velocityExpr={emission.velocityExpr ?? undefined}
             probabilityExpr={emission.probabilityExpr}
@@ -129,6 +147,8 @@ export function EntityParticles({
             blockProps={entityProps} // Reuse blockProps for entity state
             tint={tint}
             scale={emission.options?.scale ?? undefined}
+            exprContext={exprContext}
+            centered={false}
             enabled={enabled}
           />
         );

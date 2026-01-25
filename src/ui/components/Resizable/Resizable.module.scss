@@ -32,7 +32,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
     background: transparent;
     cursor: col-resize;
 
@@ -91,7 +90,6 @@
                 rgb(245 245 245 / 96%) 100%
             ),
             var(--color-block);
-
         transition:
             box-shadow 180ms var(--spring-bezier),
             rotate 180ms var(--spring-bezier),
@@ -135,12 +133,14 @@
 
     &:hover .handleBar {
         @include tokens.shadow-lg;
+
         rotate: 0deg;
         translate: 0 -1px;
     }
 
     &:active .handleBar {
         @include tokens.shadow-sm;
+
         translate: 0 1px;
     }
 }

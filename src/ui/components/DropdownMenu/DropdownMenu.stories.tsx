@@ -14,7 +14,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "./DropdownMenu";
+} from './index';
 import Button from "../buttons/Button/Button";
 import { useState } from "react";
 

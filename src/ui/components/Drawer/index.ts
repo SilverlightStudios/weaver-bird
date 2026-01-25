@@ -1,12 +1,10 @@
-export {
-  Drawer,
-  DrawerTrigger,
-  DrawerPortal,
-  DrawerClose,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerHeader,
-  DrawerFooter,
-  DrawerTitle,
-  DrawerDescription,
-} from "./Drawer";
+export { Drawer, type DrawerProps } from "./components/DrawerRoot";
+export { DrawerTrigger, type DrawerTriggerProps } from "./components/DrawerTrigger";
+export { DrawerPortal } from "./components/DrawerPortal";
+export { DrawerClose } from "./components/DrawerClose";
+export { DrawerOverlay } from "./components/DrawerOverlay";
+export { DrawerContent } from "./components/DrawerContent";
+export { DrawerHeader } from "./components/DrawerHeader";
+export { DrawerFooter } from "./components/DrawerFooter";
+export { DrawerTitle } from "./components/DrawerTitle";
+export { DrawerDescription } from "./components/DrawerDescription";

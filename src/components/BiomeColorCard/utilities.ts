@@ -104,7 +104,7 @@ export function buildSourceOptions(
                 label: variantLabel ? `${packName} (${variantLabel})` : packName,
                 variantLabel,
                 relativePath: assetIdToTexturePath(asset.id),
-                order: priority === undefined ? Number.MAX_SAFE_INTEGER : priority,
+                order: priority ?? Number.MAX_SAFE_INTEGER,
             });
         });
     });

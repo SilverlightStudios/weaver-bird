@@ -14,6 +14,7 @@ import type {
 } from "./types";
 import { getEntityStateValue } from "./types";
 import { isConstantExpression } from "./expressionParser";
+import { evaluateArithmeticOp, evaluateComparisonOp } from "./expressionEvaluatorUtils";
 
 // ============================================================================
 // Seeded Random Number Generator
@@ -182,6 +183,46 @@ function resolveVariable(name: string, context: AnimationContext): number {
 // AST Evaluation
 // ============================================================================
 
+function evaluateUnaryOp(operator: string, operand: number): number {
+  switch (operator) {
+    case "-":
+      return -operand;
+    case "+":
+      return operand;
+    case "!":
+      return operand ? 0 : 1;
+    default:
+      throw new Error(`Unknown unary operator: ${operator}`);
+  }
+}
+
+function evaluateBinaryOp(operator: string, left: number, right: number): number {
+  // Try arithmetic operators first
+  const arithmeticResult = evaluateArithmeticOp(operator, left, right);
+  if (arithmeticResult !== null) return arithmeticResult;
+
+  // Try comparison operators
+  const comparisonResult = evaluateComparisonOp(operator, left, right);
+  if (comparisonResult !== null) return comparisonResult;
+
+  throw new Error(`Unknown binary operator: ${operator}`);
+}
+
+function evaluateFunctionCall(
+  name: string,
+  args: ASTNode[],
+  context: AnimationContext,
+): number {
+  const func = BUILTIN_FUNCTIONS[name];
+  if (!func) {
+    console.warn(`[ExpressionEvaluator] Unknown function: ${name}`);
+    return 0;
+  }
+
+  const evaluatedArgs = args.map((arg) => evaluateAST(arg, context));
+  return func(evaluatedArgs, context);
+}
+
 /**
  * Evaluate an AST node to produce a numeric value.
  */
@@ -195,22 +236,12 @@ export function evaluateAST(node: ASTNode, context: AnimationContext): number {
 
     case "UnaryOp": {
       const operand = evaluateAST(node.operand, context);
-      switch (node.operator) {
-        case "-":
-          return -operand;
-        case "+":
-          return operand;
-        case "!":
-          return operand ? 0 : 1;
-        default:
-          throw new Error(`Unknown unary operator: ${node.operator}`);
-      }
+      return evaluateUnaryOp(node.operator, operand);
     }
 
     case "BinaryOp": {
       const left = evaluateAST(node.left, context);
 
-      // Short-circuit evaluation for logical operators
       if (node.operator === "&&") {
         return left ? evaluateAST(node.right, context) : 0;
       }
@@ -219,46 +250,11 @@ export function evaluateAST(node: ASTNode, context: AnimationContext): number {
       }
 
       const right = evaluateAST(node.right, context);
-
-      switch (node.operator) {
-        case "+":
-          return left + right;
-        case "-":
-          return left - right;
-        case "*":
-          return left * right;
-        case "/":
-          return right !== 0 ? left / right : 0;
-        case "%":
-          return right !== 0 ? left % right : 0;
-        case "==":
-          return left === right ? 1 : 0;
-        case "!=":
-          return left !== right ? 1 : 0;
-        case "<":
-          return left < right ? 1 : 0;
-        case ">":
-          return left > right ? 1 : 0;
-        case "<=":
-          return left <= right ? 1 : 0;
-        case ">=":
-          return left >= right ? 1 : 0;
-        default:
-          throw new Error(`Unknown binary operator: ${node.operator}`);
-      }
+      return evaluateBinaryOp(node.operator, left, right);
     }
 
-    case "FunctionCall": {
-      const func = BUILTIN_FUNCTIONS[node.name];
-      if (!func) {
-        console.warn(`[ExpressionEvaluator] Unknown function: ${node.name}`);
-        return 0;
-      }
-
-      // Evaluate arguments
-      const args = node.args.map((arg) => evaluateAST(arg, context));
-      return func(args, context);
-    }
+    case "FunctionCall":
+      return evaluateFunctionCall(node.name, node.args, context);
 
     default:
       throw new Error(`Unknown AST node type: ${(node as ASTNode).type}`);

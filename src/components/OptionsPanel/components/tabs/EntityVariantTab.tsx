@@ -35,7 +35,7 @@ export const EntityVariantTab = ({ assetId }: EntityVariantTabProps) => {
             </label>
             <select
               className="w-full px-3 py-2 border rounded-md bg-background"
-              value={selectedVariant || "wall"}
+              value={selectedVariant ?? "wall"}
               onChange={handleVariantChange}
             >
               {availableVariants.map((variant) => (

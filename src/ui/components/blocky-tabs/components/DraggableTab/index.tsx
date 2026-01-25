@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Drawer } from "../../../Drawer/Drawer";
+import { Drawer } from "../../../Drawer";
 import type { ZoneId, TabItem } from "../../types";
 import { isHorizontalZone } from "../../constants";
 import {
@@ -119,7 +119,7 @@ export const DraggableTab: React.FC<DraggableTabProps> = ({
           <div
             className={`${s.tail} ${isActive ? s.tailActive : ""}`}
             data-zone={zone}
-            style={{ backgroundColor: tab.color || "var(--color-block)" }}
+            style={{ backgroundColor: tab.color ?? "var(--color-block)" }}
           />
         )}
       </div>

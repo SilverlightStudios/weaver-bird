@@ -30,17 +30,12 @@
  * - Multiple matching terms score higher
  */
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import {
-  isInventoryVariant,
-  isMinecraftItem,
-  isNumberedVariant,
-} from "@lib/assetUtils";
-import { assetGroupingWorker } from "@lib/assetGroupingWorker";
-import { assetMatchesQuery } from "@lib/searchUtils";
 import { useStore } from "@state/store";
 import { AssetCard } from "./components/AssetCard";
 import { SharedEntityThumbnailsCanvas } from "./components/SharedEntityThumbnailsCanvas";
 import { getWinningPack } from "./utilities";
+import { findBestMatchingVariant } from "./variantMatching";
+import { groupAndFilterAssets, type GroupedAsset } from "./assetGrouping";
 import type { Props } from "./types";
 import s from "./styles.module.scss";
 
@@ -62,24 +57,11 @@ export default function AssetResults({
     [disabledPackIds],
   );
 
-  // Ref for the container to handle events
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // OPTIMIZATION: Progressive rendering - stagger card mounting to avoid initial lag
-  // Render cards in batches to prevent overwhelming the browser with 50+ MinecraftCSSBlocks at once
-  const [renderCount, setRenderCount] = useState(12); // Start with first 12 cards
-  const renderBatchSize = 12; // Render 12 more cards per batch
-
-  // State for grouped assets before pagination
-  const [allGroupedAssets, setAllGroupedAssets] = useState<
-    Array<{
-      id: string;
-      displayId: string;
-      name: string;
-      variantCount: number;
-      allVariants: string[];
-    }>
-  >([]);
+  const [renderCount, setRenderCount] = useState(12);
+  const renderBatchSize = 12;
+  const [allGroupedAssets, setAllGroupedAssets] = useState<GroupedAsset[]>([]);
 
   // Reset render count when assets change (new search, pagination, etc.)
   useEffect(() => {
@@ -100,230 +82,21 @@ export default function AssetResults({
     [winners, providersByAsset, packOrder, disabledSet],
   );
 
-  // OPTIMIZATION: Group assets by variant using Web Worker to avoid blocking main thread
-  // This runs in a background thread and saves ~30-50ms per operation
   useEffect(() => {
     let mounted = true;
 
-    const groupAssets = async () => {
-      const assetIds = assets.map((a) => a.id);
-      const labelsById = new Map(assets.map((asset) => [asset.id, asset.labels]));
-
-      // Use Web Worker for CPU-intensive grouping
-      const groups = await assetGroupingWorker.groupAssets(assetIds);
+    const loadGroupedAssets = async () => {
+      const grouped = await groupAndFilterAssets(
+        assets,
+        searchQuery,
+        getWinningPackForAsset,
+      );
 
       if (!mounted) return;
-
-      // Debug logging for grass_block
-      const grassBlockGroups = groups.filter((g) =>
-        g.baseId.includes("grass_block"),
-      );
-      if (grassBlockGroups.length > 0) {
-        console.log(
-          "[AssetResults] Grass block groups BEFORE search filtering:",
-          grassBlockGroups,
-        );
-      }
-
-      const queryFilteredGroups = searchQuery
-        ? groups.filter((group) =>
-            group.variantIds.some((variantId) => {
-              const labels = labelsById.get(variantId) ?? [];
-              return assetMatchesQuery(variantId, labels, searchQuery);
-            }),
-          )
-        : groups;
-
-      // Debug logging for grass_block after filtering
-      const grassBlockFiltered = queryFilteredGroups.filter((g) =>
-        g.baseId.includes("grass_block"),
-      );
-      if (grassBlockFiltered.length > 0) {
-        console.log(
-          "[AssetResults] Grass block groups AFTER search filtering:",
-          grassBlockFiltered,
-        );
-      }
-
-      // Helper function to find best matching variant based on search query
-      const findBestMatch = (variants: string[], query: string): string => {
-        if (!query || variants.length === 0) return variants[0] || "";
-
-        const queryTerms = query
-          .toLowerCase()
-          .split(/[\s_\-/]+/)
-          .filter((term) => term.length > 0);
-
-        if (queryTerms.length === 0) return variants[0] || "";
-
-        let bestMatch = variants[0] || "";
-        let bestScore = -1;
-
-        for (const variant of variants) {
-          const variantPath = variant.includes(":")
-            ? variant.split(":")[1] || variant
-            : variant;
-          const variantName = variantPath.toLowerCase();
-
-          let score = 0;
-          for (const term of queryTerms) {
-            if (variantName.includes(term)) {
-              const isExactWord = new RegExp(`\\b${term}\\b`).test(variantName);
-              const matchBonus = isExactWord ? 10 : 5;
-              const lastSegment = variantPath.split("/").pop()?.toLowerCase() || "";
-              const isInLastSegment = lastSegment.includes(term);
-              const positionBonus = isInLastSegment ? 5 : 0;
-              score += matchBonus + positionBonus;
-            }
-          }
-
-          if (score > bestScore) {
-            bestScore = score;
-            bestMatch = variant;
-          }
-        }
-
-        return bestScore > 0 ? bestMatch : variants[0] || "";
-      };
-
-      // Return only the base asset from each group
-      // Prefer inventory variant as display icon since that's what players recognize
-      const displayAssets = queryFilteredGroups.map((group) => {
-        const blockVariants = group.variantIds.filter((id) =>
-          id.includes(":block/"),
-        );
-        const itemVariants = group.variantIds.filter((id) =>
-          isMinecraftItem(id),
-        );
-        const otherVariants = group.variantIds.filter(
-          (id) => !id.includes(":block/") && !isMinecraftItem(id),
-        );
-
-        const getAssetPath = (id: string) =>
-          id.includes(":") ? id.split(":")[1] ?? id : id;
-
-        const baseBlockPath =
-          group.baseId.startsWith("block/") ? group.baseId : undefined;
-        const baseItemPath = baseBlockPath
-          ? `item/${baseBlockPath.slice("block/".length)}`
-          : group.baseId.startsWith("item/")
-            ? group.baseId
-            : undefined;
-
-        const pickVariant = (variants: string[], targetPath?: string) => {
-          if (variants.length === 0) return undefined;
-          if (!targetPath) return variants[0];
-          return (
-            variants.find((id) => getAssetPath(id) === targetPath) ??
-            variants[0]
-          );
-        };
-
-        const blockPrimaryId = pickVariant(blockVariants, baseBlockPath);
-        const itemPrimaryId = pickVariant(itemVariants, baseItemPath);
-
-        // SMART SELECTION: Use search query to pick best matching variant
-        let selectionId: string;
-        if (searchQuery && group.variantIds.length > 1) {
-          // Prefer block variants for selection so 3D previews stay default
-          if (blockVariants.length > 0) {
-            selectionId = findBestMatch(blockVariants, searchQuery);
-          } else if (itemVariants.length > 0) {
-            selectionId = findBestMatch(itemVariants, searchQuery);
-          } else {
-            selectionId = findBestMatch(group.variantIds, searchQuery);
-          }
-          console.log(
-            `[AssetResults.grouping] Smart selection for "${group.baseId}": query="${searchQuery}" → "${selectionId}"`,
-          );
-        } else {
-          // Default behavior
-          selectionId = blockPrimaryId ?? itemPrimaryId ?? group.variantIds[0];
-        }
-
-        // Prefer inventory variant as display icon since that's what players recognize
-        const inventoryVariant = group.variantIds.find((id) =>
-          isInventoryVariant(id),
-        );
-        let displayId = itemPrimaryId ?? inventoryVariant ?? selectionId;
-
-        // SMART SELECTION FOR DISPLAY: Apply to displayId for multi-variant groups
-        // This makes the card thumbnail show the matching variant based on search
-        if (searchQuery && group.variantIds.length > 1) {
-          if (itemVariants.length > 0) {
-            displayId =
-              itemVariants.length > 1
-                ? findBestMatch(itemVariants, searchQuery)
-                : itemPrimaryId ?? itemVariants[0];
-            console.log(
-              `[AssetResults.grouping] Smart displayId for item "${group.baseId}": "${displayId}"`,
-            );
-          } else if (
-            otherVariants.length > 1 &&
-            !blockVariants.length &&
-            !itemVariants.length
-          ) {
-            // Entity-only group (like boats)
-            displayId = findBestMatch(otherVariants, searchQuery);
-            console.log(
-              `[AssetResults.grouping] Smart displayId for entity "${group.baseId}": "${displayId}"`,
-            );
-          } else if (blockVariants.length > 1) {
-            // Block group with multiple variants (like signs, fences)
-            displayId = findBestMatch(blockVariants, searchQuery);
-            console.log(
-              `[AssetResults.grouping] Smart displayId for block "${group.baseId}": "${displayId}"`,
-            );
-          }
-        }
-
-        // Prefer the full banner texture for the banner family card icon.
-        // (Skip smart selection override for banner to keep the base texture)
-        if (group.baseId === "entity/banner") {
-          const full = group.variantIds.find((id) =>
-            id.endsWith(":entity/banner_base"),
-          );
-          if (full) displayId = full;
-        }
-
-        // Prefer the base pot texture for the decorated pot family card icon.
-        // (Skip smart selection override for decorated_pot to keep the base texture)
-        if (group.baseId === "entity/decorated_pot") {
-          const base = group.variantIds.find((id) =>
-            id.endsWith(":entity/decorated_pot/decorated_pot_base"),
-          );
-          if (base) displayId = base;
-        }
-
-        let variantCount = 0;
-        if (blockPrimaryId) {
-          const blockWinnerPack = getWinningPackForAsset(blockPrimaryId);
-          const blockVariantsForCount = blockWinnerPack
-            ? blockVariants.filter(
-                (variantId) =>
-                  getWinningPackForAsset(variantId) === blockWinnerPack,
-              )
-            : blockVariants;
-          variantCount = blockVariantsForCount.filter(isNumberedVariant).length;
-        } else {
-          const numberedVariants = group.variantIds.filter(isNumberedVariant);
-          variantCount = numberedVariants.length;
-        }
-
-        return {
-          id: selectionId,
-          displayId,
-          name: group.displayName,
-          variantCount,
-          allVariants: [...blockVariants, ...itemVariants, ...otherVariants],
-        };
-      });
-
-      // Store ALL grouped assets (before pagination)
-      setAllGroupedAssets(displayAssets);
+      setAllGroupedAssets(grouped);
     };
 
-    void groupAssets();
+    void loadGroupedAssets();
 
     return () => {
       mounted = false;
@@ -356,7 +129,7 @@ export default function AssetResults({
 
     // Use requestIdleCallback to render next batch during browser idle time
     const idleCallback =
-      window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+      window.requestIdleCallback ?? ((cb) => setTimeout(cb, 16));
     const handle = idleCallback(() => {
       setRenderCount((prev) => Math.min(prev + renderBatchSize, groupedAssets.length));
     });
@@ -377,75 +150,8 @@ export default function AssetResults({
     }
   }, [totalPages, hasNextPage, hasPrevPage, onPaginationChange]);
 
-  /**
-   * Find the best matching variant from a list based on the search query
-   * Returns the variant whose name contains the most search terms
-   */
-  const findBestMatchingVariant = useCallback(
-    (variants: string[], query: string): string => {
-      if (!query || variants.length === 0) {
-        return variants[0] || "";
-      }
-
-      // Normalize query to lowercase and split into terms
-      const queryTerms = query
-        .toLowerCase()
-        .split(/[\s_\-/]+/)
-        .filter((term) => term.length > 0);
-
-      if (queryTerms.length === 0) {
-        return variants[0] || "";
-      }
-
-      let bestMatch = variants[0] || "";
-      let bestScore = -1;
-
-      for (const variant of variants) {
-        // Extract the readable part of the asset ID
-        // e.g., "minecraft:entity/boat/jungle" -> "boat jungle"
-        const variantPath = variant.includes(":")
-          ? variant.split(":")[1] || variant
-          : variant;
-        const variantName = variantPath.toLowerCase();
-
-        // Score based on:
-        // 1. How many query terms appear in the variant name
-        // 2. Exact word matches score higher than substring matches
-        // 3. Earlier matches score higher (wood types before "boat")
-        let score = 0;
-
-        for (const term of queryTerms) {
-          if (variantName.includes(term)) {
-            // Check if it's an exact word match (e.g., "jungle" in "boat/jungle")
-            const isExactWord = new RegExp(`\\b${term}\\b`).test(variantName);
-            const matchBonus = isExactWord ? 10 : 5;
-
-            // Bonus for matches in the last segment (wood type, etc.)
-            const lastSegment = variantPath.split("/").pop()?.toLowerCase() || "";
-            const isInLastSegment = lastSegment.includes(term);
-            const positionBonus = isInLastSegment ? 5 : 0;
-
-            score += matchBonus + positionBonus;
-          }
-        }
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = variant;
-        }
-      }
-
-      // If no matches found, return the first variant
-      return bestScore > 0 ? bestMatch : variants[0] || "";
-    },
-    [],
-  );
-
-  // Create a stable callback that can be reused
-  // Now selects the best matching variant based on search query
   const handleSelectAsset = useCallback(
     (assetId: string, allVariants: string[]) => {
-      // If there's a search query and multiple variants, find the best match
       const selectedVariant =
         searchQuery && allVariants.length > 1
           ? findBestMatchingVariant(allVariants, searchQuery)
@@ -457,7 +163,7 @@ export default function AssetResults({
 
       onSelect(selectedVariant);
     },
-    [onSelect, searchQuery, findBestMatchingVariant],
+    [onSelect, searchQuery],
   );
 
   // Calculate display range for current page
@@ -527,7 +233,7 @@ export default function AssetResults({
             isSelected={
               selectedId === group.id ||
               selectedId === group.displayId ||
-              group.allVariants.includes(selectedId || "")
+              group.allVariants.includes(selectedId ?? "")
             }
             onSelect={() => handleSelectAsset(group.id, group.allVariants)}
             staggerIndex={index}

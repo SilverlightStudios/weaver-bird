@@ -20,7 +20,7 @@ export const TargetVersion = () => {
       try {
         setLoading(true);
         const cached = await getCachedVanillaVersion();
-        setVanillaVersion(cached || latestVersion);
+        setVanillaVersion(cached ?? latestVersion);
 
         // If no target version is set, default to vanilla version
         if (targetMinecraftVersion === null && cached) {
@@ -33,7 +33,7 @@ export const TargetVersion = () => {
         setLoading(false);
       }
     };
-    loadVanillaVersion();
+    void loadVanillaVersion();
   }, [latestVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle version change
@@ -46,7 +46,7 @@ export const TargetVersion = () => {
     }
   };
 
-  const effectiveVersion = targetMinecraftVersion || vanillaVersion || latestVersion;
+  const effectiveVersion = targetMinecraftVersion ?? vanillaVersion ?? latestVersion;
 
   return (
     <div className={s.root}>
@@ -65,12 +65,12 @@ export const TargetVersion = () => {
           <label htmlFor="target-version-select">Target Version:</label>
           <select
             id="target-version-select"
-            value={targetMinecraftVersion || "auto"}
+            value={targetMinecraftVersion ?? "auto"}
             onChange={(e) => handleVersionChange(e.target.value)}
             className={s.versionDropdown}
           >
             <option value="auto">
-              Auto (Current Vanilla: {vanillaVersion || latestVersion})
+              Auto (Current Vanilla: {vanillaVersion ?? latestVersion})
             </option>
             <optgroup label="Minecraft Versions">
               {versions.reverse().map((version) => (

@@ -9,83 +9,33 @@
  */
 
 import * as THREE from "three";
+import { getParticlePhysics } from "@constants/particles";
 import {
-  getParticlePhysics,
-  type ParticlePhysics,
-} from "@constants/particles";
-import { compileMinecraftExpr, type CompiledMinecraftExpr } from "./minecraftExpr";
+  initializeParticleAnimation,
+  applyPositionJitter,
+  calculateParticleLifetime,
+  initializeParticleVelocity,
+  calculateParticleQuadSize,
+  setupParticleMaterial,
+} from "./ParticleInitializers";
+import { applyBehaviorTick as applyBehaviorTickImpl } from "./ParticleBehaviors";
+import { getSpawnRuntimes, evaluateChildSpawns, type SpawnRuntime } from "./ParticleSpawning";
+import {
+  getFullSizeForRender as getFullSizeForRenderImpl,
+  calculateParticleOpacity,
+} from "./ParticleRendering";
+import type {
+  Particle,
+  ParticleQuality,
+  EmitConfig,
+  SpawnTextureConfig,
+} from "./types";
+import {
+  SECONDS_PER_TICK,
+  QUALITY_MAX_PARTICLES,
+} from "./types";
 
-const TICKS_PER_SECOND = 20;
-const SECONDS_PER_TICK = 1 / TICKS_PER_SECOND;
-
-/**
- * Internal particle state
- */
-interface Particle {
-  active: boolean;
-  sprite: THREE.Sprite;
-  material: THREE.SpriteMaterial;
-  position: THREE.Vector3;
-  prevPosition: THREE.Vector3;
-  velocity: THREE.Vector3; // blocks/tick
-  age: number; // ticks
-  lifetime: number; // ticks
-  quadSize: number; // Minecraft `quadSize` (half-size, world units)
-  physics: ParticlePhysics | null;
-  particleType: string;
-  textures: THREE.Texture[];
-  frameIndex: number; // for cycling animations
-  frameTimeTicks: number;
-  frameCount: number;
-  frameDurationTicks: number;
-  lifetimeAnimation: boolean; // SpriteSet.get(age,lifetime) style
-  staticRandomTexture: boolean; // Pick one random texture and keep it (like campfire smoke)
-}
-
-interface SpawnRuntime {
-  particleType: string;
-  probabilityFn: CompiledMinecraftExpr | null;
-  countFn: CompiledMinecraftExpr | null;
-}
-
-/**
- * Configuration for particle emission
- */
-export interface EmitConfig {
-  /** Position to emit from */
-  position: THREE.Vector3;
-  /** Particle type ID (e.g., "flame", "smoke") */
-  particleType: string;
-  /** Number of particles to emit */
-  count: number;
-  /** Array of textures for animation frames */
-  textures: THREE.Texture[];
-  /** Optional color tint [r, g, b] 0-255 */
-  tint?: [number, number, number];
-  /** Frame duration in ticks (20 ticks = 1 second) */
-  frameDuration?: number;
-  /** Initial velocity (blocks/tick) [vx, vy, vz] */
-  velocity?: [number, number, number];
-  /** Optional per-emission size scale multiplier */
-  scale?: number;
-}
-
-export interface SpawnTextureConfig {
-  textures: THREE.Texture[];
-  frameDuration?: number;
-  tint?: [number, number, number];
-}
-
-/**
- * Quality presets
- */
-export type ParticleQuality = "low" | "medium" | "high";
-
-const QUALITY_MAX_PARTICLES: Record<ParticleQuality, number> = {
-  low: 50,
-  medium: 150,
-  high: 300,
-};
+export type { EmitConfig, SpawnTextureConfig, ParticleQuality } from "./types";
 
 /**
  * Sprite-based particle engine for Minecraft-accurate rendering
@@ -121,7 +71,9 @@ export class ParticleEngine {
         material,
         position: new THREE.Vector3(),
         prevPosition: new THREE.Vector3(),
+        spawnPosition: new THREE.Vector3(),
         velocity: new THREE.Vector3(),
+        spawnVelocity: new THREE.Vector3(),
         age: 0,
         lifetime: 1,
         quadSize: 0.1,
@@ -179,10 +131,6 @@ export class ParticleEngine {
       return;
     }
 
-    // Debug: Track burst particles
-    const burstParticles: Array<{lifetime: number, age: number}> = [];
-    const shouldLogBurst = config.particleType === 'smoke' && config.count > 1 && Math.random() < 0.2;
-
     for (let i = 0; i < config.count; i++) {
       // Find an inactive particle
       const particle = this.findInactiveParticle();
@@ -198,182 +146,54 @@ export class ParticleEngine {
       particle.particleType = config.particleType;
       particle.textures = config.textures;
 
-      // Set up animation
-      // Use extracted usesStaticTexture flag to determine if particle picks one random texture
-      // Check both snake_case (from generated data) and camelCase (for compatibility)
-      const usesStaticRandomTexture = physics.usesStaticTexture ?? physics.uses_static_texture ?? false;
-
-      // Debug campfire particles
-      if (config.particleType.includes('campfire') || config.particleType.includes('smoke')) {
-        console.log(`[ParticleEngine] ${config.particleType}: usesStaticTexture=${physics.usesStaticTexture}, uses_static_texture=${physics.uses_static_texture}, frameCount=${config.textures.length}`);
-      }
-
-      particle.staticRandomTexture = usesStaticRandomTexture;
-      particle.frameIndex = usesStaticRandomTexture
-        ? Math.floor(Math.random() * config.textures.length) // Pick random texture and keep it
-        : 0; // Start at first frame for cycling/lifetime animations
+      const animationState = initializeParticleAnimation(physics, config.textures.length);
+      particle.staticRandomTexture = animationState.staticRandomTexture;
+      particle.frameIndex = animationState.frameIndex;
       particle.frameTimeTicks = 0;
-      particle.frameCount = config.textures.length;
+      particle.frameCount = animationState.frameCount;
       particle.frameDurationTicks = config.frameDuration ?? 2;
-      // Lifetime animation: maps frames to particle age (generic_7 → generic_0)
-      // Only enabled if explicitly set in physics data (e.g., ash_smoke particles)
-      // Default to false (cycling animation) for particles without this flag
-      const hasLifetimeAnim = physics.lifetimeAnimation ?? physics.lifetime_animation ?? false;
-      particle.lifetimeAnimation = hasLifetimeAnim;
+      particle.lifetimeAnimation = animationState.lifetimeAnimation;
 
       // Spawn position
       particle.position.set(config.position.x, config.position.y, config.position.z);
       particle.prevPosition.copy(particle.position);
 
-      // UNIVERSAL: Apply position jitter if present (e.g., RisingParticle: (rand - rand) * 0.05)
-      // EXTRACTED: position_jitter field contains jitter amplitudes per axis
-      if (physics.position_jitter) {
-        particle.position.x += (Math.random() - Math.random()) * physics.position_jitter[0];
-        particle.position.y += (Math.random() - Math.random()) * physics.position_jitter[1];
-        particle.position.z += (Math.random() - Math.random()) * physics.position_jitter[2];
-        particle.prevPosition.copy(particle.position);
-      }
+      // Apply position jitter if present
+      applyPositionJitter(particle.position, physics);
+      particle.prevPosition.copy(particle.position);
+      particle.spawnPosition.copy(particle.position);
 
-      // UNIVERSAL: Lifetime (ticks) from extracted physics
-      // EXTRACTED: Backend computes lifetime ranges for all particles (ash_smoke, rising, etc.)
+      // Lifetime from extracted physics
       particle.age = 0;
       const scale = (physics.scale ?? 1.0) * (config.scale ?? 1.0);
+      particle.lifetime = calculateParticleLifetime(physics);
 
-      // Debug scale for ALL particles (temporarily)
-      console.log(`[ParticleEngine] SCALE DEBUG: ${config.particleType} - physics.scale=${physics.scale}, config.scale=${config.scale}, combined=${scale}`);
-
-      // Use lifetimeTicks (schema v3+) or lifetime (schema v2)
-      const lifetimeRange = physics.lifetimeTicks ?? (Array.isArray(physics.lifetime) ? physics.lifetime : [physics.lifetime ?? 20, physics.lifetime ?? 20]);
-      const [minTicks, maxTicks] = lifetimeRange;
-      const t = minTicks + Math.random() * (maxTicks - minTicks);
-      particle.lifetime = Math.max(1, Math.floor(t));
-
-      // UNIVERSAL: Velocity initialization from extracted physics
-      // EXTRACTED: velocity_multiplier, velocity_add, velocity_jitter applied universally
+      // Velocity initialization from extracted physics
       const inVel = config.velocity ?? [0, 0, 0];
+      const velocity = initializeParticleVelocity(
+        config.particleType,
+        inVel,
+        physics,
+        this.initBaseVelocity.bind(this),
+      );
+      particle.velocity.copy(velocity);
+      particle.spawnVelocity.copy(velocity);
 
-      if (
-        config.particleType === "campfire_signal_smoke" ||
-        config.particleType === "campfire_cosy_smoke"
-      ) {
-        // SPECIAL CASE: CampfireSmokeParticle directly sets xd/yd/zd without calling super()
-        // with velocity params, so it bypasses base randomization.
-        particle.velocity.set(inVel[0], inVel[1], inVel[2]);
-      } else {
-        // UNIVERSAL: Base velocity randomization + extracted modifiers
-        const v = this.initBaseVelocity(inVel);
-        const vm = physics.velocityMultiplier ?? [1, 1, 1];
-        v.set(v.x * vm[0], v.y * vm[1], v.z * vm[2]);
-        const va = physics.velocityAdd ?? [0, 0, 0];
-        v.add(new THREE.Vector3(va[0], va[1], va[2]));
-        const vj = physics.velocityJitter ?? [0, 0, 0];
-        v.add(new THREE.Vector3(
-          (Math.random() - 0.5) * vj[0],
-          (Math.random() - 0.5) * vj[1],
-          (Math.random() - 0.5) * vj[2],
-        ));
-        particle.velocity.copy(v);
-      }
+      // Calculate quad size
+      const baseQuadSize = calculateParticleQuadSize(physics, 1.0);
+      particle.quadSize = baseQuadSize * scale;
 
-      // Initial quad size (half-size)
-      // Check both quadSize (schema v3+) and size (legacy extracted data)
-      const extractedQuadSize = physics.quadSize ?? physics.size;
-      const hasScaleMultiplier = typeof physics.scale === "number" && physics.scale !== 1.0;
-
-      // If size is the default 0.1 AND there's a scale multiplier, this particle uses
-      // the SingleQuadParticle random formula (0.1 to 0.2) then applies scale.
-      // Don't treat 0.1 as an explicit size override in this case.
-      const isDefaultSizeWithScale = extractedQuadSize === 0.1 && hasScaleMultiplier;
-
-      if (typeof extractedQuadSize === "number" && Number.isFinite(extractedQuadSize) && extractedQuadSize > 0 && !isDefaultSizeWithScale) {
-        particle.quadSize = extractedQuadSize;
-      } else {
-        // SingleQuadParticle: 0.1f * (rand*0.5f + 0.5f) * 2.0f  (range 0.1..0.2)
-        particle.quadSize = 0.1 * (Math.random() * 0.5 + 0.5) * 2.0;
-      }
-
-      const baseQuadSize = particle.quadSize;
-
-      // UNIVERSAL: Apply per-particle scale from extracted physics
-      // EXTRACTED: scale field contains all particle-specific scaling
-      particle.quadSize *= scale;
-
-      // Debug quadSize for ALL particles (temporarily)
-      console.log(`[ParticleEngine] QUADSIZE DEBUG: ${config.particleType} - base=${baseQuadSize.toFixed(3)}, scale=${scale.toFixed(3)}, final=${particle.quadSize.toFixed(3)}, diameter=${(particle.quadSize * 2).toFixed(3)}`);
-
-      // Initial material state (per-particle material; do not share between particles)
+      // Setup material and color
       particle.material.map = particle.textures[particle.frameIndex] ?? particle.textures[0];
       particle.material.needsUpdate = true;
-      particle.material.opacity = THREE.MathUtils.clamp(physics.baseAlpha ?? physics.alpha ?? 1, 0, 1);
-
-      // Color/tint
-      const colorScale = physics.colorScale ?? physics.color_scale;
-      // Check for randomized color marker: [-1.0, -1.0, -1.0]
-      // This indicates color should be computed as: random() * color_scale for each channel
-      const hasRandomizedColor = physics.color &&
-        physics.color[0] === -1.0 &&
-        physics.color[1] === -1.0 &&
-        physics.color[2] === -1.0;
-
-      if (hasRandomizedColor && typeof colorScale === "number") {
-        // Randomized grayscale color (BaseAshSmokeParticle pattern)
-        const gray = Math.random() * colorScale;
-        particle.material.color.setRGB(gray, gray, gray, THREE.SRGBColorSpace);
-      } else if (config.tint) {
-        // Apply tint color
-        let r = config.tint[0] / 255;
-        let g = config.tint[1] / 255;
-        let b = config.tint[2] / 255;
-
-        // For dust particles (redstone, etc.), randomize brightness to match vanilla
-        // Vanilla Minecraft dust particles have varied brightness (0.75x to 1.0x)
-        if (config.particleType === "dust" || config.particleType === "minecraft:dust") {
-          const brightnessMult = 0.75 + Math.random() * 0.25; // 75% to 100%
-          r *= brightnessMult;
-          g *= brightnessMult;
-          b *= brightnessMult;
-        }
-
-        particle.material.color.setRGB(r, g, b, THREE.SRGBColorSpace);
-      } else if (physics.color) {
-        particle.material.color.setRGB(physics.color[0], physics.color[1], physics.color[2], THREE.SRGBColorSpace);
-      } else {
-        particle.material.color.setRGB(1, 1, 1, THREE.SRGBColorSpace);
-      }
+      setupParticleMaterial(particle.material, physics, config.tint, config.particleType);
 
       // Apply initial interpolated position/size immediately.
       particle.sprite.position.copy(particle.position);
-      const initialFullSize = this.getFullSizeForRender(particle, 0);
+      const initialFullSize = getFullSizeForRenderImpl(particle, 0);
       particle.sprite.scale.set(initialFullSize, initialFullSize, 1);
 
-      // Debug sprite scale being set
-      console.log(`[ParticleEngine] SPRITE SCALE SET: ${config.particleType} - fullSize=${initialFullSize.toFixed(3)}, sprite.scale=${particle.sprite.scale.x.toFixed(3)}`);
-
       this.activeCount++;
-
-      // Track for burst logging
-      if (shouldLogBurst) {
-        burstParticles.push({
-          lifetime: particle.lifetime,
-          age: particle.age,
-        });
-      }
-    }
-
-    // Debug: Log burst if multiple smoke particles were created
-    if (shouldLogBurst && burstParticles.length > 1) {
-      const lifetimes = burstParticles.map(p => p.lifetime);
-      const uniqueLifetimes = new Set(lifetimes);
-        console.log('[ParticleEngine] BURST CREATED:', {
-          particleType: config.particleType,
-          count: burstParticles.length,
-          lifetimes,
-          uniqueCount: uniqueLifetimes.size,
-          allSame: uniqueLifetimes.size === 1,
-          behavior: physics.behavior,
-          lifetimeBase: physics.lifetimeBase,
-          lifetimeAnimation: physics.lifetimeAnimation ?? physics.lifetime_animation,
-        });
     }
   }
 
@@ -407,23 +227,17 @@ export class ParticleEngine {
       );
 
       // Size (Minecraft `getQuadSize(partialTick)` returns half-size; sprites need full size).
-      const fullSize = this.getFullSizeForRender(particle, partialTick);
+      const fullSize = getFullSizeForRenderImpl(particle, partialTick);
       particle.sprite.scale.set(fullSize, fullSize, 1);
 
-      // Opacity/alpha (base multiplier).
-      let alpha = particle.physics.baseAlpha ?? particle.physics.alpha ?? 1;
-
-      // CampfireSmokeParticle.tick() fades out in the last 60 ticks
-      if (
-        (particle.particleType === "campfire_signal_smoke" || particle.particleType === "campfire_cosy_smoke") &&
-        particle.age >= particle.lifetime - 60
-      ) {
-        // Fade: alpha -= 0.015f per tick (approximated over partialTick)
-        const ticksRemaining = particle.lifetime - particle.age;
-        alpha = Math.max(0.01, 1.0 - (60 - ticksRemaining) * 0.015);
-      }
-
-      particle.material.opacity = THREE.MathUtils.clamp(alpha, 0, 1);
+      // Opacity/alpha
+      const alpha = calculateParticleOpacity(
+        particle.particleType,
+        particle.age,
+        particle.lifetime,
+        particle.physics
+      );
+      particle.material.opacity = alpha;
 
       // Texture animation.
       if (particle.frameCount > 1) {
@@ -461,22 +275,31 @@ export class ParticleEngine {
       }
 
       // Apply behavior-specific tick logic
-      this.applyBehaviorTick(particle, physics);
+      const behavior = physics.behavior ?? null;
+      const isPortal = behavior === "portal" || particle.particleType === "portal";
+      const isReversePortal =
+        behavior === "reverse_portal" || particle.particleType === "reverse_portal";
 
-      // Gravity: yd -= 0.04 * gravity
-      particle.velocity.y -= 0.04 * (physics.gravity ?? 0);
+      if (isPortal || isReversePortal) {
+        this.applyPortalMotion(particle, isReversePortal);
+      } else {
+        applyBehaviorTickImpl(particle, physics);
 
-      // Move (no world collision in preview)
-      particle.position.x += particle.velocity.x;
-      particle.position.y += particle.velocity.y;
-      particle.position.z += particle.velocity.z;
+        // Gravity: yd -= 0.04 * gravity
+        particle.velocity.y -= 0.04 * (physics.gravity ?? 0);
 
-      // Friction: velocity *= friction
-      // Particles that override tick() without calling super.tick() skip friction
-      const skipsFriction = physics.skipsFriction ?? physics.skips_friction ?? false;
-      if (!skipsFriction) {
-        const friction = physics.friction ?? 0.98;
-        particle.velocity.multiplyScalar(friction);
+        // Move (no world collision in preview)
+        particle.position.x += particle.velocity.x;
+        particle.position.y += particle.velocity.y;
+        particle.position.z += particle.velocity.z;
+
+        // Friction: velocity *= friction
+        // Particles that override tick() without calling super.tick() skip friction
+        const skipsFriction = physics.skipsFriction ?? physics.skips_friction ?? false;
+        if (!skipsFriction) {
+          const friction = physics.friction ?? 0.98;
+          particle.velocity.multiplyScalar(friction);
+        }
       }
 
       this.spawnChildParticles(particle);
@@ -495,48 +318,10 @@ export class ParticleEngine {
     }
   }
 
-  private getSpawnRuntimes(particleType: string, physics: ParticlePhysics): SpawnRuntime[] {
-    const cached = this.spawnRuntimeCache.get(particleType);
-    if (cached) return cached;
-
-    const spawns = physics.spawnsParticles ?? physics.spawns_particles;
-    if (!spawns || spawns.length === 0) {
-      this.spawnRuntimeCache.set(particleType, []);
-      return [];
-    }
-
-    const runtimes: SpawnRuntime[] = [];
-    for (const spawn of spawns) {
-      const spawnType = spawn.particleId ?? spawn.particle_id;
-      if (!spawnType) continue;
-
-      const rawProbabilityExpr = spawn.probabilityExpr ?? spawn.probability_expr;
-      const probabilityExpr =
-        particleType === "lava" && rawProbabilityExpr?.includes("$$0")
-          ? rawProbabilityExpr.replace(/\$\$0/g, "this.age / this.lifetime")
-          : rawProbabilityExpr;
-      const countExpr = spawn.countExpr ?? spawn.count_expr;
-      const probabilityFn = probabilityExpr ? compileMinecraftExpr(probabilityExpr) : null;
-      const countFn = countExpr ? compileMinecraftExpr(countExpr) : null;
-
-      if (probabilityExpr && !probabilityFn) continue;
-      if (countExpr && !countFn) continue;
-
-      runtimes.push({
-        particleType: spawnType,
-        probabilityFn,
-        countFn,
-      });
-    }
-
-    this.spawnRuntimeCache.set(particleType, runtimes);
-    return runtimes;
-  }
-
   private spawnChildParticles(particle: Particle): void {
     if (!particle.physics) return;
 
-    const runtimes = this.getSpawnRuntimes(particle.particleType, particle.physics);
+    const runtimes = getSpawnRuntimes(particle.particleType, particle.physics, this.spawnRuntimeCache);
     if (runtimes.length === 0) return;
 
     const context = {
@@ -544,24 +329,13 @@ export class ParticleEngine {
       lifetime: particle.lifetime,
     };
 
-    for (const spawn of runtimes) {
-      if (spawn.probabilityFn) {
-        const shouldSpawn = spawn.probabilityFn(Math.random, 0, context);
-        if (!shouldSpawn) continue;
-      }
+    const spawns = evaluateChildSpawns(runtimes, context);
 
-      let count = 1;
-      if (spawn.countFn) {
-        const rawCount = spawn.countFn(Math.random, 0, context);
-        count = Number.isFinite(rawCount) ? Math.max(0, Math.trunc(rawCount)) : 0;
-      }
-
-      if (count <= 0) continue;
-
+    for (const spawn of spawns) {
       const spawnConfig = this.spawnTextureMap[spawn.particleType];
       if (!spawnConfig || spawnConfig.textures.length === 0) continue;
 
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < spawn.count; i++) {
         this.emit({
           position: particle.position,
           particleType: spawn.particleType,
@@ -579,154 +353,28 @@ export class ParticleEngine {
     }
   }
 
-  /**
-   * Apply behavior-specific tick modifications
-   *
-   * Different particle types have unique tick() behaviors that affect movement.
-   * This method handles special cases like portal particle rising.
-   */
-  private applyBehaviorTick(particle: Particle, physics: ParticlePhysics): void {
-    // UNIVERSAL: Apply constant tick velocity delta if present
-    // EXTRACTED: tick_velocity_delta contains constant per-tick velocity changes
-    const tickDelta = physics.tickVelocityDelta ?? physics.tick_velocity_delta;
-    if (tickDelta) {
-      particle.velocity.x += tickDelta[0];
-      particle.velocity.y += tickDelta[1];
-      particle.velocity.z += tickDelta[2];
+  private applyPortalMotion(particle: Particle, isReversePortal: boolean): void {
+    const lifetime = Math.max(1, particle.lifetime);
+    const t = particle.age / lifetime;
+
+    if (isReversePortal) {
+      particle.position.x += particle.spawnVelocity.x * t;
+      particle.position.y += particle.spawnVelocity.y * t;
+      particle.position.z += particle.spawnVelocity.z * t;
+      return;
     }
 
-    // UNIVERSAL: Apply random tick velocity jitter if present
-    // EXTRACTED: tick_velocity_jitter contains jitter amplitudes (e.g., CampfireSmokeParticle: [0.0002, 0, 0.0002])
-    // Pattern: velocity += random(0..1) * amplitude * (±1)
-    const tickJitter = physics.tickVelocityJitter ?? physics.tick_velocity_jitter;
-    if (tickJitter) {
-      particle.velocity.x += Math.random() * tickJitter[0] * (Math.random() > 0.5 ? 1 : -1);
-      particle.velocity.y += Math.random() * tickJitter[1] * (Math.random() > 0.5 ? 1 : -1);
-      particle.velocity.z += Math.random() * tickJitter[2] * (Math.random() > 0.5 ? 1 : -1);
-    }
+    let f = -t + t * t * 2.0;
+    f = 1.0 - f;
 
-    // Behavior-specific handling (for particles that still need special logic)
-    switch (particle.particleType) {
-      case "portal":
-      case "reverse_portal":
-        // Portal particles rise and spiral toward center
-        // In Minecraft, they move toward a target point (0.5, 1, 0.5) from block center
-        this.applyPortalBehavior(particle);
-        break;
-
-      case "enchant":
-        // Enchanting table particles spiral upward toward the book
-        this.applyEnchantBehavior(particle);
-        break;
-
-      default:
-        // No special behavior
-        break;
-    }
+    particle.position.set(
+      particle.spawnPosition.x + particle.spawnVelocity.x * f,
+      particle.spawnPosition.y + particle.spawnVelocity.y * f + (1.0 - t),
+      particle.spawnPosition.z + particle.spawnVelocity.z * f,
+    );
   }
 
-  /**
-   * Portal particle rising/spiraling behavior
-   *
-   * Minecraft PortalParticle moves toward a target point with damped velocity.
-   */
-  private applyPortalBehavior(particle: Particle): void {
-    // Portal particles rise gently while drifting toward center
-    // The original Minecraft code moves toward (xTarget, yTarget, zTarget)
-    // For preview, simulate gentle upward drift with slight centering
 
-    const centerX = 0.5;
-    const centerZ = 0.5;
-    const targetY = 1.0;
-
-    // Gently attract toward center
-    const dx = centerX - particle.position.x;
-    const dy = targetY - particle.position.y;
-    const dz = centerZ - particle.position.z;
-
-    // Apply small velocity adjustments (damped attraction)
-    const attraction = 0.01;
-    particle.velocity.x += dx * attraction;
-    particle.velocity.y += dy * attraction + 0.005; // Extra upward boost
-    particle.velocity.z += dz * attraction;
-  }
-
-  /**
-   * Enchanting table particle spiral behavior
-   */
-  private applyEnchantBehavior(particle: Particle): void {
-    // Enchant particles spiral upward toward a target (book position)
-    const targetY = 1.5;
-    const dy = targetY - particle.position.y;
-
-    // Gentle upward attraction
-    particle.velocity.y += dy * 0.015 + 0.003;
-
-    // Slight spiral effect
-    const angle = particle.age * 0.1;
-    particle.velocity.x += Math.sin(angle) * 0.002;
-    particle.velocity.z += Math.cos(angle) * 0.002;
-  }
-
-  private getFullSizeForRender(particle: Particle, partialTick: number): number {
-    const quadSize = this.getQuadSizeForRender(particle, partialTick);
-    return quadSize * 2.0;
-  }
-
-  private getQuadSizeForRender(particle: Particle, partialTick: number): number {
-    // UNIVERSAL: Quad size rendering with extracted animation curves
-    const curve = particle.physics?.quadSizeCurve ?? particle.physics?.quad_size_curve;
-
-    if (!curve || curve.type === "constant") {
-      return particle.quadSize;
-    }
-
-    const age = particle.age + partialTick;
-    const ageRatio = age / particle.lifetime;
-
-    switch (curve.type) {
-      case "linear_grow_clamped": {
-        // Formula: quadSize * clamp(ageRatio * multiplier, 0, 1)
-        const growth = Math.min(1.0, Math.max(0.0, ageRatio * curve.multiplier));
-        return particle.quadSize * growth;
-      }
-
-      case "quadratic_shrink": {
-        // Formula: quadSize * (1 - ageRatio² * factor)
-        return particle.quadSize * (1.0 - ageRatio * ageRatio * curve.factor);
-      }
-
-      case "linear_shrink": {
-        // Formula: quadSize * (1 - ageRatio / lifetimeMultiplier)
-        const shrink = 1.0 - age / (particle.lifetime * curve.lifetime_multiplier);
-        return particle.quadSize * Math.max(0.0, shrink);
-      }
-
-      case "ease_in_quad": {
-        // Formula: quadSize * (1 - (1 - ageRatio)²)
-        // Portal particle easing curve
-        let t = 1.0 - ageRatio;
-        t = t * t;
-        t = 1.0 - t;
-        return particle.quadSize * t;
-      }
-
-      case "sine_wave": {
-        // Formula: amplitude * sin((age + partialTick + phase) * frequency * PI)
-        // Firework particle animation
-        return curve.amplitude * Math.sin((age + curve.phase) * curve.frequency * Math.PI);
-      }
-
-      case "absolute": {
-        // Formula: constant (ignores quadSize)
-        // BlockMarker particle
-        return curve.size;
-      }
-
-      default:
-        return particle.quadSize;
-    }
-  }
 
   /**
    * Find an inactive particle in the pool

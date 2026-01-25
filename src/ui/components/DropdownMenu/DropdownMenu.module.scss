@@ -17,6 +17,7 @@
 
     // Texture overlay
     isolation: isolate;
+
     @include tokens.texture-overlay(0.2);
 
     &[data-side="top"] {
@@ -28,8 +29,7 @@
     }
 }
 
-// Individual menu item
-.item {
+%item-base {
     @include tokens.radius-quirky-sm;
 
     position: relative;
@@ -38,13 +38,11 @@
     gap: var(--spacing-sm);
     padding: 0.45rem 0.6rem;
     margin: 0.15rem 0;
-
     font-family: var(--font-family);
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     line-height: 1;
-
     cursor: pointer;
     user-select: none;
     outline: none;
@@ -52,15 +50,22 @@
     @include tokens.menu-item-states;
 }
 
+// Individual menu item
+.item {
+    @extend %item-base;
+}
+
 // Checkbox item
 .checkboxItem {
-    @extend .item;
+    @extend %item-base;
+
     padding-left: 1.8rem;
 }
 
 // Radio item
 .radioItem {
-    @extend .item;
+    @extend %item-base;
+
     padding-left: 1.8rem;
 }
 
@@ -125,7 +130,7 @@
 
 // SubTrigger - trigger for nested submenu
 .subTrigger {
-    @extend .item;
+    @extend %item-base;
 
     &[data-state="open"] {
         background: var(--color-primary);

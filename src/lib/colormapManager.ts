@@ -8,11 +8,12 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getPackTexturePath, getVanillaTexturePath } from "@lib/tauri";
 import { getBiomesWithCoords } from "@/components/BiomeColorCard/biomeData";
+import {
+  GRASS_COLORMAP_ASSET_ID,
+  FOLIAGE_COLORMAP_ASSET_ID,
+} from "@/constants/colormaps";
 import { colormapSamplerWorker } from "@lib/colormapSamplerWorker";
 import type { PackMeta } from "@state/types";
-
-const GRASS_COLORMAP_ASSET_ID = "minecraft:colormap/grass";
-const FOLIAGE_COLORMAP_ASSET_ID = "minecraft:colormap/foliage";
 
 /**
  * Resolve which pack should provide a colormap

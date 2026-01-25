@@ -5,6 +5,11 @@
 export type PackId = string;
 export type AssetId = string;
 
+export interface EntityParticleBounds {
+  base: { x: number; y: number; z: number };
+  size: { x: number; y: number; z: number };
+}
+
 /**
  * Metadata for a resource pack
  */
@@ -171,6 +176,9 @@ export interface UIState {
 
   // Entity animation source selection (per entity texture asset)
   entityAnimationVariantByAssetId: Record<AssetId, EntityAnimationVariant>;
+
+  // Entity particle bounds (derived from rendered model)
+  entityParticleBoundsByAssetId: Record<AssetId, EntityParticleBounds>;
 
   // Debug mode
   jemDebugMode: boolean; // Enable JEM model inspector for debugging entity models

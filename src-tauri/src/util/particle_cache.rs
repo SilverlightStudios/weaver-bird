@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Context, Result};
+use once_cell::sync::Lazy;
 use std::fs;
 use std::path::{Path, PathBuf};
+use tokio::sync::Mutex;
 
 use super::block_particle_extractor::{
     clear_block_emissions_cache, clear_block_emissions_data_cache, extract_block_emissions,
@@ -24,6 +26,9 @@ pub struct ParticleCacheData {
     pub emissions: ExtractedBlockEmissions,
     pub textures: ParticleTextureData,
 }
+
+// Serialize particle extraction work so we don't spawn multiple CFR JVMs in parallel.
+static PARTICLE_CACHE_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 fn is_project_root(path: &Path) -> bool {
     path.join("src/constants/particles").exists()
@@ -133,6 +138,7 @@ pub async fn ensure_particle_cache(
     version: &str,
     jar_path: &Path,
 ) -> Result<ParticleCacheData> {
+    let _guard = PARTICLE_CACHE_MUTEX.lock().await;
     let physics = match load_cached_physics_data(version)? {
         Some(data) if data.version == version => data,
         _ => extract_particle_physics(jar_path, version)
@@ -166,6 +172,7 @@ pub async fn rebuild_particle_cache(
     jar_path: &Path,
     full: bool,
 ) -> Result<ParticleCacheData> {
+    let _guard = PARTICLE_CACHE_MUTEX.lock().await;
     if full {
         clear_particle_caches(version)?;
     } else {

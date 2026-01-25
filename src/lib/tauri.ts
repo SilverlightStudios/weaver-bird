@@ -7,6 +7,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { OverrideWirePayload, ScanResult } from "@state";
+import { normalizeAssetId } from "@lib/assetUtils";
 
 /**
  * Structured error response from Tauri backend
@@ -105,13 +106,58 @@ export async function initializeVanillaTextures(): Promise<string> {
   return invoke<string>("initialize_vanilla_textures");
 }
 
+function addUnderscoreBeforeDigits(assetId: string): string {
+  const colonIndex = assetId.indexOf(":");
+  const namespace = colonIndex >= 0 ? assetId.slice(0, colonIndex) : "";
+  const path = colonIndex >= 0 ? assetId.slice(colonIndex + 1) : assetId;
+  const updatedPath = path.replace(/([a-zA-Z])(\d+)/g, "$1_$2");
+  return colonIndex >= 0 ? `${namespace}:${updatedPath}` : updatedPath;
+}
+
+function buildTextureAssetIdCandidates(assetId: string): string[] {
+  const candidates: string[] = [];
+  const pushCandidate = (id: string) => {
+    if (id && !candidates.includes(id)) {
+      candidates.push(id);
+    }
+  };
+
+  pushCandidate(assetId);
+
+  const normalized = normalizeAssetId(assetId);
+  pushCandidate(normalized);
+  pushCandidate(addUnderscoreBeforeDigits(normalized));
+
+  return candidates;
+}
+
+async function resolveTexturePath(
+  assetId: string,
+  resolver: (candidateId: string) => Promise<string>,
+): Promise<string> {
+  const candidates = buildTextureAssetIdCandidates(assetId);
+  let lastError: unknown = null;
+
+  for (const candidateId of candidates) {
+    try {
+      return await resolver(candidateId);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error(`Texture not found for ${assetId}`);
+}
+
 /**
  * Get the file path to a vanilla texture
  * @param assetId - Asset ID like "minecraft:block/stone"
  * @returns Absolute path to the texture PNG file
  */
 export async function getVanillaTexturePath(assetId: string): Promise<string> {
-  return invoke<string>("get_vanilla_texture_path", { assetId });
+  return resolveTexturePath(assetId, (candidateId) =>
+    invoke<string>("get_vanilla_texture_path", { assetId: candidateId }),
+  );
 }
 
 /**
@@ -232,8 +278,18 @@ export async function getPackTexturePath(
   packPath: string,
   assetId: string,
   isZip: boolean,
+  versionFolders?: string[] | null,
 ): Promise<string> {
-  return invoke<string>("get_pack_texture_path", { packPath, assetId, isZip });
+  return resolveTexturePath(assetId, (candidateId) =>
+    invoke<string>("get_pack_texture_path", {
+      packPath,
+      assetId: candidateId,
+      isZip,
+      ...(versionFolders && versionFolders.length > 0
+        ? { versionFolders }
+        : {}),
+    }),
+  );
 }
 
 /**

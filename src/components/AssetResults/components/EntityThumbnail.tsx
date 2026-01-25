@@ -7,7 +7,7 @@ import {
   acquireUrlTexture,
   releaseUrlTexture,
 } from "@lib/three/urlTextureCache";
-import type { ParsedEntityModel } from "@/lib/emf/types";
+import type { ParsedEntityModel } from "@lib/emf";
 
 interface Props {
   jemModel: ParsedEntityModel;

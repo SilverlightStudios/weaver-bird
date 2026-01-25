@@ -29,7 +29,7 @@ export const OutputSettings = ({
           <input
             type="text"
             className={s.input}
-            value={outputDir || ""}
+            value={outputDir ?? ""}
             onChange={(e) => onOutputDirChange(e.target.value)}
             placeholder="Select output directory..."
             readOnly

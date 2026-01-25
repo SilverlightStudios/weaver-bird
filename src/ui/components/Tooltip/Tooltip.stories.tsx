@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./Tooltip";
+} from './index';
 import Button from "../buttons/Button/Button";
 
 const meta = {

@@ -3,7 +3,7 @@ import {
     Tooltip,
     TooltipTrigger,
     TooltipContent,
-} from "@/ui/components/Tooltip/Tooltip";
+} from "@/ui/components/Tooltip";
 import { useVariantTexture } from "../../hooks/useVariantTexture";
 import type { TextureThumbnailProps } from "./types";
 import s from "../../styles.module.scss";

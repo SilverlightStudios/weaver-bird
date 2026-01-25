@@ -62,7 +62,7 @@ export const useTabTranslation = (
   activeZone: ZoneId | null,
   closingZone: ZoneId | null,
 ) => {
-  const effectiveZone = activeZone || closingZone;
+  const effectiveZone = activeZone ?? closingZone;
   const shouldHide = effectiveZone === zone && !isActive;
 
   if (!shouldHide) return "";

@@ -13,7 +13,10 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::particle_physics_extractor::{download_mojang_mappings, ensure_cfr_available};
+use super::particle_physics_extractor::{
+    clear_shared_decompile_dir, download_mojang_mappings, ensure_cfr_available,
+    get_shared_decompile_dir,
+};
 
 /// Extracted particle options (for ParticleOptions-based emissions like dust)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -168,7 +171,7 @@ pub fn load_cached_block_emissions(version: &str) -> Result<Option<ExtractedBloc
     };
 
     // If the cache is from an older schema, force re-extraction to populate new fields.
-    const CURRENT_SCHEMA_VERSION: u32 = 7;
+    const CURRENT_SCHEMA_VERSION: u32 = 8;
     if data.schema_version < CURRENT_SCHEMA_VERSION {
         println!(
             "[block_emissions] Cached emissions schema {} is older than {}, re-extracting...",
@@ -190,10 +193,7 @@ pub fn load_cached_block_emissions(version: &str) -> Result<Option<ExtractedBloc
 
 pub fn clear_block_emissions_cache(version: &str) -> Result<()> {
     clear_block_emissions_data_cache(version)?;
-    let decompile_dir = get_emissions_cache_dir()?.join("decompiled").join(version);
-    if decompile_dir.exists() {
-        fs::remove_dir_all(&decompile_dir).context("Failed to remove emissions decompile cache")?;
-    }
+    clear_shared_decompile_dir(version)?;
     Ok(())
 }
 
@@ -643,7 +643,11 @@ fn simplify_and_convert_prob(
     field_values: &HashMap<String, String>,
 ) -> String {
     let raw_expr = replace_random_locals(&guard.expr, random_locals);
-    let mut expr = extract_random_clause(&raw_expr);
+    let mut expr = simplify_probability_expression(&raw_expr, field_values);
+    if expr == "false" || expr.is_empty() {
+        return expr;
+    }
+    expr = extract_random_clause(&expr);
     if guard.invert {
         expr = invert_probability_expr(&expr);
     }
@@ -815,7 +819,11 @@ fn parse_rgb24_int(color: i32) -> [f32; 3] {
     [r, g, b]
 }
 
-fn load_dust_particle_option_constants(decompile_dir: &Path, class_mappings: &HashMap<String, String>) -> HashMap<String, ExtractedParticleOptions> {
+fn load_dust_particle_option_constants(
+    decompile_dir: &Path,
+    mappings_path: &Path,
+    class_mappings: &HashMap<String, String>,
+) -> HashMap<String, ExtractedParticleOptions> {
     let mut out: HashMap<String, ExtractedParticleOptions> = HashMap::new();
 
     // Try to find DustParticleOptions class (obfuscated or deobfuscated)
@@ -841,37 +849,30 @@ fn load_dust_particle_option_constants(decompile_dir: &Path, class_mappings: &Ha
         return out;
     };
 
-    // Load field mappings for DustParticleOptions to deobfuscate field names
-    // Mappings file path is in decompile_dir parent/parent (cache root)
-    let mappings_path = decompile_dir.parent()
-        .and_then(|p| p.parent())
-        .map(|p| p.join(format!("{}-mappings.txt", decompile_dir.file_name().unwrap().to_str().unwrap())));
-
+    // Load field mappings for DustParticleOptions to deobfuscate field names.
     let mut field_mappings: HashMap<String, String> = HashMap::new(); // obfuscated -> deobfuscated
-    if let Some(mappings_file) = mappings_path {
-        if let Ok(mappings_content) = fs::read_to_string(&mappings_file) {
-            let mut in_dust_class = false;
-            for line in mappings_content.lines() {
-                // Check if we're in the DustParticleOptions class section
-                if line == format!("{} ->", dust_deobf).trim() || line.starts_with(&format!("{} -> ", dust_deobf)) {
-                    in_dust_class = true;
-                    continue;
-                }
-                // Exit when we hit another class
-                if in_dust_class && line.ends_with(':') && !line.starts_with("    ") {
-                    break;
-                }
-                // Parse field mappings (lines starting with 4 spaces)
-                if in_dust_class && line.starts_with("    ") && line.contains(" -> ") {
-                    let trimmed = line.trim();
-                    if let Some(arrow_pos) = trimmed.rfind(" -> ") {
-                        let after_arrow = &trimmed[arrow_pos + 4..];
-                        let obf_field = after_arrow.trim_end_matches(':');
-                        // Extract field name from before arrow (last token)
-                        let before_arrow = &trimmed[..arrow_pos];
-                        if let Some(deobf_field) = before_arrow.split_whitespace().last() {
-                            field_mappings.insert(obf_field.to_string(), deobf_field.to_string());
-                        }
+    if let Ok(mappings_content) = fs::read_to_string(mappings_path) {
+        let mut in_dust_class = false;
+        for line in mappings_content.lines() {
+            // Check if we're in the DustParticleOptions class section
+            if line == format!("{} ->", dust_deobf).trim() || line.starts_with(&format!("{} -> ", dust_deobf)) {
+                in_dust_class = true;
+                continue;
+            }
+            // Exit when we hit another class
+            if in_dust_class && line.ends_with(':') && !line.starts_with("    ") {
+                break;
+            }
+            // Parse field mappings (lines starting with 4 spaces)
+            if in_dust_class && line.starts_with("    ") && line.contains(" -> ") {
+                let trimmed = line.trim();
+                if let Some(arrow_pos) = trimmed.rfind(" -> ") {
+                    let after_arrow = &trimmed[arrow_pos + 4..];
+                    let obf_field = after_arrow.trim_end_matches(':');
+                    // Extract field name from before arrow (last token)
+                    let before_arrow = &trimmed[..arrow_pos];
+                    if let Some(deobf_field) = before_arrow.split_whitespace().last() {
+                        field_mappings.insert(obf_field.to_string(), deobf_field.to_string());
                     }
                 }
             }
@@ -1862,7 +1863,7 @@ pub async fn extract_block_emissions(
     let cfr_path = ensure_cfr_available().await?;
 
     // Create directory for decompiled output
-    let decompile_dir = get_emissions_cache_dir()?.join("decompiled").join(version);
+    let decompile_dir = get_shared_decompile_dir(version)?;
     fs::create_dir_all(&decompile_dir).context("Failed to create decompile directory")?;
 
     // Step 1: Decompile entire block and block entity packages for automatic discovery
@@ -1959,7 +1960,8 @@ pub async fn extract_block_emissions(
     // Step 4: Extract emissions from discovered classes
     let mut extracted_blocks = HashMap::new();
     let mut extracted_entities = HashMap::new();
-    let dust_options = load_dust_particle_option_constants(&decompile_dir, &class_mappings);
+    let dust_options =
+        load_dust_particle_option_constants(&decompile_dir, &mappings_path, &class_mappings);
 
     // Create reverse mapping: class_name -> [block_ids]
     let mut class_to_block_ids: HashMap<String, Vec<String>> = HashMap::new();

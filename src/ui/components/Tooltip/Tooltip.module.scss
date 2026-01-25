@@ -11,10 +11,8 @@
     max-width: 16rem;
     padding: 0.35rem 0.6rem;
     overflow: visible;
-
     background: var(--color-ink);
     color: var(--color-bg);
-
     font-family: var(--font-family);
     font-size: 0.7rem;
     text-transform: uppercase;
@@ -26,6 +24,7 @@
 
     // Texture overlay
     isolation: isolate;
+
     @include tokens.texture-overlay(0.15);
 
     // Animation based on side

@@ -25,45 +25,32 @@ export function normalizeSpawnedParticles(
   });
 }
 
-export function normalizeParticlePhysics(raw: ParticlePhysics): ParticlePhysics {
-  const velocityMultiplier =
-    raw.velocityMultiplier ?? raw.velocity_multiplier ?? null;
-  const velocityAdd = raw.velocityAdd ?? raw.velocity_add ?? null;
-  const velocityJitter = raw.velocityJitter ?? raw.velocity_jitter ?? null;
-  const colorScale = raw.colorScale ?? raw.color_scale ?? null;
-  const lifetimeBase = raw.lifetimeBase ?? raw.lifetime_base ?? null;
-  const lifetimeAnimation =
-    raw.lifetimeAnimation ?? raw.lifetime_animation ?? null;
-  const tickVelocityDelta =
-    raw.tickVelocityDelta ?? raw.tick_velocity_delta ?? null;
-  const skipsFriction = raw.skipsFriction ?? raw.skips_friction ?? null;
-  const usesStaticTexture = raw.usesStaticTexture ?? raw.uses_static_texture ?? null;
-  const hasPhysics = raw.hasPhysics ?? raw.has_physics ?? null;
-  const quadSize = raw.quadSize ?? (typeof raw.size === "number" ? raw.size : null);
-  const baseAlpha = raw.baseAlpha ?? raw.alpha ?? null;
-  const lifetimeTicks =
-    raw.lifetimeTicks ??
-    (Array.isArray(raw.lifetime) ? raw.lifetime : null);
-  const spawnsParticles = normalizeSpawnedParticles(
-    raw.spawnsParticles ?? raw.spawns_particles ?? null,
-  );
+function normalizeField<T>(camelCase: T | undefined, snake_case: T | undefined): T | null {
+  return camelCase ?? snake_case ?? null;
+}
 
+export function normalizeParticlePhysics(raw: ParticlePhysics): ParticlePhysics {
   return {
     ...raw,
-    lifetimeTicks,
-    hasPhysics,
-    quadSize,
-    baseAlpha,
-    velocityMultiplier,
-    velocityAdd,
-    velocityJitter,
-    colorScale,
-    lifetimeBase,
-    lifetimeAnimation,
-    tickVelocityDelta,
-    skipsFriction,
-    usesStaticTexture,
-    spawnsParticles,
+    lifetimeTicks: raw.lifetimeTicks ?? (Array.isArray(raw.lifetime) ? raw.lifetime : null),
+    hasPhysics: normalizeField(raw.hasPhysics, raw.has_physics),
+    quadSize: raw.quadSize ?? (typeof raw.size === "number" ? raw.size : null),
+    baseAlpha: normalizeField(raw.baseAlpha, raw.alpha),
+    velocityMultiplier: normalizeField(raw.velocityMultiplier, raw.velocity_multiplier),
+    velocityAdd: normalizeField(raw.velocityAdd, raw.velocity_add),
+    velocityJitter: normalizeField(raw.velocityJitter, raw.velocity_jitter),
+    colorScale: normalizeField(raw.colorScale, raw.color_scale),
+    colorRandomBase: normalizeField(raw.colorRandomBase, raw.color_random_base),
+    colorRandomScale: normalizeField(raw.colorRandomScale, raw.color_random_scale),
+    colorRandomMultiplier: normalizeField(raw.colorRandomMultiplier, raw.color_random_multiplier),
+    lifetimeBase: normalizeField(raw.lifetimeBase, raw.lifetime_base),
+    lifetimeAnimation: normalizeField(raw.lifetimeAnimation, raw.lifetime_animation),
+    tickVelocityDelta: normalizeField(raw.tickVelocityDelta, raw.tick_velocity_delta),
+    skipsFriction: normalizeField(raw.skipsFriction, raw.skips_friction),
+    usesStaticTexture: normalizeField(raw.usesStaticTexture, raw.uses_static_texture),
+    spawnsParticles: normalizeSpawnedParticles(
+      raw.spawnsParticles ?? raw.spawns_particles ?? null,
+    ),
   };
 }
 
@@ -125,6 +112,192 @@ export function looksLikeCampfireSlotExpr(exprs: Array<string | null | undefined
   );
 }
 
+function normalizeItemSlotProbability(probabilityExpr: string | null): string | null {
+  if (!probabilityExpr || !probabilityExpr.includes("items.get(")) {
+    return probabilityExpr;
+  }
+
+  const randomClause = extractRandomClause(probabilityExpr);
+  return stripLeadingNot(randomClause);
+}
+
+function normalizeEmissionSource(
+  emissionSource: string | null,
+  ownerIsCampfire: boolean,
+): string | null {
+  if (emissionSource === "makeParticles") {
+    return ownerIsCampfire ? "particleTick" : "animateTick";
+  }
+  if (emissionSource === "addParticlesAndSound") {
+    return "animateTick";
+  }
+  return emissionSource;
+}
+
+function normalizeCampfireLoopCount(
+  loopCountExpr: string | null,
+  loopIndexVar: string | null,
+  positionExpr: string[] | null,
+  ownerId?: string,
+): string | null {
+  if (
+    loopCountExpr &&
+    ownerId?.includes("campfire") &&
+    /items\s*\.\s*size\s*\(\s*\)/.test(loopCountExpr)
+  ) {
+    return "4";
+  }
+  if (loopCountExpr || !loopIndexVar) return loopCountExpr;
+
+  const looksLikeCampfire = looksLikeCampfireSlotExpr(positionExpr ?? []);
+  if (looksLikeCampfire && ownerId?.includes("campfire")) {
+    return "4";
+  }
+  return loopCountExpr;
+}
+
+function isCampfireCookingSmoke(
+  particleId: string,
+  positionExpr: string[] | null,
+  loopCountExpr: string | null,
+  ownerId?: string,
+): boolean {
+  if (!ownerId?.includes("campfire")) return false;
+  if (particleId !== "smoke") return false;
+  if (looksLikeCampfireSlotExpr(positionExpr ?? [])) return true;
+  return Boolean(loopCountExpr && /items\s*\.\s*size\s*\(\s*\)/.test(loopCountExpr));
+}
+
+function applyCampfireParticleTick(params: {
+  condition: string | null;
+  probabilityExpr: string | null;
+  countExpr: string | null;
+  particleId: string;
+  isCampfireSmoke: boolean;
+  rawEmissionSource: string | null;
+}): { condition: string | null; probabilityExpr: string | null; countExpr: string | null } {
+  let { condition, probabilityExpr, countExpr } = params;
+  const { particleId, isCampfireSmoke, rawEmissionSource } = params;
+
+  condition = mergeConditions(condition, "lit=true");
+
+  if (isCampfireSmoke) {
+    probabilityExpr = probabilityExpr ?? "rand() < 0.11";
+    countExpr = countExpr ?? "randInt(2) + 2";
+  } else if (particleId === "smoke" && rawEmissionSource === "makeParticles") {
+    probabilityExpr = "false";
+  }
+
+  return { condition, probabilityExpr, countExpr };
+}
+
+interface NormalizedEmissionState {
+  condition: string | null;
+  probabilityExpr: string | null;
+  countExpr: string | null;
+  loopCountExpr: string | null;
+  loopIndexVar: string | null;
+  emissionSource: string | null;
+}
+
+function initializeEmissionState(
+  raw: ParticleEmission,
+  extended: ParticleEmission & {
+    probability_expr?: string | null;
+    count_expr?: string | null;
+    loop_count_expr?: string | null;
+    loop_index_var?: string | null;
+    emission_source?: string | null;
+  },
+): Omit<NormalizedEmissionState, 'emissionSource' | 'loopCountExpr'> & { rawEmissionSource: string | null } {
+  return {
+    condition: raw.condition ?? null,
+    probabilityExpr: raw.probabilityExpr ?? extended.probability_expr ?? null,
+    countExpr: raw.countExpr ?? extended.count_expr ?? null,
+    loopIndexVar: raw.loopIndexVar ?? extended.loop_index_var ?? null,
+    rawEmissionSource: raw.emissionSource ?? extended.emission_source ?? null,
+  };
+}
+
+function detectAndNormalizeLoopVar(
+  state: { probabilityExpr: string | null; loopIndexVar: string | null },
+  positionExpr: string[] | null,
+  velocityExpr: string[] | null,
+): string | null {
+  return state.loopIndexVar ?? detectLoopIndexVar([
+    state.probabilityExpr,
+    ...(positionExpr ?? []),
+    ...(velocityExpr ?? []),
+  ]);
+}
+
+function applyCampfireSignalCondition(
+  condition: string | null,
+  particleId: string,
+): string | null {
+  const signalCondition =
+    particleId === "campfire_signal_smoke"
+      ? "signal_fire=true"
+      : "signal_fire=false";
+  return mergeConditions(condition, signalCondition);
+}
+
+function applyCampfireNormalization(
+  state: NormalizedEmissionState,
+  particleId: string,
+  isCampfireSmoke: boolean,
+  ownerId?: string,
+): NormalizedEmissionState {
+  const ownerIsCampfire = isCampfireBlock(ownerId);
+
+  if (ownerIsCampfire && state.emissionSource === "particleTick") {
+    const result = applyCampfireParticleTick({
+      condition: state.condition,
+      probabilityExpr: state.probabilityExpr,
+      countExpr: state.countExpr,
+      particleId,
+      isCampfireSmoke,
+      rawEmissionSource: state.emissionSource,
+    });
+    state.condition = result.condition;
+    state.probabilityExpr = result.probabilityExpr;
+    state.countExpr = result.countExpr;
+  }
+
+  if (ownerIsCampfire && isCampfireSmoke) {
+    state.condition = applyCampfireSignalCondition(state.condition, particleId);
+  }
+
+  return state;
+}
+
+function processLoopVariables(
+  initial: ReturnType<typeof initializeEmissionState>,
+  extended: ParticleEmission & {
+    loop_count_expr?: string | null;
+    position_expr?: [string, string, string] | null;
+    velocity_expr?: [string, string, string] | null;
+  },
+  raw: ParticleEmission,
+  ownerId?: string,
+): { loopCountExpr: string | null; loopIndexVar: string | null; probabilityExpr: string | null } {
+  const positionExpr = raw.positionExpr ?? extended.position_expr ?? null;
+  const velocityExpr = raw.velocityExpr ?? extended.velocity_expr ?? null;
+  const probabilityExpr = normalizeItemSlotProbability(initial.probabilityExpr);
+  const loopIndexVar = detectAndNormalizeLoopVar(
+    { probabilityExpr, loopIndexVar: initial.loopIndexVar },
+    positionExpr,
+    velocityExpr,
+  );
+  const loopCountExpr = normalizeCampfireLoopCount(
+    raw.loopCountExpr ?? extended.loop_count_expr ?? null,
+    loopIndexVar,
+    positionExpr,
+    ownerId,
+  );
+  return { loopCountExpr, loopIndexVar, probabilityExpr };
+}
+
 export function normalizeParticleEmission(
   raw: ParticleEmission,
   ownerId?: string,
@@ -137,83 +310,53 @@ export function normalizeParticleEmission(
     position_expr?: [string, string, string] | null;
     velocity_expr?: [string, string, string] | null;
     emission_source?: string | null;
+    particle_id?: string;
   };
 
-  let condition = raw.condition ?? null;
-  let probabilityExpr = raw.probabilityExpr ?? extended.probability_expr ?? null;
-  let countExpr = raw.countExpr ?? extended.count_expr ?? null;
-  let loopCountExpr = raw.loopCountExpr ?? extended.loop_count_expr ?? null;
-  let loopIndexVar = raw.loopIndexVar ?? extended.loop_index_var ?? null;
-  const rawEmissionSource = raw.emissionSource ?? extended.emission_source ?? null;
-  let emissionSource = rawEmissionSource;
-  const ownerIsCampfire = isCampfireBlock(ownerId);
-
-  const usesItemSlots = Boolean(probabilityExpr && probabilityExpr.includes("items.get("));
-  if (ownerId && ownerId.includes("campfire") && usesItemSlots) {
-    // Campfire item-slot smoke depends on block entity state; default to empty slots.
-    probabilityExpr = "false";
-  } else if (probabilityExpr && probabilityExpr.includes("items.get(")) {
-    const randomClause = extractRandomClause(probabilityExpr);
-    probabilityExpr = stripLeadingNot(randomClause);
-  }
-
   const positionExpr = raw.positionExpr ?? extended.position_expr ?? null;
-  const velocityExpr = raw.velocityExpr ?? extended.velocity_expr ?? null;
-  loopIndexVar ??= detectLoopIndexVar([
-    probabilityExpr,
-    ...(positionExpr ?? []),
-    ...(velocityExpr ?? []),
-  ]);
+  const initial = initializeEmissionState(raw, extended);
+  const { loopCountExpr, loopIndexVar, probabilityExpr } = processLoopVariables(
+    initial,
+    extended,
+    raw,
+    ownerId,
+  );
 
-  if (!loopCountExpr && loopIndexVar && looksLikeCampfireSlotExpr(positionExpr ?? [])) {
-    if (ownerId && ownerId.includes("campfire")) {
-      loopCountExpr = "4";
-    }
+  const ownerIsCampfire = isCampfireBlock(ownerId);
+  const emissionSource = normalizeEmissionSource(initial.rawEmissionSource, ownerIsCampfire);
+  const particleId = raw.particleId ?? extended.particle_id ?? "";
+  const isCampfireSmoke = particleId === "campfire_signal_smoke" || particleId === "campfire_cosy_smoke";
+
+  let state = applyCampfireNormalization(
+    {
+      condition: initial.condition,
+      probabilityExpr,
+      countExpr: initial.countExpr,
+      loopCountExpr,
+      loopIndexVar,
+      emissionSource,
+    },
+    particleId,
+    isCampfireSmoke,
+    ownerId,
+  );
+
+  if (isCampfireCookingSmoke(particleId, positionExpr, loopCountExpr, ownerId)) {
+    state.condition = mergeConditions(state.condition, "cooking=true");
   }
 
-  if (emissionSource === "makeParticles") {
-    emissionSource = ownerIsCampfire ? "particleTick" : "animateTick";
-  }
-  if (emissionSource === "addParticlesAndSound") {
-    emissionSource = "animateTick";
-  }
-
-  const particleId = raw.particleId ?? (raw as { particle_id?: string }).particle_id ?? "";
-  const isCampfireSmoke =
-    particleId === "campfire_signal_smoke" || particleId === "campfire_cosy_smoke";
-
-  if (ownerIsCampfire && emissionSource === "particleTick") {
-    condition = mergeConditions(condition, "lit=true");
-
-    if (isCampfireSmoke) {
-      probabilityExpr = probabilityExpr ?? "rand() < 0.11";
-      countExpr = countExpr ?? "randInt(2) + 2";
-    } else if (particleId === "smoke" && rawEmissionSource === "makeParticles") {
-      // Smoke from makeParticles only occurs during extinguish events.
-      probabilityExpr = "false";
-    }
-  }
-
-  if (rawEmissionSource === "extinguish") {
-    probabilityExpr = "false";
-  }
-
-  if (ownerIsCampfire && isCampfireSmoke) {
-    const signalCondition =
-      particleId === "campfire_signal_smoke"
-        ? "signal_fire=true"
-        : "signal_fire=false";
-    condition = mergeConditions(condition, signalCondition);
+  if (initial.rawEmissionSource === "extinguish") {
+    state = { ...state, probabilityExpr: "false" };
   }
 
   return {
     ...raw,
-    condition: condition ?? undefined,
-    probabilityExpr: probabilityExpr ?? undefined,
-    countExpr: countExpr ?? undefined,
-    loopCountExpr: loopCountExpr ?? undefined,
-    loopIndexVar: loopIndexVar ?? undefined,
-    emissionSource: emissionSource ?? undefined,
+    condition: state.condition ?? undefined,
+    probabilityExpr: state.probabilityExpr ?? undefined,
+    countExpr: state.countExpr ?? undefined,
+    loopCountExpr: state.loopCountExpr ?? undefined,
+    loopIndexVar: state.loopIndexVar ?? undefined,
+    emissionSource: state.emissionSource ?? undefined,
   };
 }
 

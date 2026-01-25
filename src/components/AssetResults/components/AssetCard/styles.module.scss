@@ -28,7 +28,7 @@
 
     &.selected {
         border-color: var(--color-primary);
-        background-color: rgba(94, 114, 228, 0.08);
+        background-color: rgb(94 114 228 / 8%);
         box-shadow: var(--shadow-md);
     }
 }
@@ -50,7 +50,7 @@
         0 0,
         0 8px,
         8px -8px,
-        -8px 0px;
+        -8px 0;
     position: relative;
     overflow: hidden;
 }
@@ -64,9 +64,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: rgb(255 255 255 / 95%);
     border-radius: var(--radius-sm);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
     font-size: 14px;
     z-index: 6;
     transition: transform 0.2s ease;
@@ -85,9 +85,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 193, 7, 0.95);
+    background-color: rgb(255 193 7 / 95%);
     border-radius: var(--radius-sm);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
     font-size: 14px;
     z-index: 6;
     transition: transform 0.2s ease;
@@ -110,7 +110,7 @@
     background: linear-gradient(135deg, var(--color-primary) 0%, #4a5eb8 100%);
     color: white;
     border-radius: var(--radius-sm);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
     font-size: 12px;
     font-weight: 600;
     z-index: 6;
@@ -118,7 +118,7 @@
 
     &:hover {
         transform: scale(1.1);
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 3px 8px rgb(0 0 0 / 30%);
     }
 }
 
@@ -138,7 +138,7 @@
     height: 80%;
     object-fit: contain;
     image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     image-rendering: crisp-edges;
 }
 
@@ -147,7 +147,7 @@
     height: 80%;
     object-fit: contain;
     image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     image-rendering: crisp-edges;
 }
 
@@ -165,11 +165,12 @@
     width: 100%;
     height: calc(100% * var(--frame-count));
     image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     image-rendering: crisp-edges;
 }
 
 /* Container Queries for Adaptive Block Sizing */
+
 /* Browser support: Chrome 105+, Edge 105+, Safari 16+, Firefox 110+ */
 
 /* Smaller drawer: reduce block scale for compact display */
@@ -244,7 +245,7 @@
     font-weight: 500;
     color: var(--color-text);
     text-align: center;
-    word-break: break-word;
+    overflow-wrap: anywhere;
     line-height: 1.2;
     min-height: 2.4em;
     display: flex;

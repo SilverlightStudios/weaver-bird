@@ -12,40 +12,11 @@ import * as THREE from "three";
 import { JEMTreeView } from "./JEMTreeView";
 import styles from "./JEMInspectorV2.module.scss";
 import type { JEMFile, JEMModelPart } from "./types";
-
-interface JEMInspectorConfig {
-  scene: THREE.Scene;
-  jemData: JEMFile;
-  rootGroup: THREE.Group;
-}
-
-interface TransformControlsState {
-  partName: string;
-  posX: number;
-  posY: number;
-  posZ: number;
-  inverseX: boolean;
-  inverseY: boolean;
-  inverseZ: boolean;
-  rotX: number;
-  rotY: number;
-  rotZ: number;
-  scaleX: number;
-  scaleY: number;
-  scaleZ: number;
-  worldPosX: number;
-  worldPosY: number;
-  worldPosZ: number;
-}
-
-interface ChangesState {
-  changes: string;
-}
-
-interface JEMInspectorTransformControls {
-  state: TransformControlsState;
-  changesState: ChangesState;
-}
+import type {
+  JEMInspectorConfig,
+  JEMInspectorTransformControls,
+} from "./JEMInspectorV2Types";
+import { createTransformPanel } from "./JEMInspectorV2Helpers";
 
 export class JEMInspectorV2 {
   private containerElement: HTMLDivElement;
@@ -111,227 +82,13 @@ export class JEMInspectorV2 {
   }
 
   private createTransformPanel() {
-    // Add info message
-    const infoState = {
-      info: "⚠️ Animations paused in debug mode",
-    };
-    this.gui.add(infoState, "info").name("").disable();
-
-    // State for selected part
-    const state: TransformControlsState = {
-      partName: "None selected",
-      posX: 0,
-      posY: 0,
-      posZ: 0,
-      inverseX: false,
-      inverseY: false,
-      inverseZ: false,
-      rotX: 0,
-      rotY: 0,
-      rotZ: 0,
-      scaleX: 1,
-      scaleY: 1,
-      scaleZ: 1,
-      worldPosX: 0,
-      worldPosY: 0,
-      worldPosZ: 0,
-    };
-
-    this.gui.add(state, "partName").name("Part Name").disable();
-
-    // Position controls
-    const posFolder = this.gui.addFolder("Position (Local)");
-    posFolder
-      .add(state, "posX", -2, 2, 0.001)
-      .name("X")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          this.selectedObject.position.x = value;
-          this.updateWorldPosition();
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    posFolder
-      .add(state, "posY", -2, 2, 0.001)
-      .name("Y")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          this.selectedObject.position.y = value;
-          this.updateWorldPosition();
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    posFolder
-      .add(state, "posZ", -2, 2, 0.001)
-      .name("Z")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          this.selectedObject.position.z = value;
-          this.updateWorldPosition();
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    posFolder.open();
-
-    // Inverse axis controls
-    const inverseFolder = this.gui.addFolder("Inverse Axis");
-    inverseFolder
-      .add(state, "inverseX")
-      .name("Inverse X")
-      .onChange((value: boolean) => {
-        if (this.selectedObject) {
-          this.selectedObject.scale.x = value
-            ? -Math.abs(this.selectedObject.scale.x)
-            : Math.abs(this.selectedObject.scale.x);
-        }
-      });
-    inverseFolder
-      .add(state, "inverseY")
-      .name("Inverse Y")
-      .onChange((value: boolean) => {
-        if (this.selectedObject) {
-          this.selectedObject.scale.y = value
-            ? -Math.abs(this.selectedObject.scale.y)
-            : Math.abs(this.selectedObject.scale.y);
-        }
-      });
-    inverseFolder
-      .add(state, "inverseZ")
-      .name("Inverse Z")
-      .onChange((value: boolean) => {
-        if (this.selectedObject) {
-          this.selectedObject.scale.z = value
-            ? -Math.abs(this.selectedObject.scale.z)
-            : Math.abs(this.selectedObject.scale.z);
-        }
-      });
-
-    // Rotation controls
-    const rotFolder = this.gui.addFolder("Rotation (Degrees)");
-    rotFolder
-      .add(state, "rotX", -180, 180, 1)
-      .name("X")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          this.selectedObject.rotation.x = THREE.MathUtils.degToRad(value);
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    rotFolder
-      .add(state, "rotY", -180, 180, 1)
-      .name("Y")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          this.selectedObject.rotation.y = THREE.MathUtils.degToRad(value);
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    rotFolder
-      .add(state, "rotZ", -180, 180, 1)
-      .name("Z")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          this.selectedObject.rotation.z = THREE.MathUtils.degToRad(value);
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    rotFolder.open();
-
-    // Scale controls
-    const scaleFolder = this.gui.addFolder("Scale");
-    scaleFolder
-      .add(state, "scaleX", 0.1, 5, 0.1)
-      .name("X")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          const sign = this.selectedObject.scale.x < 0 ? -1 : 1;
-          this.selectedObject.scale.x = value * sign;
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    scaleFolder
-      .add(state, "scaleY", 0.1, 5, 0.1)
-      .name("Y")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          const sign = this.selectedObject.scale.y < 0 ? -1 : 1;
-          this.selectedObject.scale.y = value * sign;
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    scaleFolder
-      .add(state, "scaleZ", 0.1, 5, 0.1)
-      .name("Z")
-      .onChange((value: number) => {
-        if (this.selectedObject) {
-          const sign = this.selectedObject.scale.z < 0 ? -1 : 1;
-          this.selectedObject.scale.z = value * sign;
-          this.updateChangesLog();
-          this.updateHighlight();
-        }
-      });
-    scaleFolder.open();
-
-    // World position (read-only)
-    const worldFolder = this.gui.addFolder("World Position (Read-Only)");
-    worldFolder.add(state, "worldPosX").name("World X").disable().listen();
-    worldFolder.add(state, "worldPosY").name("World Y").disable().listen();
-    worldFolder.add(state, "worldPosZ").name("World Z").disable().listen();
-
-    // Changes log
-    const changesFolder = this.gui.addFolder("📝 Changes Made");
-    const changesState: ChangesState = {
-      changes: "No changes yet",
-    };
-    changesFolder.add(changesState, "changes").name("").disable();
-    changesFolder.open();
-
-    // JEM Source Data
-    const dataFolder = this.gui.addFolder("📋 JEM Source Data");
-    const dataState = {
-      copyJSON: () => {
-        if (this.selectedObject) {
-          const jemPart = this.findJEMPart(this.selectedObject.name);
-          if (jemPart) {
-            navigator.clipboard.writeText(JSON.stringify(jemPart, null, 2));
-            console.log("Copied JEM data:", jemPart);
-          }
-        }
-      },
-      showInConsole: () => {
-        if (this.selectedObject) {
-          const jemPart = this.findJEMPart(this.selectedObject.name);
-          if (jemPart) {
-            console.log("JEM Part Data:", jemPart);
-            console.table({
-              id: jemPart.id,
-              translateX: jemPart.translate?.[0],
-              translateY: jemPart.translate?.[1],
-              translateZ: jemPart.translate?.[2],
-              invertAxis: jemPart.invertAxis,
-              boxes: jemPart.boxes?.length || 0,
-              submodels: jemPart.submodels?.length || 0,
-            });
-          }
-        }
-      },
-    };
-    dataFolder.add(dataState, "copyJSON").name("📄 Copy JEM JSON");
-    dataFolder.add(dataState, "showInConsole").name("🖥️ Log to Console");
-
-    // Store references
-    this.transformControls = {
-      state,
-      changesState,
-    };
+    this.transformControls = createTransformPanel(this.gui, {
+      updateWorldPosition: () => this.updateWorldPosition(),
+      updateChangesLog: () => this.updateChangesLog(),
+      updateHighlight: () => this.updateHighlight(),
+      getSelectedObject: () => this.selectedObject,
+      findJEMPart: (name: string) => this.findJEMPart(name),
+    });
   }
 
   private selectPart(object: THREE.Object3D) {
@@ -488,7 +245,7 @@ export class JEMInspectorV2 {
       return null;
     };
 
-    return searchModels(this.jemData.models || []);
+    return searchModels(this.jemData.models ?? []);
   }
 
   private highlightPart(object: THREE.Object3D) {

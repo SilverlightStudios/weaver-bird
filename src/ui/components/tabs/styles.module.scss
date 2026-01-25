@@ -21,12 +21,11 @@
 
 .tabsList {
     display: flex;
-    flex-direction: row;
+    flex-flow: row wrap;
     gap: var(--spacing-xs);
     padding: var(--spacing-md);
     background-color: var(--color-block);
     border-bottom: 3px solid var(--color-ink);
-    flex-wrap: wrap;
 
     // Subtle halftone pattern overlay
     position: relative;
@@ -35,7 +34,9 @@
         content: "";
         position: absolute;
         inset: 0;
+
         @include tokens.pattern-halftone-sm;
+
         opacity: 0.15;
         mix-blend-mode: soft-light;
         pointer-events: none;
@@ -83,7 +84,7 @@
     }
 
     // Middle tabs - small radius all around
-    &:not(:first-child):not(:last-child) {
+    &:not(:first-child, :last-child) {
         border-radius: 0.4rem;
     }
 
@@ -97,16 +98,20 @@
         content: "";
         position: absolute;
         inset: 0;
+
         @include tokens.pattern-stripes-diagonal;
+
         opacity: 0.08;
         mix-blend-mode: multiply;
         pointer-events: none;
+
         @include tokens.radius-quirky-sm;
     }
 
     // Hover state - increases shadow and straightens
     &:hover {
         @include tokens.shadow-lg;
+
         rotate: -0.1deg;
         translate: 0 -2px;
         transition: all 180ms var(--spring-bezier);
@@ -116,12 +121,15 @@
     &[data-state="active"] {
         background-color: var(--color-primary);
         color: white;
+
         @include tokens.shadow-xl;
+
         rotate: 0deg;
 
         // Different stripe pattern for active state
         &::before {
             @include tokens.pattern-stripes-vertical;
+
             opacity: 0.12;
         }
 
@@ -130,7 +138,9 @@
             content: "";
             position: absolute;
             inset: -3px;
+
             @include tokens.radius-quirky-sm;
+
             border: 2px solid var(--color-primary);
             opacity: 0.3;
             filter: blur(2px);
@@ -141,12 +151,14 @@
     // Active state stays elevated on interaction
     &[data-state="active"]:hover {
         @include tokens.shadow-xl;
+
         translate: 0 -3px;
     }
 
     // Pressed state
     &[data-state="active"]:active {
         @include tokens.shadow-sm;
+
         rotate: var(--rotate-mild);
         translate: 0 2px;
     }
@@ -158,6 +170,7 @@
 
         &:hover {
             @include tokens.shadow-md;
+
             translate: 0 0;
         }
     }
@@ -176,7 +189,9 @@
 
     // Border and shadow - no rotation for cleaner edge alignment
     @include tokens.border-standard;
+
     border-radius: 4px;
+
     @include tokens.shadow-sm;
 
     // Subtle patterns and textures
@@ -188,7 +203,9 @@
         content: "";
         position: absolute;
         inset: 0;
+
         @include tokens.pattern-halftone-sm;
+
         opacity: 0.08;
         mix-blend-mode: soft-light;
         z-index: -1;
@@ -214,6 +231,7 @@
         translate: 0 10px;
         rotate: 1deg;
     }
+
     to {
         opacity: 1;
         translate: 0 0;

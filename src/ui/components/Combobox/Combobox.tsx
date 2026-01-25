@@ -61,7 +61,7 @@ export function Combobox({
     if (!open) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      const triggerElement = triggerDivRef.current || triggerButtonRef.current;
+      const triggerElement = triggerDivRef.current ?? triggerButtonRef.current;
       if (
         contentRef.current &&
         !contentRef.current.contains(e.target as Node) &&
@@ -89,7 +89,7 @@ export function Combobox({
 
   // Position the dropdown relative to trigger
   useEffect(() => {
-    const triggerElement = triggerDivRef.current || triggerButtonRef.current;
+    const triggerElement = triggerDivRef.current ?? triggerButtonRef.current;
     if (!open || !contentRef.current || !triggerElement) return;
 
     const trigger = triggerElement;
@@ -142,7 +142,7 @@ export function Combobox({
       type="button"
     >
       <span className={s.triggerText}>
-        {selectedOption?.label || placeholder}
+        {selectedOption?.label ?? placeholder}
       </span>
       <span className={s.triggerIcon}>{open ? "▲" : "▼"}</span>
     </button>

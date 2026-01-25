@@ -2,7 +2,7 @@ import {
     Tooltip,
     TooltipTrigger,
     TooltipContent,
-} from "@/ui/components/Tooltip/Tooltip";
+} from "@/ui/components/Tooltip";
 import { TabsTrigger } from "@/ui/components/tabs";
 import type { TabIconProps } from "../../types";
 import s from "../../styles.module.scss";

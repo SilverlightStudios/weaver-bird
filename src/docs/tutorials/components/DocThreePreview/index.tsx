@@ -176,7 +176,7 @@ export default function DocThreePreview({
             <TexturedModel
               key={index}
               jemData={layer.jemData}
-              textureUrl={layer.textureUrl || ""}
+              textureUrl={layer.textureUrl ?? ""}
               color={layer.color}
             />
           ))}

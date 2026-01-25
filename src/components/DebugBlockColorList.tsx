@@ -43,7 +43,7 @@ export default function DebugBlockColorList() {
         return acc;
       },
       {} as Record<string, ParsedTintEntry[]>,
-    ) || {};
+    ) ?? {};
 
   const sortedTintTypes = Object.keys(groupedEntries).sort((a, b) => {
     // Sort order: grass, foliage, water, fixed_*, special

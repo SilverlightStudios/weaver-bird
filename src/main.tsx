@@ -5,7 +5,7 @@ import './app.css'
 
 // Import test utilities in development mode for browser console access
 if (import.meta.env.DEV) {
-  import('@lib/test').then((testUtils) => {
+  void import('@lib/test').then((testUtils) => {
     console.log('[Dev] Test utilities loaded. Available commands:');
     console.log('  - runTestAndReport()             - RUN THIS: Test all blocks and get error report');
     console.log('  - testAllBlocks(options)         - Test all blocks with options');

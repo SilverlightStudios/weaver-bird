@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { jemToThreeJS } from "@lib/emf";
 import { OrbitControls, PerspectiveCamera, Bounds } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import type { ParsedEntityModel } from "@/lib/emf/types";
+import type { ParsedEntityModel } from "@lib/emf";
 
 interface Props {
   jemModel: ParsedEntityModel;

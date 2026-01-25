@@ -63,7 +63,10 @@
       "Bash(unzip:*)",
       "Bash(node:*)",
       "Bash(npx tsc:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(git -C /Users/nicholaswillette/Repos/Weaverbird checkout src/ui/components/Pagination/Pagination.tsx src/ui/components/Drawer/Drawer.tsx src/ui/components/DropdownMenu/DropdownMenu.tsx src/ui/components/Tooltip/Tooltip.tsx src/ui/components/RadioGroup/RadioGroup.tsx src/ui/components/Resizable/Resizable.tsx)",
+      "Bash(npx eslint:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

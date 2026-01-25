@@ -26,12 +26,14 @@
 @mixin interactive-lift {
     &:hover {
         @include shadows.shadow-lg;
+
         rotate: 0deg;
         translate: 0 -2px;
     }
 
     &:active {
         @include shadows.shadow-sm;
+
         translate: 0 2px;
     }
 }
@@ -43,12 +45,14 @@
 @mixin interactive-lift-guarded {
     &:where(:not(:disabled)):hover {
         @include shadows.shadow-lg;
+
         rotate: 0deg;
         translate: 0 -2px;
     }
 
     &:where(:not(:disabled)):active {
         @include shadows.shadow-sm;
+
         translate: 0 2px;
     }
 }
@@ -63,7 +67,9 @@
         content: "";
         position: absolute;
         inset: 0;
+
         @include patterns.pattern-halftone-sm;
+
         opacity: $opacity;
         mix-blend-mode: soft-light;
         pointer-events: none;

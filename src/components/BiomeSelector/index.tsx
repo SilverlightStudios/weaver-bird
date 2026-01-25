@@ -46,7 +46,7 @@ export const BiomeSelector = () => {
       <label className={s.label}>Biome:</label>
       <Combobox
         options={biomeOptions}
-        value={selectedBiomeId || "plains"}
+        value={selectedBiomeId ?? "plains"}
         onValueChange={handleBiomeChange}
         placeholder="Select biome..."
         searchPlaceholder="Search biomes..."

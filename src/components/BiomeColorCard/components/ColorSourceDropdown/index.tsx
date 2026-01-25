@@ -5,7 +5,7 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuLabel,
-} from "@/ui/components/DropdownMenu/DropdownMenu";
+} from "@/ui/components/DropdownMenu";
 import type { ColorSourceDropdownProps } from "./types";
 import s from "./styles.module.scss";
 

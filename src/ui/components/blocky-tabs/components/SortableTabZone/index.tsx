@@ -73,8 +73,8 @@ export const SortableTabZone: React.FC<SortableTabZoneProps> = ({
             activeZone={activeZone}
             portalContainer={portalContainer}
             drawerSize={
-              drawerSizes[tab.id] ||
-              tab.defaultDrawerSize ||
+              drawerSizes[tab.id] ??
+              tab.defaultDrawerSize ??
               DRAWER_DEFAULT_SIZE
             }
             onDrawerResize={(size) => onDrawerResize(tab.id, size)}

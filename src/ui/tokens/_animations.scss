@@ -63,6 +63,7 @@ $duration-slower: 320ms;
     100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-8px);
     }
@@ -81,9 +82,11 @@ $duration-slower: 320ms;
     100% {
         rotate: 0deg;
     }
+
     25% {
         rotate: -3deg;
     }
+
     75% {
         rotate: 3deg;
     }
@@ -102,6 +105,7 @@ $duration-slower: 320ms;
     100% {
         scale: 1;
     }
+
     50% {
         scale: 1.05;
     }
@@ -120,6 +124,7 @@ $duration-slower: 320ms;
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -139,9 +144,11 @@ $duration-slower: 320ms;
         scale: 0;
         opacity: 0;
     }
+
     50% {
         scale: 1.1;
     }
+
     100% {
         scale: 1;
         opacity: 1;
@@ -161,9 +168,11 @@ $duration-slower: 320ms;
     100% {
         transform: translateX(0);
     }
+
     25% {
         transform: translateX(-8px);
     }
+
     75% {
         transform: translateX(8px);
     }

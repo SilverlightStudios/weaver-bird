@@ -23,9 +23,7 @@
 
 import { VANILLA_ANIMATIONS } from './generated';
 
-export type { BellAnimationName } from './generated/bell';
-export type { ChestAnimationName } from './generated/chest';
-export type { ShulkerBoxAnimationName } from './generated/shulker_box';
+
 
 /**
  * Animation keyframe (JPM-compatible)

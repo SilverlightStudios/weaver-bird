@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getPackTexturePath, getVanillaTexturePath } from "@lib/tauri";
-import { normalizeAssetId } from "@lib/assetUtils";
 import { useSelectWinner, useSelectPack } from "@state/selectors";
 
 /**
@@ -10,7 +9,7 @@ import { useSelectWinner, useSelectPack } from "@state/selectors";
 export function useVariantTexture(variantId: string): string | null {
     const [textureUrl, setTextureUrl] = useState<string | null>(null);
     const winnerPackId = useSelectWinner(variantId);
-    const pack = useSelectPack(winnerPackId || "");
+    const pack = useSelectPack(winnerPackId ?? "");
 
     useEffect(() => {
         let mounted = true;
@@ -19,17 +18,16 @@ export function useVariantTexture(variantId: string): string | null {
             if (!variantId) return;
 
             try {
-                const normalizedId = normalizeAssetId(variantId);
                 let texturePath: string;
 
                 if (winnerPackId && winnerPackId !== "minecraft:vanilla" && pack) {
                     texturePath = await getPackTexturePath(
                         pack.path,
-                        normalizedId,
+                        variantId,
                         pack.is_zip,
                     );
                 } else {
-                    texturePath = await getVanillaTexturePath(normalizedId);
+                    texturePath = await getVanillaTexturePath(variantId);
                 }
 
                 if (mounted) {
@@ -44,7 +42,7 @@ export function useVariantTexture(variantId: string): string | null {
             }
         }
 
-        loadTexture();
+        void loadTexture();
 
         return () => {
             mounted = false;

@@ -57,6 +57,7 @@
 .patternSample {
     min-height: 200px;
     border: 3px solid var(--color-border);
+
     @include tokens.radius-quirky-md;
     @include tokens.shadow-md;
 
@@ -84,16 +85,19 @@
 .halftoneSm {
     position: absolute;
     inset: 0;
+
     @include tokens.pattern-halftone-sm;
 }
 
 .halftoneMd {
     background: var(--color-block);
+
     @include tokens.pattern-halftone-md;
 }
 
 .halftoneLg {
     background: var(--color-bg);
+
     @include tokens.pattern-halftone-lg;
 }
 
@@ -105,6 +109,7 @@
         content: "";
         position: absolute;
         inset: 0;
+
         @include tokens.pattern-comic-dots;
     }
 }
@@ -124,6 +129,7 @@
 
 .grid {
     background: var(--color-block);
+
     @include tokens.pattern-grid;
 }
 
@@ -146,6 +152,7 @@
         content: "";
         position: absolute;
         inset: 0;
+
         @include tokens.gradient-spotlight;
     }
 }
@@ -220,6 +227,7 @@
         content: "";
         position: absolute;
         inset: 0;
+
         @include tokens.pattern-halftone-sm;
 
         z-index: -1;

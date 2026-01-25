@@ -9,6 +9,7 @@
 
     // Halftone overlay for punk aesthetic
     @include tokens.pattern-halftone-lg;
+
     opacity: 0;
     pointer-events: none;
     transition: opacity 200ms ease;
@@ -23,8 +24,10 @@
 .content {
     position: fixed;
     background: var(--color-bg-surface);
+
     @include tokens.border-standard;
     @include tokens.shadow-lg;
+
     z-index: 101;
     display: flex;
     flex-direction: column;
@@ -33,6 +36,7 @@
     pointer-events: none;
     opacity: 0;
     transition: opacity 160ms ease;
+
     --drawer-inline-size: 22rem; // cap for horizontal drawers (overridable)
     --drawer-block-size: 24rem; // cap for vertical drawers (overridable)
 
@@ -40,6 +44,7 @@
 
     // Texture overlay
     isolation: isolate;
+
     @include tokens.texture-overlay(0.15);
 
     &:focus-visible {
@@ -66,6 +71,7 @@
     border-radius: 1.6rem 1.6rem 0 0;
     border-bottom: none;
     max-height: 0; // Start at 0 for opening animation
+
     --drawer-block-size: 100vh;
 
     // Only transition max-height for top/bottom
@@ -80,7 +86,7 @@
     margin-bottom: -10vh;
 
     // Centered on desktop OR when position is absolute (portal mode)
-    @media (min-width: 640px) {
+    @media (width >= 640px) {
         left: 50%;
         right: auto;
         max-width: 32rem;
@@ -118,6 +124,7 @@
     border-radius: 0 0 1.6rem 1.6rem;
     border-top: none;
     max-height: 0; // Start at 0 for opening animation
+
     --drawer-block-size: 350px;
 
     // Only transition max-height for top/bottom
@@ -132,7 +139,7 @@
     margin-top: -10vh;
 
     // Centered on desktop
-    @media (min-width: 640px) {
+    @media (width >= 640px) {
         left: 50%;
         right: auto;
         max-width: 32rem;
@@ -227,13 +234,14 @@
     width: min(var(--drawer-inline-size), 100%);
     border-radius: 0 1.6rem 1.6rem 0;
     border-left: none;
+
     --drawer-inline-size: 350px;
 
     // Extend background beyond screen during animation (full-screen mode only)
     padding-left: 10vw;
     margin-left: -10vw;
 
-    @media (min-width: 640px) {
+    @media (width >= 640px) {
         border-radius: 0 2rem 2rem 0;
     }
 
@@ -253,6 +261,7 @@
         @starting-style {
             max-width: 0;
         }
+
         max-width: var(--drawer-inline-size);
         transition: max-width 300ms ease;
     }
@@ -281,13 +290,14 @@
     width: min(var(--drawer-inline-size), 100%);
     border-radius: 1.6rem 0 0 1.6rem;
     border-right: none;
+
     --drawer-inline-size: 350px;
 
     // Extend background beyond screen during animation (full-screen mode only)
     padding-right: 10vw;
     margin-right: -10vw;
 
-    @media (min-width: 640px) {
+    @media (width >= 640px) {
         border-radius: 2rem 0 0 2rem;
     }
 
@@ -307,6 +317,7 @@
         @starting-style {
             max-width: 0;
         }
+
         max-width: var(--drawer-inline-size);
         transition: max-width 300ms ease;
     }
@@ -352,7 +363,7 @@
 
     animation: scaleIn 300ms var(--spring-bezier);
 
-    @media (min-width: 640px) {
+    @media (width >= 640px) {
         max-width: 32rem;
     }
 }
@@ -365,7 +376,6 @@
     background: var(--color-ink);
     border-radius: 2rem;
     opacity: 0.3;
-
     animation: handlePulse 1.5s ease-in-out;
 }
 

@@ -47,7 +47,7 @@
   flex-shrink: 0;
 
   // Asymmetric border radius (square-ish but quirky)
-  border-radius: 0.6rem 0.3rem 0.7rem 0.3rem;
+  border-radius: 0.6rem 0.3rem 0.7rem;
 
   // Background
   background: var(--color-block);
@@ -73,7 +73,9 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
+
     @include tokens.pattern-halftone-sm;
+
     mix-blend-mode: soft-light;
     opacity: 0.2;
     pointer-events: none;
@@ -82,6 +84,7 @@
   // Hover state
   &:hover:not(.disabled) {
     @include tokens.shadow-lg;
+
     rotate: 0deg;
     translate: 0 -2px;
     background: var(--color-bg);
@@ -90,6 +93,7 @@
   // Active/pressed state
   &:active:not(.disabled) {
     @include tokens.shadow-sm;
+
     translate: 0 2px;
   }
 
@@ -97,10 +101,12 @@
   &.checked {
     background: var(--color-primary);
     border-color: var(--color-ink);
+
     @include tokens.shadow-lg;
 
     &:hover:not(.disabled) {
       @include tokens.shadow-xl;
+
       background: color-mix(in srgb, var(--color-primary) 90%, black);
     }
   }
@@ -120,7 +126,7 @@
   background: white;
 
   // Asymmetric radius for playfulness
-  border-radius: 0.4rem 0.2rem 0.3rem 0.2rem;
+  border-radius: 0.4rem 0.2rem 0.3rem;
 
   // Slight rotation opposite to parent
   rotate: 2deg;
@@ -137,6 +143,7 @@
     scale: 0;
     rotate: -45deg;
   }
+
   100% {
     scale: 1;
     rotate: 2deg;

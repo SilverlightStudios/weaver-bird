@@ -1,9 +1,52 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { getPackTexturePath } from "@lib/tauri";
+import { readBlockModel, type BlockModel } from "@lib/tauri/blockModels";
+import { resolveTextureRef } from "@lib/utils/blockGeometry";
+import { useSelectPacksDir } from "@state/selectors";
 import { useStore } from "@/state/store";
 import type { VariantChooserProps } from "./types";
 import s from "./styles.module.scss";
+
+const TEXTURE_KEY_PRIORITY = [
+  "all",
+  "side",
+  "end",
+  "top",
+  "bottom",
+  "particle",
+  "layer0",
+  "layer1",
+];
+
+const resolveTextureId = (
+  textureRef: string | null,
+  fallbackNamespace: string,
+): string | null => {
+  if (!textureRef || textureRef.startsWith("#")) return null;
+  const cleaned = textureRef.replace(/\.png$/i, "");
+  return cleaned.includes(":") ? cleaned : `${fallbackNamespace}:${cleaned}`;
+};
+
+const pickModelTextureId = (
+  model: BlockModel,
+  fallbackNamespace: string,
+): string | null => {
+  const textures = model.textures ?? {};
+  for (const key of TEXTURE_KEY_PRIORITY) {
+    const resolved = resolveTextureRef(textures[key] ?? "", textures);
+    const textureId = resolveTextureId(resolved, fallbackNamespace);
+    if (textureId) return textureId;
+  }
+
+  for (const value of Object.values(textures)) {
+    const resolved = resolveTextureRef(value, textures);
+    const textureId = resolveTextureId(resolved, fallbackNamespace);
+    if (textureId) return textureId;
+  }
+
+  return null;
+};
 
 export const VariantChooser = ({
   providers,
@@ -11,6 +54,7 @@ export const VariantChooser = ({
   assetId,
 }: VariantChooserProps) => {
   const packs = useStore((state) => state.packs);
+  const packsDir = useSelectPacksDir();
   const [textureUrls, setTextureUrls] = useState<Record<string, string>>({});
   const [loadingTextures, setLoadingTextures] = useState<Record<string, boolean>>({});
 
@@ -35,14 +79,42 @@ export const VariantChooser = ({
           if (!pack) return;
 
           try {
-            const texturePath = await invoke<string>("get_pack_texture_path", {
-              packPath: pack.path,
-              assetId: assetId,
-              isZip: pack.is_zip,
-            });
+            const texturePath = await getPackTexturePath(
+              pack.path,
+              assetId,
+              pack.is_zip,
+            );
+
             newUrls[provider.packId] = convertFileSrc(texturePath);
           } catch (error) {
-            console.error(`Failed to load texture for ${provider.packId}:`, error);
+            try {
+              const assetPath = assetId.includes(":")
+                ? assetId.split(":")[1] ?? assetId
+                : assetId;
+              const isBlockTexture = assetPath.startsWith("block/");
+              if (!isBlockTexture || !packsDir) {
+                throw error;
+              }
+
+              const namespace = assetId.split(":")[0] || "minecraft";
+              const model = await readBlockModel(provider.packId, assetId, packsDir);
+              const textureId = pickModelTextureId(model, namespace);
+              if (!textureId) {
+                throw error;
+              }
+
+              const texturePath = await getPackTexturePath(
+                pack.path,
+                textureId,
+                pack.is_zip,
+              );
+              newUrls[provider.packId] = convertFileSrc(texturePath);
+            } catch (fallbackError) {
+              console.error(
+                `Failed to load texture for ${provider.packId}:`,
+                fallbackError,
+              );
+            }
           }
         })
       );
@@ -51,8 +123,8 @@ export const VariantChooser = ({
       setLoadingTextures({});
     };
 
-    loadTextureUrls();
-  }, [assetId, providers, packs]);
+    void loadTextureUrls();
+  }, [assetId, providers, packs, packsDir]);
 
   if (!assetId || providers.length === 0) {
     return (

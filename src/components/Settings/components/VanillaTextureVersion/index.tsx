@@ -28,7 +28,7 @@ export const VanillaTextureVersion = () => {
 
         setVersions(availableVersions);
         setCurrentVersion(cached);
-        setSelectedVersion(cached || availableVersions[0]?.version || "");
+        setSelectedVersion(cached ?? availableVersions[0]?.version ?? "");
         setError(undefined);
       } catch (err) {
         setError(formatError(err));
@@ -36,7 +36,7 @@ export const VanillaTextureVersion = () => {
         setLoading(false);
       }
     };
-    load();
+    void load();
   }, []);
 
   // Handle version change

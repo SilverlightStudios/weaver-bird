@@ -24,7 +24,7 @@
     height: 70%;
     object-fit: contain;
     image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     image-rendering: crisp-edges;
 
     // Safari/WebKit optimization for smooth transitions
@@ -51,6 +51,7 @@
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }
@@ -60,12 +61,15 @@
     position: relative;
     width: 100%;
     height: 100%;
+
     // Center the isometric projection
     display: flex;
     align-items: center;
     justify-content: center;
+
     // Enable 3D transforms for proper face positioning
     transform-style: preserve-3d;
+
     // Isometric view: rotate the whole scene
     // rotateX(-30deg) tilts down to see top, rotateY(135deg) rotates to show front face
     // Changed from -45deg to 135deg to show front of directional blocks (shelves, furnaces, etc.)
@@ -75,6 +79,7 @@
     // Force hardware acceleration with translateZ(0)
     // Note: already using translate3d in face transforms, but this ensures scene is also accelerated
     backface-visibility: hidden;
+
     // REMOVED: will-change: transform
     // Reason: Pre-allocating GPU layers for all blocks caused Safari to freeze
     // when many blocks transitioned simultaneously. Safari will still hardware-accelerate
@@ -84,11 +89,13 @@
 // Base face styles
 .face {
     position: absolute;
+
     // Position from center using custom properties
     left: 50%;
     top: 50%;
     transform-origin: center center;
     overflow: hidden;
+
     // Slight scale up to eliminate subpixel gaps between faces
     // Using padding instead of scale to avoid blurring textures
     margin: -0.5px;
@@ -101,18 +108,22 @@
     img {
         // Position and scale image for UV mapping
         position: absolute;
+
         // Scale image to show only the UV portion
         width: calc(100% / var(--uv-width, 1));
         height: calc(100% / var(--uv-height, 1));
+
         // Offset for UV coordinates
         left: calc(-100% * var(--uv-x, 0) / var(--uv-width, 1));
         top: calc(-100% * var(--uv-y, 0) / var(--uv-height, 1));
         transform-origin: top left;
         transform: scaleX(var(--uv-flip-x, 1)) scaleY(var(--uv-flip-y, 1));
+
         // Pixelated rendering
         image-rendering: pixelated;
-        image-rendering: -moz-crisp-edges;
         image-rendering: crisp-edges;
+        image-rendering: crisp-edges;
+
         // Apply brightness
         filter: brightness(var(--face-brightness, 1));
     }

@@ -313,7 +313,7 @@ describe("BlockModel", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Advance frames to test animation
-    renderer.advanceFrames(60, 1); // Advance 60 frames at 1fps
+    await renderer.advanceFrames(60, 1); // Advance 60 frames at 1fps
 
     // The group should exist (animation is applied via useFrame)
     expect(renderer.scene.children.length).toBeGreaterThan(0);

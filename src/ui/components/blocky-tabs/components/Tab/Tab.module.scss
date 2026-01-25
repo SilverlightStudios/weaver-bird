@@ -11,7 +11,6 @@
     user-select: none;
     position: relative;
     scale: 1;
-
     transition:
         scale 200ms ease,
         box-shadow 200ms ease,
@@ -62,6 +61,7 @@
     scale: 1.1;
     rotate: 0deg;
     border-color: var(--color-ink);
+
     @include tokens.shadow-md;
 }
 
@@ -75,10 +75,12 @@
     cursor: grabbing;
     scale: 1.1;
     rotate: 5deg;
+
     @include tokens.shadow-xl;
 
     // Reset to square when dragging
     border-radius: 12px !important;
+
     @include tokens.border-standard;
 
     // Restore all borders that were removed by zone-specific styling

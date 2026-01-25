@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from "react";
 import s from "./styles.module.scss";
+import { ButtonIcon } from "./ButtonIcon";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 export type ButtonSize = "md" | "lg";
@@ -37,30 +38,27 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const icon = renderIcon?.();
-    const stackIcon = icon
-      ? iconLocation === "above" || iconLocation === "below"
-      : false;
-
-    const contentClassName = [
-      s.content,
-      stackIcon ? s.stack : "",
-      icon ? s.withIcon : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-
     const { style, ...restProps } = rest;
     const accent = color ?? "var(--color-primary)";
 
     const mergedStyle = {
       ...(style ?? {}),
-      // Expose accent color to CSS for per-variant styling
       "--button-accent": accent,
     } as CSSProperties;
 
     const rootClassName = [s.button, fullWidth ? s.fullWidth : "", className]
       .filter(Boolean)
       .join(" ");
+
+    const content = icon ? (
+      <ButtonIcon icon={icon} location={iconLocation}>
+        {children}
+      </ButtonIcon>
+    ) : (
+      <span className={s.content}>
+        {children && <span className={s.label}>{children}</span>}
+      </span>
+    );
 
     return (
       <button
@@ -74,20 +72,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         {...restProps}
       >
-        <span className={contentClassName}>
-          {icon && (iconLocation === "leading" || iconLocation === "above") && (
-            <span className={s.icon} data-location={iconLocation}>
-              {icon}
-            </span>
-          )}
-          {children && <span className={s.label}>{children}</span>}
-          {icon &&
-            (iconLocation === "following" || iconLocation === "below") && (
-              <span className={s.icon} data-location={iconLocation}>
-                {icon}
-              </span>
-            )}
-        </span>
+        {content}
         <span className={s.activeOutline} aria-hidden="true" />
       </button>
     );

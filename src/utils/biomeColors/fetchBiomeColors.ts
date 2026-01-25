@@ -106,6 +106,83 @@ function normalizeBiomeName(name: string): string {
 }
 
 /**
+ * Parse coordinate text from wiki table cell
+ */
+function parseCoordinates(coordText: string): { coords: { x: number; y: number } | null; usesNoise: boolean } {
+  if (coordText === "N/A" || coordText.toLowerCase().includes("noise")) {
+    return { coords: null, usesNoise: true };
+  }
+
+  const match = coordText.match(/(\d+)\s*,\s*(\d+)/);
+  if (match) {
+    return {
+      coords: {
+        x: parseInt(match[1], 10),
+        y: parseInt(match[2], 10),
+      },
+      usesNoise: false,
+    };
+  }
+
+  return { coords: null, usesNoise: false };
+}
+
+/**
+ * Find or create biome entry in list
+ */
+function findOrCreateBiome(biomes: BiomeColorCoords[], biomeId: string, biomeName: string): BiomeColorCoords {
+  let biome = biomes.find((b) => b.biomeId === biomeId);
+
+  if (!biome) {
+    biome = {
+      biomeId,
+      name: biomeName,
+      grassCoords: null,
+      foliageCoords: null,
+      usesNoise: false,
+    };
+    biomes.push(biome);
+  }
+
+  return biome;
+}
+
+/**
+ * Process a single table row and update biome data
+ */
+function processTableRow(
+  row: Element,
+  isGrassTable: boolean,
+  isFoliageTable: boolean,
+  biomes: BiomeColorCoords[],
+): void {
+  const cells = row.querySelectorAll("td");
+
+  if (cells.length < 2) {
+    return; // Skip header rows
+  }
+
+  const biomeName = cells[0].textContent?.trim();
+  if (!biomeName) return;
+
+  const coordText = cells[1].textContent?.trim();
+  if (!coordText) return;
+
+  const biomeId = normalizeBiomeName(biomeName);
+  const { coords, usesNoise } = parseCoordinates(coordText);
+
+  const biome = findOrCreateBiome(biomes, biomeId, biomeName);
+
+  if (isGrassTable) {
+    biome.grassCoords = coords;
+    biome.usesNoise = biome.usesNoise || usesNoise;
+  } else if (isFoliageTable) {
+    biome.foliageCoords = coords;
+    biome.usesNoise = biome.usesNoise || usesNoise;
+  }
+}
+
+/**
  * Parse the wiki HTML to extract biome colormap coordinates
  *
  * Note: This function parses the HTML structure of the Minecraft Wiki.
@@ -113,19 +190,13 @@ function normalizeBiomeName(name: string): string {
  */
 function parseWikiHTML(html: string): BiomeColorCoords[] {
   const biomes: BiomeColorCoords[] = [];
-
-  // Create a DOM parser
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
-
-  // Find all tables with biome color data
-  // The wiki uses tables with headers "Biome" and coordinates
   const tables = doc.querySelectorAll("table.wikitable");
 
   for (const table of Array.from(tables)) {
-    // Check if this is a grass or foliage color table
     const prevHeading = table.previousElementSibling;
-    const headingText = prevHeading?.textContent?.toLowerCase() || "";
+    const headingText = prevHeading?.textContent?.toLowerCase() ?? "";
 
     const isGrassTable = headingText.includes("grass");
     const isFoliageTable = headingText.includes("foliage");
@@ -134,65 +205,9 @@ function parseWikiHTML(html: string): BiomeColorCoords[] {
       continue;
     }
 
-    // Parse table rows
     const rows = table.querySelectorAll("tr");
-
     for (const row of Array.from(rows)) {
-      const cells = row.querySelectorAll("td");
-
-      if (cells.length < 2) {
-        continue; // Skip header rows
-      }
-
-      // First cell: biome name
-      const biomeName = cells[0].textContent?.trim();
-      if (!biomeName) continue;
-
-      // Second cell: coordinates (e.g., "50, 173") or "N/A"
-      const coordText = cells[1].textContent?.trim();
-      if (!coordText) continue;
-
-      const biomeId = normalizeBiomeName(biomeName);
-
-      // Parse coordinates or detect N/A
-      let coords: { x: number; y: number } | null = null;
-      let usesNoise = false;
-
-      if (coordText === "N/A" || coordText.toLowerCase().includes("noise")) {
-        usesNoise = true;
-      } else {
-        // Parse "50, 173" format
-        const match = coordText.match(/(\d+)\s*,\s*(\d+)/);
-        if (match) {
-          coords = {
-            x: parseInt(match[1], 10),
-            y: parseInt(match[2], 10),
-          };
-        }
-      }
-
-      // Find or create biome entry
-      let biome = biomes.find((b) => b.biomeId === biomeId);
-
-      if (!biome) {
-        biome = {
-          biomeId,
-          name: biomeName,
-          grassCoords: null,
-          foliageCoords: null,
-          usesNoise: false,
-        };
-        biomes.push(biome);
-      }
-
-      // Update coordinates
-      if (isGrassTable) {
-        biome.grassCoords = coords;
-        biome.usesNoise = biome.usesNoise || usesNoise;
-      } else if (isFoliageTable) {
-        biome.foliageCoords = coords;
-        biome.usesNoise = biome.usesNoise || usesNoise;
-      }
+      processTableRow(row, isGrassTable, isFoliageTable, biomes);
     }
   }
 

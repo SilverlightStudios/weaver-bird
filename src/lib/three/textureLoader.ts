@@ -2,177 +2,19 @@
  * Texture loading utilities for Minecraft resource packs
  */
 import * as THREE from "three";
-import { invoke } from "@tauri-apps/api/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { getPackTexturePath, getVanillaTexturePath } from "@lib/tauri";
 import {
-  buildAnimationTimeline,
-  loadAnimationMetadata,
-} from "@lib/utils/animationTexture";
+  type AnimatedTextureInfo,
+  type AnimMaterial,
+  setupAnimatedTexture,
+} from "./animatedTextureMaterial";
 
 // Cache textures to avoid reloading
 const textureCache = new Map<string, THREE.Texture>();
 
 // Track animated textures for animation updates
-interface AnimatedTextureInfo {
-  texture: THREE.Texture;
-  frameCount: number;
-  frames: number[];
-  frameTimesMs: number[];
-  sequenceIndex: number;
-  lastUpdateTime: number;
-  interpolate: boolean; // Whether to smoothly fade between frames
-  material?: THREE.ShaderMaterial; // Custom shader material for interpolation
-}
-
 const animatedTextures = new Map<THREE.Texture, AnimatedTextureInfo>();
-
-/**
- * Create a custom shader material for animated texture interpolation
- * Uses MeshStandardMaterial with onBeforeCompile to preserve lighting behavior
- */
-function createAnimatedTextureMaterial(
-  texture: THREE.Texture,
-  frameCount: number,
-): THREE.ShaderMaterial {
-  // Clone the texture so we can modify its properties without affecting the original
-  const clonedTexture = texture.clone();
-  clonedTexture.needsUpdate = true;
-
-  // Reset repeat and offset since we'll handle animation in the shader
-  clonedTexture.repeat.set(1, 1);
-  clonedTexture.offset.set(0, 0);
-
-  // Use MeshStandardMaterial as base to get exact same lighting as non-animated blocks
-  const material = new THREE.MeshStandardMaterial({
-    map: clonedTexture,
-    transparent: true,
-    alphaTest: 0.1,
-    roughness: 0.8,
-    metalness: 0.2,
-    side: THREE.FrontSide,
-  });
-
-  // Inject custom animation shader code into the standard material
-  material.onBeforeCompile = (shader) => {
-    // Add custom uniforms for animation
-    shader.uniforms.frameCount = { value: frameCount };
-    shader.uniforms.currentFrame = { value: 0 };
-    shader.uniforms.nextFrame = { value: 0 };
-    shader.uniforms.blendFactor = { value: 0.0 };
-
-    // Store reference to shader uniforms for updates
-    (material as AnimMaterial).userData.animUniforms = shader.uniforms as unknown as AnimUniforms;
-
-    // Add uniform declarations to fragment shader
-    shader.fragmentShader = `
-      uniform float frameCount;
-      uniform float currentFrame;
-      uniform float nextFrame;
-      uniform float blendFactor;
-      ${shader.fragmentShader}
-    `;
-
-    // Replace the texture sampling with custom frame blending
-    shader.fragmentShader = shader.fragmentShader.replace(
-      "#include <map_fragment>",
-      `
-        // Custom animated texture sampling with frame blending
-        float frameHeight = 1.0 / frameCount;
-        float currentFrameV = (frameCount - 1.0 - currentFrame) / frameCount;
-        float nextFrameIndex = mod(nextFrame, frameCount);
-        float nextFrameV = (frameCount - 1.0 - nextFrameIndex) / frameCount;
-
-        // Sample current frame
-        vec2 currentUv = vMapUv;
-        currentUv.y = currentFrameV + currentUv.y * frameHeight;
-        vec4 currentColor = texture2D(map, currentUv);
-
-        // Sample next frame
-        vec2 nextUv = vMapUv;
-        nextUv.y = nextFrameV + nextUv.y * frameHeight;
-        vec4 nextColor = texture2D(map, nextUv);
-
-        // Blend between frames
-        vec4 sampledDiffuseColor = mix(currentColor, nextColor, blendFactor);
-
-        #ifdef DECODE_VIDEO_TEXTURE
-          sampledDiffuseColor = vec4( mix( pow( sampledDiffuseColor.rgb * 0.9478672986 + vec3( 0.0521327014 ), vec3( 2.4 ) ), sampledDiffuseColor.rgb * 0.0773993808, vec3( lessThanEqual( sampledDiffuseColor.rgb, vec3( 0.04045 ) ) ) ), sampledDiffuseColor.w );
-        #endif
-        diffuseColor *= sampledDiffuseColor;
-      `,
-    );
-  };
-
-  // Cast to ShaderMaterial type for compatibility with existing code
-  return material as unknown as THREE.ShaderMaterial;
-}
-
-/**
- * Setup animated texture configuration and register it for animation updates
- * Shared between loadPackTexture and loadVanillaTexture to avoid duplication
- */
-async function setupAnimatedTexture(
-  tex: THREE.Texture,
-  textureUrl: string,
-  textureId: string,
-): Promise<void> {
-  if (!tex.image) return;
-
-  const {width} = tex.image;
-  const {height} = tex.image;
-
-  // Animated textures have height > width and height evenly divisible by width
-  const isAnimated = height > width && height % width === 0;
-  if (!isAnimated) return;
-
-  const frameCount = height / width;
-  console.log(
-    `[textureLoader] Animated texture: ${textureId} (${frameCount} frames, ${width}x${height})`,
-  );
-
-  // Apply animation frame cropping - V coordinates scaled: repeat by 1/frameCount
-  tex.repeat.set(1, 1 / frameCount);
-
-  // Load animation metadata (frametime, frames, interpolate) when available
-  const metadata = await loadAnimationMetadata(textureUrl);
-  const timeline = buildAnimationTimeline(frameCount, metadata);
-  const initialFrame = timeline.frames[0] ?? 0;
-  const offset = (frameCount - 1 - initialFrame) / frameCount;
-  tex.offset.set(0, offset);
-
-  const interpolate = metadata?.interpolate ?? false;
-  const material = interpolate
-    ? createAnimatedTextureMaterial(tex, frameCount)
-    : undefined;
-
-  animatedTextures.set(tex, {
-    texture: tex,
-    frameCount,
-    frames: timeline.frames,
-    frameTimesMs: timeline.frameTimesMs,
-    sequenceIndex: 0,
-    lastUpdateTime: performance.now(),
-    interpolate,
-    material,
-  });
-
-  console.log(
-    `[textureLoader] Registered animated texture: ${frameCount} frames @ ${timeline.frameTimesMs[0] ?? 50}ms/frame`,
-  );
-}
-
-interface AnimUniforms {
-  currentFrame: { value: number };
-  nextFrame: { value: number };
-  blendFactor: { value: number };
-  [key: string]: THREE.IUniform;
-}
-
-interface AnimMaterial extends THREE.Material {
-  userData: {
-    animUniforms?: AnimUniforms;
-  } & Record<string, unknown>;
-}
 
 /**
  * Update all animated textures
@@ -184,7 +26,7 @@ export function updateAnimatedTextures(currentTime: number): void {
       return;
     }
 
-    let {sequenceIndex} = info;
+    let { sequenceIndex } = info;
     let frameStartTime = info.lastUpdateTime;
     let elapsedMs = currentTime - frameStartTime;
     let frameTimeMs = info.frameTimesMs[sequenceIndex] ?? 50;
@@ -211,10 +53,8 @@ export function updateAnimatedTextures(currentTime: number): void {
     const nextFrame = info.frames[nextSequenceIndex] ?? currentFrame;
 
     if (info.interpolate && info.material) {
-      // Shader-based interpolation: blend between frames in the sequence.
       const progress = Math.min(elapsedMs / frameTimeMs, 1.0);
 
-      // Update shader uniforms (stored in userData by onBeforeCompile)
       const animUniforms = (info.material as AnimMaterial).userData?.animUniforms;
       if (animUniforms) {
         animUniforms.currentFrame.value = currentFrame;
@@ -222,7 +62,6 @@ export function updateAnimatedTextures(currentTime: number): void {
         animUniforms.blendFactor.value = progress;
       }
     } else if (advanced) {
-      // Instant frame switching (no interpolation)
       const offset =
         (info.frameCount - 1 - currentFrame) / info.frameCount;
       info.texture.offset.set(0, offset);
@@ -233,11 +72,6 @@ export function updateAnimatedTextures(currentTime: number): void {
 
 /**
  * Load a texture from a resource pack
- *
- * @param packPath - Path to the resource pack
- * @param textureId - Texture ID (e.g., "minecraft:block/dirt")
- * @param isZip - Whether the pack is a ZIP file
- * @returns Three.js Texture or null if not found
  */
 export async function loadPackTexture(
   packPath: string,
@@ -250,7 +84,6 @@ export async function loadPackTexture(
   console.log(`[textureLoader] Pack path: ${packPath}`);
   console.log(`[textureLoader] Is ZIP: ${isZip}`);
 
-  // Check cache first
   const cacheKey = `${packPath}:${textureId}`;
   if (textureCache.has(cacheKey)) {
     console.log(`[textureLoader] ✓ Texture found in cache: ${textureId}`);
@@ -258,22 +91,19 @@ export async function loadPackTexture(
   }
 
   try {
-    // Get the file path from Tauri backend
     console.log(`[textureLoader] → Requesting texture path from backend...`);
-    const texturePath = await invoke<string>("get_pack_texture_path", {
+    const texturePath = await getPackTexturePath(
       packPath,
-      assetId: textureId,
+      textureId,
       isZip,
-      versionFolders: versionFolders ?? undefined,
-    });
+      versionFolders ?? undefined,
+    );
 
     console.log(`[textureLoader] ✓ Backend returned path: ${texturePath}`);
 
-    // Convert to a URL that can be loaded in the browser
     const textureUrl = convertFileSrc(texturePath);
     console.log(`[textureLoader] ✓ Converted to browser URL: ${textureUrl}`);
 
-    // Load the texture first, then check for animation
     console.log(`[textureLoader] → Loading texture from URL...`);
     const texture = await new Promise<THREE.Texture>((resolve, reject) => {
       const loader = new THREE.TextureLoader();
@@ -283,15 +113,13 @@ export async function loadPackTexture(
           console.log(
             `[textureLoader] ✓ Texture loaded successfully: ${textureId}`,
           );
-          // Configure texture for Minecraft-style rendering
           tex.magFilter = THREE.NearestFilter;
           tex.minFilter = THREE.NearestFilter;
           tex.wrapS = THREE.ClampToEdgeWrapping;
           tex.wrapT = THREE.ClampToEdgeWrapping;
           tex.colorSpace = THREE.SRGBColorSpace;
 
-          // Setup animation if texture dimensions indicate animated texture
-          await setupAnimatedTexture(tex, textureUrl, textureId);
+          await setupAnimatedTexture(tex, textureUrl, textureId, animatedTextures);
 
           resolve(tex);
         },
@@ -308,7 +136,6 @@ export async function loadPackTexture(
       );
     });
 
-    // Cache the texture
     textureCache.set(cacheKey, texture);
     console.log(`[textureLoader] ✓ Texture cached`);
     console.log(`===========================================`);
@@ -324,9 +151,6 @@ export async function loadPackTexture(
 
 /**
  * Load vanilla Minecraft texture
- *
- * @param textureId - Texture ID (e.g., "minecraft:block/dirt")
- * @returns Three.js Texture or null if not found
  */
 export async function loadVanillaTexture(
   textureId: string,
@@ -337,29 +161,22 @@ export async function loadVanillaTexture(
   }
 
   try {
-    // Get the vanilla texture path from Tauri backend
-    const texturePath = await invoke<string>("get_vanilla_texture_path", {
-      assetId: textureId,
-    });
+    const texturePath = await getVanillaTexturePath(textureId);
 
-    // Convert to a URL that can be loaded in the browser
     const textureUrl = convertFileSrc(texturePath);
 
-    // Load the texture
     const texture = await new Promise<THREE.Texture>((resolve, reject) => {
       const loader = new THREE.TextureLoader();
       loader.load(
         textureUrl,
         async (tex) => {
-          // Configure texture for Minecraft-style rendering
           tex.magFilter = THREE.NearestFilter;
           tex.minFilter = THREE.NearestFilter;
           tex.wrapS = THREE.ClampToEdgeWrapping;
           tex.wrapT = THREE.ClampToEdgeWrapping;
           tex.colorSpace = THREE.SRGBColorSpace;
 
-          // Setup animation if texture dimensions indicate animated texture
-          await setupAnimatedTexture(tex, textureUrl, textureId);
+          await setupAnimatedTexture(tex, textureUrl, textureId, animatedTextures);
 
           resolve(tex);
         },
@@ -374,7 +191,6 @@ export async function loadVanillaTexture(
       );
     });
 
-    // Cache the texture
     textureCache.set(cacheKey, texture);
     return texture;
   } catch (error) {
@@ -388,11 +204,6 @@ export async function loadVanillaTexture(
 
 /**
  * Create a texture loader function for a specific pack
- *
- * @param packPath - Path to the resource pack
- * @param isZip - Whether the pack is a ZIP file
- * @param variantNumber - Optional variant number to append to texture paths (for ETF-style variants)
- * @returns Function that loads textures from this pack with vanilla fallback
  */
 export function createTextureLoader(
   packPath: string,
@@ -402,16 +213,11 @@ export function createTextureLoader(
   return async (textureId: string) => {
     console.log(`[textureLoader] createTextureLoader called for: ${textureId}`);
 
-    // Apply variant number to texture path if provided (ETF-style variants)
-    // BUT only if the texture path doesn't already have a variant number
     let actualTextureId = textureId;
     if (variantNumber) {
-      // Check if texture already ends with a number (indicating it's already a variant)
       const hasVariantNumber = /\d+$/.test(textureId);
 
       if (!hasVariantNumber) {
-        // Append variant number to the texture path
-        // E.g., "block/allium" + "3" -> "block/allium3"
         actualTextureId = `${textureId}${variantNumber}`;
         console.log(
           `[textureLoader] Applying variant suffix: ${textureId} -> ${actualTextureId}`,
@@ -423,12 +229,9 @@ export function createTextureLoader(
       }
     }
 
-    // Try loading from the pack first
     console.log(`[textureLoader] Attempting pack texture load...`);
     let texture = await loadPackTexture(packPath, actualTextureId, isZip);
 
-    // If variant texture failed and we applied a variant suffix, try without it
-    // This handles cases like grass_block_side which don't have variants
     if (!texture && variantNumber && actualTextureId !== textureId) {
       console.log(
         `[textureLoader] Variant texture failed, trying base texture: ${textureId}`,
@@ -436,14 +239,12 @@ export function createTextureLoader(
       texture = await loadPackTexture(packPath, textureId, isZip);
     }
 
-    // Fall back to vanilla if not found
     if (!texture) {
       console.log(
         `[textureLoader] Pack texture failed, trying vanilla fallback...`,
       );
       texture = await loadVanillaTexture(actualTextureId);
 
-      // Also try vanilla without variant suffix
       if (!texture && variantNumber && actualTextureId !== textureId) {
         texture = await loadVanillaTexture(textureId);
       }
@@ -483,7 +284,6 @@ export function isTextureAnimated(texture: THREE.Texture): boolean {
  * Clear the texture cache
  */
 export function clearTextureCache(): void {
-  // Dispose all textures
   for (const texture of textureCache.values()) {
     texture.dispose();
     animatedTextures.delete(texture);
