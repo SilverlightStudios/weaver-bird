@@ -143,6 +143,15 @@ export function normalizeTranslationY(
 ): void {
   const channel = `${boneName}.ty`;
 
+  if (boneName === "headwear" || boneName === "head2") {
+    console.log(`[DEBUG] normalizeTranslationY for ${boneName}:`, {
+      isRoot,
+      invertAxis,
+      smallSharedTyHas: smallSharedTyChannels.has(channel),
+      existingOffsetYPx: userData.translationOffsetYPx,
+    });
+  }
+
   if (smallSharedTyChannels.has(channel)) return;
   if (typeof userData.translationOffsetYPx === "number") return;
   if (typeof userData.translationOffsetY === "number") return;
@@ -163,6 +172,16 @@ export function normalizeTranslationY(
     parentOriginPx[1] >= 16 &&
     Math.abs(ty0) >= 8 &&
     Math.abs(ty0 + parentOriginPx[1]) <= 2;
+
+  if (boneName === "headwear" || boneName === "head2") {
+    console.log(`[DEBUG] normalizeTranslationY ${boneName} conditions:`, {
+      ty0,
+      isConstant,
+      parentOriginPx,
+      cancelsParentOriginY,
+      willSetOffset: cancelsParentOriginY || (!isConstant && Math.abs(ty0) > 1e-6),
+    });
+  }
 
   if (cancelsParentOriginY) {
     if (Math.abs(ty0) > 1e-6) userData.translationOffsetYPx = ty0;

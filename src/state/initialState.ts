@@ -88,6 +88,9 @@ export const initialState: AppState = {
   // Entity animation variant selection
   entityAnimationVariantByAssetId: {},
 
+  // Entity particle bounds (populated by renderer)
+  entityParticleBoundsByAssetId: {},
+
   // Debug mode
   jemDebugMode: false, // Debug mode disabled by default
 

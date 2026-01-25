@@ -16,6 +16,8 @@ import { breezeHandler } from "./breeze";
 import { bannerHandler } from "./banner";
 import { equipmentHandler } from "./equipment";
 import { baseVariantHandler } from "./base_variant";
+import { endermanHandler } from "./enderman";
+import { mobStatesHandler } from "./mob_states";
 
 export const entityHandlers: EntityHandler[] = [
   // Specific entity handlers (order matters - more specific handlers first)
@@ -35,6 +37,9 @@ export const entityHandlers: EntityHandler[] = [
   breezeHandler,
   bannerHandler,
   equipmentHandler,
+  endermanHandler,
+  // Generic mob states handler for entities without specific handlers
+  mobStatesHandler,
   // Generic variant handler last (catches all variant directories)
   baseVariantHandler,
 ];

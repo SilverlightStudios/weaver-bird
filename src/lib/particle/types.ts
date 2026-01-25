@@ -14,7 +14,9 @@ export interface Particle {
   material: THREE.SpriteMaterial;
   position: THREE.Vector3;
   prevPosition: THREE.Vector3;
+  spawnPosition: THREE.Vector3;
   velocity: THREE.Vector3; // blocks/tick
+  spawnVelocity: THREE.Vector3; // blocks/tick at spawn
   age: number; // ticks
   lifetime: number; // ticks
   quadSize: number; // Minecraft `quadSize` (half-size, world units)

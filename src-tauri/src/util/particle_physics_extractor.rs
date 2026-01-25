@@ -53,6 +53,12 @@ pub struct ExtractedParticlePhysics {
     pub color: Option<[f32; 3]>,
     /// BaseAshSmokeParticle grayscale color scale (random.nextFloat() * color_scale).
     pub color_scale: Option<f32>,
+    /// Random color base (random.nextFloat() * scale + base).
+    pub color_random_base: Option<f32>,
+    /// Random color scale (random.nextFloat() * scale + base).
+    pub color_random_scale: Option<f32>,
+    /// Random color channel multiplier.
+    pub color_random_multiplier: Option<[f32; 3]>,
     /// BaseAshSmokeParticle base lifetime parameter (used in its lifetime formula).
     pub lifetime_base: Option<i32>,
     /// If true, animation frames map to lifetime/age (SpriteSet.get(age, lifetime)).
@@ -81,6 +87,9 @@ pub struct ExtractedParticlePhysics {
     /// Determines how particle size changes over its lifetime
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quad_size_curve: Option<QuadSizeCurve>,
+    /// High-level behavior identifier (e.g., portal, reverse_portal)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub behavior: Option<String>,
 }
 
 /// Particle size animation curve types
@@ -307,7 +316,7 @@ pub fn load_cached_physics_data(version: &str) -> Result<Option<ExtractedPhysics
     };
 
     // If the cache is from an older schema, force re-extraction to populate new fields.
-    const CURRENT_SCHEMA_VERSION: u32 = 6;
+    const CURRENT_SCHEMA_VERSION: u32 = 8;
     if data.schema_version < CURRENT_SCHEMA_VERSION {
         println!(
             "[particle_physics] Cached physics schema {} is older than {}, re-extracting...",
@@ -809,6 +818,11 @@ fn extract_physics_with_inheritance(
         position_jitter: direct.position_jitter.or(from_super.position_jitter),
         color: direct.color.or(from_super.color),
         color_scale: direct.color_scale.or(from_super.color_scale),
+        color_random_base: direct.color_random_base.or(from_super.color_random_base),
+        color_random_scale: direct.color_random_scale.or(from_super.color_random_scale),
+        color_random_multiplier: direct
+            .color_random_multiplier
+            .or(from_super.color_random_multiplier),
         lifetime_base: direct.lifetime_base.or(from_super.lifetime_base),
         lifetime_animation: lifetime_animation.or(direct.lifetime_animation).or(from_super.lifetime_animation),
         tick_velocity_delta: direct.tick_velocity_delta.or(from_super.tick_velocity_delta),
@@ -817,6 +831,7 @@ fn extract_physics_with_inheritance(
         skips_friction,
         uses_static_texture: None, // Will be set from provider analysis
         quad_size_curve: direct.quad_size_curve,
+        behavior: direct.behavior.or(from_super.behavior),
     };
 
     // Parse parent class from "extends" clause
@@ -837,10 +852,23 @@ fn extract_physics_with_inheritance(
         physics = merge_physics(parent_physics, physics);
     }
 
+    if physics.behavior.is_none() {
+        physics.behavior = infer_behavior_from_class(class_name);
+    }
+
     // Cache the result
     cache.insert(class_name.to_string(), physics.clone());
 
     physics
+}
+
+fn infer_behavior_from_class(class_name: &str) -> Option<String> {
+    let short_name = class_name.rsplit('.').next().unwrap_or(class_name);
+    match short_name {
+        "PortalParticle" => Some("portal".to_string()),
+        "ReversePortalParticle" => Some("reverse_portal".to_string()),
+        _ => None,
+    }
 }
 
 /// Merge two physics objects: base values + overrides.
@@ -868,6 +896,11 @@ fn merge_physics(
         position_jitter: child.position_jitter.or(parent.position_jitter),
         color: child.color.or(parent.color),
         color_scale: child.color_scale.or(parent.color_scale),
+        color_random_base: child.color_random_base.or(parent.color_random_base),
+        color_random_scale: child.color_random_scale.or(parent.color_random_scale),
+        color_random_multiplier: child
+            .color_random_multiplier
+            .or(parent.color_random_multiplier),
         lifetime_base: child.lifetime_base.or(parent.lifetime_base),
         lifetime_animation: child.lifetime_animation.or(parent.lifetime_animation),
         tick_velocity_delta: child.tick_velocity_delta.or(parent.tick_velocity_delta),
@@ -876,6 +909,7 @@ fn merge_physics(
         skips_friction: child.skips_friction.or(parent.skips_friction),
         uses_static_texture: child.uses_static_texture.or(parent.uses_static_texture),
         quad_size_curve: child.quad_size_curve.or(parent.quad_size_curve),
+        behavior: child.behavior.or(parent.behavior),
     }
 }
 
@@ -1373,6 +1407,40 @@ fn extract_physics_from_source(source: &str, field_mappings: &ParticleFieldMappi
             }
         }
 
+        // If Math.random() * N + base pattern exists, capture the lifetime range.
+        if physics.lifetime.is_none() {
+            let random_mul_pattern = format!(
+                r"this\.{}\s*=\s*\(int\)\s*\(\s*(?:(?:Math\.)?random\(\)|(?:this\.)?\w+\.\w+\(\))\s*\*\s*([\d.]+)[fFdD]?\s*\)\s*\+\s*([\d.]+)",
+                regex::escape(lifetime_field)
+            );
+            if let Ok(random_mul_re) = Regex::new(&random_mul_pattern) {
+                if let Some(caps) = random_mul_re.captures(source) {
+                    let parse_num = |value: &str| -> Option<f32> {
+                        value
+                            .trim()
+                            .trim_end_matches(|c: char| matches!(c, 'f' | 'F' | 'd' | 'D'))
+                            .parse::<f32>()
+                            .ok()
+                    };
+
+                    if let (Some(mult), Some(base)) = (
+                        parse_num(caps.get(1).unwrap().as_str()),
+                        parse_num(caps.get(2).unwrap().as_str()),
+                    ) {
+                        let base_i = base.floor() as i32;
+                        let mult_floor = mult.floor() as i32;
+                        let is_integer = (mult - mult_floor as f32).abs() < f32::EPSILON;
+                        let max_add = if is_integer && mult_floor > 0 {
+                            mult_floor - 1
+                        } else {
+                            mult_floor
+                        };
+                        physics.lifetime = Some([base_i, base_i + max_add]);
+                    }
+                }
+            }
+        }
+
         // If ternary pattern didn't match, try simple pattern
         if physics.lifetime.is_none() {
             let pattern = format!(
@@ -1525,7 +1593,7 @@ fn extract_physics_from_source(source: &str, field_mappings: &ParticleFieldMappi
         // this.rCol = $$16 = this.random.nextFloat() * $$12;
         // This means color is [random * color_scale, random * color_scale, random * color_scale]
         let random_pattern = format!(
-            r"this\.{}\s*=\s*\$\$\w+\s*=\s*this\.random\.nextFloat\(\)\s*\*\s*\$\$\d+",
+            r"this\.{}\s*=\s*\$\$\w+\s*=\s*(?:this\.)?[A-Za-z_$][\w$]*\.\w+\(\)\s*\*\s*\$\$\d+",
             regex::escape(r_col_field)
         );
         if let Ok(random_re) = Regex::new(&random_pattern) {
@@ -1539,8 +1607,89 @@ fn extract_physics_from_source(source: &str, field_mappings: &ParticleFieldMappi
             }
         }
 
-        // If no randomized pattern, try fixed color pattern
+        let mut has_random_color = false;
+
         if physics.color.is_none() {
+            let parse_float = |value: &str| -> Option<f32> {
+                let trimmed = value
+                    .trim()
+                    .trim_end_matches(|c: char| matches!(c, 'f' | 'F' | 'd' | 'D'));
+                trimmed.parse::<f32>().ok()
+            };
+
+            let mut seed_var: Option<String> = None;
+            let mut seed_scale: Option<f32> = None;
+            let mut seed_base: Option<f32> = None;
+
+            let pattern_scale_base = r"(?:float|double)\s+(\$\$\w+)\s*=\s*(?:\(\s*(?:float|double)\s*\)\s*)?(?:this\.)?[A-Za-z_$][\w$]*\.\w+\(\)\s*\*\s*([-+]?[\d.]+(?:[eE][+-]?\d+)?)[fFdD]?\s*\+\s*([-+]?[\d.]+(?:[eE][+-]?\d+)?)[fFdD]?";
+            if let Ok(re) = Regex::new(pattern_scale_base) {
+                if let Some(caps) = re.captures(source) {
+                    seed_var = caps.get(1).map(|m| m.as_str().to_string());
+                    seed_scale = parse_float(caps.get(2).unwrap().as_str());
+                    seed_base = parse_float(caps.get(3).unwrap().as_str());
+                }
+            }
+
+            if seed_var.is_none() {
+                let pattern_base_scale = r"(?:float|double)\s+(\$\$\w+)\s*=\s*([-+]?[\d.]+(?:[eE][+-]?\d+)?)[fFdD]?\s*\+\s*(?:\(\s*(?:float|double)\s*\)\s*)?(?:this\.)?[A-Za-z_$][\w$]*\.\w+\(\)\s*\*\s*([-+]?[\d.]+(?:[eE][+-]?\d+)?)[fFdD]?";
+                if let Ok(re) = Regex::new(pattern_base_scale) {
+                    if let Some(caps) = re.captures(source) {
+                        seed_var = caps.get(1).map(|m| m.as_str().to_string());
+                        seed_base = parse_float(caps.get(2).unwrap().as_str());
+                        seed_scale = parse_float(caps.get(3).unwrap().as_str());
+                    }
+                }
+            }
+
+            if let (Some(var_name), Some(scale), Some(base)) = (seed_var, seed_scale, seed_base) {
+                let parse_random_multiplier = |field: &str| -> Option<f32> {
+                    let field_esc = regex::escape(field);
+                    let var_esc = regex::escape(&var_name);
+                    let num = r"([-+]?[\d.]+(?:[eE][+-]?\d+)?)";
+
+                    let patterns = [
+                        format!(
+                            r"this\.{}\s*=\s*(?:\(\s*(?:float|double)\s*\)\s*)?{}\s*\*\s*{}[fFdD]?",
+                            field_esc, var_esc, num
+                        ),
+                        format!(
+                            r"this\.{}\s*=\s*{}[fFdD]?\s*\*\s*(?:\(\s*(?:float|double)\s*\)\s*)?{}",
+                            field_esc, num, var_esc
+                        ),
+                        format!(
+                            r"this\.{}\s*=\s*(?:\(\s*(?:float|double)\s*\)\s*)?{}",
+                            field_esc, var_esc
+                        ),
+                    ];
+
+                    for pattern in patterns {
+                        if let Ok(re) = Regex::new(&pattern) {
+                            if let Some(caps) = re.captures(source) {
+                                if let Some(m) = caps.get(1) {
+                                    return parse_float(m.as_str());
+                                }
+                                return Some(1.0);
+                            }
+                        }
+                    }
+                    None
+                };
+
+                let r_mul = parse_random_multiplier(field_mappings.r_col.as_ref().unwrap());
+                let g_mul = parse_random_multiplier(field_mappings.g_col.as_ref().unwrap());
+                let b_mul = parse_random_multiplier(field_mappings.b_col.as_ref().unwrap());
+
+                if let (Some(r), Some(g), Some(b)) = (r_mul, g_mul, b_mul) {
+                    physics.color_random_base = Some(base);
+                    physics.color_random_scale = Some(scale);
+                    physics.color_random_multiplier = Some([r, g, b]);
+                    has_random_color = true;
+                }
+            }
+        }
+
+        // If no randomized pattern, try fixed color pattern
+        if physics.color.is_none() && !has_random_color {
             let parse_color_component = |field: &str| -> Option<f32> {
                 // support floats with optional exponent and optional f suffix
                 let pattern = format!(
@@ -2436,6 +2585,11 @@ pub async fn extract_particle_physics(
                             position_jitter: physics.position_jitter.or(existing.position_jitter),
                             color: physics.color.or(existing.color),
                             color_scale: physics.color_scale.or(existing.color_scale),
+                            color_random_base: physics.color_random_base.or(existing.color_random_base),
+                            color_random_scale: physics.color_random_scale.or(existing.color_random_scale),
+                            color_random_multiplier: physics
+                                .color_random_multiplier
+                                .or(existing.color_random_multiplier),
                             lifetime_base: physics.lifetime_base.or(existing.lifetime_base),
                             lifetime_animation: physics.lifetime_animation.or(existing.lifetime_animation),
                             tick_velocity_delta: physics.tick_velocity_delta.or(existing.tick_velocity_delta),
@@ -2444,6 +2598,7 @@ pub async fn extract_particle_physics(
                             skips_friction: physics.skips_friction.or(existing.skips_friction),
                             uses_static_texture: physics.uses_static_texture.or(existing.uses_static_texture),
                             quad_size_curve: physics.quad_size_curve.clone().or(existing.quad_size_curve.clone()),
+                            behavior: physics.behavior.clone().or(existing.behavior.clone()),
                         };
                     })
                     .or_insert(physics);
@@ -2469,6 +2624,11 @@ pub async fn extract_particle_physics(
                             position_jitter: v.position_jitter.or(existing.position_jitter),
                             color: v.color.or(existing.color),
                             color_scale: v.color_scale.or(existing.color_scale),
+                            color_random_base: v.color_random_base.or(existing.color_random_base),
+                            color_random_scale: v.color_random_scale.or(existing.color_random_scale),
+                            color_random_multiplier: v
+                                .color_random_multiplier
+                                .or(existing.color_random_multiplier),
                             lifetime_base: v.lifetime_base.or(existing.lifetime_base),
                             lifetime_animation: v.lifetime_animation.or(existing.lifetime_animation),
                             tick_velocity_delta: v.tick_velocity_delta.or(existing.tick_velocity_delta),
@@ -2477,6 +2637,7 @@ pub async fn extract_particle_physics(
                             skips_friction: v.skips_friction.or(existing.skips_friction),
                             uses_static_texture: v.uses_static_texture.or(existing.uses_static_texture),
                             quad_size_curve: v.quad_size_curve.clone().or(existing.quad_size_curve.clone()),
+                            behavior: v.behavior.clone().or(existing.behavior.clone()),
                         };
                     })
                     .or_insert(v);
@@ -2520,6 +2681,15 @@ pub async fn extract_particle_physics(
                 position_jitter: particle_class_physics.position_jitter.or(merged_physics.position_jitter),
                 color: particle_class_physics.color.or(merged_physics.color),
                 color_scale: particle_class_physics.color_scale.or(merged_physics.color_scale),
+                color_random_base: particle_class_physics
+                    .color_random_base
+                    .or(merged_physics.color_random_base),
+                color_random_scale: particle_class_physics
+                    .color_random_scale
+                    .or(merged_physics.color_random_scale),
+                color_random_multiplier: particle_class_physics
+                    .color_random_multiplier
+                    .or(merged_physics.color_random_multiplier),
                 lifetime_base: particle_class_physics.lifetime_base.or(merged_physics.lifetime_base),
                 lifetime_animation: particle_class_physics.lifetime_animation.or(merged_physics.lifetime_animation),
                 tick_velocity_delta: particle_class_physics.tick_velocity_delta.or(merged_physics.tick_velocity_delta),
@@ -2528,6 +2698,10 @@ pub async fn extract_particle_physics(
                 skips_friction: particle_class_physics.skips_friction.or(merged_physics.skips_friction),
                 uses_static_texture: particle_class_physics.uses_static_texture.or(merged_physics.uses_static_texture),
                 quad_size_curve: particle_class_physics.quad_size_curve.clone().or(merged_physics.quad_size_curve),
+                behavior: particle_class_physics
+                    .behavior
+                    .clone()
+                    .or(merged_physics.behavior),
             };
         }
 
@@ -2562,7 +2736,7 @@ pub async fn extract_particle_physics(
     final_particles.retain(|k, _| !k.starts_with("__base_") && !k.starts_with("__provider_"));
 
     let data = ExtractedPhysicsData {
-        schema_version: 6,
+        schema_version: 8,
         version: version.to_string(),
         particles: final_particles,
     };

@@ -16,6 +16,7 @@ import {
   isParticleDataLoaded,
   type ParticleEmission,
 } from "@constants/particles";
+import type { MinecraftExprContext } from "@lib/particle/minecraftExpr";
 import {
   applyNaturalBlockStateDefaults,
   extractBlockStateProperties,
@@ -77,6 +78,7 @@ export function ParticleWrapper({
   // Subscribe to particleDataReady to re-render when caches load
   const particleDataReady = useStore((state) => state.particleDataReady);
   const setParticleDataReady = useStore((state) => state.setParticleDataReady);
+  const entityParticleBounds = useStore((state) => state.entityParticleBoundsByAssetId[assetId]);
 
   console.log(`[ParticleWrapper] Rendering for ${assetId}, enabled=${enabled}, particleDataReady=${particleDataReady}`);
 
@@ -115,6 +117,22 @@ export function ParticleWrapper({
 
   // Calculate block ID for special handling (e.g., redstone color tinting)
   const blockId = isEntity ? null : assetIdToBlockId(assetId);
+  const exprContext = useMemo((): MinecraftExprContext | undefined => {
+    if (!isEntity) return undefined;
+    const base = entityParticleBounds?.base ?? { x: 0, y: 0, z: 0 };
+    const size = entityParticleBounds?.size ?? { x: 1, y: 1, z: 1 };
+    return {
+      position: base,
+      dimensions: {
+        width: size.x || 1,
+        height: size.y || 1,
+        depth: size.z || size.x || 1,
+      },
+    };
+  }, [isEntity, entityParticleBounds]);
+  const entityPosition = exprContext?.position
+    ? [exprContext.position.x, exprContext.position.y, exprContext.position.z] as [number, number, number]
+    : undefined;
 
   // Get active emissions
   const activeEmissions = useMemo(() => {
@@ -227,6 +245,7 @@ export function ParticleWrapper({
             key={`${emission.particleId}-${index}`}
             particleType={emission.particleId}
             emissionRate={emission.rate}
+            position={entityPosition}
             positionExpr={emission.positionExpr ?? undefined}
             velocityExpr={emission.velocityExpr ?? undefined}
             probabilityExpr={probabilityExpr}
@@ -237,13 +256,15 @@ export function ParticleWrapper({
             tint={tint}
             scale={emission.options?.scale ?? undefined}
             emissionSource={emission.emissionSource}
+            exprContext={exprContext}
+            centered={!isEntity}
             enabled={enabled}
           />
         );
       })}
 
       {/* Emission Point Visualization */}
-      {showEmissionPoints &&
+      {showEmissionPoints && !isEntity &&
         activeEmissions.map((emission: ParticleEmission, index: number) => (
           <EmissionPointMarker
             key={`marker-${emission.particleId}-${index}`}

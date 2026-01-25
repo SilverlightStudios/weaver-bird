@@ -191,19 +191,57 @@ export function getBlockEmissions(blockId: string, blockProps?: Record<string, s
  * @param entityId - Entity ID (e.g., "minecraft:zombie", "zombie")
  * @returns Entity emissions or null if not found
  */
+function normalizeEntityIdInput(entityId: string): string {
+  return entityId.replace(/^minecraft:/, "").replace(/^entity\//, "");
+}
+
+function findEntityByClassName(
+  targetId: string,
+  entities: ParticleData["entities"],
+): string | null {
+  const normalizedTarget = targetId.replace(/[_/]/g, "").toLowerCase();
+  if (!normalizedTarget) return null;
+
+  for (const [key, data] of Object.entries(entities)) {
+    const className = data.className ?? "";
+    const simpleName = className.split(".").pop() ?? "";
+    const normalizedClass = simpleName.replace(/_/g, "").toLowerCase();
+    if (normalizedClass && normalizedClass === normalizedTarget) {
+      return key;
+    }
+  }
+
+  return null;
+}
+
 export function getEntityEmissions(entityId: string): EntityEmissions | null {
-  // Normalize entity ID: "minecraft:zombie" -> "zombie"
-  const id = entityId.replace(/^minecraft:/, "");
-  const rawData = getParticleDataSync().entities[id];
+  const entities = getParticleDataSync().entities;
+  if (!entities || Object.keys(entities).length === 0) return null;
 
-  if (!rawData) return null;
+  const normalized = normalizeEntityIdInput(entityId);
+  const baseId = normalized.split("/")[0] ?? normalized;
+  const candidates = [normalized, baseId].filter(Boolean);
 
-  // Return emissions as-is from extracted data
-  // Emission timing is now controlled by probabilityExpr and countExpr
-  return {
-    className: rawData.className,
-    emissions: rawData.emissions as ParticleEmission[],
-  };
+  for (const candidate of candidates) {
+    const rawData = entities[candidate];
+    if (rawData) {
+      return {
+        className: rawData.className,
+        emissions: rawData.emissions as ParticleEmission[],
+      };
+    }
+
+    const classNameKey = findEntityByClassName(candidate, entities);
+    if (classNameKey) {
+      const matched = entities[classNameKey];
+      return {
+        className: matched.className,
+        emissions: matched.emissions as ParticleEmission[],
+      };
+    }
+  }
+
+  return null;
 }
 
 /**

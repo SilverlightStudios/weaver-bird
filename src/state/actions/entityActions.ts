@@ -161,4 +161,14 @@ export const createEntityActions = (set: SetFn) => ({
       state.entityAnimationVariantByAssetId[assetId] = variant;
     });
   },
+
+  setEntityParticleBounds: (assetId: AssetId, bounds) => {
+    set((state) => {
+      if (!bounds) {
+        delete state.entityParticleBoundsByAssetId[assetId];
+        return;
+      }
+      state.entityParticleBoundsByAssetId[assetId] = bounds;
+    });
+  },
 });

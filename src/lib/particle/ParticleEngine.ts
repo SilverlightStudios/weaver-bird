@@ -71,7 +71,9 @@ export class ParticleEngine {
         material,
         position: new THREE.Vector3(),
         prevPosition: new THREE.Vector3(),
+        spawnPosition: new THREE.Vector3(),
         velocity: new THREE.Vector3(),
+        spawnVelocity: new THREE.Vector3(),
         age: 0,
         lifetime: 1,
         quadSize: 0.1,
@@ -159,6 +161,7 @@ export class ParticleEngine {
       // Apply position jitter if present
       applyPositionJitter(particle.position, physics);
       particle.prevPosition.copy(particle.position);
+      particle.spawnPosition.copy(particle.position);
 
       // Lifetime from extracted physics
       particle.age = 0;
@@ -174,6 +177,7 @@ export class ParticleEngine {
         this.initBaseVelocity.bind(this),
       );
       particle.velocity.copy(velocity);
+      particle.spawnVelocity.copy(velocity);
 
       // Calculate quad size
       const baseQuadSize = calculateParticleQuadSize(physics, 1.0);
@@ -271,22 +275,31 @@ export class ParticleEngine {
       }
 
       // Apply behavior-specific tick logic
-      applyBehaviorTickImpl(particle, physics);
+      const behavior = physics.behavior ?? null;
+      const isPortal = behavior === "portal" || particle.particleType === "portal";
+      const isReversePortal =
+        behavior === "reverse_portal" || particle.particleType === "reverse_portal";
 
-      // Gravity: yd -= 0.04 * gravity
-      particle.velocity.y -= 0.04 * (physics.gravity ?? 0);
+      if (isPortal || isReversePortal) {
+        this.applyPortalMotion(particle, isReversePortal);
+      } else {
+        applyBehaviorTickImpl(particle, physics);
 
-      // Move (no world collision in preview)
-      particle.position.x += particle.velocity.x;
-      particle.position.y += particle.velocity.y;
-      particle.position.z += particle.velocity.z;
+        // Gravity: yd -= 0.04 * gravity
+        particle.velocity.y -= 0.04 * (physics.gravity ?? 0);
 
-      // Friction: velocity *= friction
-      // Particles that override tick() without calling super.tick() skip friction
-      const skipsFriction = physics.skipsFriction ?? physics.skips_friction ?? false;
-      if (!skipsFriction) {
-        const friction = physics.friction ?? 0.98;
-        particle.velocity.multiplyScalar(friction);
+        // Move (no world collision in preview)
+        particle.position.x += particle.velocity.x;
+        particle.position.y += particle.velocity.y;
+        particle.position.z += particle.velocity.z;
+
+        // Friction: velocity *= friction
+        // Particles that override tick() without calling super.tick() skip friction
+        const skipsFriction = physics.skipsFriction ?? physics.skips_friction ?? false;
+        if (!skipsFriction) {
+          const friction = physics.friction ?? 0.98;
+          particle.velocity.multiplyScalar(friction);
+        }
       }
 
       this.spawnChildParticles(particle);
@@ -338,6 +351,27 @@ export class ParticleEngine {
         });
       }
     }
+  }
+
+  private applyPortalMotion(particle: Particle, isReversePortal: boolean): void {
+    const lifetime = Math.max(1, particle.lifetime);
+    const t = particle.age / lifetime;
+
+    if (isReversePortal) {
+      particle.position.x += particle.spawnVelocity.x * t;
+      particle.position.y += particle.spawnVelocity.y * t;
+      particle.position.z += particle.spawnVelocity.z * t;
+      return;
+    }
+
+    let f = -t + t * t * 2.0;
+    f = 1.0 - f;
+
+    particle.position.set(
+      particle.spawnPosition.x + particle.spawnVelocity.x * f,
+      particle.spawnPosition.y + particle.spawnVelocity.y * f + (1.0 - t),
+      particle.spawnPosition.z + particle.spawnVelocity.z * f,
+    );
   }
 
 

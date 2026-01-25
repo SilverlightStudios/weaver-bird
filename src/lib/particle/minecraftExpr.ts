@@ -13,6 +13,8 @@ import { createRuntimeHelpers } from "./minecraftExprRuntime";
 export interface MinecraftExprContext {
   age?: number;
   lifetime?: number;
+  position?: { x: number; y: number; z: number };
+  dimensions?: { width: number; height: number; depth: number };
 }
 
 export type CompiledMinecraftExpr = (
@@ -45,12 +47,38 @@ export function compileMinecraftExpr(
 
   // Entity random position methods (must be before .get[XYZ]() replacement)
   // getRandomX(width) = getX() + (2*random - 1) * width * getBbWidth()
-  // Since getX() becomes 0 and we don't have getBbWidth(), approximate as:
-  // getRandomX(multiplier) -> (rand() * 2 - 1) * multiplier
-  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getRandomX\s*\(([^)]+)\)/g, "(rand() * 2 - 1) * $1");
-  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getRandomZ\s*\(([^)]+)\)/g, "(rand() * 2 - 1) * $1");
   // getRandomY() = getY() + random * getBbHeight()
-  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getRandomY\s*\(\)/g, "rand()");
+  // getRandomZ(width) = getZ() + (2*random - 1) * width * getBbWidth()
+  js = js.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*\.getRandomX\s*\(([^)]+)\)/g,
+    "(entityX + (rand() * 2 - 1) * $1 * entityWidth)",
+  );
+  js = js.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*\.getRandomZ\s*\(([^)]+)\)/g,
+    "(entityZ + (rand() * 2 - 1) * $1 * entityDepth)",
+  );
+  js = js.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*\.getRandomY\s*\(\)/g,
+    "(entityY + rand() * entityHeight)",
+  );
+
+  // Entity bounds helpers
+  js = js.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*\.getBbWidth\s*\(\)/g,
+    "entityWidth",
+  );
+  js = js.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*\.getBbHeight\s*\(\)/g,
+    "entityHeight",
+  );
+  js = js.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*\.dimensions\.width\s*\(\)/g,
+    "entityWidth",
+  );
+  js = js.replace(
+    /[A-Za-z_$][A-Za-z0-9_$]*\.dimensions\.height\s*\(\)/g,
+    "entityHeight",
+  );
 
   // CRITICAL: Handle Direction.Axis enum comparisons BEFORE replacing $\d+ tokens
   // Pattern: $6 == Direction.Axis.X -> axisX($6)
@@ -76,7 +104,9 @@ export function compileMinecraftExpr(
   js = js.replace(/(\$\d+)\.getZ\s*\(\s*\)/g, "blockPosZ($1)");
 
   // Now handle general entity/block position accessors (for non-parameter objects)
-  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.get[XYZ]\(\)/g, "0");
+  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getX\s*\(\)/g, "entityX");
+  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getY\s*\(\)/g, "entityY");
+  js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.getZ\s*\(\)/g, "entityZ");
   js = js.replace(/[A-Za-z_$][A-Za-z0-9_$]*\.[xyz](?:\(\))?/g, "0");
 
   // Random functions
@@ -181,6 +211,12 @@ export function compileMinecraftExpr(
       "blockPosX",
       "blockPosY",
       "blockPosZ",
+      "entityX",
+      "entityY",
+      "entityZ",
+      "entityWidth",
+      "entityHeight",
+      "entityDepth",
       `"use strict"; return (${withDirection});`,
     ) as (
       rand: () => number,
@@ -206,6 +242,12 @@ export function compileMinecraftExpr(
       blockPosX: (param: number) => number,
       blockPosY: (param: number) => number,
       blockPosZ: (param: number) => number,
+      entityX: number,
+      entityY: number,
+      entityZ: number,
+      entityWidth: number,
+      entityHeight: number,
+      entityDepth: number,
     ) => number;
 
     return (rand, loopIndex = 0, context) => {
@@ -235,6 +277,12 @@ export function compileMinecraftExpr(
           helpers.blockPosX,
           helpers.blockPosY,
           helpers.blockPosZ,
+          helpers.entityX,
+          helpers.entityY,
+          helpers.entityZ,
+          helpers.entityWidth,
+          helpers.entityHeight,
+          helpers.entityDepth,
         ),
       );
     };

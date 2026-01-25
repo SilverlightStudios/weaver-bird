@@ -65,8 +65,18 @@ export function initializeParticleVelocity(
   const isCampfireSmoke =
     particleType === "campfire_signal_smoke" ||
     particleType === "campfire_cosy_smoke";
+  const behavior = physics.behavior;
+  const isPortal =
+    behavior === "portal" ||
+    behavior === "reverse_portal" ||
+    particleType === "portal" ||
+    particleType === "reverse_portal";
 
   if (isCampfireSmoke) {
+    return new THREE.Vector3(baseVelocity[0], baseVelocity[1], baseVelocity[2]);
+  }
+
+  if (isPortal) {
     return new THREE.Vector3(baseVelocity[0], baseVelocity[1], baseVelocity[2]);
   }
 
@@ -128,6 +138,10 @@ export function setupParticleMaterial(
   );
 
   const colorScale = physics.colorScale ?? physics.color_scale;
+  const colorRandomBase = physics.colorRandomBase ?? physics.color_random_base ?? 0;
+  const colorRandomScale = physics.colorRandomScale ?? physics.color_random_scale ?? 0;
+  const colorRandomMultiplier =
+    physics.colorRandomMultiplier ?? physics.color_random_multiplier ?? [1, 1, 1];
   const hasRandomizedColor =
     physics.color &&
     physics.color[0] === -1.0 &&
@@ -137,6 +151,14 @@ export function setupParticleMaterial(
   if (hasRandomizedColor && typeof colorScale === "number") {
     const gray = Math.random() * colorScale;
     material.color.setRGB(gray, gray, gray, THREE.SRGBColorSpace);
+  } else if (colorRandomScale !== 0 || colorRandomBase !== 0) {
+    const value = Math.random() * colorRandomScale + colorRandomBase;
+    material.color.setRGB(
+      value * colorRandomMultiplier[0],
+      value * colorRandomMultiplier[1],
+      value * colorRandomMultiplier[2],
+      THREE.SRGBColorSpace,
+    );
   } else if (tint) {
     let r = tint[0] / 255;
     let g = tint[1] / 255;

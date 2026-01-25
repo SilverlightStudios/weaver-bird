@@ -58,19 +58,37 @@ export function computeAdditiveOffsets(
 ): void {
   const absoluteAxes = getAbsoluteAxes(userData);
 
+  if (boneName === "headwear" || boneName === "head2") {
+    console.log(`[DEBUG] computeAdditiveOffsets for ${boneName}:`, {
+      isRoot,
+      axesSet: Array.from(axesSet),
+      absoluteAxes,
+      parentName: bone.parent?.name,
+    });
+  }
+
   for (const axis of ["x", "y", "z"] as const) {
     if (!axesSet.has(axis)) continue;
 
     const channel = `${boneName}.t${axis}`;
     const prop = `t${axis}` as "tx" | "ty" | "tz";
 
-    // Skip channels that should remain as-is
-    if (absoluteAxes.includes(axis)) continue;
-    if (poseDependentChannels.has(channel)) continue;
-    if (derivedFromInputOnly.has(channel)) continue;
+    if (boneName === "headwear" && axis === "y") {
+      console.log(`[DEBUG] computeAdditiveOffsets headwear.ty checks:`, {
+        absoluteAxesHasY: absoluteAxes.includes("y"),
+        poseDependentHas: poseDependentChannels.has(channel),
+        derivedFromInputOnlyHas: derivedFromInputOnly.has(channel),
+      });
+    }
 
-    // Special handling for Y axis
+    // Skip absolute channels for all axes
+    if (absoluteAxes.includes(axis)) continue;
+
+    // Special handling for Y axis - always call normalizeTranslationY even for pose-dependent channels
+    // Y normalization needs to happen to prevent the head from floating above the body
     if (axis === "y") {
+      // derivedFromInputOnly should still skip Y axis (vanilla placeholders)
+      if (derivedFromInputOnly.has(channel)) continue;
       normalizeTranslationY(
         boneName,
         bone,
@@ -83,6 +101,10 @@ export function computeAdditiveOffsets(
       );
       continue;
     }
+
+    // For X and Z: skip pose-dependent and input-only derived channels
+    if (poseDependentChannels.has(channel)) continue;
+    if (derivedFromInputOnly.has(channel)) continue;
 
     // X and Z axes: compute offset if not constant
     processXZAxisOffset(axis, boneName, channel, prop, userData, ctx, isConstantByChannel);

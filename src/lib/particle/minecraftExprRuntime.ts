@@ -24,6 +24,12 @@ export interface RuntimeHelpers {
   blockPosX: (param: number) => number;
   blockPosY: (param: number) => number;
   blockPosZ: (param: number) => number;
+  entityX: number;
+  entityY: number;
+  entityZ: number;
+  entityWidth: number;
+  entityHeight: number;
+  entityDepth: number;
 }
 
 export function createRuntimeHelpers(
@@ -104,6 +110,21 @@ export function createRuntimeHelpers(
   const blockPosY = (_param: number): number => 0;
   const blockPosZ = (_param: number): number => 0;
 
+  const position = context?.position ?? { x: 0, y: 0, z: 0 };
+  const dimensions = context?.dimensions ?? { width: 1, height: 1, depth: 1 };
+  const entityX = Number.isFinite(position.x) ? position.x : 0;
+  const entityY = Number.isFinite(position.y) ? position.y : 0;
+  const entityZ = Number.isFinite(position.z) ? position.z : 0;
+  const entityWidth = Number.isFinite(dimensions.width) && dimensions.width > 0
+    ? dimensions.width
+    : 1;
+  const entityHeight = Number.isFinite(dimensions.height) && dimensions.height > 0
+    ? dimensions.height
+    : 1;
+  const entityDepth = Number.isFinite(dimensions.depth) && dimensions.depth > 0
+    ? dimensions.depth
+    : entityWidth;
+
   return {
     randInt,
     floormod,
@@ -124,5 +145,11 @@ export function createRuntimeHelpers(
     blockPosX,
     blockPosY,
     blockPosZ,
+    entityX,
+    entityY,
+    entityZ,
+    entityWidth,
+    entityHeight,
+    entityDepth,
   };
 }

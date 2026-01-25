@@ -7,6 +7,7 @@ import { useParticleTexture, useSpawnParticleTextures } from "./hooks/useParticl
 import { useParticleEngine } from "./hooks/useParticleEngine";
 import { processTick } from "./ParticleEmitter3D/emissionHelpers";
 import { useCompiledExpressions } from "./ParticleEmitter3D/useCompiledExpressions";
+import type { MinecraftExprContext } from "@lib/particle/minecraftExpr";
 
 export interface ParticleEmitter3DProps {
   particleType: string;
@@ -35,6 +36,10 @@ export interface ParticleEmitter3DProps {
   tint?: [number, number, number];
   /** Optional per-emission size scale multiplier */
   scale?: number;
+  /** Optional context for expression evaluation */
+  exprContext?: MinecraftExprContext;
+  /** Whether to center X/Z for block coordinates */
+  centered?: boolean;
   /** Which method this emission comes from (determines call rate):
    * - "animateTick": ~2% per tick (random block sampling)
    * - "particleTick": 100% per tick (called every tick)
@@ -79,6 +84,8 @@ export function ParticleEmitter3D({
   blockProps,
   tint,
   scale,
+  exprContext,
+  centered = true,
   emissionSource,
 }: ParticleEmitter3DProps): JSX.Element | null {
   console.log(`[ParticleEmitter3D] Render: particleType=${particleType}, enabled=${enabled}, emissionRate=${emissionRate}, emissionSource=${emissionSource}`);
@@ -153,6 +160,8 @@ export function ParticleEmitter3D({
           velocity,
           particleType,
           countExpr,
+          exprContext,
+          centered,
           texture,
           tint,
           scale,

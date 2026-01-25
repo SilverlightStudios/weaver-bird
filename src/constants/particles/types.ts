@@ -61,6 +61,15 @@ export interface ParticlePhysics {
   /** Color scale for grayscale particles - schema v3+ */
   colorScale?: number | null;
   color_scale?: number | null;
+  /** Random color base for per-particle tinting */
+  colorRandomBase?: number | null;
+  color_random_base?: number | null;
+  /** Random color scale for per-particle tinting */
+  colorRandomScale?: number | null;
+  color_random_scale?: number | null;
+  /** Per-channel multiplier for randomized color */
+  colorRandomMultiplier?: [number, number, number] | null;
+  color_random_multiplier?: [number, number, number] | null;
 
   // Schema v3+ fields (not in old cached data but used by components)
   /** Size scale multiplier */

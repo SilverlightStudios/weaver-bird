@@ -34,6 +34,7 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0], entityTypeOverride, 
   const jemDebugMode = useStore((state) => state.jemDebugMode);
   const animationPlaying = useStore((state) => state.animationPlaying);
   const animationSpeed = useStore((state) => state.animationSpeed);
+  const setEntityParticleBounds = useStore((state) => state.setEntityParticleBounds);
 
   const resolvedPackId = storeWinnerPackId ?? (vanillaPack ? "minecraft:vanilla" : undefined);
   const resolvedPack = storeWinnerPackId ? storeWinnerPack : vanillaPack;
@@ -158,6 +159,29 @@ function EntityModel({ assetId, positionOffset = [0, 0, 0], entityTypeOverride, 
     }
     return () => { jemInspectorRef.current?.dispose(); jemInspectorRef.current = null; };
   }, [jemDebugMode, entityGroup, parsedJemData]);
+
+  useEffect(() => {
+    if (!entityGroup || !groupRef.current) return;
+
+    const box = new THREE.Box3().setFromObject(groupRef.current);
+    if (!Number.isFinite(box.min.y) || !Number.isFinite(box.max.y)) return;
+
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    if (!Number.isFinite(size.x) || !Number.isFinite(size.y) || !Number.isFinite(size.z)) {
+      return;
+    }
+
+    if (size.lengthSq() === 0) return;
+
+    setEntityParticleBounds(assetId, {
+      base: { x: center.x, y: box.min.y, z: center.z },
+      size: { x: size.x, y: size.y, z: size.z },
+    });
+  }, [assetId, entityGroup, setEntityParticleBounds]);
 
   // Animation frame
   useFrame((_, delta) => {

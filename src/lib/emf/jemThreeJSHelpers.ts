@@ -203,6 +203,7 @@ export function createBoxMesh(
   }
 
   const mesh = new THREE.Mesh(geometry, materials);
+  mesh.name = `${partName}_box${boxIndex}`;
   mesh.position.set(meshX, meshY, meshZ);
 
   // Note: sizeAdd/inflate is already applied during JEM parsing to the box coordinates

@@ -125,6 +125,10 @@ export interface StoreActions {
     assetId: AssetId,
     variant: EntityAnimationVariant,
   ) => void;
+  setEntityParticleBounds: (
+    assetId: AssetId,
+    bounds: AppState["entityParticleBoundsByAssetId"][AssetId] | null,
+  ) => void;
 
   // Debug mode
   setJemDebugMode: (enabled: boolean) => void;

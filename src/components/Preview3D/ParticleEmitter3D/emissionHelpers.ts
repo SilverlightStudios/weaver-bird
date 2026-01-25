@@ -2,7 +2,7 @@
  * Helper functions for particle emission logic to reduce complexity
  */
 import type * as THREE from "three";
-import type { CompiledMinecraftExpr } from "@lib/particle/minecraftExpr";
+import type { CompiledMinecraftExpr, MinecraftExprContext } from "@lib/particle/minecraftExpr";
 
 const ANIMATE_TICK_SAMPLE_COUNT = 667;
 const ANIMATE_TICK_SAMPLE_VOLUME = 32 * 32 * 32;
@@ -81,16 +81,22 @@ export function calculatePosition(
   defaultPosition: [number, number, number],
   rand: () => number,
   loopIndex: number,
+  context?: MinecraftExprContext,
+  centered: boolean = true,
 ): [number, number, number] {
   if (!positionFns) {
     return defaultPosition;
   }
 
-  return [
-    positionFns[0](rand, loopIndex) - 0.5,
-    positionFns[1](rand, loopIndex),
-    positionFns[2](rand, loopIndex) - 0.5,
-  ];
+  const x = positionFns[0](rand, loopIndex, context);
+  const y = positionFns[1](rand, loopIndex, context);
+  const z = positionFns[2](rand, loopIndex, context);
+
+  if (!centered) {
+    return [x, y, z];
+  }
+
+  return [x - 0.5, y, z - 0.5];
 }
 
 /**
@@ -101,15 +107,16 @@ export function calculateVelocity(
   defaultVelocity: [number, number, number],
   rand: () => number,
   loopIndex: number,
+  context?: MinecraftExprContext,
 ): [number, number, number] {
   if (!velocityFns) {
     return defaultVelocity;
   }
 
   return [
-    velocityFns[0](rand, loopIndex),
-    velocityFns[1](rand, loopIndex),
-    velocityFns[2](rand, loopIndex),
+    velocityFns[0](rand, loopIndex, context),
+    velocityFns[1](rand, loopIndex, context),
+    velocityFns[2](rand, loopIndex, context),
   ];
 }
 
@@ -156,6 +163,8 @@ export interface ProcessTickParams {
   velocity: [number, number, number];
   particleType: string;
   countExpr?: string;
+  exprContext?: MinecraftExprContext;
+  centered?: boolean;
   texture: {
     textures: THREE.Texture[];
     tint?: [number, number, number];
@@ -181,11 +190,13 @@ export function processTick(params: ProcessTickParams): void {
     velocityFns,
     position,
     velocity,
-    particleType,
-    countExpr,
-    texture,
-    tint,
-    scale,
+  particleType,
+  countExpr,
+  exprContext,
+  centered = true,
+  texture,
+  tint,
+  scale,
     engine,
     tmpPos,
     rand,
@@ -214,8 +225,8 @@ export function processTick(params: ProcessTickParams): void {
     if (particleCount === 0) continue;
 
     for (let i = 0; i < particleCount; i++) {
-      const pos = calculatePosition(positionFns, position, rand, loopIndex);
-      const vel = calculateVelocity(velocityFns, velocity, rand, loopIndex);
+      const pos = calculatePosition(positionFns, position, rand, loopIndex, exprContext, centered);
+      const vel = calculateVelocity(velocityFns, velocity, rand, loopIndex, exprContext);
 
       emitParticle(engine, tmpPos, {
         position: pos,

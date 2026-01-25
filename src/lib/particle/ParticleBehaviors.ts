@@ -34,11 +34,6 @@ export function applyBehaviorTick(
   }
 
   switch (particle.particleType) {
-    case "portal":
-    case "reverse_portal":
-      applyPortalBehavior(particle);
-      break;
-
     case "enchant":
       applyEnchantBehavior(particle);
       break;
@@ -46,26 +41,6 @@ export function applyBehaviorTick(
     default:
       break;
   }
-}
-
-/**
- * Portal particle rising/spiraling behavior
- *
- * Minecraft PortalParticle moves toward a target point with damped velocity.
- */
-function applyPortalBehavior(particle: ParticleBehaviorState): void {
-  const centerX = 0.5;
-  const centerZ = 0.5;
-  const targetY = 1.0;
-
-  const dx = centerX - particle.position.x;
-  const dy = targetY - particle.position.y;
-  const dz = centerZ - particle.position.z;
-
-  const attraction = 0.01;
-  particle.velocity.x += dx * attraction;
-  particle.velocity.y += dy * attraction + 0.005;
-  particle.velocity.z += dz * attraction;
 }
 
 /**
